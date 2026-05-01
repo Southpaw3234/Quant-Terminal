@@ -1,0 +1,35 @@
+name: Quant Terminal v21 - Daily Cycle
+on:
+  schedule:
+    - cron: '35 13 * * 1-5'
+  workflow_dispatch:
+jobs:
+  run-cycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - name: Install rclone
+        run: sudo apt-get install -y rclone
+      - name: Run quant cycle
+        env:
+          GDRIVE_RCLONE_CONF: ${{ secrets.GDRIVE_RCLONE_CONF }}
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          NEWS_API_KEY: ${{ secrets.NEWS_API_KEY }}
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          AV_API_KEY: ${{ secrets.AV_API_KEY }}
+        run: python quant_runner.py 2>&1 | tee cycle_output.log
+      - name: Upload cycle log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cycle-log-${{ github.run_id }}
+          path: cycle_output.log
+          retention-days: 30
