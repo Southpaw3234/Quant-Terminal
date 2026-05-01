@@ -1,0 +1,75 @@
+# ============================================================
+# Quant Terminal v21 — Daily Autonomous Cycle
+# Fires at 09:35 ET (13:35 UTC) every weekday Mon-Fri
+# ============================================================
+
+name: Quant Terminal v21 — Daily Cycle
+
+on:
+  schedule:
+    # 13:35 UTC = 09:35 ET (EST) / 10:35 ET (EDT)
+    # Adjust to 14:35 UTC during EDT (Mar-Nov): change to 14 35
+    - cron: '35 13 * * 1-5'
+
+  # Also allow manual trigger from GitHub Actions tab
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual run'
+        required: false
+        default: 'Manual trigger'
+
+jobs:
+  run-cycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300   # 5-hour max (training takes ~20min first run, ~5min after)
+
+    steps:
+
+      # 1. Check out the repository
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      # 2. Set up Python 3.11
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      # 3. Install rclone for Google Drive sync
+      - name: Install rclone
+        run: |
+          sudo apt-get install -y rclone
+          echo "rclone installed: $(rclone --version | head -1)"
+
+      # 4. Run the quant cycle
+      - name: Run quant cycle
+        env:
+          GDRIVE_RCLONE_CONF: ${{ secrets.GDRIVE_RCLONE_CONF }}
+          ALPACA_API_KEY:     ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY:  ${{ secrets.ALPACA_SECRET_KEY }}
+          NEWS_API_KEY:       ${{ secrets.NEWS_API_KEY }}
+          FRED_API_KEY:       ${{ secrets.FRED_API_KEY }}
+          AV_API_KEY:         ${{ secrets.AV_API_KEY }}
+          # TRADIER_UPGRADE: Add when ready:
+          # TRADIER_API_KEY: ${{ secrets.TRADIER_API_KEY }}
+        run: |
+          python quant_runner.py 2>&1 | tee cycle_output.log
+          echo "Exit code: $?"
+
+      # 5. Upload cycle log as artifact (viewable in GitHub Actions UI)
+      - name: Upload cycle log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cycle-log-${{ github.run_id }}
+          path: cycle_output.log
+          retention-days: 30
+
+      # 6. Notify on failure (optional — needs EMAIL_TO secret)
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "Cycle failed — check logs at:"
+          echo "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
