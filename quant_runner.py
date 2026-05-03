@@ -3,7 +3,7 @@
 Quant Terminal v21 — GitHub Actions Runner
 ==========================================
 Runs the full 5-stage autonomous cycle once per invocation.
-Designed to be called by GitHub Actions at 09:35 ET every trading day.
+Designed to be called by GitHub Actions at 09:30 ET every trading day.
 
 Stages:
   1. Macro refresh
