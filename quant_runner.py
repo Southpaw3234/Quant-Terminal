@@ -1,1723 +1,236 @@
 #!/usr/bin/env python3
 """
-Quant Terminal v21 — GitHub Actions Runner
-==========================================
+Quant Terminal v24.1 — GitHub Actions Runner
+=============================================
 Runs the full 5-stage autonomous cycle once per invocation.
-Designed to be called by GitHub Actions at 09:30 ET every trading day.
+Designed to be called by GitHub Actions at 09:35 ET every trading day.
 
 Stages:
-  1. Macro refresh
-  2a. IV flags refresh
-  2b. Market data + signal generation
-  3. Trade execution + prediction logging
-  4. Outcome scoring
-  5. Failure diagnosis + rule rewriting
+   1. Macro refresh
+   2a. IV flags refresh
+   2b. Market data + features + signals (parallel)
+   3. Trade execution + prediction logging
+   4. Outcome scoring
+   5. Failure diagnosis + rule rewriting
 
 All logs persist to Google Drive via rclone (configured in GitHub secrets).
+Output is tee'd to cycle_output.log and uploaded as a GitHub Actions artifact.
 
-Setup:
-  1. Fork/clone this file to your GitHub repo
-  2. Add secrets to GitHub repo settings:
-     - GDRIVE_RCLONE_CONF: base64-encoded rclone.conf for your Google Drive
-     - ALPACA_API_KEY, ALPACA_SECRET_KEY (optional — paper trading)
-     - NEWS_API_KEY (optional — FinBERT sentiment)
-     - FRED_API_KEY (optional — FRED macro data)
-     - AV_API_KEY   (optional — Alpha Vantage free key for earnings)
-  3. GitHub Actions workflow fires this script at 09:35 ET Mon-Fri
+Upgrade from v21 → v24.1:
+  - CVaR portfolio optimisation (CLARABEL solver)
+  - Options IV earnings flag with position scaling
+  - Kelly Criterion + dynamic VIX leverage
+  - River ML adaptive signal weights
+  - Self-learning rule rewriter
+  - FinBERT sentiment (skipped in FAST_MODE)
+  - 140-ticker watchlist
 """
 
 import os
 import sys
 import json
-import time
-import datetime
-import warnings
-warnings.filterwarnings("ignore")
-
-# ── Runtime check ─────────────────────────────────────────────
-print(f"\n{'='*60}")
-print(f"Quant Terminal v21 — Autonomous Cycle")
-print(f"Start: {datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC")
-print(f"{'='*60}\n")
-
-# ── Install dependencies ──────────────────────────────────────
 import subprocess
-def pip_install(pkg):
-    subprocess.run(
-        [sys.executable, "-m", "pip", "install", "-q", pkg],
-        capture_output=True, check=False
-    )
-
-DEPS = [
-    "pandas>=2.2", "scikit-learn>=1.5", "xgboost>=2.1",
-    "lightgbm>=4.4", "catboost>=1.2.5", "optuna>=3.6",
-    "yfinance>=0.2.40", "arch>=6.3", "hmmlearn>=0.3.2",
-    "cvxpy>=1.5", "ta>=0.11", "pandas_ta>=0.3.14b0",
-    "requests>=2.31", "imbalanced-learn>=0.12",
-    "river>=0.21", "threadpoolctl==3.1.0",
-]
-
-print("Installing dependencies...")
-for dep in DEPS:
-    pip_install(dep)
-print("Dependencies ready\n")
-
-# ── Core imports ──────────────────────────────────────────────
-import numpy as np
-import pandas as pd
-import requests
+import datetime
+import traceback
 from pathlib import Path
-from collections import defaultdict
 
-import yfinance as yf
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import roc_auc_score
-from sklearn.model_selection import TimeSeriesSplit
-from imblearn.over_sampling import SMOTE
-import xgboost as xgb
-import lightgbm as lgb
-from catboost import CatBoostClassifier
-import optuna; optuna.logging.set_verbosity(optuna.logging.WARNING)
-from arch import arch_model
-from hmmlearn.hmm import GaussianHMM
-import cvxpy as cp
-import ta
-from river import linear_model, preprocessing, metrics, drift
+# ── Logging setup — tee stdout to cycle_output.log ───────────────────────
+import io
 
-np.random.seed(42)
+LOG_FILE = "cycle_output.log"
 
-# ── Google Drive sync via rclone ──────────────────────────────
-DRIVE_DIR  = Path("/tmp/quant_terminal_v21")
-DRIVE_DIR.mkdir(parents=True, exist_ok=True)
-RCLONE_REMOTE = "gdrive:quant_terminal_v21"   # matches rclone.conf remote name
-
-def drive_pull():
-    """Pull latest files from Google Drive to local /tmp."""
-    conf = os.environ.get("GDRIVE_RCLONE_CONF", "")
-    if not conf:
-        print("  No GDRIVE_RCLONE_CONF secret — using local /tmp only")
-        return
-    # Write rclone config
-    import base64
-    conf_path = Path("/tmp/rclone.conf")
-    conf_path.write_bytes(base64.b64decode(conf))
-    result = subprocess.run(
-        ["rclone", "sync", RCLONE_REMOTE, str(DRIVE_DIR),
-         "--config", str(conf_path), "--quiet"],
-        capture_output=True, text=True
-    )
-    if result.returncode == 0:
-        print("  Drive pull OK")
-    else:
-        print(f"  Drive pull warn: {result.stderr[:100]}")
-
-def drive_push():
-    """Push updated files from /tmp back to Google Drive."""
-    conf = os.environ.get("GDRIVE_RCLONE_CONF", "")
-    if not conf:
-        return
-    import base64
-    conf_path = Path("/tmp/rclone.conf")
-    if not conf_path.exists():
-        conf_path.write_bytes(base64.b64decode(conf))
-    result = subprocess.run(
-        ["rclone", "sync", str(DRIVE_DIR), RCLONE_REMOTE,
-         "--config", str(conf_path), "--quiet"],
-        capture_output=True, text=True
-    )
-    if result.returncode == 0:
-        print("  Drive push OK")
-    else:
-        print(f"  Drive push warn: {result.stderr[:100]}")
-
-# ── Configuration ─────────────────────────────────────────────
-ALPACA_API_KEY    = os.environ.get("ALPACA_API_KEY", "")
-ALPACA_SECRET_KEY = os.environ.get("ALPACA_SECRET_KEY", "")
-NEWS_API_KEY      = os.environ.get("NEWS_API_KEY", "")
-FRED_API_KEY      = os.environ.get("FRED_API_KEY", "")
-AV_API_KEY        = os.environ.get("AV_API_KEY", "demo")
-
-# TRADIER_UPGRADE: When ready to upgrade, add:
-# TRADIER_API_KEY = os.environ.get("TRADIER_API_KEY", "")
-# Then replace yfinance options chain calls with Tradier API calls.
-
-DEFAULT_WATCHLIST = [
-    "AAPL","MSFT","NVDA","GOOGL","AMZN","META","TSLA",
-    "JPM","V","UNH","SPY",
-    "BTC-USD","ETH-USD","SOL-USD","BNB-USD","XRP-USD"
-]
-
-FORECAST_DAYS     = 5
-TRAIN_START       = "2019-01-01"
-TRAIN_END         = datetime.date.today().isoformat()
-PORTFOLIO_CAPITAL = 10_000
-MIN_CONFIDENCE    = 0.65
-MAX_POSITION_PCT  = 0.20
-STOP_LOSS_PCT     = 0.05
-MAX_DRAWDOWN_PCT  = 0.15
-HMM_STATES        = 3
-GARCH_PATHS       = 2_000   # reduced for GitHub Actions speed
-
-PT_LOG_COLS = ["ts","ticker","action","price","qty",
-               "confidence","regime","order_id","status"]
-
-PRED_LOG_COLS = [
-    "pred_ts","ticker","action","confidence","price_at_pred",
-    "p_ensemble","p_up_garch","rsi","regime","vix","yield_curve",
-    "ism_pmi","unemployment","sentiment","horizon_days",
-    "outcome_ts","price_at_outcome","actual_return",
-    "was_correct","magnitude_error","scored",
-    "iv_flag","iv_scale","iv_note"
-]
-
-PT_LOG_FILE   = str(DRIVE_DIR / "pt_v21_log.csv")
-PRED_LOG_FILE = str(DRIVE_DIR / "predictions_v21.csv")
-WEIGHTS_FILE  = str(DRIVE_DIR / "adaptive_weights_v21.json")
-RULES_FILE    = str(DRIVE_DIR / "learned_rules_v21.json")
-
-# Initialise log files if missing
-for f, cols in [(PT_LOG_FILE, PT_LOG_COLS), (PRED_LOG_FILE, PRED_LOG_COLS)]:
-    if not Path(f).exists():
-        pd.DataFrame(columns=cols).to_csv(f, index=False)
-
-# Load persisted state
-ADAPTIVE_WEIGHTS = {
-    "w_ensemble":0.55,"w_garch":0.20,
-    "w_sentiment":0.10,"w_regime":0.10,"w_yieldcurve":0.05
-}
-LEARNED_RULES = {}
-
-if Path(WEIGHTS_FILE).exists():
-    try: ADAPTIVE_WEIGHTS = json.loads(Path(WEIGHTS_FILE).read_text())
-    except Exception: pass
-if Path(RULES_FILE).exists():
-    try: LEARNED_RULES = json.loads(Path(RULES_FILE).read_text())
-    except Exception: pass
-
-MACRO    = {}
-iv_flags = {}
-raw_data = {}
-featured = {}
-regimes  = {}
-models   = {}
-garch_res= {}
-sentiments={}
-signals  = {}
-opt_weights={}
-
-FEATURE_COLS = []
-
-# ── Paste all v21 functions below ─────────────────────────────
-# (extracted verbatim from notebook cells 4-15, 17)
-
-
-
-# ========================================================
-# CORE FUNCTIONS (extracted from v21 notebook)
-# ========================================================
-
-
-# ── Cell 4 ─────────────────────────────────────────────
-# ============================================================
-# CELL 4 — MACRO DATA
-# ============================================================
-MACRO: dict = {}
-
-def _yf_latest(ticker, period="5d"):
-    try:
-        df = yf.Ticker(ticker).history(period=period, auto_adjust=True)
-        if df.empty: return None
-        return float(df["Close"].dropna().iloc[-1])
-    except Exception: return None
-
-def _fred(series_id, fallback=None):
-    if not FRED_API_KEY: return fallback
-    try:
-        url = (f"https://api.stlouisfed.org/fred/series/observations"
-               f"?series_id={series_id}&api_key={FRED_API_KEY}"
-               f"&file_type=json&sort_order=desc&limit=2")
-        r = requests.get(url, timeout=8)
-        for o in r.json().get("observations",[]):
-            try: return float(o["value"])
-            except Exception: continue
-        return fallback
-    except Exception: return fallback
-
-def fetch_macro():
-    global MACRO
-    fed_rate  = _yf_latest("^IRX")
-    tnx_10y   = _yf_latest("^TNX")
-    irx_2y    = _yf_latest("^IRX")
-    vix       = _yf_latest("^VIX")
-    dxy       = _yf_latest("DX-Y.NYB")
-    wti_crude = _yf_latest("CL=F")
-    gold      = _yf_latest("GC=F")
-    hyg       = _yf_latest("HYG")
-    lqd       = _yf_latest("LQD")
-    credit_spread = round(hyg/lqd,4) if hyg and lqd else None
-    spy_info  = {}
-    try: spy_info = yf.Ticker("SPY").info
-    except Exception: pass
-    spy_pe     = spy_info.get("trailingPE")
-    ey         = round(100/spy_pe,2) if spy_pe and spy_pe>0 else None
-    ey_spread  = round(ey-(tnx_10y or 4.3),2) if ey else None
-    yc         = round((tnx_10y or 4.3)-(irx_2y or 5.0),3)
-    unemployment = _fred("UNRATE",   fallback=3.9)
-    cpi_yoy      = _fred("CPIAUCSL", fallback=3.1)
-    gdp_growth   = _fred("A191RL1Q225SBEA", fallback=2.8)
-    retail_sales = _fred("RSAFS",    fallback=0.4)
-    ism_pmi      = _fred("MANEMP",   fallback=50.3)
-    crypto_fg = None; crypto_fg_label = "unavailable"
-    try:
-        r = requests.get("https://api.alternative.me/fng/?limit=1",timeout=5)
-        crypto_fg       = int(r.json()["data"][0]["value"])
-        crypto_fg_label = r.json()["data"][0]["value_classification"]
-    except Exception: pass
-    if vix:
-        if vix<15:    mr,mc="Risk-on / Bull","success"
-        elif vix<25:  mr,mc="Neutral / Mixed","warning"
-        else:         mr,mc="Risk-off / Bear","danger"
-    else: mr,mc="Unknown","secondary"
-    MACRO = dict(
-        fed_rate=fed_rate,tnx_10y=tnx_10y,yield_curve=yc,
-        vix=vix,dxy=dxy,wti_crude=wti_crude,gold=gold,
-        credit_spread=credit_spread,earnings_yield=ey,ey_spread=ey_spread,
-        unemployment=unemployment,cpi_yoy=cpi_yoy,gdp_growth=gdp_growth,
-        retail_sales=retail_sales,ism_pmi=ism_pmi,
-        crypto_fg=crypto_fg,crypto_fg_label=crypto_fg_label,
-        macro_regime=mr,macro_regime_color=mc
-    )
-    return MACRO
-
-print("Fetching macro data...")
-fetch_macro()
-for k,v in MACRO.items():
-    if v is not None and k not in ("macro_regime","macro_regime_color","crypto_fg_label"):
-        print(f"  {k:<20} {v}")
-print(f"\nMacro ready | regime: {MACRO['macro_regime']}")
-
-# ── Cell 5 ─────────────────────────────────────────────
-# ============================================================
-# CELL 5 — TICKER DATA DOWNLOAD
-# ============================================================
-def download_ticker(ticker, start, end):
-    for attempt in range(3):
-        try:
-            df = yf.Ticker(ticker).history(start=start,end=end,auto_adjust=True)
-            if df.empty: return None
-            df.index = pd.to_datetime(df.index).tz_localize(None)
-            df = df[["Open","High","Low","Close","Volume"]].copy()
-            df.dropna(subset=["Close"],inplace=True)
-            return df
-        except Exception as e:
-            if attempt==2: print(f"  {ticker}: {e}")
-            time.sleep(1)
-    return None
-
-raw_data = {}
-print(f"Downloading {len(DEFAULT_WATCHLIST)} tickers...")
-for tk in DEFAULT_WATCHLIST:
-    df = download_ticker(tk,TRAIN_START,TRAIN_END)
-    if df is not None and len(df)>100:
-        raw_data[tk] = df
-        print(f"  OK {tk:<10} {len(df)} rows  ${df['Close'].iloc[-1]:.2f}")
-    else:
-        print(f"  SKIP {tk}")
-print(f"\n{len(raw_data)}/{len(DEFAULT_WATCHLIST)} tickers ready")
-
-# ── Cell 6 ─────────────────────────────────────────────
-# ============================================================
-# CELL 6 — FEATURE ENGINEERING  (macro-aware)
-# ============================================================
-def build_features(df):
-    d = df.copy()
-    c,h,l,v = d["Close"],d["High"],d["Low"],d["Volume"]
-    for k in [1,3,5,10,21]: d[f"ret_{k}d"]=c.pct_change(k)
-    for w in [5,10,20,50,200]:
-        d[f"sma_{w}"]=c.rolling(w).mean()
-        d[f"sma_r_{w}"]=c/d[f"sma_{w}"]-1
-    d["ema_12"]=c.ewm(span=12,adjust=False).mean()
-    d["ema_26"]=c.ewm(span=26,adjust=False).mean()
-    d["macd"]=d["ema_12"]-d["ema_26"]
-    d["macd_sig"]=d["macd"].ewm(span=9,adjust=False).mean()
-    d["macd_h"]=d["macd"]-d["macd_sig"]
-    d["rsi_14"]=ta.momentum.rsi(c,window=14)
-    d["rsi_7"]=ta.momentum.rsi(c,window=7)
-    stoch=ta.momentum.StochasticOscillator(h,l,c)
-    d["stoch_k"]=stoch.stoch(); d["stoch_d"]=stoch.stoch_signal()
-    d["cci"]=ta.trend.CCIIndicator(h,l,c).cci()
-    d["willr"]=ta.momentum.WilliamsRIndicator(h,l,c).williams_r()
-    d["mfi"]=ta.volume.MFIIndicator(h,l,c,v).money_flow_index()
-    bb=ta.volatility.BollingerBands(c)
-    d["bb_upper"]=bb.bollinger_hband(); d["bb_lower"]=bb.bollinger_lband()
-    d["bb_pct"]=bb.bollinger_pband(); d["bb_w"]=bb.bollinger_wband()
-    d["atr_14"]=ta.volatility.AverageTrueRange(h,l,c).average_true_range()
-    kelt=ta.volatility.KeltnerChannel(h,l,c)
-    d["kelt_u"]=kelt.keltner_channel_hband()
-    d["kelt_l"]=kelt.keltner_channel_lband()
-    d["vol_r_20"]=v/v.rolling(20).mean()
-    d["obv"]=ta.volume.OnBalanceVolumeIndicator(c,v).on_balance_volume()
-    d["vwap"]=(c*v).cumsum()/v.cumsum()
-    d["dow"]=d.index.dayofweek; d["month"]=d.index.month
-    d["body"]=(c-d["Open"]).abs()/(h-l+1e-9)
-    d["upper_w"]=(h-c.clip(lower=d["Open"]))/(h-l+1e-9)
-    d["lower_w"]=(c.clip(upper=d["Open"])-l)/(h-l+1e-9)
-    for w in [5,10,21]: d[f"rvol_{w}"]=d["ret_1d"].rolling(w).std()*np.sqrt(252)
-    macro_vals = {
-        "m_vix":    MACRO.get("vix") or 20.0,
-        "m_tnx":    MACRO.get("tnx_10y") or 4.3,
-        "m_yc":     MACRO.get("yield_curve") or 0.0,
-        "m_dxy":    MACRO.get("dxy") or 104.0,
-        "m_wti":    MACRO.get("wti_crude") or 80.0,
-        "m_gold":   MACRO.get("gold") or 2000.0,
-        "m_credit": MACRO.get("credit_spread") or 1.0,
-        "m_unemp":  MACRO.get("unemployment") or 4.0,
-        "m_cpi":    MACRO.get("cpi_yoy") or 3.0,
-        "m_gdp":    MACRO.get("gdp_growth") or 2.5,
-        "m_pmi":    MACRO.get("ism_pmi") or 50.0,
-        "m_cfg":    float(MACRO.get("crypto_fg") or 50),
-    }
-    for col,val in macro_vals.items(): d[col]=val
-    d["target"]=(c.shift(-FORECAST_DAYS)>c).astype(int)
-    feat_cols=[col for col in d.columns
-               if col not in ["Open","High","Low","Close","Volume","target"]]
-    d[feat_cols]=d[feat_cols].shift(1)
-    d.dropna(inplace=True)
-    return d
-
-print("Building features...")
-featured = {}
-for tk,df in raw_data.items():
-    fd=build_features(df)
-    if len(fd)>200:
-        featured[tk]=fd
-        print(f"  OK {tk:<10} {len(fd)} rows  {len(fd.columns)} features")
-
-FEATURE_COLS=[c for c in next(iter(featured.values())).columns
-              if c not in ["Open","High","Low","Close","Volume","target"]]
-print(f"\n{len(featured)} tickers | {len(FEATURE_COLS)} features (incl macro)")
-
-# ── Cell 7 ─────────────────────────────────────────────
-# ============================================================
-# CELL 7 — HMM REGIME DETECTION
-# ============================================================
-def fit_hmm(df, n_states=HMM_STATES):
-    returns=df["Close"].pct_change().dropna().values.reshape(-1,1)
-    model=GaussianHMM(n_components=n_states,covariance_type="full",
-                      n_iter=200,random_state=42)
-    model.fit(returns)
-    labels=model.predict(returns)
-    s=pd.Series(labels,index=df.index[1:],name="regime")
-    return s.reindex(df.index).ffill().fillna(0).astype(int)
-
-print("Fitting HMM regimes...")
-regimes = {}
-for tk,df in featured.items():
-    regimes[tk]=fit_hmm(raw_data[tk].loc[df.index[0]:])
-    print(f"  OK {tk:<10} regime={regimes[tk].iloc[-1]}")
-print("\nRegimes complete")
-
-# ── Cell 8 ─────────────────────────────────────────────
-# ============================================================
-# CELL 8 — ML ENSEMBLE TRAINING
-# ============================================================
-def train_ensemble(df, ticker):
-    X=df[FEATURE_COLS].values; y=df["target"].values
-    scaler=StandardScaler(); X_sc=scaler.fit_transform(X)
-    tscv=TimeSeriesSplit(n_splits=5)
-    def xgb_obj(trial):
-        p=dict(
-            n_estimators=trial.suggest_int("n",100,500),
-            max_depth=trial.suggest_int("d",3,9),
-            learning_rate=trial.suggest_float("lr",1e-3,0.3,log=True),
-            subsample=trial.suggest_float("sub",0.5,1.0),
-            colsample_bytree=trial.suggest_float("col",0.5,1.0),
-            gamma=trial.suggest_float("g",0,5),
-            reg_alpha=trial.suggest_float("a",0,3),
-            reg_lambda=trial.suggest_float("l",0,3),
-            use_label_encoder=False,eval_metric="logloss",
-            tree_method="hist",random_state=42,verbosity=0)
-        aucs=[]
-        for ti,vi in tscv.split(X_sc):
-            Xtr,Xva,ytr,yva=X_sc[ti],X_sc[vi],y[ti],y[vi]
-            try: Xtr,ytr=SMOTE(random_state=42).fit_resample(Xtr,ytr)
-            except Exception: pass
-            m=xgb.XGBClassifier(**p)
-            m.fit(Xtr,ytr,eval_set=[(Xva,yva)],verbose=False)
-            if len(np.unique(yva))>1:
-                aucs.append(roc_auc_score(yva,m.predict_proba(Xva)[:,1]))
-        return np.mean(aucs) if aucs else 0.5
-    study=optuna.create_study(direction="maximize")
-    study.optimize(xgb_obj,n_trials=25,show_progress_bar=False)
-    bp=study.best_params
-    best_xgb=xgb.XGBClassifier(
-        n_estimators=bp["n"],max_depth=bp["d"],learning_rate=bp["lr"],
-        subsample=bp["sub"],colsample_bytree=bp["col"],gamma=bp["g"],
-        reg_alpha=bp["a"],reg_lambda=bp["l"],
-        use_label_encoder=False,eval_metric="logloss",
-        tree_method="hist",random_state=42,verbosity=0)
-    best_lgb=lgb.LGBMClassifier(
-        n_estimators=400,max_depth=6,learning_rate=0.05,
-        num_leaves=63,subsample=0.8,colsample_bytree=0.8,
-        random_state=42,verbose=-1)
-    best_cat=CatBoostClassifier(
-        iterations=300,depth=6,learning_rate=0.05,random_seed=42,verbose=0)
-    try: X_r,y_r=SMOTE(random_state=42).fit_resample(X_sc,y)
-    except Exception: X_r,y_r=X_sc,y
-    best_xgb.fit(X_r,y_r); best_lgb.fit(X_r,y_r); best_cat.fit(X_r,y_r)
-    n_val=max(int(len(X_sc)*0.2),30)
-    Xva,yva=X_sc[-n_val:],y[-n_val:]
-    prob=(best_xgb.predict_proba(Xva)[:,1]+
-          best_lgb.predict_proba(Xva)[:,1]+
-          best_cat.predict_proba(Xva)[:,1])/3
-    auc=roc_auc_score(yva,prob) if len(np.unique(yva))>1 else 0.5
-    fi=pd.Series(best_xgb.feature_importances_,
-                 index=FEATURE_COLS).sort_values(ascending=False)
-    return dict(xgb=best_xgb,lgb=best_lgb,cat=best_cat,
-                scaler=scaler,auc=auc,fi=fi)
-
-print("Training ensembles (10-20 min first run)...")
-models = {}
-for tk,df in featured.items():
-    print(f"  {tk}...",end=" ",flush=True)
-    try:
-        m=train_ensemble(df,tk); models[tk]=m
-        print(f"AUC={m['auc']:.3f} OK")
-    except Exception as e:
-        print(f"FAILED: {e}")
-print(f"\n{len(models)}/{len(featured)} trained")
-
-# ── Cell 9 ─────────────────────────────────────────────
-
-# ============================================================
-# OPTIONS IV EARNINGS FLAG  (free via yfinance)
-# ============================================================
-# Fetches implied volatility from options chain before earnings.
-# Returns: expected_move_pct, is_earnings_week, iv_flag
-# Used in generate_signal to reduce confidence on high-IV names.
-
-# ============================================================
-# HARDENED EARNINGS DATE DETECTION — 3-source + full normaliser
-# ============================================================
-# Layer 1: Cross-references yfinance (3 methods), Earnings Whispers,
-#           and Alpha Vantage. Trusts a date only when 2+ sources agree.
-# Layer 2: Normalises every timestamp format (UNIX int, string,
-#           Timestamp, datetime) to a timezone-naive date object.
-# Layer 3: Validates business-sense rules (weekday, 0-120 days out).
-
-def _normalise_earnings_date(raw) -> "datetime.date | None":
-    """
-    Convert any earnings date format to a timezone-naive datetime.date.
-    Handles: UNIX int, float, ISO string, pd.Timestamp, datetime.datetime.
-    Returns None if conversion fails or result fails sanity checks.
-    """
-    import datetime as _dt
-    import pandas as _pd
-    try:
-        if raw is None:
-            return None
-
-        # UNIX timestamp (int or float)
-        if isinstance(raw, (int, float)) and not isinstance(raw, bool):
-            if raw > 1_000_000_000:   # looks like UNIX seconds
-                d = _dt.datetime.utcfromtimestamp(raw).date()
-            elif raw > 1_000_000:     # maybe UNIX milliseconds
-                d = _dt.datetime.utcfromtimestamp(raw / 1000).date()
-            else:
-                return None
-
-        # Pandas Timestamp
-        elif isinstance(raw, _pd.Timestamp):
-            if raw.tzinfo is not None:
-                raw = raw.tz_convert("UTC").tz_localize(None)
-            d = raw.date()
-
-        # Python datetime
-        elif isinstance(raw, _dt.datetime):
-            d = raw.date()
-
-        # Python date
-        elif isinstance(raw, _dt.date):
-            d = raw
-
-        # String
-        elif isinstance(raw, str):
-            raw = raw.strip()
-            if not raw or raw.lower() in ("none","nan","nat","n/a"):
-                return None
-            # Try common formats
-            for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%d-%m-%Y",
-                        "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"):
-                try:
-                    d = _dt.datetime.strptime(raw[:len(fmt)], fmt).date()
-                    break
-                except (ValueError, IndexError):
-                    continue
-            else:
-                # Last resort: pandas parser
-                d = _pd.Timestamp(raw).date()
-
-        else:
-            return None
-
-        # ── Layer 3 sanity checks ────────────────────────────
-        today = _dt.date.today()
-        days_out = (d - today).days
-
-        if days_out < 0:
-            return None          # in the past — stale data
-        if days_out > 120:
-            return None          # too far out — likely wrong year
-        if d.weekday() > 4:
-            return None          # weekend — earnings never on Sat/Sun
-
-        return d
-
-    except Exception:
-        return None
-
-
-def get_earnings_date(ticker: str) -> dict:
-    """
-    Multi-source earnings date detection with consensus validation.
-
-    Sources tried (in parallel):
-      A: yfinance calendar (3 sub-methods)
-      B: Earnings Whispers free JSON endpoint
-      C: Alpha Vantage earnings calendar (free, 25 req/day)
-
-    Returns:
-      {
-        "date": datetime.date | None,
-        "days_to": int | None,
-        "confidence": "HIGH" | "LOW" | "NONE",
-        "sources": [list of source names that agreed],
-        "is_earnings_week": bool,
-        "note": str
-      }
-
-    Confidence rules:
-      HIGH  — 2+ sources agree within 2-day window
-      LOW   — only 1 source returned a date
-      NONE  — no source returned a valid date
-    """
-    import datetime as _dt
-    import pandas as _pd
-    import requests as _req
-
-    today  = _dt.date.today()
-    result = dict(
-        date=None, days_to=None,
-        confidence="NONE", sources=[],
-        is_earnings_week=False, note=""
-    )
-
-    candidates = {}   # source_name -> datetime.date
-
-    tk_obj = yf.Ticker(ticker)
-
-    # ── Source A-1: tk.calendar dict ────────────────────────
-    try:
-        cal = tk_obj.calendar
-        if isinstance(cal, dict):
-            for key in ("Earnings Date", "earningsDate", "earnings_date"):
-                val = cal.get(key)
-                if val is None:
-                    continue
-                # May be a list or scalar
-                vals = list(val) if hasattr(val, "__iter__") and not isinstance(val, str) else [val]
-                for v in vals:
-                    d = _normalise_earnings_date(v)
-                    if d:
-                        candidates["yf_calendar_dict"] = d
-                        break
-                if "yf_calendar_dict" in candidates:
-                    break
-            # Also try earningsTimestamp directly
-            ts = cal.get("earningsTimestamp") or cal.get("earningsCallTimestampStart")
-            if ts and "yf_calendar_dict" not in candidates:
-                d = _normalise_earnings_date(ts)
-                if d:
-                    candidates["yf_calendar_ts"] = d
-    except Exception:
-        pass
-
-    # ── Source A-2: tk.calendar DataFrame ───────────────────
-    try:
-        cal = tk_obj.calendar
-        if hasattr(cal, "columns"):
-            for col in ("Earnings Date", "earningsDate"):
-                if col in cal.columns:
-                    raw_vals = cal[col].dropna()
-                    for v in raw_vals:
-                        d = _normalise_earnings_date(v)
-                        if d:
-                            candidates["yf_calendar_df"] = d
-                            break
-                    if "yf_calendar_df" in candidates:
-                        break
-    except Exception:
-        pass
-
-    # ── Source A-3: tk.earnings_dates ───────────────────────
-    try:
-        ed = tk_obj.earnings_dates
-        if ed is not None and not ed.empty:
-            # Filter to future dates
-            future_mask = ed.index > _pd.Timestamp.now()
-            future = ed[future_mask]
-            if not future.empty:
-                d = _normalise_earnings_date(future.index[0])
-                if d:
-                    candidates["yf_earnings_dates"] = d
-    except Exception:
-        pass
-
-    # ── Source A-4: tk.info fields ──────────────────────────
-    try:
-        info = tk_obj.info
-        for field in ("nextEarningsDate", "earningsDate", "earningsTimestamp"):
-            val = info.get(field)
-            if val:
-                d = _normalise_earnings_date(val)
-                if d:
-                    candidates["yf_info"] = d
-                    break
-    except Exception:
-        pass
-
-    # ── Source B: Earnings Whispers free endpoint ────────────
-    try:
-        ew_url = f"https://www.earningswhispers.com/api/earningscalendar?ticker={ticker.upper()}"
-        r = _req.get(ew_url, timeout=5,
-                     headers={"User-Agent": "Mozilla/5.0"})
-        if r.status_code == 200:
-            data = r.json()
-            raw_date = (data.get("epsdatetime") or
-                        data.get("earningsdate") or
-                        data.get("date"))
-            if raw_date:
-                d = _normalise_earnings_date(raw_date)
-                if d:
-                    candidates["earnings_whispers"] = d
-    except Exception:
-        pass
-
-    # ── Source C: Alpha Vantage earnings calendar (free) ─────
-    # Only attempt if FRED_API_KEY available (to avoid burning
-    # free AV quota unnecessarily — use same key slot or skip)
-    try:
-        av_key = "demo"   # demo key works for calendar endpoint
-        av_url = (f"https://www.alphavantage.co/query"
-                  f"?function=EARNINGS_CALENDAR&symbol={ticker.upper()}"
-                  f"&horizon=3month&apikey={av_key}")
-        r = _req.get(av_url, timeout=6)
-        if r.status_code == 200 and r.text.strip():
-            # Returns CSV: symbol,name,reportDate,fiscalDateEnding,...
-            lines = r.text.strip().splitlines()
-            for line in lines[1:]:   # skip header
-                parts = line.split(",")
-                if len(parts) >= 3 and parts[0].strip().upper() == ticker.upper():
-                    d = _normalise_earnings_date(parts[2].strip())
-                    if d:
-                        candidates["alpha_vantage"] = d
-                        break
-    except Exception:
-        pass
-
-    # ── Source D: Finnhub earnings calendar (free, no key needed) ──
-    # Completely independent of Yahoo Finance — own aggregated feed.
-    # Free tier: 60 calls/minute, no API key required.
-    try:
-        fh_from = today.isoformat()
-        fh_to   = (_dt.date.today() + _dt.timedelta(days=90)).isoformat()
-        fh_url  = (f"https://finnhub.io/api/v1/calendar/earnings"
-                   f"?from={fh_from}&to={fh_to}"
-                   f"&symbol={ticker.upper()}&token=")
-        r = _req.get(fh_url, timeout=6,
-                     headers={"User-Agent": "Mozilla/5.0",
-                               "X-Finnhub-Token": ""})
-        if r.status_code == 200:
-            data = r.json()
-            earnings_list = data.get("earningsCalendar", [])
-            for item in earnings_list:
-                raw_date = item.get("date") or item.get("reportDate")
-                if raw_date:
-                    d = _normalise_earnings_date(raw_date)
-                    if d:
-                        candidates["finnhub"] = d
-                        break
-    except Exception:
-        pass
-
-
-    # ── Consensus logic: find agreement ─────────────────────
-    if not candidates:
-        result["note"] = "no earnings date found from any source"
-        return result
-
-    # Group candidates by date (within 2-day window = same date)
-    date_votes: dict = {}
-    for source, d in candidates.items():
-        placed = False
-        for anchor in list(date_votes.keys()):
-            if abs((d - anchor).days) <= 2:
-                date_votes[anchor].append((source, d))
-                placed = True
-                break
-        if not placed:
-            date_votes[d] = [(source, d)]
-
-    # Pick the group with most votes; break ties by earliest date
-    best_group = max(date_votes.values(), key=lambda g: (len(g), -g[0][1].toordinal()))
-    best_sources = [s for s,_ in best_group]
-    best_dates   = [d for _,d in best_group]
-    # Use the median date in the group
-    best_dates.sort()
-    best_date = best_dates[len(best_dates)//2]
-
-    confidence = "HIGH" if len(best_sources) >= 2 else "LOW"
-
-    days_to = (best_date - today).days
-    is_ew   = 0 <= days_to <= 7
-
-    result.update(dict(
-        date=best_date,
-        days_to=days_to,
-        confidence=confidence,
-        sources=best_sources,
-        is_earnings_week=is_ew,
-        note=(f"Earnings {days_to}d away ({best_date}) "
-              f"[conf={confidence}, sources={best_sources}]")
-    ))
-
-    return result
-
-
-def get_options_iv_flag(ticker: str) -> dict:
-    """
-    Options IV earnings flag — hardened v21.
-    Uses get_earnings_date() for multi-source consensus earnings detection.
-    Uses straddle with bid/ask validation + impliedVolatility fallback.
-    """
-    import datetime as _dt
-    import pandas as _pd
-
-    result = dict(
-        expected_move_pct=None,
-        is_earnings_week=False,
-        iv_flag="NORMAL",
-        position_scale=1.0,
-        ok=False,
-        note=""
-    )
-    try:
-        tk_obj = yf.Ticker(ticker)
-
-        # ── Earnings date (multi-source consensus) ────────────
-        ed_result = get_earnings_date(ticker)
-        result["is_earnings_week"] = ed_result["is_earnings_week"]
-        if ed_result["is_earnings_week"]:
-            result["note"] += ed_result["note"] + " "
-
-        # ── Options chain ─────────────────────────────────────
-        expirations = []
-        try:
-            expirations = tk_obj.options or []
-        except Exception:
-            pass
-
-        if not expirations:
-            result["note"] += "no options chain"
-            if result["is_earnings_week"]:
-                result["iv_flag"]        = "ELEVATED"
-                result["position_scale"] = 0.50
-                result["note"] += " — ELEVATED applied without IV data"
-                result["ok"] = True
-            return result
-
-        # Nearest expiry >= 5 days out
-        today = _dt.date.today()
-        near_exp = None
-        for exp in expirations:
+class _Tee(io.TextIOWrapper):
+    def __init__(self, *streams):
+        self._streams = streams
+    def write(self, data):
+        for s in self._streams:
             try:
-                if (_dt.date.fromisoformat(exp) - today).days >= 5:
-                    near_exp = exp; break
-            except Exception: continue
-        if near_exp is None:
-            near_exp = expirations[0]
-
-        try:
-            chain = tk_obj.option_chain(near_exp)
-            calls = chain.calls.copy()
-            puts  = chain.puts.copy()
-        except Exception as e:
-            result["note"] += f"chain error: {str(e)[:40]}"
-            if result["is_earnings_week"]:
-                result["iv_flag"]        = "ELEVATED"
-                result["position_scale"] = 0.50
-                result["ok"] = True
-            return result
-
-        if calls.empty or puts.empty:
-            result["note"] += "empty chain"
-            return result
-
-        try:
-            hist = tk_obj.history(period="1d", auto_adjust=True)
-            spot = float(hist["Close"].iloc[-1]) if not hist.empty else 0.0
-        except Exception:
-            spot = 0.0
-
-        if spot <= 0:
-            result["note"] += "no spot price"
-            return result
-
-        # ── ATM straddle with bid/ask validation ──────────────
-        exp_move_pct = None
-        method_used  = "none"
-
-        try:
-            calls["dist"] = (calls["strike"] - spot).abs()
-            puts["dist"]  = (puts["strike"]  - spot).abs()
-            atm_c = calls.nsmallest(1,"dist").iloc[0]
-            atm_p = puts.nsmallest(1,"dist").iloc[0]
-            c_bid = float(atm_c.get("bid",0) or 0)
-            c_ask = float(atm_c.get("ask",0) or 0)
-            p_bid = float(atm_p.get("bid",0) or 0)
-            p_ask = float(atm_p.get("ask",0) or 0)
-            if c_ask > 0 and c_ask >= c_bid >= 0 and p_ask > 0 and p_ask >= p_bid >= 0:
-                straddle = (c_bid+c_ask)/2 + (p_bid+p_ask)/2
-                if straddle > 0:
-                    exp_move_pct = round(straddle/spot*100, 2)
-                    method_used  = "atm_straddle"
-        except Exception:
-            pass
-
-        # ── impliedVolatility fallback ────────────────────────
-        if exp_move_pct is None:
-            try:
-                calls["dist"] = (calls["strike"] - spot).abs()
-                atm_rows = calls.nsmallest(3,"dist")
-                iv_vals  = atm_rows["impliedVolatility"].dropna()
-                iv_vals  = iv_vals[iv_vals > 0]
-                if len(iv_vals) > 0:
-                    avg_iv = float(iv_vals.mean())
-                    try: dte = max((_dt.date.fromisoformat(near_exp)-today).days, 1)
-                    except Exception: dte = 30
-                    exp_move_pct = round(avg_iv*(dte/252)**0.5*100, 2)
-                    method_used  = "iv_col_fallback"
+                s.write(data)
+                s.flush()
             except Exception:
                 pass
+        return len(data)
+    def flush(self):
+        for s in self._streams:
+            try: s.flush()
+            except Exception: pass
 
-        if exp_move_pct is None:
-            result["note"] += "cannot compute expected move"
-            if result["is_earnings_week"]:
-                result["iv_flag"]        = "ELEVATED"
-                result["position_scale"] = 0.50
-                result["ok"] = True
-            return result
+_log_fh = open(LOG_FILE, "w", encoding="utf-8")
+sys.stdout = _Tee(sys.__stdout__, _log_fh)
+sys.stderr = _Tee(sys.__stderr__, _log_fh)
 
-        result["expected_move_pct"] = exp_move_pct
-        result["note"] += f"±{exp_move_pct:.1f}% via {method_used}"
+print(f"\n{'='*60}")
+print(f"QUANT TERMINAL v24.1 — GitHub Actions Daily Run")
+print(f"Started: {datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}")
+print(f"{'='*60}\n")
 
-        # Classify
-        if   exp_move_pct >= 8.0: result["iv_flag"],result["position_scale"] = "HIGH",    0.30
-        elif exp_move_pct >= 5.0: result["iv_flag"],result["position_scale"] = "ELEVATED", 0.55
-        elif exp_move_pct >= 3.0: result["iv_flag"],result["position_scale"] = "MODERATE", 0.80
-        else:                     result["iv_flag"],result["position_scale"] = "NORMAL",   1.0
+# ── rclone helpers ────────────────────────────────────────────────────────
+GDRIVE_RCLONE_CONF = os.environ.get("GDRIVE_RCLONE_CONF", "")
+GDRIVE_REMOTE      = "gdrive"
+GDRIVE_FOLDER      = "quant_terminal_v24.1"   # folder in My Drive
+LOCAL_DATA         = Path("data")
 
-        # Earnings penalty
-        if result["is_earnings_week"]:
-            result["position_scale"] = round(result["position_scale"]*0.5, 2)
-            result["note"] += " [EARNINGS — position halved]"
+def _write_rclone_conf():
+    """Decode the base64 rclone config secret and write to ~/.config/rclone/rclone.conf"""
+    if not GDRIVE_RCLONE_CONF:
+        print("⚠  GDRIVE_RCLONE_CONF not set — Drive sync disabled, using local data/")
+        return False
+    import base64
+    conf_path = Path.home() / ".config" / "rclone" / "rclone.conf"
+    conf_path.parent.mkdir(parents=True, exist_ok=True)
+    conf_path.write_bytes(base64.b64decode(GDRIVE_RCLONE_CONF))
+    print(f"✓ rclone config written → {conf_path}")
+    return True
 
-        result["ok"] = True
-
-    except Exception as e:
-        result["note"] = f"IV error: {str(e)[:80]}"
-
-    return result
-
-
-def garch_vol_forecast(df, ticker, n_paths=GARCH_PATHS, horizon=FORECAST_DAYS):
-    rets=np.log(df["Close"]/df["Close"].shift(1)).dropna()*100
-    seed=abs(hash(ticker))%(2**31)
+def _rclone_download():
+    """Sync Google Drive → local data/ before the cycle."""
+    print("\nStage 0a: Syncing data from Google Drive...")
+    LOCAL_DATA.mkdir(exist_ok=True)
+    for sub in ["paper_trades", "predictions", "weights", "models"]:
+        (LOCAL_DATA / sub).mkdir(exist_ok=True)
     try:
-        res=arch_model(rets,vol="GARCH",p=1,q=1,dist="normal").fit(
-            disp="off",show_warning=False)
-        fc=res.forecast(horizon=horizon,reindex=False)
-        v1d=float(np.sqrt(fc.variance.values[-1,0]))/100
-        rng=np.random.default_rng(seed)
-        paths=rng.normal(0,rets.std()/100,(n_paths,horizon))
-        cr=paths.sum(axis=1)
-        p_up=float((cr>0).mean())
-        var95=float(np.percentile(cr,5))
-        es95=float(cr[cr<=var95].mean()) if (cr<=var95).any() else var95
-        return dict(vol1d=v1d,annvol=v1d*np.sqrt(252),
-                    p_up=p_up,var95=var95,es95=es95,ok=True)
-    except Exception as e:
-        return dict(vol1d=0.02,annvol=0.32,p_up=0.5,
-                    var95=-0.05,es95=-0.08,ok=False,err=str(e))
-
-print("Running GARCH...")
-garch_res = {}
-for tk,df in featured.items():
-    garch_res[tk]=garch_vol_forecast(df,tk)
-    g=garch_res[tk]
-    print(f"  {'OK' if g['ok'] else 'WN'} {tk:<10} annvol={g['annvol']:.1%} p_up={g['p_up']:.1%}")
-print("\nGARCH complete")
-
-# ── OPTIONS IV FLAGS ─────────────────────────────────────────
-print("Fetching options IV flags...")
-iv_flags: dict = {}
-for tk in featured:
-    iv_flags[tk] = get_options_iv_flag(tk)
-    f = iv_flags[tk]
-    flag_str = f.get("iv_flag","N/A")
-    note_str = f.get("note","")
-    earn_str = " [EARNINGS]" if f.get("is_earnings_week") else ""
-    print(f"  {tk:<10} {flag_str:<10} scale={f.get('position_scale',1.0):.2f}  {note_str[:50]}{earn_str}")
-print(f"\nIV flags ready for {len(iv_flags)} tickers")
-
-
-# ── Cell 10 ─────────────────────────────────────────────
-# ============================================================
-# CELL 10 — FINBERT SENTIMENT
-# ============================================================
-def fetch_headlines(ticker, n=10):
-    if not NEWS_API_KEY: return []
-    try:
-        url=(f"https://newsapi.org/v2/everything?q={ticker}"
-             f"&language=en&pageSize={n}&sortBy=publishedAt"
-             f"&apiKey={NEWS_API_KEY}")
-        r=requests.get(url,timeout=5)
-        return [a.get("title","") for a in r.json().get("articles",[])]
-    except Exception: return []
-
-def sentiment_score(headlines):
-    if not headlines: return 0.0
-    try:
-        from transformers import pipeline
-        pipe=pipeline("text-classification",model="ProsusAI/finbert",
-                      truncation=True,max_length=128)
-        lmap={"positive":1,"negative":-1,"neutral":0}
-        scores=[lmap.get(pipe(h)[0]["label"].lower(),0)*pipe(h)[0]["score"]
-                for h in headlines[:8] if h.strip()]
-        return float(np.mean(scores)) if scores else 0.0
-    except Exception: return 0.0
-
-print("Computing sentiment...")
-sentiments = {}
-for tk in featured:
-    hl=fetch_headlines(tk)
-    sentiments[tk]=sentiment_score(hl)
-    src=f"{len(hl)} headlines" if hl else "no key"
-    print(f"  OK {tk:<10} {sentiments[tk]:+.3f} ({src})")
-print("\nSentiment complete")
-
-# ── Cell 11 ─────────────────────────────────────────────
-# ============================================================
-# CELL 11 — ADAPTIVE SIGNAL GENERATOR
-# ============================================================
-# Uses ADAPTIVE_WEIGHTS (updated by River) and LEARNED_RULES
-# (written by the failure diagnosis engine) to generate signals.
-
-def apply_learned_rules(ticker, rsi, regime, vix, yc, base_composite):
-    """Apply self-written rule overrides to dampen or boost confidence."""
-    dampener = 1.0
-    rules_applied = []
-
-    # High RSI in Bear regime
-    if rsi > 68 and regime == 0:
-        rule = LEARNED_RULES.get("high_rsi_bear", {})
-        if rule.get("count", 0) >= 3:
-            dampener *= (1 - rule.get("dampen", 0.0))
-            rules_applied.append(f"high_rsi_bear (dampen {rule['dampen']:.0%})")
-
-    # VIX spike rule
-    if vix and vix > 28:
-        rule = LEARNED_RULES.get("vix_spike", {})
-        if rule.get("count", 0) >= 3:
-            dampener *= (1 - rule.get("dampen", 0.0))
-            rules_applied.append(f"vix_spike (dampen {rule['dampen']:.0%})")
-
-    # Inverted yield curve rule
-    if yc and yc < -0.1:
-        rule = LEARNED_RULES.get("inverted_yc", {})
-        if rule.get("count", 0) >= 3:
-            dampener *= (1 - rule.get("dampen", 0.0))
-            rules_applied.append(f"inverted_yc (dampen {rule['dampen']:.0%})")
-
-    # Ticker-specific rule
-    tk_rule_key = f"ticker_{ticker}"
-    rule = LEARNED_RULES.get(tk_rule_key, {})
-    if rule.get("count", 0) >= 5:
-        dampener *= (1 - rule.get("dampen", 0.0))
-        rules_applied.append(f"{tk_rule_key} (dampen {rule['dampen']:.0%})")
-
-    return dampener, rules_applied
-
-def generate_signal(ticker, model_pack, df_feat, regime, garch, sent, iv_flag=None):
-    row  = df_feat[FEATURE_COLS].iloc[[-1]].values
-    Xsc  = model_pack["scaler"].transform(row)
-    p_xgb = float(model_pack["xgb"].predict_proba(Xsc)[0,1])
-    p_lgb = float(model_pack["lgb"].predict_proba(Xsc)[0,1])
-    p_cat = float(model_pack["cat"].predict_proba(Xsc)[0,1])
-    p_ens = (p_xgb+p_lgb+p_cat)/3.0
-
-    regime_score = {0:0.4,1:0.6,2:0.5}.get(regime,0.5)
-    sent_norm    = (sent+1)/2
-    yc           = MACRO.get("yield_curve") or 0
-    yc_score     = 1.0 if yc > 0 else 0.4
-
-    # Use adaptive weights (updated by River learning)
-    w = ADAPTIVE_WEIGHTS
-    composite = (
-        w["w_ensemble"]   * p_ens +
-        w["w_garch"]      * garch["p_up"] +
-        w["w_sentiment"]  * sent_norm +
-        w["w_regime"]     * regime_score +
-        w["w_yieldcurve"] * yc_score
-    )
-
-    # VIX macro dampener
-    vix_val = MACRO.get("vix") or 20
-    if vix_val > 30:   composite *= 0.85
-    elif vix_val > 22: composite *= 0.93
-
-    # Apply learned rule overrides
-    rsi = float(df_feat["rsi_14"].iloc[-1]) if "rsi_14" in df_feat.columns else 50.0
-    rule_dampener, rules_applied = apply_learned_rules(
-        ticker, rsi, regime, vix_val, yc, composite)
-    composite *= rule_dampener
-
-    composite = float(np.clip(composite, 0, 1))
-
-    # ── OPTIONS IV DAMPENER ──────────────────────────────────
-    iv_scale     = 1.0
-    iv_note      = ""
-    iv_flag_str  = "NORMAL"
-    if iv_flag and iv_flag.get("ok"):
-        iv_scale    = float(iv_flag.get("position_scale", 1.0))
-        iv_flag_str = iv_flag.get("iv_flag", "NORMAL")
-        iv_note     = iv_flag.get("note", "")
-        if iv_flag_str in ("HIGH", "ELEVATED"):
-            # Dampen composite toward 0.5 (uncertainty)
-            composite = 0.5 + (composite - 0.5) * iv_scale
-            composite = float(np.clip(composite, 0, 1))
-
-    if   composite >= MIN_CONFIDENCE:       action = "BUY"
-    elif composite <= (1-MIN_CONFIDENCE):   action = "SELL"
-    else:                                   action = "HOLD"
-
-    close = float(df_feat["Close"].iloc[-1])
-    atr   = float(df_feat["atr_14"].iloc[-1]) if "atr_14" in df_feat.columns else close*0.02
-
-    return dict(
-        ticker=ticker, action=action,
-        confidence=round(composite,4),
-        p_xgb=round(p_xgb,4), p_lgb=round(p_lgb,4), p_cat=round(p_cat,4),
-        p_ensemble=round(p_ens,4),
-        garch_p_up=round(garch["p_up"],4),
-        ann_vol=round(garch["annvol"],4),
-        var95=round(garch["var95"],4),
-        sentiment=round(sent,4),
-        regime=regime, auc=round(model_pack["auc"],4),
-        rsi=round(rsi,2), atr=round(atr,4),
-        close=round(close,4),
-        rules_applied=rules_applied,
-        ts=datetime.datetime.utcnow().isoformat(),
-        iv_flag=iv_flag_str,
-        iv_scale=round(iv_scale,3),
-        iv_note=iv_note
-    )
-
-print("Generating signals...")
-signals = {}
-for tk in models:
-    if tk not in featured: continue
-    try:
-        sig=generate_signal(
-            tk,models[tk],featured[tk],
-            int(regimes[tk].iloc[-1]) if tk in regimes else 0,
-            garch_res.get(tk,dict(p_up=0.5,annvol=0.3,var95=-0.05,es95=-0.08,ok=False)),
-            sentiments.get(tk,0.0),
-            iv_flag=iv_flags.get(tk, {}))
-        signals[tk]=sig
-        rules_note = f" [{', '.join(sig['rules_applied'])}]" if sig['rules_applied'] else ""
-        print(f"  {sig['action']:<4} {tk:<10} conf={sig['confidence']:.3f}{rules_note}")
-    except Exception as ex:
-        print(f"  FAIL {tk}: {ex}")
-print(f"\n{len(signals)} signals generated")
-
-# ── Cell 12 ─────────────────────────────────────────────
-# ============================================================
-# CELL 12 — CVaR PORTFOLIO OPTIMISATION
-# ============================================================
-def cvar_optimize(tickers, lookback=252):
-    pd_dict={tk:featured[tk]["Close"].tail(lookback)
-             for tk in tickers if tk in featured}
-    if len(pd_dict)<2:
-        n=max(len(tickers),1); return {tk:1/n for tk in tickers}
-    prices=pd.DataFrame(pd_dict).dropna()
-    rets=prices.pct_change().dropna().values
-    T,N=rets.shape
-    w=cp.Variable(N,nonneg=True); z=cp.Variable(T,nonneg=True); zeta=cp.Variable()
-    prob=cp.Problem(cp.Minimize(zeta+(1/(0.05*T))*cp.sum(z)),
-                    [cp.sum(w)==1,w<=0.25,z>=-rets@w-zeta])
-    try:
-        prob.solve(solver=cp.CLARABEL,verbose=False)
-        if w.value is None: raise ValueError("no solution")
-        return {tk:float(wt) for tk,wt in zip(pd_dict.keys(),w.value)}
-    except Exception as e:
-        print(f"  CVaR fallback ({e})")
-        n=max(len(tickers),1); return {tk:1/n for tk in tickers}
-
-buy_tickers=[tk for tk,s in signals.items() if s["action"]=="BUY"]
-if buy_tickers:
-    opt_weights=cvar_optimize(buy_tickers)
-    print("CVaR weights:")
-    for tk,wt in sorted(opt_weights.items(),key=lambda x:-x[1]):
-        print(f"  {tk:<10} {wt:.1%}")
-else:
-    opt_weights={}
-    print("No BUY signals")
-print("\nOptimisation complete")
-
-# ── Cell 13 ─────────────────────────────────────────────
-# ============================================================
-# CELL 13 — PAPER TRADING + PREDICTION LOGGER
-# ============================================================
-def kelly_qty(confidence, capital, price,
-              max_pct=MAX_POSITION_PCT, stop_loss=STOP_LOSS_PCT):
-    p=confidence; q=1-p
-    b=(1-stop_loss)/stop_loss
-    hk=max(0.0,((p*b-q)/b)/2)
-    pct=min(hk,max_pct)
-    return max(int(pct*capital/price) if price>0 else 0,0)
-
-_broker=None; _broker_equity=PORTFOLIO_CAPITAL
-
-def _try_alpaca():
-    global _broker,_broker_equity
-    if not ALPACA_API_KEY or not ALPACA_SECRET_KEY:
-        print("  No Alpaca keys — local paper mode"); return
-    try:
-        from alpaca.trading.client import TradingClient
-        _broker=TradingClient(ALPACA_API_KEY,ALPACA_SECRET_KEY,paper=True)
-        _broker_equity=float(_broker.get_account().equity)
-        print(f"  Alpaca connected — ${_broker_equity:,.2f}")
-    except Exception as e:
-        print(f"  Alpaca failed ({e})"); _broker=None
-
-_try_alpaca()
-
-def _current_equity():
-    if _broker is not None:
-        try: return float(_broker.get_account().equity)
-        except Exception: pass
-    log=pd.read_csv(PT_LOG_FILE)
-    if log.empty: return PORTFOLIO_CAPITAL
-    bought=log[log["action"]=="BUY"]["price"].mul(log[log["action"]=="BUY"]["qty"]).sum()
-    sold  =log[log["action"]=="SELL"]["price"].mul(log[log["action"]=="SELL"]["qty"]).sum()
-    return float(PORTFOLIO_CAPITAL-bought+sold)
-
-def execute_trade(sig, qty, capital):
-    oid=f"LOCAL_{sig['ts'][:19].replace(':','').replace('-','')}_{sig['ticker']}"
-    status="local_sim"
-    if _broker is not None and not sig["ticker"].endswith("-USD"):
-        try:
-            from alpaca.trading.requests import MarketOrderRequest
-            from alpaca.trading.enums import OrderSide,TimeInForce
-            side=OrderSide.BUY if sig["action"]=="BUY" else OrderSide.SELL
-            req=MarketOrderRequest(symbol=sig["ticker"],qty=qty,
-                                   side=side,time_in_force=TimeInForce.DAY)
-            order=_broker.submit_order(req)
-            oid=str(order.id); status="alpaca_submitted"
-        except Exception as e:
-            status=f"alpaca_fail:{str(e)[:50]}"
-    row={col:None for col in PT_LOG_COLS}
-    row.update(dict(ts=sig["ts"],ticker=sig["ticker"],action=sig["action"],
-                    price=sig["close"],qty=qty,confidence=sig["confidence"],
-                    regime=sig["regime"],order_id=oid,status=status))
-    ex=pd.read_csv(PT_LOG_FILE)
-    for col in PT_LOG_COLS:
-        if col not in ex.columns: ex[col]=None
-    pd.concat([ex,pd.DataFrame([row])],ignore_index=True)[PT_LOG_COLS].to_csv(
-        PT_LOG_FILE,index=False)
-    return row
-
-def log_prediction(sig):
-    """Log every signal with full context for future outcome scoring."""
-    row={col:None for col in PRED_LOG_COLS}
-    row.update(dict(
-        pred_ts=sig["ts"], ticker=sig["ticker"],
-        action=sig["action"], confidence=sig["confidence"],
-        price_at_pred=sig["close"],
-        p_ensemble=sig["p_ensemble"], p_up_garch=sig["garch_p_up"],
-        rsi=sig["rsi"], regime=sig["regime"],
-        vix=MACRO.get("vix"), yield_curve=MACRO.get("yield_curve"),
-        ism_pmi=MACRO.get("ism_pmi"), unemployment=MACRO.get("unemployment"),
-        sentiment=sig["sentiment"], horizon_days=FORECAST_DAYS,
-        iv_flag=sig.get("iv_flag","NORMAL"),
-        iv_scale=sig.get("iv_scale",1.0),
-        iv_note=sig.get("iv_note",""),
-        scored=False
-    ))
-    ex=pd.read_csv(PRED_LOG_FILE)
-    for col in PRED_LOG_COLS:
-        if col not in ex.columns: ex[col]=None
-    pd.concat([ex,pd.DataFrame([row])],ignore_index=True)[PRED_LOG_COLS].to_csv(
-        PRED_LOG_FILE,index=False)
-
-equity=_current_equity()
-print(f"Portfolio equity: ${equity:,.2f}")
-_halt=equity<PORTFOLIO_CAPITAL*(1-MAX_DRAWDOWN_PCT)
-if _halt: print("  Max drawdown — skipping trades")
-
-print("\nExecuting trades + logging predictions...")
-trade_count=0
-if not _halt:
-    for tk,sig in signals.items():
-        log_prediction(sig)
-        if sig["action"]=="HOLD": continue
-        _iv_sc=float(sig.get("iv_scale",1.0))
-        qty=int(kelly_qty(sig["confidence"],equity,sig["close"])*_iv_sc)
-        if qty==0: continue
-        trade=execute_trade(sig,qty,equity)
-        print(f"  {sig['action']:<4} {tk:<10} qty={qty} ${sig['close']:.2f} {trade['status']}")
-        trade_count+=1
-
-print(f"\n{trade_count} trades | all {len(signals)} signals logged to prediction log")
-
-# ── Cell 14 ─────────────────────────────────────────────
-# ============================================================
-# CELL 14 — OUTCOME SCORER
-# ============================================================
-# Checks all unscored predictions where horizon has passed.
-# Downloads actual prices, scores each prediction, marks done.
-
-def score_outcomes():
-    """Score all mature unscored predictions against actual prices."""
-    plog = pd.read_csv(PRED_LOG_FILE)
-    if plog.empty:
-        print("  No predictions to score yet")
-        return pd.DataFrame()
-
-    plog["pred_ts"] = pd.to_datetime(plog["pred_ts"], errors="coerce", utc=True)
-    now_utc = pd.Timestamp.utcnow()
-    cutoff  = now_utc - pd.Timedelta(days=FORECAST_DAYS+1)
-
-    unscored = plog[(plog["scored"].astype(str)=="False") &
-                    (plog["pred_ts"] < cutoff)].copy()
-
-    if unscored.empty:
-        print(f"  No mature unscored predictions (need {FORECAST_DAYS}+ days old)")
-        return pd.DataFrame()
-
-    print(f"  Scoring {len(unscored)} mature predictions...")
-    newly_scored = []
-
-    for idx, row in unscored.iterrows():
-        tk = row["ticker"]
-        try:
-            # Fetch recent prices to find outcome price
-            df_now = download_ticker(tk, TRAIN_START, TRAIN_END)
-            if df_now is None or df_now.empty:
-                continue
-
-            price_at_pred = float(row["price_at_pred"])
-            price_now     = float(df_now["Close"].iloc[-1])
-            actual_return = (price_now - price_at_pred) / price_at_pred
-
-            # Was the signal directionally correct?
-            action = str(row["action"])
-            if action == "BUY":
-                was_correct = actual_return > 0
-            elif action == "SELL":
-                was_correct = actual_return < 0
-            else:
-                was_correct = True  # HOLD always neutral
-
-            conf = float(row["confidence"]) if pd.notna(row["confidence"]) else 0.5
-            magnitude_error = abs(actual_return - (conf - 0.5))
-
-            # Update the row
-            plog.at[idx, "outcome_ts"]      = now_utc.isoformat()
-            plog.at[idx, "price_at_outcome"] = price_now
-            plog.at[idx, "actual_return"]    = round(actual_return, 4)
-            plog.at[idx, "was_correct"]      = was_correct
-            plog.at[idx, "magnitude_error"]  = round(magnitude_error, 4)
-            plog.at[idx, "scored"]           = True
-
-            newly_scored.append({
-                "ticker":       tk,
-                "action":       action,
-                "confidence":   conf,
-                "was_correct":  was_correct,
-                "actual_return":actual_return,
-                "regime":       row.get("regime"),
-                "vix":          row.get("vix"),
-                "rsi":          row.get("rsi"),
-                "yield_curve":  row.get("yield_curve"),
-                "ism_pmi":      row.get("ism_pmi"),
-                "sentiment":    row.get("sentiment"),
-            })
-
-            result = "CORRECT" if was_correct else "WRONG"
-            print(f"    {result} {tk:<8} {action:<4} "
-                  f"pred_px=${price_at_pred:.2f} "
-                  f"now=${price_now:.2f} "
-                  f"ret={actual_return:+.1%}")
-
-        except Exception as e:
-            print(f"    ERROR scoring {tk}: {e}")
-
-    # Save updated prediction log
-    plog.to_csv(PRED_LOG_FILE, index=False)
-    print(f"  Saved {len(newly_scored)} scored outcomes")
-    return pd.DataFrame(newly_scored)
-
-newly_scored_df = score_outcomes()
-
-# ── Cell 15 ─────────────────────────────────────────────
-# ============================================================
-# CELL 15 — FAILURE DIAGNOSIS ENGINE + RULE WRITER
-# ============================================================
-# Reads all scored outcomes. Finds statistically meaningful
-# failure patterns. Writes new rules to LEARNED_RULES.
-# River updates ADAPTIVE_WEIGHTS based on recent accuracy.
-
-def diagnose_failures_and_rewrite_rules():
-    """
-    The self-learning core. Reads scored outcomes, finds where
-    the model is systematically wrong, writes rules to fix it.
-    """
-    global ADAPTIVE_WEIGHTS, LEARNED_RULES
-
-    plog = pd.read_csv(PRED_LOG_FILE)
-    scored = plog[plog["scored"].astype(str)=="True"].copy()
-
-    if len(scored) < 5:
-        print("  Not enough scored outcomes yet for diagnosis")
-        print(f"  Have {len(scored)} — need at least 5")
-        return {}, []
-
-    scored["was_correct"] = scored["was_correct"].astype(str).map(
-        {"True":True,"False":False,"true":True,"false":False}).fillna(False)
-    scored["confidence"]  = pd.to_numeric(scored["confidence"],  errors="coerce").fillna(0.5)
-    scored["rsi"]         = pd.to_numeric(scored["rsi"],         errors="coerce").fillna(50)
-    scored["vix"]         = pd.to_numeric(scored["vix"],         errors="coerce").fillna(20)
-    scored["regime"]      = pd.to_numeric(scored["regime"],      errors="coerce").fillna(1)
-    scored["yield_curve"] = pd.to_numeric(scored["yield_curve"], errors="coerce").fillna(0)
-    scored["actual_return"]= pd.to_numeric(scored["actual_return"],errors="coerce").fillna(0)
-
-    insights    = []
-    new_rules   = dict(LEARNED_RULES)  # start from existing
-    MIN_SAMPLES = 3  # need at least this many failures before writing a rule
-
-    overall_acc = scored["was_correct"].mean()
-    print(f"  Overall accuracy: {overall_acc:.1%} across {len(scored)} predictions")
-
-    # ── Pattern 1: High RSI + Bear regime ─────────────────────
-    mask = (scored["rsi"]>68) & (scored["regime"]==0) & (scored["action"]=="BUY")
-    subset = scored[mask]
-    if len(subset) >= MIN_SAMPLES:
-        acc = subset["was_correct"].mean()
-        if acc < 0.40:  # wrong more than 60% of the time
-            dampen = round(min(0.25, (0.50 - acc)), 2)
-            new_rules["high_rsi_bear"] = {
-                "dampen": dampen, "count": int(len(subset)),
-                "accuracy": round(acc, 3),
-                "description": f"BUY with RSI>68 in Bear regime — {acc:.0%} accurate ({len(subset)} samples)"
-            }
-            insights.append(f"RULE WRITTEN: High RSI Bear — BUY signals wrong {1-acc:.0%} of time "
-                            f"({len(subset)} samples) → dampening confidence by {dampen:.0%}")
-
-    # ── Pattern 2: VIX spike ──────────────────────────────────
-    mask = (scored["vix"]>28) & (scored["action"]=="BUY")
-    subset = scored[mask]
-    if len(subset) >= MIN_SAMPLES:
-        acc = subset["was_correct"].mean()
-        if acc < 0.45:
-            dampen = round(min(0.20, (0.50 - acc)), 2)
-            new_rules["vix_spike"] = {
-                "dampen": dampen, "count": int(len(subset)),
-                "accuracy": round(acc, 3),
-                "description": f"BUY when VIX>28 — {acc:.0%} accurate ({len(subset)} samples)"
-            }
-            insights.append(f"RULE WRITTEN: VIX spike — BUY signals wrong {1-acc:.0%} of time "
-                            f"({len(subset)} samples) → dampening by {dampen:.0%}")
-
-    # ── Pattern 3: Inverted yield curve ───────────────────────
-    mask = (scored["yield_curve"]<-0.1) & (scored["action"]=="BUY")
-    subset = scored[mask]
-    if len(subset) >= MIN_SAMPLES:
-        acc = subset["was_correct"].mean()
-        if acc < 0.45:
-            dampen = round(min(0.20, (0.50 - acc)), 2)
-            new_rules["inverted_yc"] = {
-                "dampen": dampen, "count": int(len(subset)),
-                "accuracy": round(acc, 3),
-                "description": f"BUY with inverted yield curve — {acc:.0%} accurate ({len(subset)} samples)"
-            }
-            insights.append(f"RULE WRITTEN: Inverted yield curve — BUY wrong {1-acc:.0%} of time "
-                            f"({len(subset)} samples) → dampening by {dampen:.0%}")
-
-    # ── Pattern 4: Per-ticker accuracy ────────────────────────
-    for tk in scored["ticker"].unique():
-        tk_data = scored[(scored["ticker"]==tk) & (scored["action"]!="HOLD")]
-        if len(tk_data) >= 5:
-            acc = tk_data["was_correct"].mean()
-            if acc < 0.35:
-                dampen = round(min(0.20, (0.45 - acc)), 2)
-                rkey = f"ticker_{tk}"
-                new_rules[rkey] = {
-                    "dampen": dampen, "count": int(len(tk_data)),
-                    "accuracy": round(acc, 3),
-                    "description": f"{tk} systematically underperforming — {acc:.0%} accurate ({len(tk_data)} samples)"
-                }
-                insights.append(f"RULE WRITTEN: {tk} — only {acc:.0%} accurate "
-                                f"({len(tk_data)} samples) → dampening by {dampen:.0%}")
-
-    # ── Pattern 5: Remove stale rules (if model improved) ─────
-    for key in list(new_rules.keys()):
-        rule = new_rules[key]
-        if rule.get("accuracy", 0) > 0.55 and rule.get("count", 0) >= 10:
-            del new_rules[key]
-            insights.append(f"RULE REMOVED: {key} — model has improved to {rule['accuracy']:.0%} accuracy")
-
-    # ── River adaptive weight update ──────────────────────────
-    recent = scored.tail(30)  # last 30 scored predictions
-    if len(recent) >= 5:
-        # Calculate feature-level accuracy
-        ens_corr  = recent[recent["was_correct"]==True]["confidence"].mean()
-        ens_wrong = recent[recent["was_correct"]==False]["confidence"].mean()
-
-        # If ensemble is overconfident on wrong predictions, reduce weight
-        if pd.notna(ens_wrong) and pd.notna(ens_corr):
-            if ens_wrong > 0.63:  # overconfident on wrong predictions
-                new_w_ens = max(0.40, ADAPTIVE_WEIGHTS["w_ensemble"] - 0.02)
-                new_w_garch = min(0.28, ADAPTIVE_WEIGHTS["w_garch"] + 0.01)
-                new_w_sent  = min(0.18, ADAPTIVE_WEIGHTS["w_sentiment"] + 0.01)
-                ADAPTIVE_WEIGHTS["w_ensemble"]  = round(new_w_ens, 3)
-                ADAPTIVE_WEIGHTS["w_garch"]     = round(new_w_garch, 3)
-                ADAPTIVE_WEIGHTS["w_sentiment"] = round(new_w_sent, 3)
-                insights.append(f"WEIGHT UPDATE: Ensemble overconfident on wrong predictions "
-                                f"(avg conf={ens_wrong:.3f}). "
-                                f"Reduced w_ensemble to {ADAPTIVE_WEIGHTS['w_ensemble']:.3f}")
-            elif ens_wrong < 0.58 and ens_corr > 0.70:
-                # Ensemble is well-calibrated — boost its weight
-                new_w_ens = min(0.65, ADAPTIVE_WEIGHTS["w_ensemble"] + 0.01)
-                ADAPTIVE_WEIGHTS["w_ensemble"] = round(new_w_ens, 3)
-                insights.append(f"WEIGHT UPDATE: Ensemble well-calibrated — "
-                                f"increased w_ensemble to {ADAPTIVE_WEIGHTS['w_ensemble']:.3f}")
-
-    # Renormalise weights to sum to 1.0
-    total = sum(ADAPTIVE_WEIGHTS.values())
-    for k in ADAPTIVE_WEIGHTS:
-        ADAPTIVE_WEIGHTS[k] = round(ADAPTIVE_WEIGHTS[k]/total, 4)
-
-    # Save everything to Drive
-    LEARNED_RULES = new_rules
-    Path(WEIGHTS_FILE).write_text(json.dumps(ADAPTIVE_WEIGHTS, indent=2))
-    Path(RULES_FILE).write_text(json.dumps(LEARNED_RULES, indent=2))
-
-    print(f"  Adaptive weights: {ADAPTIVE_WEIGHTS}")
-    print(f"  Active learned rules: {len(LEARNED_RULES)}")
-    return new_rules, insights
-
-print("Running failure diagnosis and rule-writing engine...")
-new_rules, insights = diagnose_failures_and_rewrite_rules()
-
-if insights:
-    print("\nInsights:")
-    for ins in insights:
-        print(f"  > {ins}")
-else:
-    print("\nNo new rules written — accumulating more data...")
-
-
-# ── MAIN: 5-stage autonomous cycle ───────────────────────────
-def main():
-    global MACRO, iv_flags, raw_data, featured, regimes
-    global models, garch_res, sentiments, signals, opt_weights
-    global FEATURE_COLS, ADAPTIVE_WEIGHTS, LEARNED_RULES
-
-    print("Pulling latest files from Google Drive...")
-    drive_pull()
-
-    # Reload persisted state after pull
-    if Path(WEIGHTS_FILE).exists():
-        try: ADAPTIVE_WEIGHTS = json.loads(Path(WEIGHTS_FILE).read_text())
-        except Exception: pass
-    if Path(RULES_FILE).exists():
-        try: LEARNED_RULES = json.loads(Path(RULES_FILE).read_text())
-        except Exception: pass
-
-    print(f"Active rules: {len(LEARNED_RULES)}")
-    print(f"Adaptive weights: {ADAPTIVE_WEIGHTS}\n")
-
-    # ── Stage 1: Macro refresh ────────────────────────────────
-    print("Stage 1: Refreshing macro data...")
-    try:
-        fetch_macro()
-        print(f"  Regime: {MACRO.get('macro_regime','?')} | VIX: {MACRO.get('vix','?')}")
-    except Exception as e:
-        print(f"  Macro error: {e}")
-
-    # ── Stage 2a: IV flags ────────────────────────────────────
-    print("\nStage 2a: Refreshing options IV flags...")
-    for tk in DEFAULT_WATCHLIST:
-        try:
-            iv_flags[tk] = get_options_iv_flag(tk)
-            f = iv_flags[tk]
-            if f.get("iv_flag","NORMAL") != "NORMAL":
-                print(f"  {tk:<10} {f.get('iv_flag'):<10} "
-                      f"scale={f.get('position_scale',1):.2f}  {f.get('note','')[:50]}")
-        except Exception as e:
-            iv_flags[tk] = {"iv_flag":"NORMAL","position_scale":1.0,"ok":False}
-
-    # ── Stage 2b: Market data + signals ───────────────────────
-    print("\nStage 2b: Downloading market data...")
-    raw_data = {}
-    for tk in DEFAULT_WATCHLIST:
-        df = download_ticker(tk, TRAIN_START, TRAIN_END)
-        if df is not None and len(df) > 100:
-            raw_data[tk] = df
-    print(f"  {len(raw_data)}/{len(DEFAULT_WATCHLIST)} tickers downloaded")
-
-    print("\nBuilding features...")
-    featured = {}
-    for tk, df in raw_data.items():
-        try:
-            fd = build_features(df)
-            if len(fd) > 200:
-                featured[tk] = fd
-        except Exception as e:
-            print(f"  {tk} feature error: {e}")
-
-    if featured:
-        FEATURE_COLS = [c for c in next(iter(featured.values())).columns
-                        if c not in ["Open","High","Low","Close","Volume","target"]]
-        print(f"  {len(featured)} tickers | {len(FEATURE_COLS)} features")
-    else:
-        print("  ERROR: No featured data — aborting")
-        return
-
-    print("\nFitting HMM regimes...")
-    regimes = {}
-    for tk, df in featured.items():
-        try: regimes[tk] = fit_hmm(raw_data[tk].loc[df.index[0]:])
-        except Exception: pass
-
-    print("\nTraining ML ensemble (this takes a while first run)...")
-    models = {}
-    for tk, df in featured.items():
-        try:
-            models[tk] = train_ensemble(df, tk)
-            print(f"  {tk:<10} AUC={models[tk]['auc']:.3f}")
-        except Exception as e:
-            print(f"  {tk} train error: {e}")
-
-    print("\nRunning GARCH...")
-    garch_res = {}
-    for tk, df in featured.items():
-        try: garch_res[tk] = garch_vol_forecast(df, tk)
-        except Exception: garch_res[tk] = {"p_up":0.5,"annvol":0.3,"var95":-0.05,"ok":False}
-
-    print("\nComputing sentiment...")
-    sentiments = {}
-    for tk in featured:
-        try: sentiments[tk] = sentiment_score(fetch_headlines(tk))
-        except Exception: sentiments[tk] = 0.0
-
-    print("\nGenerating signals...")
-    signals = {}
-    for tk in models:
-        if tk not in featured: continue
-        try:
-            sig = generate_signal(
-                tk, models[tk], featured[tk],
-                int(regimes[tk].iloc[-1]) if tk in regimes else 0,
-                garch_res.get(tk, {"p_up":0.5,"annvol":0.3,"var95":-0.05,"ok":False}),
-                sentiments.get(tk, 0.0),
-                iv_flag=iv_flags.get(tk, {})
-            )
-            signals[tk] = sig
-            iv_note = f" [{sig.get('iv_flag','')}/{sig.get('iv_scale',1):.2f}]" \
-                      if sig.get("iv_flag","NORMAL") != "NORMAL" else ""
-            print(f"  {sig['action']:<4} {tk:<10} conf={sig['confidence']:.3f}{iv_note}")
-        except Exception as e:
-            print(f"  {tk} signal error: {e}")
-
-    buy_tickers = [tk for tk,s in signals.items() if s["action"]=="BUY"]
-    if buy_tickers:
-        try:
-            opt_weights = cvar_optimize(buy_tickers)
-        except Exception:
-            opt_weights = {tk:1/len(buy_tickers) for tk in buy_tickers}
-
-    # ── Stage 3: Execute + log predictions ───────────────────
-    print("\nStage 3: Executing trades + logging predictions...")
-    equity = _current_equity()
-    halt   = equity < PORTFOLIO_CAPITAL * (1 - MAX_DRAWDOWN_PCT)
-    if halt:
-        print("  Max drawdown hit — skipping trades")
-
-    trade_count = 0
-    for tk, sig in signals.items():
-        try:
-            log_prediction(sig)
-            if not halt and sig["action"] != "HOLD":
-                qty = int(kelly_qty(sig["confidence"], equity, sig["close"])
-                          * float(sig.get("iv_scale", 1.0)))
-                if qty > 0:
-                    execute_trade(sig, qty, equity)
-                    trade_count += 1
-        except Exception as e:
-            print(f"  {tk} trade error: {e}")
-
-    print(f"  {trade_count} trades | {len(signals)} predictions logged")
-
-    # ── Stage 4: Score mature predictions ─────────────────────
-    print("\nStage 4: Scoring mature predictions...")
-    try:
-        newly = score_outcomes()
-        n = len(newly) if hasattr(newly, "__len__") else 0
-        print(f"  {n} predictions scored")
-    except Exception as e:
-        print(f"  Scoring error: {e}")
-
-    # ── Stage 5: Failure diagnosis + rule rewriting ───────────
-    print("\nStage 5: Failure diagnosis + rule rewriting...")
-    try:
-        new_rules, insights = diagnose_failures_and_rewrite_rules()
-        if insights:
-            for ins in insights: print(f"  > {ins}")
+        result = subprocess.run(
+            ["rclone", "copy",
+             f"{GDRIVE_REMOTE}:{GDRIVE_FOLDER}", str(LOCAL_DATA),
+             "--exclude", "models_cache.pkl",   # too large to sync every run
+             "--transfers", "8", "--quiet"],
+            capture_output=True, text=True, timeout=120
+        )
+        if result.returncode == 0:
+            print("✓ Drive → local sync complete")
         else:
-            print(f"  No new rules — {len(LEARNED_RULES)} active rules maintained")
+            print(f"⚠  rclone download warning: {result.stderr[:300]}")
     except Exception as e:
-        print(f"  Diagnosis error: {e}")
+        print(f"⚠  rclone download error: {e} — continuing with local data")
 
-    # ── Push updated files back to Drive ─────────────────────
-    print("\nPushing updated files to Google Drive...")
-    drive_push()
+def _rclone_upload():
+    """Sync local data/ → Google Drive after the cycle."""
+    print("\nStage 6: Syncing data to Google Drive...")
+    try:
+        result = subprocess.run(
+            ["rclone", "copy",
+             str(LOCAL_DATA), f"{GDRIVE_REMOTE}:{GDRIVE_FOLDER}",
+             "--exclude", "models_cache.pkl",
+             "--transfers", "8", "--quiet"],
+            capture_output=True, text=True, timeout=120
+        )
+        if result.returncode == 0:
+            print("✓ local → Drive sync complete")
+        else:
+            print(f"⚠  rclone upload warning: {result.stderr[:300]}")
+    except Exception as e:
+        print(f"⚠  rclone upload error: {e}")
 
-    # ── Summary ───────────────────────────────────────────────
-    buy_n  = sum(1 for s in signals.values() if s["action"]=="BUY")
-    sell_n = sum(1 for s in signals.values() if s["action"]=="SELL")
-    hold_n = sum(1 for s in signals.values() if s["action"]=="HOLD")
+# ── Google Drive sync (download existing data before cycle) ───────────────
+_drive_available = _write_rclone_conf()
+if _drive_available:
+    _rclone_download()
 
-    print(f"\n{'='*60}")
-    print(f"CYCLE COMPLETE — {datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M')} UTC")
-    print(f"  Signals:  BUY={buy_n}  SELL={sell_n}  HOLD={hold_n}")
-    print(f"  Rules:    {len(LEARNED_RULES)} active")
-    print(f"  Weights:  {ADAPTIVE_WEIGHTS}")
-    print(f"  Regime:   {MACRO.get('macro_regime','?')}")
-    print(f"{'='*60}\n")
+# ── Ensure local data directories always exist ────────────────────────────
+for _sub in ["paper_trades", "predictions", "weights", "models"]:
+    (LOCAL_DATA / _sub).mkdir(parents=True, exist_ok=True)
 
+# ── Load notebook and execute core pipeline cells ─────────────────────────
+NB_PATH = "trading_model_v24.1.ipynb"
+print(f"\nLoading notebook: {NB_PATH}")
 
-if __name__ == "__main__":
-    main()
+with open(NB_PATH, encoding="utf-8-sig") as f:
+    nb = json.load(f)
+
+cells = nb["cells"]
+print(f"Notebook loaded: {len(cells)} cells\n")
+
+# Cell indices to skip (0-indexed):
+#   0  — markdown title
+#   1  — pip install (handled by requirements.txt)
+#   16 — homepage render (display-only)
+#   17 — BTC cycle tracker (display-only)
+#   18 — scheduler/threading (we run directly)
+#   19 — dashboard render (display-only)
+#   20 — full audit (display-only)
+#   21 — performance tracker (display-only)
+#   22 — backtest engine (display-only)
+SKIP_CELLS = {0, 1, 16, 17, 18, 19, 20, 21, 22}
+
+# Patch appended to Cell 3 (config): redirects all file paths to local data/
+# and applies speed settings appropriate for CI.
+GH_ACTIONS_PATCH = r"""
+# ── GitHub Actions overrides (injected by quant_runner.py) ───────────────
+import os as _os
+if _os.environ.get("GH_ACTIONS"):
+    from pathlib import Path as _Path
+
+    # Redirect all persistent storage to data/ (Google Drive not mounted here;
+    # rclone syncs before/after instead)
+    _drive_dir     = _Path("data")
+    _drive_mounted = False
+
+    PT_LOG_FILE         = str(_Path("data/paper_trades/paper_trades.csv"))
+    PRED_LOG_FILE       = str(_Path("data/predictions/predictions.csv"))
+    DAILY_PNL_LOG_FILE  = str(_Path("data/predictions/daily_pnl_log.csv"))
+    LOG_DIR             = "data"
+    RULES_FILE          = str(_Path("data/weights/learned_rules.json"))
+    WEIGHTS_FILE        = str(_Path("data/weights/adaptive_weights.json"))
+    MODEL_CACHE_FILE    = _Path("data/models_cache.pkl")
+    VWAP_LOG_FILE       = _Path("data/vwap_benchmark.csv")
+    EXEC_LOG_FILE       = _Path("data/execution_quality.csv")
+    KILL_FLAG_FILE      = _Path("data/KILL_SWITCH_ACTIVE.flag")
+    PDT_LOG_FILE        = _Path("data/pdt_log.csv")
+    MODEL_RETRAIN_FLAG  = _Path("data/RETRAIN_NEEDED.flag")
+
+    # CI speed settings (keeps each run under 60 min on free-tier runners)
+    FAST_MODE            = True   # skips FinBERT, GARCH MC paths
+    GARCH_PATHS          = 50     # default 500 → 50  (still valid signal)
+    QUICK_TUNE_TRIALS    = 3
+    FULL_TUNE_TRIALS_XGB = 10
+    FULL_TUNE_TRIALS_LGB = 10
+    FULL_TUNE_TRIALS_CAT = 10
+
+    print("GH_ACTIONS mode: storage → data/, FAST_MODE=True, GARCH_PATHS=50")
+"""
+
+# Shared execution namespace — all cells share this dict like one Python module
+namespace = {"__name__": "__main__"}
+
+# Execute cells sequentially
+failed_cells = []
+for i, cell in enumerate(cells):
+    if cell["cell_type"] != "code":
+        continue
+    if i in SKIP_CELLS:
+        print(f"[SKIP] Cell {i}")
+        continue
+
+    src = "".join(cell["source"])
+
+    # Append the GH_ACTIONS patch right after the Drive-mount block in Cell 3
+    if i == 3:
+        src = src + "\n\n" + GH_ACTIONS_PATCH
+
+    print(f"\n{'─'*55}")
+    print(f"[CELL {i}] Running...")
+    print(f"{'─'*55}")
+
+    try:
+        exec(src, namespace)  # noqa: S102
+    except SystemExit as e:
+        print(f"[CELL {i}] SystemExit({e.code}) — continuing")
+    except Exception:
+        print(f"[WARNING] Cell {i} raised an exception:")
+        traceback.print_exc()
+        failed_cells.append(i)
+
+# ── Summary ───────────────────────────────────────────────────────────────
+finish_ts = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+print(f"\n{'='*60}")
+print(f"Daily cycle complete — {finish_ts}")
+if failed_cells:
+    print(f"Cells with warnings: {failed_cells}")
+print(f"{'='*60}\n")
+
+# ── Flush log and sync back to Google Drive ───────────────────────────────
+_log_fh.flush()
+if _drive_available:
+    _rclone_upload()
+
+_log_fh.close()
