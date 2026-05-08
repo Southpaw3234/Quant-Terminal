@@ -1,0 +1,46 @@
+name: Daily Trading Cycle
+
+on:
+  schedule:
+    # 9:30 AM ET = 13:30 UTC (EDT/summer). Runs Mon–Fri only.
+    - cron: '30 13 * * 1-5'
+  workflow_dispatch:   # allows manual trigger from GitHub UI
+
+permissions:
+  contents: write      # needed to commit data/ back to the repo
+
+jobs:
+  run-cycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120   # 2-hour hard limit
+
+    steps:
+      - name: Checkout repo (with full history for data files)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run daily trading cycle
+        run: python run_daily.py
+        env:
+          GH_ACTIONS: 'true'
+
+      - name: Commit updated data files
+        run: |
+          git config user.name  "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add data/
+          git diff --staged --quiet || git commit -m "Daily run $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push

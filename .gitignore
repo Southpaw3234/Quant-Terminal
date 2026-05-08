@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.env
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Large model cache (can be hundreds of MB)
+data/models_cache.pkl
+
+# Claude working files
+.claude/
+_fix_nb.py
+upgrade_notebook.py
+
+# Old notebook versions
+trading_model_23.2.500.ipynb
+trading_model_v22.ipynb
+trading_model_v23.1.ipynb
+trading_model_v23.2.ipynb
+trading_model_v23.3.ipynb
+trading_model_v23.4.ipynb
+trading_model_v23.ipynb
