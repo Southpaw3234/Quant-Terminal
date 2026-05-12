@@ -1,22 +1,40 @@
-name: Quant Terminal v24.1 - Daily Cycle
+name: Quant Terminal v24.1 — 24/7 Trading
 
 on:
   schedule:
-    # 9:35 AM ET (EDT = UTC-4).  GitHub free-tier may delay by up to ~2 hrs.
+    # ── Morning full cycle: macro + train + signals + trade (9:35 AM ET) ──
     - cron: '35 13 * * 1-5'
-  workflow_dispatch:   # allows manual trigger from the Actions tab
+    # ── Midday signal refresh: load cached models + re-signal (12:00 PM ET) ──
+    - cron: '00 16 * * 1-5'
+    # ── Pre-close refresh: final signals before close (3:00 PM ET) ─────────
+    - cron: '00 19 * * 1-5'
+    # ── Close + scoring: score outcomes + self-learning (5:30 PM ET) ────────
+    - cron: '30 21 * * 1-5'
+    # ── Weekend scoring: score any matured predictions Saturday morning ──────
+    - cron: '00 14 * * 6'
+  workflow_dispatch:
+    inputs:
+      run_type:
+        description: 'Run type override'
+        required: false
+        default: 'morning'
+        type: choice
+        options: [morning, intraday, evening, scoring]
 
 permissions:
   contents: write
 
 jobs:
-  run-cycle:
+  trade:
     runs-on: ubuntu-latest
-    timeout-minutes: 120   # 2-hour hard cap
+    timeout-minutes: 90
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
@@ -24,7 +42,7 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
-      - name: Install Python dependencies
+      - name: Install dependencies
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
@@ -32,21 +50,79 @@ jobs:
       - name: Install rclone
         run: sudo apt-get install -y rclone
 
-      - name: Run Quant Terminal v24.1 cycle
+      - name: Determine run type from schedule
+        id: run_type
+        run: |
+          MANUAL="${{ github.event.inputs.run_type }}"
+          HOUR=$(date -u +%H)
+          MIN=$(date -u +%M)
+          DAY=$(date -u +%u)   # 1=Mon ... 6=Sat
+
+          if [ -n "$MANUAL" ]; then
+            TYPE="$MANUAL"
+          elif [ "$HOUR" = "13" ] || [ "$HOUR" = "14" ]; then
+            TYPE="morning"
+          elif [ "$HOUR" = "16" ] || [ "$HOUR" = "17" ] || [ "$HOUR" = "18" ]; then
+            TYPE="intraday"
+          elif [ "$HOUR" = "19" ]; then
+            TYPE="intraday"
+          elif [ "$HOUR" = "21" ] || [ "$DAY" = "6" ]; then
+            TYPE="evening"
+          else
+            TYPE="morning"
+          fi
+
+          echo "type=$TYPE" >> $GITHUB_OUTPUT
+          echo "Run type: $TYPE (UTC hour=$HOUR day=$DAY)"
+
+      - name: Restore model cache
+        uses: actions/cache@v4
+        with:
+          path: data/models/
+          key: model-cache-${{ steps.run_type.outputs.type == 'morning' && github.run_id || 'latest' }}
+          restore-keys: |
+            model-cache-
+
+      - name: Run trading cycle
         env:
           GH_ACTIONS: 'true'
+          RUN_TYPE:              ${{ steps.run_type.outputs.type }}
           GDRIVE_RCLONE_CONF:    ${{ secrets.GDRIVE_RCLONE_CONF }}
           ALPACA_API_KEY:        ${{ secrets.ALPACA_API_KEY }}
           ALPACA_SECRET_KEY:     ${{ secrets.ALPACA_SECRET_KEY }}
+          ALPACA_BASE_URL:       'https://paper-api.alpaca.markets'
           NEWS_API_KEY:          ${{ secrets.NEWS_API_KEY }}
           FRED_API_KEY:          ${{ secrets.FRED_API_KEY }}
-          AV_API_KEY:            ${{ secrets.AV_API_KEY }}
-        run: python quant_runner.py 2>&1 | tee cycle_output.log
+          QUIVER_QUANT_KEY:      ${{ secrets.QUIVER_QUANT_KEY }}
+          DISCORD_WEBHOOK_URL:   ${{ secrets.DISCORD_WEBHOOK_URL }}
+          GIT_USER_EMAIL:        'quant-bot@github-actions'
+          GIT_USER_NAME:         'Quant Terminal Bot'
+        run: python quant_runner.py
 
-      - name: Upload cycle log as artifact
+      - name: Save model cache (morning only)
+        if: steps.run_type.outputs.type == 'morning'
+        uses: actions/cache@v4
+        with:
+          path: data/models/
+          key: model-cache-${{ github.run_id }}
+
+      - name: Commit updated state files
+        env:
+          GIT_USER_EMAIL: 'quant-bot@github-actions'
+          GIT_USER_NAME:  'Quant Terminal Bot'
+        run: |
+          git config user.email "$GIT_USER_EMAIL"
+          git config user.name  "$GIT_USER_NAME"
+          git pull --rebase origin master || true
+          git add data/paper_trades/ data/predictions/ data/weights/ || true
+          git diff --cached --quiet || \
+            git commit -m "Auto: ${{ steps.run_type.outputs.type }} cycle $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push origin master || true
+
+      - name: Upload cycle log
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cycle-log-${{ github.run_number }}
+          name: cycle-${{ steps.run_type.outputs.type }}-${{ github.run_number }}
           path: cycle_output.log
-          retention-days: 30
+          retention-days: 60
