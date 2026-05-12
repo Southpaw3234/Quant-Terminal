@@ -363,6 +363,7 @@ let _preds = [];
 let _eqChart = null;
 
 async function loadData() {
+  if (typeof window.COLAB_DATA !== 'undefined') return window.COLAB_DATA;
   try {
     const r = await fetch(`./data.json?cb=${Date.now()}`);
     if (!r.ok) throw new Error('data.json not found');

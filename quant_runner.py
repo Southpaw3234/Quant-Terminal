@@ -128,7 +128,7 @@ if _os.environ.get("GH_ACTIONS"):
 """
 
 # ── Cell skip rules per run type ──────────────────────────────────────────
-ALWAYS_SKIP = {0, 1, 16, 17, 18, 19, 20, 21, 22}
+ALWAYS_SKIP = {0, 1, 16, 17, 18, 19, 20, 21, 22, 23}
 
 SKIP_BY_TYPE = {
     "morning":  ALWAYS_SKIP,
