@@ -258,6 +258,87 @@ if RUN_TYPE in ("morning", "evening"):
     except Exception as _snap_e:
         print(f"  60-day tracker error: {_snap_e}")
 
+# ── Daily P&L snapshot (unrealized + realized) ────────────────────────────
+if RUN_TYPE in ("morning", "intraday"):
+    try:
+        import yfinance as _yf
+        import pandas as _pd
+
+        _pt_path = Path("data/paper_trades/paper_trades.csv")
+        _hist_path = Path("data/predictions/pnl_history.csv")
+
+        if _pt_path.exists():
+            _pt = _pd.read_csv(_pt_path)
+
+            # Derive open positions
+            _pos: dict = {}
+            for _, _row in _pt.iterrows():
+                _tk = str(_row.get("ticker", ""))
+                if not _tk:
+                    continue
+                if _tk not in _pos:
+                    _pos[_tk] = {"qty": 0, "cost": 0.0}
+                _q = int(float(str(_row.get("qty", 0) or 0)))
+                _p = float(str(_row.get("price", 0) or 0))
+                if str(_row.get("action", "")) == "BUY":
+                    _pos[_tk]["qty"]  += _q
+                    _pos[_tk]["cost"] += _q * _p
+                elif str(_row.get("action", "")) == "SELL":
+                    _pos[_tk]["qty"]  -= _q
+
+            _open_pos = {tk: v for tk, v in _pos.items() if v["qty"] > 0}
+            _unrealized = 0.0
+
+            if _open_pos:
+                _tkrs = list(_open_pos.keys())
+                try:
+                    _hist_px = _yf.download(
+                        _tkrs, period="2d", auto_adjust=True,
+                        progress=False, threads=True
+                    )["Close"]
+                    if len(_tkrs) == 1:
+                        _curr = {_tkrs[0]: float(_hist_px.dropna().iloc[-1])}
+                    else:
+                        _curr = _hist_px.dropna().iloc[-1].to_dict()
+                    for _tk, _v in _open_pos.items():
+                        _avg = _v["cost"] / _v["qty"] if _v["qty"] else 0
+                        _cp  = float(_curr.get(_tk, _avg))
+                        _unrealized += (_cp - _avg) * _v["qty"]
+                except Exception as _px_e:
+                    print(f"  P&L snapshot price fetch warning: {_px_e}")
+
+            # Realized P&L from daily_pnl_log
+            _pnl_log_path = Path("data/predictions/daily_pnl_log.csv")
+            _realized = 0.0
+            if _pnl_log_path.exists():
+                _dl = _pd.read_csv(_pnl_log_path)
+                _realized = _pd.to_numeric(_dl.get("net_pl", _pd.Series(dtype=float)), errors="coerce").sum()
+
+            _today_str = datetime.datetime.utcnow().strftime("%Y-%m-%d")
+            _new_row = {
+                "date":           _today_str,
+                "unrealized_pnl": round(_unrealized, 2),
+                "realized_pnl":   round(_realized, 2),
+                "total_pnl":      round(_unrealized + _realized, 2),
+                "open_positions": len(_open_pos),
+            }
+
+            if _hist_path.exists():
+                _h = _pd.read_csv(_hist_path)
+                if _today_str in _h["date"].values:
+                    for _k, _val in _new_row.items():
+                        _h.loc[_h["date"] == _today_str, _k] = _val
+                else:
+                    _h = _pd.concat([_h, _pd.DataFrame([_new_row])], ignore_index=True)
+            else:
+                _h = _pd.DataFrame([_new_row])
+
+            _h.to_csv(_hist_path, index=False)
+            print(f"  P&L snapshot [{_today_str}]: unrealized={_unrealized:+.2f}  realized={_realized:+.2f}  total={_unrealized+_realized:+.2f}")
+
+    except Exception as _pnl_snap_e:
+        print(f"  P&L snapshot error: {_pnl_snap_e}")
+
 # ── Summary ───────────────────────────────────────────────────────────────
 _finish = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
 print(f"\n{'='*60}")
@@ -298,6 +379,7 @@ try:
         "calibration":    _read_json("data/weights/ticker_calibration.json"),
         "ticker_accuracy":_read_json("data/predictions/ticker_accuracy.json"),
         "snapshot_60d":   _read_json("data/predictions/snapshot_60d.json"),
+        "pnl_history":    _read_csv("data/predictions/pnl_history.csv"),
     }
 
     Path("docs").mkdir(exist_ok=True)
