@@ -66,7 +66,7 @@ def _write_rclone_conf():
     import base64
     p = Path.home() / ".config" / "rclone" / "rclone.conf"
     p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_bytes(base64.b64decode(GDRIVE_CONF))
+    p.write_bytes(base64.b64decode(GDRIVE_CONF.encode('ascii', 'ignore')))
     print("  rclone config written")
     return True
 
