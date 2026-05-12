@@ -2,7 +2,7 @@
 """
 Daily autonomous trading cycle runner for GitHub Actions.
 
-Reads trading_model_v24.1.ipynb and executes the core pipeline cells in
+Reads trading_model_v25.ipynb and executes the core pipeline cells in
 sequence, then commits updated CSVs back to the repo.
 
 Cells executed:  2 (imports) → 3 (config) → 4 (macro) → 5 (data) →
@@ -30,7 +30,7 @@ for sub in ["paper_trades", "predictions", "weights", "models"]:
     Path(f"data/{sub}").mkdir(parents=True, exist_ok=True)
 
 # ── Load notebook ─────────────────────────────────────────────────────────
-NB_PATH = "trading_model_v24.1.ipynb"
+NB_PATH = "trading_model_v25.ipynb"
 with open(NB_PATH, encoding="utf-8-sig") as f:
     nb = json.load(f)
 

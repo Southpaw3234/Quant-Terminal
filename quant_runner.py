@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Quant Terminal v24.1 — GitHub Actions Runner
+Quant Terminal v25 — GitHub Actions Runner
 =============================================
 Supports three run types controlled by RUN_TYPE env var:
 
@@ -25,7 +25,7 @@ from pathlib import Path
 # ── Run type ──────────────────────────────────────────────────────────────
 RUN_TYPE = os.environ.get("RUN_TYPE", "morning").lower()
 print(f"\n{'='*60}")
-print(f"QUANT TERMINAL v24.1 — {RUN_TYPE.upper()} RUN")
+print(f"QUANT TERMINAL v25 — {RUN_TYPE.upper()} RUN")
 print(f"Started: {datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}")
 print(f"{'='*60}\n")
 
@@ -53,7 +53,7 @@ sys.stderr = _Tee(sys.__stderr__, _log_fh)
 LOCAL_DATA     = Path("data")
 MODEL_CACHE    = LOCAL_DATA / "models" / "model_cache.pkl"
 GDRIVE_CONF    = os.environ.get("GDRIVE_RCLONE_CONF", "")
-GDRIVE_FOLDER  = "quant_terminal_v24.1"
+GDRIVE_FOLDER  = "quant_terminal_v25"
 
 for sub in ["paper_trades", "predictions", "weights", "models"]:
     (LOCAL_DATA / sub).mkdir(parents=True, exist_ok=True)
@@ -170,7 +170,7 @@ def _save_model_cache(ns):
             print(f"  Model cache save failed: {e}")
 
 # ── Execute notebook ───────────────────────────────────────────────────────
-NB_PATH = "trading_model_v24.1.ipynb"
+NB_PATH = "trading_model_v25.ipynb"
 print(f"Loading: {NB_PATH}  run_type={RUN_TYPE}")
 
 with open(NB_PATH, encoding="utf-8-sig") as f:
