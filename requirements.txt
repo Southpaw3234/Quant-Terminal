@@ -21,6 +21,5 @@ clarabel>=0.6
 alpaca-py>=0.8
 torch>=2.0 --index-url https://download.pytorch.org/whl/cpu
 transformers>=4.41
-pandas-ta @ git+https://github.com/twopirllc/pandas-ta@development
 numba>=0.61
 threadpoolctl>=3.1
