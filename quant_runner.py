@@ -119,11 +119,11 @@ if _os.environ.get("GH_ACTIONS"):
     ALPACA_BASE_URL     = _os.environ.get("ALPACA_BASE_URL", "https://paper-api.alpaca.markets")
     RUN_TYPE_GH         = _os.environ.get("RUN_TYPE", "morning")
     FAST_MODE           = (RUN_TYPE_GH != "morning")
-    GARCH_PATHS         = 500 if RUN_TYPE_GH == "morning" else 50
-    QUICK_TUNE_TRIALS   = 3
-    FULL_TUNE_TRIALS_XGB = 15 if RUN_TYPE_GH == "morning" else 5
-    FULL_TUNE_TRIALS_LGB = 15 if RUN_TYPE_GH == "morning" else 5
-    FULL_TUNE_TRIALS_CAT = 15 if RUN_TYPE_GH == "morning" else 5
+    GARCH_PATHS         = 100 if RUN_TYPE_GH == "morning" else 30
+    QUICK_TUNE_TRIALS   = 2
+    FULL_TUNE_TRIALS_XGB = 3
+    FULL_TUNE_TRIALS_LGB = 3
+    FULL_TUNE_TRIALS_CAT = 3
     print(f"GH_ACTIONS {RUN_TYPE_GH}: FAST_MODE={FAST_MODE} GARCH_PATHS={GARCH_PATHS}")
 """
 
