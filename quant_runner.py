@@ -266,6 +266,49 @@ if failed_cells:
     print(f"Cells with warnings: {failed_cells}")
 print(f"{'='*60}\n")
 
+# ── Generate docs/data.json for dashboard ────────────────────────────────
+try:
+    import csv as _csv
+
+    def _read_csv(path):
+        p = Path(path)
+        if not p.exists():
+            return []
+        with open(p, encoding="utf-8", errors="replace") as f:
+            return list(_csv.DictReader(f))
+
+    def _read_json(path):
+        p = Path(path)
+        if not p.exists():
+            return None
+        try:
+            return json.loads(p.read_text(encoding="utf-8", errors="replace"))
+        except Exception:
+            return None
+
+    _dash_data = {
+        "generated":      datetime.datetime.utcnow().isoformat()[:16] + " UTC",
+        "run_type":       RUN_TYPE,
+        "trades":         _read_csv("data/paper_trades/paper_trades.csv"),
+        "predictions":    _read_csv("data/predictions/predictions.csv"),
+        "pnl_log":        _read_csv("data/predictions/daily_pnl_log.csv"),
+        "rules":          _read_json("data/weights/learned_rules.json"),
+        "weights":        _read_json("data/weights/adaptive_weights.json"),
+        "features":       _read_json("data/weights/feature_importance.json"),
+        "calibration":    _read_json("data/weights/ticker_calibration.json"),
+        "ticker_accuracy":_read_json("data/predictions/ticker_accuracy.json"),
+        "snapshot_60d":   _read_json("data/predictions/snapshot_60d.json"),
+    }
+
+    Path("docs").mkdir(exist_ok=True)
+    Path("docs/data.json").write_text(
+        json.dumps(_dash_data, indent=2, default=str),
+        encoding="utf-8"
+    )
+    print("  Dashboard data.json written -> docs/data.json")
+except Exception as _dash_e:
+    print(f"  Dashboard export error: {_dash_e}")
+
 # ── Upload to Drive ───────────────────────────────────────────────────────
 if _drive_ok:
     print("Stage 6: local -> Drive sync...")

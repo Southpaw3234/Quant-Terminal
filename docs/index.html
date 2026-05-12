@@ -355,42 +355,13 @@ select.btn{padding:3px 8px}
 </div><!-- /main -->
 
 <script>
-const RAW = 'https://raw.githubusercontent.com/Southpaw3234/Quant-Terminal/master';
 let _preds = [];
 let _eqChart = null;
 
-// ── Helpers ────────────────────────────────────────────────────────────────
-function parseCSV(txt) {
-  const lines = txt.trim().split('\n').filter(l => l.trim());
-  if (lines.length < 2) return [];
-  const hdrs = lines[0].split(',').map(h => h.trim());
-  return lines.slice(1).map(line => {
-    const vals = [];
-    let inQ = false, cur = '';
-    for (const ch of line) {
-      if (ch === '"') { inQ = !inQ; }
-      else if (ch === ',' && !inQ) { vals.push(cur); cur = ''; }
-      else cur += ch;
-    }
-    vals.push(cur);
-    const o = {};
-    hdrs.forEach((h,i) => o[h] = (vals[i]||'').trim());
-    return o;
-  });
-}
-
-async function fetchCSV(path) {
+async function loadData() {
   try {
-    const r = await fetch(`${RAW}/${path}?cb=${Date.now()}`);
-    if (!r.ok) return [];
-    return parseCSV(await r.text());
-  } catch { return []; }
-}
-
-async function fetchJSON(path) {
-  try {
-    const r = await fetch(`${RAW}/${path}?cb=${Date.now()}`);
-    if (!r.ok) return null;
+    const r = await fetch(`./data.json?cb=${Date.now()}`);
+    if (!r.ok) throw new Error('data.json not found');
     return await r.json();
   } catch { return null; }
 }
@@ -779,16 +750,20 @@ function renderPnL(log) {
 async function loadAll() {
   document.getElementById('last-updated').textContent = 'Refreshing…';
 
-  const [trades, preds, pnlLog, rules, weights, features, calib, accuracy] = await Promise.all([
-    fetchCSV('data/paper_trades/paper_trades.csv'),
-    fetchCSV('data/predictions/predictions.csv'),
-    fetchCSV('data/predictions/daily_pnl_log.csv'),
-    fetchJSON('data/weights/learned_rules.json'),
-    fetchJSON('data/weights/adaptive_weights.json'),
-    fetchJSON('data/weights/feature_importance.json'),
-    fetchJSON('data/weights/ticker_calibration.json'),
-    fetchJSON('data/predictions/ticker_accuracy.json'),
-  ]);
+  const d = await loadData();
+  if (!d) {
+    document.getElementById('last-updated').textContent = 'data.json not yet generated — run a cycle first';
+    return;
+  }
+
+  const trades   = d.trades    || [];
+  const preds    = d.predictions || [];
+  const pnlLog   = d.pnl_log   || [];
+  const rules    = d.rules;
+  const weights  = d.weights;
+  const features = d.features;
+  const calib    = d.calibration;
+  const accuracy = d.ticker_accuracy;
 
   renderPositions(trades);
   renderTrades(trades);
@@ -798,8 +773,9 @@ async function loadAll() {
   renderMacro(preds);
   renderLearned(rules, weights, features, calib, accuracy);
 
+  const gen = d.generated || '';
   document.getElementById('last-updated').textContent =
-    'Updated ' + new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+    'Data from ' + gen + ' · refreshed ' + new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
 }
 
 loadAll();

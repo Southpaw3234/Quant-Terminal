@@ -117,7 +117,7 @@ jobs:
           git config user.email "$GIT_USER_EMAIL"
           git config user.name  "$GIT_USER_NAME"
           git pull --rebase origin master || true
-          git add data/paper_trades/ data/predictions/ data/weights/ || true
+          git add data/paper_trades/ data/predictions/ data/weights/ docs/data.json || true
           git diff --cached --quiet || \
             git commit -m "Auto: ${{ steps.run_type.outputs.type }} cycle $(date -u +'%Y-%m-%d %H:%M UTC')"
           git push origin master || true
