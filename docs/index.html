@@ -235,6 +235,8 @@ tr:hover td{background:rgba(88,166,255,.04)}
     <a class="nav-link" href="#macro">📡 Macro</a>
     <a class="nav-link" href="#bitcoin">₿ Bitcoin</a>
     <a class="nav-link" href="#learned">🧠 Learned</a>
+    <a class="nav-link" href="#macro" onclick="setTimeout(()=>document.getElementById('fomc-tbody').scrollIntoView({behavior:'smooth'}),300)">🏦 Fed</a>
+    <a class="nav-link" href="#macro" onclick="setTimeout(()=>document.getElementById('congress-tbody').scrollIntoView({behavior:'smooth'}),300)">🌐 Geo</a>
   </div>
   <div class="nav-right">
     <span class="live-dot"></span>
@@ -512,8 +514,8 @@ tr:hover td{background:rgba(88,166,255,.04)}
       <div class="section-line"></div>
     </div>
 
-    <!-- 4 stat cards -->
-    <div class="cards">
+    <!-- 8 stat cards: 2 rows -->
+    <div class="cards" style="grid-template-columns:repeat(4,1fr)">
       <div class="card">
         <div class="card-label">Market Regime</div>
         <div class="card-value" id="m-regime">—</div>
@@ -533,6 +535,26 @@ tr:hover td{background:rgba(88,166,255,.04)}
         <div class="card-label">ISM PMI</div>
         <div class="card-value" id="m-pmi">—</div>
         <div class="card-sub" id="m-pmi-s">Manufacturing</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Fed Funds Rate</div>
+        <div class="card-value" id="m-ffr">—</div>
+        <div class="card-sub" id="m-ffr-s">Current target rate</div>
+      </div>
+      <div class="card">
+        <div class="card-label">CPI Inflation</div>
+        <div class="card-value" id="m-cpi">—</div>
+        <div class="card-sub" id="m-cpi-s">vs 2% Fed target</div>
+      </div>
+      <div class="card">
+        <div class="card-label">10Y Treasury</div>
+        <div class="card-value" id="m-y10">—</div>
+        <div class="card-sub" id="m-y10-s">Risk-free rate</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Consumer Sentiment</div>
+        <div class="card-value" id="m-sent">—</div>
+        <div class="card-sub" id="m-sent-s">U. of Michigan index</div>
       </div>
     </div>
 
@@ -580,6 +602,92 @@ tr:hover td{background:rgba(88,166,255,.04)}
         <div class="empty"><div class="empty-msg">Loading signal distribution…</div></div>
       </div>
     </div>
+
+    <!-- ── FED RATE & FOMC SCHEDULE ───────────────────────────── -->
+    <div class="panel" style="margin-top:20px">
+      <div class="panel-hdr">
+        <span class="panel-title">🏦 Fed Rate &amp; FOMC Schedule</span>
+        <span style="color:var(--mu);font-size:10px" id="fomc-as-of">—</span>
+      </div>
+      <div class="panel-body">
+        <!-- Rate cut probability gauge -->
+        <div class="two-col" style="margin-bottom:16px">
+          <div style="background:var(--bg);border:1px solid var(--br);border-radius:8px;padding:16px">
+            <div style="font-size:9px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Rate Cut Probability (Next Meeting)</div>
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:10px">
+              <div style="font-size:32px;font-weight:700;color:var(--bl)" id="cut-prob">—</div>
+              <div>
+                <div style="font-size:11px;color:var(--mu)" id="cut-prob-label">—</div>
+                <div style="font-size:10px;color:var(--mu2);margin-top:3px">Based on rate spread &amp; macro conditions</div>
+              </div>
+            </div>
+            <div style="height:8px;background:var(--br);border-radius:4px;overflow:hidden">
+              <div id="cut-prob-bar" style="height:100%;border-radius:4px;background:linear-gradient(90deg,var(--rd),var(--yw),var(--gr));transition:width .6s" width="50%"></div>
+            </div>
+          </div>
+          <div style="background:var(--bg);border:1px solid var(--br);border-radius:8px;padding:16px">
+            <div style="font-size:9px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Next FOMC Meeting</div>
+            <div style="font-size:22px;font-weight:700;color:var(--tx)" id="fomc-next-date">—</div>
+            <div style="font-size:11px;color:var(--mu);margin-top:4px" id="fomc-days-away">—</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+              <div><div style="font-size:9px;color:var(--mu)">CURRENT RATE</div><div style="font-size:16px;font-weight:700;color:var(--or)" id="fomc-current-rate">—</div></div>
+              <div><div style="font-size:9px;color:var(--mu)">RATE SPREAD (FF-2Y)</div><div style="font-size:16px;font-weight:700" id="fomc-spread">—</div></div>
+            </div>
+          </div>
+        </div>
+        <!-- FOMC calendar table -->
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Meeting Date</th><th>End Date</th><th>Days Away</th><th>Status</th></tr></thead>
+            <tbody id="fomc-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── POLITICAL CLIMATE & GEOPOLITICAL ───────────────────── -->
+    <div class="panel" style="margin-top:20px">
+      <div class="panel-hdr">
+        <span class="panel-title">🌐 Political Climate &amp; Geopolitical Risk</span>
+        <span style="color:var(--mu);font-size:10px" id="geo-as-of">Updated each morning cycle</span>
+      </div>
+      <div class="panel-body">
+        <!-- 3-col layout: Congress | Industry Risk | Headlines -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+
+          <!-- Industry political risk scores -->
+          <div>
+            <div class="learn-sub" style="margin-bottom:10px">Industry Political Risk Scores</div>
+            <div id="industry-risk-box">
+              <div class="empty"><div class="empty-icon">🏭</div><div class="empty-msg">Run morning cycle</div></div>
+            </div>
+          </div>
+
+          <!-- Geopolitical headlines -->
+          <div>
+            <div class="learn-sub" style="margin-bottom:10px">Geopolitical &amp; Policy Headlines</div>
+            <div id="geo-news-box">
+              <div class="empty"><div class="empty-icon">📰</div><div class="empty-msg">Run morning cycle</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Congress trading table -->
+        <div class="learn-sub" style="margin-bottom:10px">Congress Member Trading Activity</div>
+        <div style="font-size:10px;color:var(--mu);margin-bottom:8px">
+          Recent trades filed by U.S. Senators &amp; Representatives — potential policy signal.
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Date</th><th>Politician</th><th>Party</th><th>Chamber</th><th>Ticker</th><th>Transaction</th><th>Amount</th></tr></thead>
+            <tbody id="congress-tbody">
+              <tr><td colspan="7"><div class="empty"><div class="empty-msg">Congress trading data loads on morning cycle</div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -1168,6 +1276,121 @@ async function loadBTC() {
   }
 }
 
+// ── FOMC & Rate Cut Renderer ──────────────────────────────────────────────
+function renderFOMC(fomc) {
+  if (!fomc || !fomc.next_meeting) return;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const prob  = fomc.cut_prob_pct || 0;
+  const rate  = fomc.current_rate || 0;
+  const spread= fomc.rate_spread  || 0;
+
+  // Probability display
+  document.getElementById('cut-prob').textContent = prob + '%';
+  document.getElementById('cut-prob-bar').style.width = prob + '%';
+  const probLabel = prob >= 70 ? '🟢 Cut likely' : prob >= 40 ? '🟡 Cut possible' : '🔴 Hold expected';
+  document.getElementById('cut-prob-label').textContent = probLabel;
+
+  // Next meeting
+  const nm   = fomc.next_meeting;
+  const nmDate = new Date(nm.start + 'T00:00:00');
+  const daysAway = Math.ceil((nmDate - today) / 86400000);
+  document.getElementById('fomc-next-date').textContent = new Date(nm.start + 'T12:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  const dEl = document.getElementById('fomc-days-away');
+  dEl.textContent = daysAway <= 0 ? 'Meeting in progress' : `${daysAway} day${daysAway!==1?'s':''} away`;
+  dEl.style.color = daysAway <= 7 ? 'var(--yw)' : 'var(--mu)';
+  document.getElementById('fomc-current-rate').textContent = rate ? rate.toFixed(2)+'%' : '—';
+  const spEl = document.getElementById('fomc-spread');
+  spEl.textContent = spread >= 0 ? '+' + spread.toFixed(2)+'%' : spread.toFixed(2)+'%';
+  spEl.style.color = spread > 0.5 ? 'var(--gr)' : spread < -0.5 ? 'var(--rd)' : 'var(--yw)';
+  document.getElementById('fomc-as-of').textContent = 'As of ' + (fomc.as_of || '—');
+
+  // FOMC calendar table
+  const upcoming = fomc.upcoming || [];
+  document.getElementById('fomc-tbody').innerHTML = upcoming.map(m => {
+    const mDate = new Date(m.start + 'T12:00:00');
+    const days  = Math.ceil((new Date(m.start + 'T00:00:00') - today) / 86400000);
+    const isPast = days < 0;
+    const isNext = m.start === nm.start;
+    const status = isPast ? '<span class="badge b-hold">Past</span>'
+                 : isNext ? '<span class="badge b-buy">Next ▶</span>'
+                 :          '<span style="color:var(--mu);font-size:10px">Upcoming</span>';
+    return `<tr style="${isNext?'background:rgba(88,166,255,.06)':''}">
+      <td style="font-weight:${isNext?700:400}">${mDate.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}</td>
+      <td style="color:var(--mu)">${new Date(m.end+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}</td>
+      <td style="color:${days<=14?'var(--yw)':'var(--mu)'}">${isPast?'—':days+' days'}</td>
+      <td>${status}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Political Climate & Geopolitical Renderer ─────────────────────────────
+function renderPolitical(congress, geoNews, industryRisk) {
+  // Industry risk scores
+  const irBox = document.getElementById('industry-risk-box');
+  if (industryRisk && Object.keys(industryRisk).length) {
+    const sorted = Object.entries(industryRisk).sort(([,a],[,b]) => b.score - a.score);
+    irBox.innerHTML = sorted.map(([sector, d]) => {
+      const score = d.score || 50;
+      const col = score >= 70 ? 'var(--rd)' : score >= 55 ? 'var(--yw)' : 'var(--gr)';
+      const trendCol = d.trend === '↑' ? 'var(--rd)' : d.trend === '↓' ? 'var(--gr)' : 'var(--mu)';
+      return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(48,54,61,.4)">
+        <div style="width:90px;font-size:11px;flex-shrink:0">${sector}</div>
+        <div style="flex:1;height:6px;background:var(--br);border-radius:3px;overflow:hidden">
+          <div style="width:${score}%;height:100%;background:${col};border-radius:3px"></div>
+        </div>
+        <div style="font-size:11px;font-weight:700;color:${col};width:32px;text-align:right">${score}</div>
+        <div style="font-size:12px;color:${trendCol};width:14px">${d.trend||'→'}</div>
+      </div>
+      <div style="font-size:9px;color:var(--mu2);padding:0 0 5px 100px;line-height:1.4">${d.driver||''}</div>`;
+    }).join('');
+  } else {
+    irBox.innerHTML = `<div class="empty"><div class="empty-icon">🏭</div><div class="empty-msg">Loads on morning cycle</div></div>`;
+  }
+
+  // Geopolitical news
+  const gnBox = document.getElementById('geo-news-box');
+  const catLabels = {geopolitical:'🌍 Geopolitical', fed_policy:'🏦 Fed Policy',
+                     political:'🏛️ Political', global_trade:'📦 Trade', macro:'📊 Macro'};
+  if (geoNews && geoNews.length) {
+    const limited = geoNews.slice(0, 12);
+    gnBox.innerHTML = limited.map(n => {
+      const cat = catLabels[n.category] || '📰 News';
+      return `<div style="padding:8px 0;border-bottom:1px solid rgba(48,54,61,.4)">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+          <span style="font-size:9px;color:var(--bl);background:rgba(88,166,255,.1);padding:1px 6px;border-radius:8px">${cat}</span>
+          <span style="font-size:9px;color:var(--mu2)">${n.source} · ${n.published}</span>
+        </div>
+        <div style="font-size:11px;color:var(--tx);line-height:1.4">${n.title}</div>
+        ${n.summary ? `<div style="font-size:10px;color:var(--mu);margin-top:3px;line-height:1.4">${n.summary.substring(0,120)}${n.summary.length>120?'…':''}</div>` : ''}
+      </div>`;
+    }).join('');
+  } else {
+    gnBox.innerHTML = `<div class="empty"><div class="empty-icon">📰</div><div class="empty-msg">Loads on morning cycle</div><div class="empty-sub">Uses NEWS_API_KEY secret</div></div>`;
+  }
+
+  // Congress trading
+  const cgTbody = document.getElementById('congress-tbody');
+  if (congress && congress.length) {
+    const partyColor = p => p==='R'?'var(--rd)':p==='D'?'var(--bl)':'var(--mu)';
+    const txnColor = t => (t||'').toLowerCase().includes('purchase')?'var(--gr)':(t||'').toLowerCase().includes('sale')?'var(--rd)':'var(--mu)';
+    cgTbody.innerHTML = congress.slice(0,20).map(t => {
+      const party = (t.party||'').trim().substring(0,1).toUpperCase();
+      const txn   = t.transaction || '—';
+      return `<tr>
+        <td style="color:var(--mu);font-size:10px">${t.date||'—'}</td>
+        <td style="font-size:11px"><strong>${t.politician||'—'}</strong></td>
+        <td><span style="color:${partyColor(party)};font-weight:700">${party||'—'}</span></td>
+        <td style="color:var(--mu);font-size:10px">${t.chamber||'—'}</td>
+        <td><strong style="color:var(--bl)">${t.ticker||'—'}</strong></td>
+        <td style="color:${txnColor(txn)};font-size:10px;font-weight:700">${txn}</td>
+        <td style="color:var(--mu);font-size:10px">${t.amount||'—'}</td>
+      </tr>`;
+    }).join('');
+  } else {
+    cgTbody.innerHTML = `<tr><td colspan="7"><div class="empty"><div class="empty-icon">🏛️</div><div class="empty-msg">Congress trading loads on morning cycle</div><div class="empty-sub">Uses QUIVER_QUANT_KEY secret</div></div></td></tr>`;
+  }
+}
+
 function renderFearGreed(preds) {
   const latest = preds && preds.length ? preds[preds.length-1] : null;
   if (!latest) return;
@@ -1325,18 +1548,66 @@ function renderMacro(preds) {
   document.getElementById('m-pos-cap').textContent     = posCapPct;
   document.getElementById('m-kelly-label').textContent = 'Kelly cap: '+posCapPct+' of max';
 
-  // Economic signal checklist
+  // Extended macro cards (from macro_extended if available)
+  const mx = D.macro_extended || {};
+  const ffr  = parseFloat(mx.fed_funds_rate || 0);
+  const y10  = parseFloat(mx.y10 || 0);
+  const sent = parseFloat(mx.consumer_sentiment || 0);
+  // CPI: FRED returns index level; estimate YoY from last value vs ~309 (year-ago baseline)
+  const cpiRaw = parseFloat(mx.cpi_yoy || 0);
+  const cpiPct = cpiRaw > 100 ? ((cpiRaw / 308.4 - 1) * 100) : cpiRaw; // baseline ~Dec 2023
+
+  if (ffr) {
+    document.getElementById('m-ffr').textContent = ffr.toFixed(2) + '%';
+    document.getElementById('m-ffr').style.color = ffr > 5 ? 'var(--rd)' : ffr > 4 ? 'var(--yw)' : 'var(--gr)';
+    document.getElementById('m-ffr-s').textContent = ffr > 5.25 ? 'Restrictive' : ffr > 3.5 ? 'Moderately tight' : 'Neutral-to-easy';
+  }
+  if (cpiPct) {
+    document.getElementById('m-cpi').textContent = cpiPct.toFixed(1) + '%';
+    document.getElementById('m-cpi').style.color = cpiPct > 4 ? 'var(--rd)' : cpiPct > 2.5 ? 'var(--yw)' : 'var(--gr)';
+    document.getElementById('m-cpi-s').textContent = cpiPct > 4 ? 'Well above target' : cpiPct > 2.5 ? 'Above 2% target' : 'Near 2% target';
+  }
+  if (y10) {
+    document.getElementById('m-y10').textContent = y10.toFixed(2) + '%';
+    document.getElementById('m-y10').style.color = y10 > 5 ? 'var(--rd)' : y10 > 4 ? 'var(--yw)' : 'var(--tx)';
+    document.getElementById('m-y10-s').textContent = y10 > 5 ? 'Elevated pressure on equities' : y10 > 4 ? 'Moderate rate pressure' : 'Supportive for growth stocks';
+  }
+  if (sent) {
+    document.getElementById('m-sent').textContent = sent.toFixed(0);
+    document.getElementById('m-sent').style.color = sent > 80 ? 'var(--gr)' : sent > 65 ? 'var(--yw)' : 'var(--rd)';
+    document.getElementById('m-sent-s').textContent = sent > 80 ? 'Optimistic consumers' : sent > 65 ? 'Mixed sentiment' : 'Pessimistic / cautious';
+  }
+
+  // Expanded economic signal checklist
+  const hy   = parseFloat(mx.hy_spread || 0);
+  const oil  = parseFloat(mx.oil_wti || 0);
+  const y2   = parseFloat(mx.y2 || 0);
+  const gdp  = parseFloat(mx.gdp_growth || 0);
+  const init = parseFloat(mx.initial_claims || 0);
+  const gold = parseFloat(mx.gold || 0);
+
   const signals = [
-    {label:'Market Regime (HMM)', val:regLabel,                          ok:reg===2,  warn:reg===0 },
-    {label:'Yield Curve (10Y-2Y)',val:(yc>=0?'+':'')+yc.toFixed(2)+'%', ok:yc>=0.2,  warn:yc<0   },
-    {label:'ISM PMI',             val:pmi.toFixed(1),                    ok:pmi>=52,  warn:pmi<48 },
-    {label:'VIX Level',           val:vix.toFixed(1),                    ok:vix<20,   warn:vix>28 },
-    {label:'Unemployment Rate',   val:ue.toFixed(1)+'%',                 ok:ue<4.5,   warn:ue>6   },
-  ];
+    {label:'Market Regime (HMM)',   val:regLabel,                           ok:reg===2,        warn:reg===0         },
+    {label:'Yield Curve (10Y-2Y)',  val:(yc>=0?'+':'')+yc.toFixed(2)+'%',  ok:yc>=0.2,        warn:yc<0            },
+    {label:'ISM PMI',               val:pmi?pmi.toFixed(1):'—',            ok:pmi>=52,        warn:pmi<48          },
+    {label:'VIX Level',             val:vix.toFixed(1),                     ok:vix<20,         warn:vix>28          },
+    {label:'Unemployment Rate',     val:ue.toFixed(1)+'%',                  ok:ue<4.5,         warn:ue>6            },
+    {label:'Fed Funds Rate',        val:ffr?ffr.toFixed(2)+'%':'—',        ok:ffr<3.5,        warn:ffr>5.5         },
+    {label:'CPI (Est. YoY)',        val:cpiPct?cpiPct.toFixed(1)+'%':'—',  ok:cpiPct<2.5,     warn:cpiPct>4        },
+    {label:'10Y Treasury Yield',    val:y10?y10.toFixed(2)+'%':'—',        ok:y10<3.5,        warn:y10>5           },
+    {label:'2Y Treasury Yield',     val:y2?y2.toFixed(2)+'%':'—',          ok:y2<ffr,         warn:y2>ffr+0.5      },
+    {label:'HY Credit Spread',      val:hy?hy.toFixed(2)+'%':'—',          ok:hy<4,           warn:hy>6            },
+    {label:'WTI Oil Price',         val:oil?'$'+oil.toFixed(1):'—',        ok:oil<80,         warn:oil>100         },
+    {label:'Gold Price',            val:gold?'$'+Math.round(gold):'—',     ok:false,          warn:gold>3000       },
+    {label:'GDP Growth (Last Q)',   val:gdp?gdp.toFixed(1)+'%':'—',        ok:gdp>=2,         warn:gdp<0           },
+    {label:'Initial Jobless Claims',val:init?Math.round(init).toLocaleString():'—', ok:init<220000, warn:init>280000 },
+    {label:'Consumer Sentiment',    val:sent?sent.toFixed(0):'—',          ok:sent>80,        warn:sent<60         },
+  ].filter(s => s.val !== '—' || ['Market Regime (HMM)','VIX Level','Yield Curve (10Y-2Y)','ISM PMI','Unemployment Rate'].includes(s.label));
+
   document.getElementById('m-signals-box').innerHTML = signals.map(s => {
     const icon = s.ok?'🟢':s.warn?'🔴':'🟡';
     const col  = s.ok?'var(--gr)':s.warn?'var(--rd)':'var(--yw)';
-    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--br)">
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(48,54,61,.4)">
       <span style="color:var(--mu);font-size:11px">${s.label}</span>
       <span style="color:${col};font-weight:700;font-size:12px">${icon} ${s.val}</span>
     </div>`;
@@ -1401,6 +1672,8 @@ async function loadAll() {
   renderPnLCard(pnlLog);
   renderMacro(preds);
   renderFearGreed(preds);
+  renderFOMC(d.fomc || null);
+  renderPolitical(d.congress_trades || [], d.geopolitical || [], d.industry_risk || {});
   renderLearned(d.rules, d.weights, d.features, d.calibration, d.ticker_accuracy);
 
   // Search hint
