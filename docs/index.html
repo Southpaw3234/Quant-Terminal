@@ -633,6 +633,21 @@ tr:hover td{background:rgba(88,166,255,.04)}
         <div class="card-sub" id="m-sent-s">U. of Michigan index</div>
       </div>
       <div class="card">
+        <div class="card-label">Unemployment Rate</div>
+        <div class="card-value" id="m-unemp">—</div>
+        <div class="card-sub" id="m-unemp-s">U.S. labor market</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Rate Cut Odds</div>
+        <div class="card-value" id="m-cut-odds">—</div>
+        <div class="card-sub" id="m-cut-odds-s">Next FOMC decision</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Next Fed Meeting</div>
+        <div class="card-value" id="m-fomc-date" style="font-size:16px">—</div>
+        <div class="card-sub" id="m-fomc-days">—</div>
+      </div>
+      <div class="card">
         <div class="card-label">WTI Crude Oil</div>
         <div class="card-value" id="m-oil">—</div>
         <div class="card-sub" id="m-oil-s">USD per barrel</div>
@@ -1874,6 +1889,33 @@ function renderMacro(preds) {
     document.getElementById('m-sent').textContent = sent.toFixed(0);
     document.getElementById('m-sent').style.color = sent > 80 ? 'var(--gr)' : sent > 65 ? 'var(--yw)' : 'var(--rd)';
     document.getElementById('m-sent-s').textContent = sent > 80 ? 'Optimistic consumers' : sent > 65 ? 'Mixed sentiment' : 'Pessimistic / cautious';
+  }
+
+  // ── Unemployment card ─────────────────────────────────────────────────────
+  if (ue) {
+    document.getElementById('m-unemp').textContent = ue.toFixed(1) + '%';
+    document.getElementById('m-unemp').style.color = ue < 4 ? 'var(--gr)' : ue < 5 ? 'var(--yw)' : 'var(--rd)';
+    document.getElementById('m-unemp-s').textContent = ue < 4 ? 'Full employment' : ue < 5 ? 'Near full employment' : ue < 6 ? 'Softening labor market' : 'Elevated — recession risk';
+  }
+
+  // ── Rate cut odds + next meeting (from FOMC data) ─────────────────────────
+  const _fomc = _D && _D.fomc;
+  if (_fomc) {
+    const _cutProb = _fomc.cut_prob_pct || 0;
+    document.getElementById('m-cut-odds').textContent = _cutProb + '%';
+    document.getElementById('m-cut-odds').style.color = _cutProb >= 70 ? 'var(--gr)' : _cutProb >= 40 ? 'var(--yw)' : 'var(--rd)';
+    document.getElementById('m-cut-odds-s').textContent = _cutProb >= 70 ? 'Cut likely' : _cutProb >= 40 ? 'Cut possible' : 'Hold expected';
+
+    const _nm = _fomc.next_meeting;
+    if (_nm) {
+      const _nmDate = new Date(_nm.start + 'T12:00:00');
+      const _today  = new Date(); _today.setHours(0,0,0,0);
+      const _days   = Math.ceil((_nmDate - _today) / 86400000);
+      document.getElementById('m-fomc-date').textContent = _nmDate.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
+      const _dEl = document.getElementById('m-fomc-days');
+      _dEl.textContent = _days <= 0 ? 'Meeting today/in progress' : _days === 1 ? 'Tomorrow' : `${_days} days away`;
+      _dEl.style.color = _days <= 7 ? 'var(--yw)' : _days <= 14 ? 'var(--or)' : 'var(--mu)';
+    }
   }
 
   // ── Commodity cards ───────────────────────────────────────────────────────
