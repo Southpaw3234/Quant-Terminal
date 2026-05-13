@@ -1549,7 +1549,7 @@ function renderMacro(preds) {
   document.getElementById('m-kelly-label').textContent = 'Kelly cap: '+posCapPct+' of max';
 
   // Extended macro cards (from macro_extended if available)
-  const mx = D.macro_extended || {};
+  const mx = (_D && _D.macro_extended) || {};
   const ffr  = parseFloat(mx.fed_funds_rate || 0);
   const y10  = parseFloat(mx.y10 || 0);
   const sent = parseFloat(mx.consumer_sentiment || 0);
