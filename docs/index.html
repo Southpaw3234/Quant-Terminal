@@ -172,6 +172,31 @@ tr:hover td{background:rgba(88,166,255,.04)}
 .empty-msg{font-size:12px;margin-bottom:4px}
 .empty-sub{font-size:10px}
 
+/* ── METRIC TOOLTIPS ── */
+.tip-wrap{position:relative;display:inline-flex;align-items:center;gap:3px;cursor:help;width:100%;justify-content:center}
+.tip-icon{font-size:9px;color:var(--mu2);opacity:.8;line-height:1;margin-top:-1px}
+.tip-box{display:none;position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);
+  width:240px;background:var(--sf2);border:1px solid rgba(88,166,255,.35);border-radius:8px;
+  padding:11px 13px;z-index:600;font-size:11px;color:var(--tx);line-height:1.55;
+  box-shadow:0 6px 24px rgba(0,0,0,.7);pointer-events:none;text-align:left;white-space:normal}
+.tip-wrap:hover .tip-box,.tip-wrap:focus-within .tip-box{display:block}
+.tip-title{color:var(--bl);font-weight:700;font-size:9px;margin-bottom:5px;letter-spacing:.8px;text-transform:uppercase}
+.tip-box em{color:var(--yw);font-style:normal}
+
+/* ── MODEL EXPLANATION ── */
+.explain-item{display:flex;align-items:flex-start;gap:11px;padding:9px 0;border-bottom:1px solid rgba(48,54,61,.5)}
+.explain-item:last-child{border-bottom:none}
+.explain-icon{font-size:15px;flex-shrink:0;margin-top:1px;width:20px;text-align:center}
+.explain-text{font-size:11px;color:var(--mu);line-height:1.65}
+.explain-text strong{color:var(--tx)}
+
+/* ── LIVE TICKER LOOKUP ── */
+.live-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;
+  background:rgba(227,179,65,.1);color:var(--yw);border:1px solid rgba(227,179,65,.3);letter-spacing:.5px;margin-left:8px;vertical-align:middle}
+.live-price-big{font-size:32px;font-weight:700;color:var(--or);letter-spacing:1px}
+.not-in-model-note{margin-top:12px;padding:10px 14px;background:rgba(227,179,65,.05);
+  border-radius:6px;border:1px solid rgba(227,179,65,.2);font-size:10px;color:var(--yw);line-height:1.5}
+
 /* ── LOADING ── */
 #loading-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;
   justify-content:center;z-index:999;flex-direction:column;gap:12px}
@@ -244,23 +269,59 @@ tr:hover td{background:rgba(88,166,255,.04)}
         </div>
         <div class="result-metrics">
           <div class="rm-item">
-            <div class="rm-label">Confidence</div>
+            <div class="rm-label">
+              <span class="tip-wrap">Confidence <span class="tip-icon">ⓘ</span>
+                <div class="tip-box"><div class="tip-title">Confidence Score</div>
+                  The model's overall conviction in its signal, blending ML probability with Kelly sizing and regime adjustment. <em>&gt;70% = strong signal. 55–70% = moderate. &lt;55% = weak/cautious.</em>
+                </div>
+              </span>
+            </div>
             <div class="rm-val" id="res-conf">—</div>
           </div>
           <div class="rm-item">
-            <div class="rm-label">ML Score</div>
+            <div class="rm-label">
+              <span class="tip-wrap">ML Score <span class="tip-icon">ⓘ</span>
+                <div class="tip-box"><div class="tip-title">Ensemble ML Score</div>
+                  The raw probability output averaged across three models: <em>XGBoost, LightGBM, and CatBoost</em>. Higher agreement = more reliable signal. Divergence between models lowers confidence.
+                </div>
+              </span>
+            </div>
             <div class="rm-val" id="res-ml">—</div>
           </div>
           <div class="rm-item">
-            <div class="rm-label">RSI</div>
+            <div class="rm-label">
+              <span class="tip-wrap">RSI <span class="tip-icon">ⓘ</span>
+                <div class="tip-box"><div class="tip-title">Relative Strength Index</div>
+                  14-day momentum oscillator on a 0–100 scale.<br>
+                  <em>&gt;70 = Overbought</em> (may pull back)<br>
+                  <em>&lt;30 = Oversold</em> (potential bounce)<br>
+                  <em>30–70 = Neutral</em> momentum
+                </div>
+              </span>
+            </div>
             <div class="rm-val" id="res-rsi">—</div>
           </div>
           <div class="rm-item">
-            <div class="rm-label">Regime</div>
+            <div class="rm-label">
+              <span class="tip-wrap">Regime <span class="tip-icon">ⓘ</span>
+                <div class="tip-box"><div class="tip-title">Market Regime (HMM)</div>
+                  Detected by a Hidden Markov Model trained on macro indicators.<br>
+                  <em>BULL</em> = trending up, full sizing<br>
+                  <em>FLAT</em> = range-bound, selective entries<br>
+                  <em>BEAR</em> = downtrend, reduced sizing &amp; strict filters
+                </div>
+              </span>
+            </div>
             <div class="rm-val" id="res-reg">—</div>
           </div>
           <div class="rm-item">
-            <div class="rm-label">Entry Price</div>
+            <div class="rm-label">
+              <span class="tip-wrap">Entry Price <span class="tip-icon">ⓘ</span>
+                <div class="tip-box"><div class="tip-title">Price at Prediction</div>
+                  The stock price recorded at the time the model generated this signal. Used as the benchmark for calculating actual return when the prediction is scored 5 trading days later.
+                </div>
+              </span>
+            </div>
             <div class="rm-val" id="res-price">—</div>
           </div>
         </div>
@@ -268,6 +329,15 @@ tr:hover td{background:rgba(88,166,255,.04)}
           <div class="big-signal" id="res-signal">—</div>
           <div style="font-size:9px;color:var(--mu);margin-top:6px" id="res-iv">—</div>
         </div>
+      </div>
+
+      <!-- Model Explanation Panel -->
+      <div class="panel" id="explain-panel">
+        <div class="panel-hdr">
+          <span class="panel-title">🧠 Why the Model Thinks This</span>
+          <span style="color:var(--mu);font-size:10px" id="explain-header-label">—</span>
+        </div>
+        <div class="panel-body" id="explain-body" style="padding:4px 16px 12px"></div>
       </div>
 
       <!-- History for ticker -->
@@ -285,11 +355,34 @@ tr:hover td{background:rgba(88,166,255,.04)}
       </div>
     </div>
 
-    <!-- Not found -->
-    <div id="not-found" class="not-found" style="display:none">
-      <div style="font-size:24px;margin-bottom:8px">🔍</div>
-      <div id="not-found-msg" style="color:var(--mu)">Ticker not in current watchlist</div>
-      <div style="font-size:10px;color:var(--mu2);margin-top:4px">The model covers S&P 500 large-caps. Run a morning cycle to add new tickers.</div>
+    <!-- Not found / Live lookup -->
+    <div id="not-found" style="display:none;max-width:900px;margin:0 auto">
+      <!-- Live price card (shown when Yahoo Finance succeeds) -->
+      <div id="live-card" class="result-card" style="display:none;margin-bottom:16px;flex-direction:column;gap:16px">
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="result-ticker" id="live-ticker">—</div>
+              <span class="live-badge">LIVE · NOT IN MODEL</span>
+            </div>
+            <div style="color:var(--mu);font-size:10px;margin-top:3px" id="live-exchange">—</div>
+          </div>
+          <div style="margin-left:auto;text-align:right">
+            <div class="live-price-big" id="live-price">—</div>
+            <div style="font-size:13px;font-weight:700;margin-top:3px" id="live-change">—</div>
+          </div>
+        </div>
+        <div class="not-in-model-note">
+          ⚠️ <strong style="color:var(--yw)">${'<span id=\"live-ticker-note\">This ticker</span>'}</strong> is not in the model's current watchlist — showing live market data only, no AI signal available.
+          The model runs on ~139 curated tickers. To add this stock to the model's watchlist, edit the ticker list in the notebook config.
+        </div>
+      </div>
+      <!-- Fallback: pure not-found -->
+      <div id="not-found-inner" style="text-align:center;padding:32px;color:var(--mu)">
+        <div style="font-size:28px;margin-bottom:10px">🔍</div>
+        <div id="not-found-msg" style="color:var(--mu);font-size:13px;margin-bottom:4px">Ticker not found</div>
+        <div style="font-size:10px;color:var(--mu2);margin-top:6px">Not in the model watchlist and live data unavailable.<br>Check the ticker symbol and try again.</div>
+      </div>
     </div>
   </div>
 </div>
@@ -814,59 +907,192 @@ function renderPnLCard(log) {
   document.getElementById('c-pnl-s').textContent = `${log.length} day${log.length!==1?'s':''} tracked`;
 }
 
+// ── Model Explanation Generator ────────────────────────────────────────────
+function generateExplanation(ticker, latest, allPreds) {
+  const a    = (latest.action || 'HOLD').toUpperCase();
+  const conf = Math.round((parseFloat(latest.confidence) || 0.5) * 100);
+  const ml   = Math.round((parseFloat(latest.p_ensemble) || 0) * 100);
+  const rsi  = parseFloat(latest.rsi  || 50);
+  const vix  = parseFloat(latest.vix  || 20);
+  const yc   = parseFloat(latest.yield_curve || 0);
+  const pmi  = parseFloat(latest.ism_pmi || 0);
+  const reg  = parseInt(latest.regime ?? 1);
+  const regLabels = {0:'BEAR', 1:'FLAT', 2:'BULL'};
+  const regLbl = regLabels[reg] ?? 'FLAT';
+  const items = [];
+
+  // 1. Signal summary
+  const sWords  = {BUY:'bullish', SELL:'bearish', HOLD:'neutral'};
+  const sColors = {BUY:'var(--gr)', SELL:'var(--rd)', HOLD:'var(--mu)'};
+  const sIcons  = {BUY:'📈', SELL:'📉', HOLD:'⏸️'};
+  const convTxt = conf>=70 ? 'This is a <strong>high-conviction</strong> signal.'
+                : conf>=55 ? 'The model has <strong>moderate conviction</strong>.'
+                :            'Signal is <strong>cautious</strong> — low conviction, smaller position.';
+  items.push({ icon: sIcons[a]||'⏸️',
+    text: `The model is <strong style="color:${sColors[a]||'var(--mu)'}">${sWords[a]||'neutral'}</strong> on ${ticker} with <strong>${conf}% confidence</strong>. ${convTxt}` });
+
+  // 2. Regime
+  const regIcons = {BULL:'🟢', FLAT:'🟡', BEAR:'🔴'};
+  const regDescs = {
+    BULL: 'The HMM detects a <strong>BULL regime</strong> — trending conditions favour long positions and the model applies standard Kelly sizing.',
+    FLAT: 'The HMM detects a <strong>FLAT/neutral regime</strong> — the market is range-bound. The model demands higher confidence before entering trades.',
+    BEAR: 'The HMM detects a <strong>BEAR regime</strong> — the model tightens entry filters, reduces position size, and avoids marginal signals.'
+  };
+  items.push({ icon: regIcons[regLbl]||'🟡', text: regDescs[regLbl]||regDescs.FLAT });
+
+  // 3. RSI
+  let rsiIcon, rsiText;
+  if      (rsi > 70) { rsiIcon='🔴'; rsiText=`RSI <strong>${rsi.toFixed(1)}</strong> — stock is <strong>overbought</strong>. Momentum is extended; pullback risk is elevated.`; }
+  else if (rsi < 30) { rsiIcon='🟢'; rsiText=`RSI <strong>${rsi.toFixed(1)}</strong> — stock is <strong>oversold</strong>. Selling pressure may be exhausted; bounce potential is higher.`; }
+  else if (rsi > 58) { rsiIcon='🟡'; rsiText=`RSI <strong>${rsi.toFixed(1)}</strong> — <strong>positive momentum</strong>, trending upward without being overextended.`; }
+  else if (rsi < 42) { rsiIcon='🟡'; rsiText=`RSI <strong>${rsi.toFixed(1)}</strong> — <strong>mild downward pressure</strong> but no extreme reading.`; }
+  else               { rsiIcon='⚪'; rsiText=`RSI <strong>${rsi.toFixed(1)}</strong> — <strong>neutral territory</strong>, balanced momentum in both directions.`; }
+  items.push({ icon: rsiIcon, text: rsiText });
+
+  // 4. ML ensemble
+  const mlIcon = '🤖';
+  const mlText = ml>=75 ? `Ensemble ML score <strong>${ml}%</strong> — XGBoost, LightGBM, and CatBoost show <strong>strong consensus</strong>. High cross-model agreement amplifies signal reliability.`
+               : ml>=60 ? `Ensemble ML score <strong>${ml}%</strong> — <strong>moderate agreement</strong> across the three models. Some divergence present.`
+               :          `Ensemble ML score <strong>${ml}%</strong> — models show <strong>mixed views</strong>. Disagreement between XGBoost/LightGBM/CatBoost reduces conviction.`;
+  items.push({ icon: mlIcon, text: mlText });
+
+  // 5. VIX / position sizing
+  let vixIcon, vixText;
+  if      (vix>35) { vixIcon='⚠️'; vixText=`VIX <strong>${vix.toFixed(1)}</strong> (Extreme Fear) — Kelly formula <strong>caps position at 40% of normal</strong>. High vol = smaller bets.`; }
+  else if (vix>28) { vixIcon='🟡'; vixText=`VIX <strong>${vix.toFixed(1)}</strong> (High Volatility) — position size <strong>capped at 60%</strong> of normal via Kelly adjustment.`; }
+  else if (vix>22) { vixIcon='🟡'; vixText=`VIX <strong>${vix.toFixed(1)}</strong> (Elevated) — positions sized at <strong>80% of normal</strong>. Mild caution applied.`; }
+  else             { vixIcon='🟢'; vixText=`VIX <strong>${vix.toFixed(1)}</strong> (Low Volatility) — calm market. Model uses <strong>full Kelly position sizing</strong>.`; }
+  items.push({ icon: vixIcon, text: vixText });
+
+  // 6. Yield curve (only if notable)
+  if      (yc < 0)   items.push({ icon:'📉', text:`Yield curve is <strong>inverted at ${yc.toFixed(2)}%</strong> — historically a recession warning. The model treats this as a macro headwind.` });
+  else if (yc > 1.0) items.push({ icon:'📈', text:`Yield curve is <strong>positive at +${yc.toFixed(2)}%</strong> — healthy credit conditions that support equity valuations.` });
+
+  // 7. ISM PMI (only if notable)
+  if      (pmi && pmi<48) items.push({ icon:'🏭', text:`ISM PMI <strong>${pmi.toFixed(1)}</strong> — manufacturing is <strong>contracting</strong>. A macro headwind factored into regime signals.` });
+  else if (pmi && pmi>54) items.push({ icon:'🏭', text:`ISM PMI <strong>${pmi.toFixed(1)}</strong> — manufacturing is <strong>expanding</strong>. Supports a risk-on macro backdrop.` });
+
+  // 8. Historical accuracy
+  const sc = allPreds.filter(p=>p.scored==='True'||p.scored==='true');
+  if (sc.length > 0) {
+    const ok  = sc.filter(p=>p.was_correct==='True'||p.was_correct==='true');
+    const acc = (ok.length/sc.length*100).toFixed(0);
+    const accColor = parseFloat(acc)>=50?'var(--gr)':'var(--rd)';
+    items.push({ icon:'📊', text:`Past model accuracy on ${ticker}: <strong style="color:${accColor}">${acc}%</strong> correct over ${sc.length} scored prediction${sc.length!==1?'s':''}.` });
+  }
+
+  return items;
+}
+
+// ── Live Ticker Lookup (for non-model tickers) ─────────────────────────────
+async function liveTickerLookup(ticker) {
+  // Direct Yahoo Finance (works in many browsers even from Netlify)
+  const tryFetch = async (url) => {
+    const r = await fetch(url, {signal: AbortSignal.timeout(5000)});
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    return r.json();
+  };
+  const parse = (json) => {
+    const res = json?.chart?.result?.[0];
+    if (!res) throw new Error('no result');
+    const m = res.meta;
+    return { price: m.regularMarketPrice, prevClose: m.previousClose||m.chartPreviousClose,
+             currency: m.currency||'USD', exchange: m.exchangeName||'', type: m.instrumentType||'' };
+  };
+  try {
+    return parse(await tryFetch(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=2d`));
+  } catch(_) {}
+  try {
+    // CORS proxy fallback
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/'+ticker+'?interval=1d&range=2d')}`;
+    const wrapper = await tryFetch(proxyUrl);
+    return parse(JSON.parse(wrapper.contents));
+  } catch(_) {}
+  return null;
+}
+
 // ── Stock Search ──────────────────────────────────────────────────────────
 let _searchTimer = null;
 function onSearch(val) {
   clearTimeout(_searchTimer);
-  _searchTimer = setTimeout(() => doSearch(val.trim().toUpperCase()), 200);
+  _searchTimer = setTimeout(() => doSearch(val.trim().toUpperCase()), 250);
 }
 
-function doSearch(ticker) {
-  const wrap = document.getElementById('result-wrap');
+async function doSearch(ticker) {
+  const wrap     = document.getElementById('result-wrap');
   const notFound = document.getElementById('not-found');
 
   if (!ticker || ticker.length < 1) {
     wrap.style.display = 'none'; notFound.style.display = 'none';
-    document.getElementById('search-hint').textContent = `${_preds.length} tickers in watchlist`;
+    const allTickers = [...new Set(_preds.map(p=>p.ticker))].sort();
+    document.getElementById('search-hint').textContent = `${allTickers.length} tickers in model — ${allTickers.slice(0,6).join(', ')}…`;
     return;
   }
 
   const tickerPreds = _preds.filter(p => p.ticker === ticker).sort((a,b)=>new Date(b.pred_ts)-new Date(a.pred_ts));
 
   if (!tickerPreds.length) {
+    // Not in model — attempt live lookup
     wrap.style.display = 'none';
     notFound.style.display = 'block';
-    document.getElementById('not-found-msg').textContent = `"${ticker}" not in current watchlist`;
-    document.getElementById('search-hint').textContent = '';
+    document.getElementById('live-card').style.display  = 'none';
+    document.getElementById('not-found-inner').style.display = 'block';
+    document.getElementById('not-found-msg').textContent = `"${ticker}" not in current model watchlist`;
+    document.getElementById('search-hint').textContent   = 'Searching live market data…';
+
+    const live = await liveTickerLookup(ticker);
+    if (live && live.price) {
+      const chg    = live.price - (live.prevClose||live.price);
+      const chgPct = live.prevClose ? (chg/live.prevClose*100) : 0;
+      document.getElementById('live-ticker').textContent      = ticker;
+      document.getElementById('live-ticker-note').textContent = ticker;
+      document.getElementById('live-exchange').textContent    = live.exchange ? `${live.exchange} · ${live.currency}` : live.currency;
+      document.getElementById('live-price').textContent = '$'+live.price.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+      const ce = document.getElementById('live-change');
+      ce.innerHTML = `<span style="color:${chg>=0?'var(--gr)':'var(--rd)'}">${chg>=0?'▲':'▼'} $${Math.abs(chg).toFixed(2)} (${chg>=0?'+':''}${chgPct.toFixed(2)}%)</span>`;
+      document.getElementById('live-card').style.display      = 'block';
+      document.getElementById('not-found-inner').style.display = 'none';
+      document.getElementById('search-hint').textContent = `Live price for ${ticker} · Not in model watchlist`;
+    } else {
+      document.getElementById('search-hint').textContent = '';
+    }
     return;
   }
 
   notFound.style.display = 'none';
   wrap.style.display = 'block';
 
-  const latest = tickerPreds[0];
-  const a = (latest.action||'HOLD').toUpperCase();
+  const latest   = tickerPreds[0];
+  const a        = (latest.action||'HOLD').toUpperCase();
   const sigClass = {BUY:'big-buy',SELL:'big-sell',HOLD:'big-hold'}[a]||'big-hold';
 
   document.getElementById('res-ticker').textContent = ticker;
-  document.getElementById('res-date').textContent = 'Last signal: ' + fts(latest.pred_ts);
+  document.getElementById('res-date').textContent   = 'Last signal: ' + fts(latest.pred_ts);
   document.getElementById('res-signal').textContent = a;
-  document.getElementById('res-signal').className = 'big-signal ' + sigClass;
-  document.getElementById('res-conf').textContent = Math.round((parseFloat(latest.confidence)||0.5)*100)+'%';
-  document.getElementById('res-ml').textContent = Math.round((parseFloat(latest.p_ensemble)||0)*100)+'%';
-  const rsi = parseFloat(latest.rsi||0);
+  document.getElementById('res-signal').className   = 'big-signal ' + sigClass;
+  document.getElementById('res-conf').textContent   = Math.round((parseFloat(latest.confidence)||0.5)*100)+'%';
+  document.getElementById('res-ml').textContent     = Math.round((parseFloat(latest.p_ensemble)||0)*100)+'%';
+  const rsi  = parseFloat(latest.rsi||0);
   const rsiEl = document.getElementById('res-rsi');
-  rsiEl.textContent = rsi.toFixed(1);
-  rsiEl.style.color = rsi>70?'var(--rd)':rsi<30?'var(--gr)':'var(--tx)';
-  document.getElementById('res-reg').innerHTML = regime(latest.regime);
+  rsiEl.textContent   = rsi.toFixed(1);
+  rsiEl.style.color   = rsi>70?'var(--rd)':rsi<30?'var(--gr)':'var(--tx)';
+  document.getElementById('res-reg').innerHTML   = regime(latest.regime);
   document.getElementById('res-price').textContent = f$(latest.price_at_pred);
-  document.getElementById('res-iv').textContent = latest.iv_note || '';
+  document.getElementById('res-iv').textContent    = latest.iv_note || '';
+
+  // Explanation panel
+  const items = generateExplanation(ticker, latest, tickerPreds);
+  document.getElementById('explain-header-label').textContent = `${a} · ${Math.round((parseFloat(latest.confidence)||0.5)*100)}% confidence`;
+  document.getElementById('explain-body').innerHTML = items.map(it =>
+    `<div class="explain-item"><div class="explain-icon">${it.icon}</div><div class="explain-text">${it.text}</div></div>`
+  ).join('');
 
   // History table
   document.getElementById('history-title').textContent = `Signal History — ${ticker}`;
   const sc = tickerPreds.filter(p=>p.scored==='True'||p.scored==='true');
   const ok = sc.filter(p=>p.was_correct==='True'||p.was_correct==='true');
   document.getElementById('history-acc').textContent = sc.length ? `${ok.length}/${sc.length} correct (${(ok.length/sc.length*100).toFixed(0)}%)` : 'No scored outcomes yet';
+  document.getElementById('search-hint').textContent = `${tickerPreds.length} prediction${tickerPreds.length!==1?'s':''} found · Last: ${fd(latest.pred_ts)}`;
 
   document.getElementById('history-tbody').innerHTML = tickerPreds.slice(0,20).map(p => {
     const isc=p.scored==='True'||p.scored==='true', iok=p.was_correct==='True'||p.was_correct==='true';
