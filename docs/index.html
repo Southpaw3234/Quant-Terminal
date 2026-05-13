@@ -202,11 +202,12 @@ tr:hover td{background:rgba(88,166,255,.04)}
 <nav class="nav">
   <div class="nav-logo">
     ⬡ QUANT TERMINAL
-    <span>v24.1</span>
+    <span>v25</span>
   </div>
   <div class="nav-links">
     <a class="nav-link active" href="#search">🔍 Search</a>
     <a class="nav-link" href="#tracker">📊 Tracker</a>
+    <a class="nav-link" href="#macro">📡 Macro</a>
     <a class="nav-link" href="#bitcoin">₿ Bitcoin</a>
     <a class="nav-link" href="#learned">🧠 Learned</a>
   </div>
@@ -406,7 +407,91 @@ tr:hover td{background:rgba(88,166,255,.04)}
 </div>
 
 <!-- ════════════════════════════════════════════════════════ -->
-<!-- ③ BITCOIN TRACKER                                       -->
+<!-- ③ MACRO ECON OUTLOOK                                    -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div style="border-top:2px solid var(--br)"></div>
+<div id="macro">
+  <div class="section">
+    <div class="section-hdr">
+      <span class="section-icon">📡</span>
+      <h2>MACRO ECON OUTLOOK</h2>
+      <span class="section-num" id="macro-regime-badge">LOADING</span>
+      <div class="section-line"></div>
+    </div>
+
+    <!-- 4 stat cards -->
+    <div class="cards">
+      <div class="card">
+        <div class="card-label">Market Regime</div>
+        <div class="card-value" id="m-regime">—</div>
+        <div class="card-sub">HMM model signal</div>
+      </div>
+      <div class="card">
+        <div class="card-label">VIX</div>
+        <div class="card-value" id="m-vix">—</div>
+        <div class="card-sub" id="m-vix-s">Volatility index</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Yield Curve</div>
+        <div class="card-value" id="m-yc">—</div>
+        <div class="card-sub" id="m-yc-s">10Y-2Y spread</div>
+      </div>
+      <div class="card">
+        <div class="card-label">ISM PMI</div>
+        <div class="card-value" id="m-pmi">—</div>
+        <div class="card-sub" id="m-pmi-s">Manufacturing</div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <!-- VIX Fear Gauge -->
+      <div class="panel">
+        <div class="panel-hdr">
+          <span class="panel-title">VIX Fear Gauge</span>
+          <span style="color:var(--mu);font-size:10px" id="m-kelly-label">Kelly cap: —</span>
+        </div>
+        <div class="panel-body">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <span style="font-size:11px;color:var(--mu)">Calm</span>
+            <span style="font-size:26px;font-weight:700" id="m-vix-big">—</span>
+            <span style="font-size:11px;color:var(--mu)">Panic</span>
+          </div>
+          <div class="fg-bar"><div class="fg-needle" id="m-vix-needle" style="left:10%"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--mu2);margin-bottom:14px">
+            <span>VIX 10</span><span>VIX 20</span><span>VIX 28</span><span>VIX 35+</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+            <div class="btc-m"><div class="lbl">Unemployment</div><div class="val" id="m-ue">—</div></div>
+            <div class="btc-m"><div class="lbl">Vol Regime</div><div class="val" id="m-vol-regime">—</div></div>
+            <div class="btc-m"><div class="lbl">Max Position</div><div class="val" id="m-pos-cap">—</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Economic signal checklist -->
+      <div class="panel">
+        <div class="panel-hdr"><span class="panel-title">Economic Signals</span></div>
+        <div class="panel-body" id="m-signals-box">
+          <div class="empty"><div class="empty-icon">📡</div><div class="empty-msg">Run morning cycle to populate</div><div class="empty-sub">Macro data refreshes each trading day</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Signal distribution by regime -->
+    <div class="panel">
+      <div class="panel-hdr">
+        <span class="panel-title">Signal Distribution by Regime</span>
+        <span style="color:var(--mu);font-size:10px" id="m-total-count">—</span>
+      </div>
+      <div class="panel-body" id="m-regime-dist">
+        <div class="empty"><div class="empty-msg">Loading signal distribution…</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- ④ BITCOIN TRACKER                                       -->
 <!-- ════════════════════════════════════════════════════════ -->
 <div style="border-top:2px solid var(--br)"></div>
 <div id="bitcoin">
@@ -795,65 +880,64 @@ function doSearch(ticker) {
   }).join('');
 }
 
-// ── Bitcoin Tracker ───────────────────────────────────────────────────────
+// ── Bitcoin Tracker (CoinGecko — CORS-safe) ──────────────────────────────
 async function loadBTC() {
   try {
-    const r = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/BTC-USD?interval=1d&range=30d');
-    if (!r.ok) throw new Error();
-    const j = await r.json();
-    const res = j.chart.result[0];
-    const meta = res.meta;
-    const ts   = res.timestamp;
-    const closes = res.indicators.quote[0].close;
-    const highs   = res.indicators.quote[0].high;
-    const lows    = res.indicators.quote[0].low;
+    // Parallel: market data + 30-day chart
+    const [rm, rc] = await Promise.all([
+      fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin&price_change_percentage=7d,30d'),
+      fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=30&interval=daily')
+    ]);
+    if (!rm.ok || !rc.ok) throw new Error('CoinGecko unavailable');
 
-    const price   = meta.regularMarketPrice || closes[closes.length-1];
-    const prev    = meta.previousClose || closes[closes.length-2] || price;
-    const chg     = price - prev;
-    const chgPct  = (chg/prev)*100;
-    const high    = meta.regularMarketDayHigh || Math.max(...highs.filter(Boolean).slice(-1));
-    const low     = meta.regularMarketDayLow  || Math.min(...lows.filter(Boolean).slice(-1));
-    const open7d  = closes.filter(Boolean).slice(-8)[0] || price;
-    const open30d = closes.filter(Boolean)[0] || price;
-    const chg7d   = (price-open7d)/open7d*100;
-    const chg30d  = (price-open30d)/open30d*100;
+    const [mArr, chart] = await Promise.all([rm.json(), rc.json()]);
+    const m      = mArr[0];
+    const price  = m.current_price;
+    const chg    = m.price_change_24h || 0;
+    const chgPct = m.price_change_percentage_24h || 0;
+    const high   = m.high_24h || price;
+    const low    = m.low_24h  || price;
+    const chg7d  = m.price_change_percentage_7d_in_currency  || 0;
+    const chg30d = m.price_change_percentage_30d_in_currency || 0;
+    const updAt  = new Date(m.last_updated);
 
     // Update price card
-    const pe = document.getElementById('btc-price');
-    pe.textContent = '$' + price.toLocaleString(undefined,{maximumFractionDigits:0});
+    document.getElementById('btc-price').textContent = '$' + price.toLocaleString(undefined,{maximumFractionDigits:0});
     const ce = document.getElementById('btc-change');
-    ce.innerHTML = `<span style="color:${chg>=0?'var(--gr)':'var(--rd)'}">${chg>=0?'▲':'▼'} ${Math.abs(chg).toFixed(0)} (${chg>=0?'+':''}${chgPct.toFixed(2)}%) 24h</span>`;
-    document.getElementById('btc-sub').textContent = `Last update: ${new Date(meta.regularMarketTime*1000).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})} ET`;
+    ce.innerHTML = `<span style="color:${chg>=0?'var(--gr)':'var(--rd)'}">${chg>=0?'▲':'▼'} $${Math.abs(chg).toFixed(0)} (${chg>=0?'+':''}${chgPct.toFixed(2)}%) 24h</span>`;
+    document.getElementById('btc-sub').textContent = `CoinGecko · Updated ${updAt.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}`;
 
-    document.getElementById('btc-high').textContent = '$'+high.toLocaleString(undefined,{maximumFractionDigits:0});
-    document.getElementById('btc-high').style.color = 'var(--gr)';
-    document.getElementById('btc-low').textContent = '$'+low.toLocaleString(undefined,{maximumFractionDigits:0});
-    document.getElementById('btc-low').style.color = 'var(--rd)';
+    const hiEl = document.getElementById('btc-high');
+    hiEl.textContent = '$'+high.toLocaleString(undefined,{maximumFractionDigits:0}); hiEl.style.color='var(--gr)';
+    const loEl = document.getElementById('btc-low');
+    loEl.textContent = '$'+low.toLocaleString(undefined,{maximumFractionDigits:0});  loEl.style.color='var(--rd)';
     const s7 = document.getElementById('btc-7d');
-    s7.textContent = (chg7d>=0?'+':'')+chg7d.toFixed(2)+'%'; s7.style.color=chg7d>=0?'var(--gr)':'var(--rd)';
+    s7.textContent  = (chg7d>=0?'+':'')+chg7d.toFixed(2)+'%';  s7.style.color  = chg7d>=0?'var(--gr)':'var(--rd)';
     const s30 = document.getElementById('btc-30d');
-    s30.textContent = (chg30d>=0?'+':'')+chg30d.toFixed(2)+'%'; s30.style.color=chg30d>=0?'var(--gr)':'var(--rd)';
-
+    s30.textContent = (chg30d>=0?'+':'')+chg30d.toFixed(2)+'%'; s30.style.color = chg30d>=0?'var(--gr)':'var(--rd)';
     document.getElementById('btc-chart-label').textContent = '$'+price.toLocaleString(undefined,{maximumFractionDigits:0});
 
     // Draw chart
-    const labels = ts.map(t=>new Date(t*1000).toLocaleDateString('en-US',{month:'short',day:'numeric'}));
-    const data   = closes.map((v,i)=>v||closes[i-1]||null);
-    const ctx = document.getElementById('btc-chart').getContext('2d');
+    const pts    = chart.prices; // [[ts_ms, price], ...]
+    const labels = pts.map(([ts])=>new Date(ts).toLocaleDateString('en-US',{month:'short',day:'numeric'}));
+    const data   = pts.map(([,v])=>+v.toFixed(2));
+    const ctx    = document.getElementById('btc-chart').getContext('2d');
     if (_btcChart) { _btcChart.destroy(); _btcChart=null; }
     const borderColor = chg30d>=0?'#f0883e':'#f85149';
     _btcChart = new Chart(ctx, {
       type:'line',
       data:{labels,datasets:[{data,borderColor,backgroundColor:chg30d>=0?'rgba(240,136,62,.07)':'rgba(248,81,73,.06)',borderWidth:2.5,fill:true,tension:.35,pointRadius:0,spanGaps:true}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#161b22',borderColor:'#30363d',borderWidth:1,titleColor:'#8b949e',bodyColor:'#e6edf3',callbacks:{label:c=>' $'+c.parsed.y.toLocaleString(undefined,{maximumFractionDigits:0})}}},
-        scales:{x:{grid:{color:'#21262d'},ticks:{color:'#8b949e',font:{family:'monospace',size:9},maxTicksLimit:8}},
-                y:{grid:{color:'#21262d'},ticks:{color:'#8b949e',font:{family:'monospace',size:9},callback:v=>'$'+v.toLocaleString()}}}}
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{backgroundColor:'#161b22',borderColor:'#30363d',borderWidth:1,titleColor:'#8b949e',bodyColor:'#e6edf3',
+          callbacks:{label:c=>' $'+c.parsed.y.toLocaleString(undefined,{maximumFractionDigits:0})}}},
+        scales:{
+          x:{grid:{color:'#21262d'},ticks:{color:'#8b949e',font:{family:'monospace',size:9},maxTicksLimit:8}},
+          y:{grid:{color:'#21262d'},ticks:{color:'#8b949e',font:{family:'monospace',size:9},callback:v=>'$'+v.toLocaleString()}}}}
     });
 
   } catch(e) {
-    document.getElementById('btc-price').textContent = 'API unavailable';
-    document.getElementById('btc-change').textContent = 'Try refreshing — Yahoo Finance may be rate-limiting';
+    document.getElementById('btc-price').textContent = 'Loading…';
+    document.getElementById('btc-change').textContent = 'CoinGecko rate limit — will retry on next refresh';
     document.getElementById('btc-change').style.color = 'var(--mu)';
   }
 }
@@ -955,9 +1039,109 @@ function renderLearned(rules, weights, features, calib, accuracy) {
   }
 }
 
+// ── Macro Econ Outlook ────────────────────────────────────────────────────
+function renderMacro(preds) {
+  if (!preds || !preds.length) return;
+
+  // Pull macro values from most recent prediction row
+  const latest  = preds[preds.length - 1];
+  const vix = parseFloat(latest.vix || 0);
+  const yc  = parseFloat(latest.yield_curve || 0);
+  const pmi = parseFloat(latest.ism_pmi || 0);
+  const ue  = parseFloat(latest.unemployment || 0);
+  const reg = parseInt(latest.regime ?? 1);
+
+  const regLabels = {0:'BEAR', 1:'FLAT', 2:'BULL'};
+  const regLabel  = regLabels[reg] ?? 'FLAT';
+
+  // Regime badge
+  document.getElementById('macro-regime-badge').textContent = regLabel;
+  const regEl = document.getElementById('m-regime');
+  regEl.innerHTML = `<span class="badge ${reg===2?'b-bull':reg===0?'b-bear':'b-flat'}" style="font-size:16px;padding:4px 12px">${regLabel}</span>`;
+
+  // VIX
+  const vixEl = document.getElementById('m-vix');
+  vixEl.textContent = vix ? vix.toFixed(1) : '—';
+  vixEl.style.color = vix>35?'var(--rd)':vix>28?'var(--yw)':vix>22?'var(--or)':'var(--gr)';
+  document.getElementById('m-vix-s').textContent = vix>35?'Extreme Fear':vix>28?'High Volatility':vix>22?'Elevated':'Low Volatility';
+  document.getElementById('m-vix-big').textContent = vix ? vix.toFixed(1) : '—';
+  document.getElementById('m-vix-big').style.color = vix>35?'var(--rd)':vix>28?'var(--yw)':vix>22?'var(--or)':'var(--gr)';
+
+  // Yield curve
+  const ycEl = document.getElementById('m-yc');
+  ycEl.textContent = vix ? (yc>=0?'+':'')+yc.toFixed(2)+'%' : '—';
+  ycEl.style.color = yc<-0.1?'var(--rd)':yc<0.2?'var(--yw)':'var(--gr)';
+  document.getElementById('m-yc-s').textContent = yc<0?'Inverted ⚠️':yc<0.2?'Flat':'Normal';
+
+  // ISM PMI
+  const pmiEl = document.getElementById('m-pmi');
+  pmiEl.textContent = pmi ? pmi.toFixed(1) : '—';
+  pmiEl.style.color = pmi>=52?'var(--gr)':pmi>=50?'var(--yw)':'var(--rd)';
+  document.getElementById('m-pmi-s').textContent = pmi>=52?'Expanding':pmi>=50?'Barely Growing':'Contracting';
+
+  // Unemployment
+  const ueEl = document.getElementById('m-ue');
+  ueEl.textContent = ue ? ue.toFixed(1)+'%' : '—';
+  ueEl.style.color = ue>6?'var(--rd)':ue>4.5?'var(--yw)':'var(--gr)';
+
+  // VIX needle (scale: VIX 10 = 0%, VIX 40 = 100%)
+  const vixPct = Math.min(100, Math.max(0, (vix-10)/30*100));
+  document.getElementById('m-vix-needle').style.left = vixPct+'%';
+
+  // Vol regime + Kelly cap
+  let volRegime, posCapPct;
+  if      (vix>35) { volRegime='EXTREME'; posCapPct='40%'; }
+  else if (vix>28) { volRegime='HIGH';    posCapPct='60%'; }
+  else if (vix>22) { volRegime='ELEVATED';posCapPct='80%'; }
+  else             { volRegime='NORMAL';  posCapPct='100%';}
+  document.getElementById('m-vol-regime').textContent  = volRegime;
+  document.getElementById('m-vol-regime').style.color  = vix>35?'var(--rd)':vix>28?'var(--yw)':vix>22?'var(--or)':'var(--gr)';
+  document.getElementById('m-pos-cap').textContent     = posCapPct;
+  document.getElementById('m-kelly-label').textContent = 'Kelly cap: '+posCapPct+' of max';
+
+  // Economic signal checklist
+  const signals = [
+    {label:'Market Regime (HMM)', val:regLabel,                          ok:reg===2,  warn:reg===0 },
+    {label:'Yield Curve (10Y-2Y)',val:(yc>=0?'+':'')+yc.toFixed(2)+'%', ok:yc>=0.2,  warn:yc<0   },
+    {label:'ISM PMI',             val:pmi.toFixed(1),                    ok:pmi>=52,  warn:pmi<48 },
+    {label:'VIX Level',           val:vix.toFixed(1),                    ok:vix<20,   warn:vix>28 },
+    {label:'Unemployment Rate',   val:ue.toFixed(1)+'%',                 ok:ue<4.5,   warn:ue>6   },
+  ];
+  document.getElementById('m-signals-box').innerHTML = signals.map(s => {
+    const icon = s.ok?'🟢':s.warn?'🔴':'🟡';
+    const col  = s.ok?'var(--gr)':s.warn?'var(--rd)':'var(--yw)';
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--br)">
+      <span style="color:var(--mu);font-size:11px">${s.label}</span>
+      <span style="color:${col};font-weight:700;font-size:12px">${icon} ${s.val}</span>
+    </div>`;
+  }).join('');
+
+  // Signal distribution by regime
+  document.getElementById('m-total-count').textContent = preds.length+' total signals';
+  const regDist = [{lbl:'BULL',r:2,cls:'b-bull'},{lbl:'FLAT',r:1,cls:'b-flat'},{lbl:'BEAR',r:0,cls:'b-bear'}].map(({lbl,r,cls}) => {
+    const rp   = preds.filter(p=>parseInt(p.regime)===r);
+    const buys = rp.filter(p=>p.action==='BUY').length;
+    const sels = rp.filter(p=>p.action==='SELL').length;
+    const hlds = rp.filter(p=>p.action==='HOLD').length;
+    const sc   = rp.filter(p=>p.scored==='True'||p.scored==='true');
+    const ok   = sc.filter(p=>p.was_correct==='True'||p.was_correct==='true');
+    const acc  = sc.length ? (ok.length/sc.length*100).toFixed(0)+'%' : '—';
+    const acol = sc.length&&parseFloat(acc)>=50?'var(--gr)':'var(--rd)';
+    return `<div style="display:flex;align-items:center;gap:16px;padding:10px 0;border-bottom:1px solid var(--br)">
+      <span class="badge ${cls}" style="width:44px;text-align:center">${lbl}</span>
+      <span style="color:var(--mu);font-size:11px">${rp.length} signals</span>
+      <span style="color:var(--gr);font-size:11px">▲ ${buys} BUY</span>
+      <span style="color:var(--rd);font-size:11px">▼ ${sels} SELL</span>
+      <span style="color:var(--mu);font-size:11px">— ${hlds} HOLD</span>
+      ${sc.length?`<span style="margin-left:auto;color:${acol};font-size:11px">Acc: ${acc}</span>`:''}
+    </div>`;
+  }).join('');
+  document.getElementById('m-regime-dist').innerHTML = regDist;
+}
+
 // ── Nav active state on scroll ────────────────────────────────────────────
 function updateNavOnScroll() {
-  const sections = ['search','tracker','bitcoin','learned'];
+  const sections = ['search','tracker','macro','bitcoin','learned'];
   const links = document.querySelectorAll('.nav-link');
   let active = 'search';
   for (const id of sections) {
@@ -989,6 +1173,7 @@ async function loadAll() {
   renderPredictions(preds);
   renderPnLChart(pnlHist);
   renderPnLCard(pnlLog);
+  renderMacro(preds);
   renderFearGreed(preds);
   renderLearned(d.rules, d.weights, d.features, d.calibration, d.ticker_accuracy);
 

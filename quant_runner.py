@@ -367,12 +367,22 @@ try:
         except Exception:
             return None
 
+    _preds_list = _read_csv("data/predictions/predictions.csv")
+    # Derive macro snapshot from latest prediction row
+    _macro_snap = {}
+    if _preds_list:
+        _lp = _preds_list[-1]
+        for _mk in ["vix", "yield_curve", "ism_pmi", "unemployment",
+                    "regime", "sentiment", "crypto_fg"]:
+            _macro_snap[_mk] = _lp.get(_mk, "")
+
     _dash_data = {
         "generated":      datetime.datetime.utcnow().isoformat()[:16] + " UTC",
         "run_type":       RUN_TYPE,
         "trades":         _read_csv("data/paper_trades/paper_trades.csv"),
-        "predictions":    _read_csv("data/predictions/predictions.csv"),
+        "predictions":    _preds_list,
         "pnl_log":        _read_csv("data/predictions/daily_pnl_log.csv"),
+        "macro":          _macro_snap,
         "rules":          _read_json("data/weights/learned_rules.json"),
         "weights":        _read_json("data/weights/adaptive_weights.json"),
         "features":       _read_json("data/weights/feature_importance.json"),
