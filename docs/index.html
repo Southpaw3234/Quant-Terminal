@@ -204,6 +204,62 @@ tr:hover td{background:rgba(88,166,255,.04)}
   border-radius:50%;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
+/* ── HEATMAP ── */
+.heat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:4px;margin-top:12px}
+.heat-cell{border-radius:6px;padding:6px 4px;text-align:center;cursor:pointer;transition:transform .12s,opacity .12s;border:1px solid transparent}
+.heat-cell:hover{transform:scale(1.06);opacity:.9;border-color:rgba(255,255,255,.15)}
+.heat-ticker{font-size:10px;font-weight:700;letter-spacing:.5px}
+.heat-signal{font-size:8px;margin-top:2px;opacity:.8}
+.heat-buy{background:rgba(63,185,80,.18);color:var(--gr)}
+.heat-sell{background:rgba(248,81,73,.18);color:var(--rd)}
+.heat-hold{background:rgba(139,148,158,.1);color:var(--mu)}
+
+/* ── SECTOR BARS ── */
+.sector-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(48,54,61,.4)}
+.sector-name{width:110px;font-size:11px;flex-shrink:0;color:var(--tx)}
+.sector-bar-wrap{flex:1;height:8px;background:var(--br);border-radius:4px;overflow:hidden;display:flex}
+.sector-bar-buy{height:100%;background:var(--gr);transition:width .4s}
+.sector-bar-sell{height:100%;background:var(--rd);transition:width .4s}
+.sector-bar-hold{height:100%;background:rgba(139,148,158,.3);transition:width .4s}
+.sector-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:8px;width:52px;text-align:center;flex-shrink:0}
+.sb-bull{background:rgba(63,185,80,.15);color:var(--gr)}
+.sb-bear{background:rgba(248,81,73,.15);color:var(--rd)}
+.sb-neu{background:rgba(139,148,158,.12);color:var(--mu)}
+
+/* ── EARNINGS ── */
+.earn-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(48,54,61,.4)}
+.earn-ticker{font-size:13px;font-weight:700;color:var(--bl);width:52px;flex-shrink:0}
+.earn-date{font-size:10px;color:var(--mu);width:80px}
+.earn-days{font-size:10px;font-weight:700;width:60px}
+.earn-eps{font-size:10px;color:var(--mu);flex:1}
+.earn-signal{flex-shrink:0}
+
+/* ── SMART MONEY ── */
+.sm-tabs{display:flex;gap:8px;margin-bottom:16px}
+.sm-tab{padding:5px 14px;border-radius:6px;font-size:11px;cursor:pointer;border:1px solid var(--br);color:var(--mu);background:none;font-family:var(--fn);transition:all .15s}
+.sm-tab.active{color:var(--bl);border-color:rgba(88,166,255,.4);background:rgba(88,166,255,.08)}
+
+/* ── OPTIONS FLOW ── */
+.flow-call{color:var(--gr);font-weight:700}
+.flow-put{color:var(--rd);font-weight:700}
+
+/* ── OPTIMIZER ── */
+.opt-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(48,54,61,.3)}
+.opt-alloc-bar{height:4px;border-radius:2px;background:var(--gr);margin-top:4px;transition:width .4s}
+
+/* ── COMPARISON ── */
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.compare-col{background:var(--sf);border:1px solid var(--br);border-radius:8px;padding:16px}
+.compare-metric{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(48,54,61,.3);font-size:11px}
+
+/* ── PIN BUTTON ── */
+.pin-btn{background:none;border:1px solid var(--br);border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:var(--fn);color:var(--mu);transition:all .15s;margin-left:8px}
+.pin-btn:hover{color:var(--yw);border-color:var(--yw)}
+.pin-btn.pinned{color:var(--yw);border-color:rgba(227,179,65,.5);background:rgba(227,179,65,.08)}
+.pinned-strip{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;padding:10px 14px;background:rgba(227,179,65,.05);border:1px solid rgba(227,179,65,.15);border-radius:8px}
+.pinned-chip{display:flex;align-items:center;gap:4px;padding:3px 8px;background:var(--sf);border:1px solid var(--br);border-radius:12px;font-size:11px;cursor:pointer;color:var(--tx);transition:all .15s}
+.pinned-chip:hover{border-color:var(--bl);color:var(--bl)}
+
 /* ── RESPONSIVE ── */
 @media(max-width:900px){
   .cards{grid-template-columns:repeat(2,1fr)}
@@ -212,6 +268,17 @@ tr:hover td{background:rgba(88,166,255,.04)}
   .btc-metrics{grid-template-columns:repeat(2,1fr)}
   .section{padding:20px 14px}
   .hero{padding:28px 14px}
+  .heat-grid{grid-template-columns:repeat(auto-fill,minmax(58px,1fr))}
+  .nav-links{flex-wrap:wrap;gap:2px}
+  .compare-grid{grid-template-columns:1fr}
+  .sector-name{width:80px;font-size:10px}
+  .nav{height:auto;padding:8px 12px;flex-wrap:wrap;gap:6px}
+}
+@media(max-width:480px){
+  .heat-grid{grid-template-columns:repeat(auto-fill,minmax(50px,1fr))}
+  .cards{grid-template-columns:1fr 1fr}
+  .hero-label{font-size:20px}
+  .big-signal{font-size:28px}
 }
 </style>
 </head>
@@ -232,8 +299,14 @@ tr:hover td{background:rgba(88,166,255,.04)}
   <div class="nav-links">
     <a class="nav-link active" href="#search">🔍 Search</a>
     <a class="nav-link" href="#tracker">📊 Tracker</a>
+    <a class="nav-link" href="#heatmap">🔥 Heat</a>
+    <a class="nav-link" href="#sectors">🎯 Sectors</a>
     <a class="nav-link" href="#macro">📡 Macro</a>
-    <a class="nav-link" href="#bitcoin">₿ Bitcoin</a>
+    <a class="nav-link" href="#earnings">📅 Earnings</a>
+    <a class="nav-link" href="#smartmoney">💰 Smart$</a>
+    <a class="nav-link" href="#options">🌊 Flow</a>
+    <a class="nav-link" href="#optimizer">💡 Optimize</a>
+    <a class="nav-link" href="#bitcoin">₿ BTC</a>
     <a class="nav-link" href="#learned">🧠 Learned</a>
     <a class="nav-link" href="#macro" onclick="setTimeout(()=>document.getElementById('fomc-tbody').scrollIntoView({behavior:'smooth'}),300)">🏦 Fed</a>
     <a class="nav-link" href="#macro" onclick="setTimeout(()=>document.getElementById('congress-tbody').scrollIntoView({behavior:'smooth'}),300)">🌐 Geo</a>
@@ -259,6 +332,8 @@ tr:hover td{background:rgba(88,166,255,.04)}
       <div class="search-icon">⌕</div>
     </div>
     <div class="search-hint" id="search-hint">—</div>
+    <!-- Pinned watchlist -->
+    <div id="pinned-strip" class="pinned-strip" style="display:none;max-width:760px;margin:12px auto 0"></div>
   </div>
 
   <div class="section" style="padding-top:0">
@@ -461,6 +536,7 @@ tr:hover td{background:rgba(88,166,255,.04)}
       <div class="panel-hdr">
         <span class="panel-title">All Predictions</span>
         <div style="display:flex;gap:6px">
+          <button class="btn" onclick="exportCSV()" title="Download signals as CSV">⬇ Export CSV</button>
           <select id="f-action" class="btn" onchange="filterPreds()" style="padding:3px 8px">
             <option value="">All signals</option>
             <option value="BUY">BUY</option>
@@ -821,6 +897,196 @@ tr:hover td{background:rgba(88,166,255,.04)}
   </div>
 </div>
 
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- ⑧ PORTFOLIO HEATMAP                                    -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section-divider"></div>
+<div id="heatmap">
+  <div class="section">
+    <div class="section-hdr">
+      <span class="section-icon">🔥</span>
+      <h2>PORTFOLIO HEAT MAP</h2>
+      <span class="section-num" id="heat-count">— tickers</span>
+      <div class="section-line"></div>
+    </div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;align-items:center">
+      <span style="font-size:10px;color:var(--mu)">Filter:</span>
+      <button class="btn" onclick="renderHeat('ALL')" id="hf-all" style="padding:3px 10px">All</button>
+      <button class="btn" onclick="renderHeat('BUY')" id="hf-buy" style="padding:3px 10px">BUY only</button>
+      <button class="btn" onclick="renderHeat('SELL')" id="hf-sell" style="padding:3px 10px">SELL only</button>
+      <span style="font-size:10px;color:var(--mu);margin-left:12px">Sort:</span>
+      <button class="btn" onclick="sortHeat('conf')" style="padding:3px 10px">Confidence</button>
+      <button class="btn" onclick="sortHeat('alpha')" style="padding:3px 10px">A–Z</button>
+    </div>
+    <div class="heat-grid" id="heat-grid"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- ⑨ SECTOR ROTATION                                       -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section-divider"></div>
+<div id="sectors">
+  <div class="section">
+    <div class="section-hdr">
+      <span class="section-icon">🎯</span>
+      <h2>SECTOR ROTATION</h2>
+      <span class="section-num" id="sector-count">—</span>
+      <div class="section-line"></div>
+    </div>
+    <div class="two-col" style="gap:24px">
+      <div>
+        <div style="font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Signal Distribution by Sector</div>
+        <div id="sector-bars"></div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Top Bull &amp; Bear Sectors</div>
+        <div id="sector-detail"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- ⑩ EARNINGS CALENDAR                                     -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section-divider"></div>
+<div id="earnings">
+  <div class="section">
+    <div class="section-hdr">
+      <span class="section-icon">📅</span>
+      <h2>EARNINGS CALENDAR</h2>
+      <span class="section-num" id="earn-count">—</span>
+      <div class="section-line"></div>
+    </div>
+    <div style="font-size:11px;color:var(--mu);margin-bottom:14px">Upcoming earnings for watchlist tickers — model signal shown alongside earnings date so you can manage risk before announcements.</div>
+    <div id="earn-list">
+      <div class="empty"><div class="empty-icon">📅</div><div class="empty-msg">Earnings calendar loads on morning cycle</div><div class="empty-sub">Covers 40 liquid watchlist tickers</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- ⑪ SMART MONEY (INSIDER + CONGRESS)                      -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section-divider"></div>
+<div id="smartmoney">
+  <div class="section">
+    <div class="section-hdr">
+      <span class="section-icon">💰</span>
+      <h2>SMART MONEY TRACKER</h2>
+      <span class="section-num" id="sm-count">—</span>
+      <div class="section-line"></div>
+    </div>
+    <div class="sm-tabs">
+      <button class="sm-tab active" onclick="showSmTab('insider')">🏢 Corporate Insiders</button>
+      <button class="sm-tab" onclick="showSmTab('congress')">🏛️ Congress</button>
+      <button class="sm-tab" onclick="showSmTab('short')">📉 Short Interest</button>
+    </div>
+    <!-- Insider tab -->
+    <div id="sm-insider">
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Ticker</th><th>Name</th><th>Title</th><th>Transaction</th><th>Shares</th><th>Price</th><th>Value</th></tr></thead>
+          <tbody id="insider-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <!-- Congress tab -->
+    <div id="sm-congress" style="display:none">
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Politician</th><th>Party</th><th>Chamber</th><th>Ticker</th><th>Transaction</th><th>Amount</th></tr></thead>
+          <tbody id="congress-tbody2"></tbody>
+        </table>
+      </div>
+    </div>
+    <!-- Short interest tab -->
+    <div id="sm-short" style="display:none">
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Ticker</th><th>Short Volume</th><th>Total Volume</th><th>Short %</th></tr></thead>
+          <tbody id="short-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- ⑫ OPTIONS FLOW                                          -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section-divider"></div>
+<div id="options">
+  <div class="section">
+    <div class="section-hdr">
+      <span class="section-icon">🌊</span>
+      <h2>OPTIONS FLOW</h2>
+      <span class="section-num" id="opt-count">—</span>
+      <div class="section-line"></div>
+    </div>
+    <div style="font-size:11px;color:var(--mu);margin-bottom:14px">Unusual options activity — large call/put volume relative to open interest signals institutional positioning.</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Date</th><th>Ticker</th><th>Type</th><th>Strike</th><th>Expiry</th><th>Volume</th><th>OI</th><th>IV</th><th>Sentiment</th></tr></thead>
+        <tbody id="opt-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- ⑬ PORTFOLIO OPTIMIZER                                   -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section-divider"></div>
+<div id="optimizer">
+  <div class="section">
+    <div class="section-hdr">
+      <span class="section-icon">💡</span>
+      <h2>PORTFOLIO OPTIMIZER</h2>
+      <span class="section-num" id="opt-signal-count">—</span>
+      <div class="section-line"></div>
+    </div>
+    <div class="two-col" style="gap:24px">
+      <div>
+        <div style="font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Kelly-Weighted Allocation · Current BUY Signals</div>
+        <div style="display:flex;gap:10px;margin-bottom:14px;align-items:center;flex-wrap:wrap">
+          <label style="font-size:11px;color:var(--mu)">Portfolio size: $<input id="port-size" type="number" value="10000" min="1000" step="1000" style="width:90px;background:var(--sf);border:1px solid var(--br);border-radius:4px;padding:3px 6px;color:var(--tx);font-family:var(--fn);font-size:11px" onchange="renderOptimizer()"></label>
+          <label style="font-size:11px;color:var(--mu)">Max per position: <input id="max-pos-pct" type="number" value="20" min="5" max="50" step="5" style="width:56px;background:var(--sf);border:1px solid var(--br);border-radius:4px;padding:3px 6px;color:var(--tx);font-family:var(--fn);font-size:11px" onchange="renderOptimizer()">%</label>
+          <button class="btn" onclick="renderOptimizer()" style="padding:4px 12px">Recalculate</button>
+        </div>
+        <div id="optimizer-list"></div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Portfolio Summary</div>
+        <div id="optimizer-summary" style="background:var(--sf);border:1px solid var(--br);border-radius:8px;padding:16px"></div>
+        <div style="font-size:9px;color:var(--mu2);margin-top:12px;line-height:1.6">Kelly sizing uses model confidence × (win rate - loss rate) / win rate. VIX cap applies: VIX&gt;35 = 40% max, &gt;28 = 60%, &gt;22 = 80%. Max per-position cap enforced. For educational purposes only — not financial advice.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- ⑭ TICKER COMPARISON                                     -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section-divider"></div>
+<div id="compare-section">
+  <div class="section">
+    <div class="section-hdr">
+      <span class="section-icon">⚖️</span>
+      <h2>TICKER COMPARISON</h2>
+      <div class="section-line"></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:center">
+      <input id="cmp-a" class="search-input" type="text" placeholder="Ticker A (e.g. AAPL)" style="max-width:180px;font-size:13px;padding:8px 14px" oninput="this.value=this.value.toUpperCase()">
+      <span style="font-size:18px;color:var(--mu)">vs</span>
+      <input id="cmp-b" class="search-input" type="text" placeholder="Ticker B (e.g. NVDA)" style="max-width:180px;font-size:13px;padding:8px 14px" oninput="this.value=this.value.toUpperCase()">
+      <button class="btn" onclick="runCompare()" style="padding:8px 20px">Compare →</button>
+    </div>
+    <div id="compare-result"></div>
+  </div>
+</div>
+
 <!-- ── FOOTER ── -->
 <div style="border-top:1px solid var(--br);padding:16px 24px;text-align:center;color:var(--mu);font-size:10px">
   Quant Terminal v25 · Paper trading only · Auto-refreshes every 5 min
@@ -1174,7 +1440,9 @@ async function doSearch(ticker) {
   const a        = (latest.action||'HOLD').toUpperCase();
   const sigClass = {BUY:'big-buy',SELL:'big-sell',HOLD:'big-hold'}[a]||'big-hold';
 
-  document.getElementById('res-ticker').textContent = ticker;
+  document.getElementById('res-ticker').innerHTML = ticker +
+    `<button class="pin-btn" id="pin-btn" data-ticker="${ticker}" onclick="togglePin('${ticker}')">${getPinned().includes(ticker)?'★ Pinned':'☆ Pin'}</button>`;
+  document.getElementById('res-ticker').querySelector('.pin-btn').classList.toggle('pinned', getPinned().includes(ticker));
   document.getElementById('res-date').textContent   = 'Last signal: ' + fts(latest.pred_ts);
   document.getElementById('res-signal').textContent = a;
   document.getElementById('res-signal').className   = 'big-signal ' + sigClass;
@@ -1649,6 +1917,340 @@ function updateNavOnScroll() {
 }
 window.addEventListener('scroll', updateNavOnScroll, {passive:true});
 
+// ── Export CSV ────────────────────────────────────────────────────────────
+function exportCSV() {
+  if (!_preds || !_preds.length) { alert('No predictions loaded yet.'); return; }
+  const cols = ['pred_ts','ticker','action','confidence','price_at_pred','rsi','vix','regime',
+                 'yield_curve','ism_pmi','sentiment','scored','was_correct','actual_return'];
+  const rows = [cols.join(',')];
+  _preds.forEach(p => rows.push(cols.map(c => JSON.stringify(p[c]||'')).join(',')));
+  const blob = new Blob([rows.join('\n')], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `quant_signals_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+// ── Pinned watchlist ──────────────────────────────────────────────────────
+function getPinned() { try { return JSON.parse(localStorage.getItem('qt_pinned')||'[]'); } catch { return []; } }
+function setPinned(arr) { localStorage.setItem('qt_pinned', JSON.stringify(arr)); }
+function togglePin(ticker) {
+  let pins = getPinned();
+  if (pins.includes(ticker)) pins = pins.filter(t => t !== ticker);
+  else pins = [...pins, ticker];
+  setPinned(pins);
+  renderPinnedStrip();
+  updatePinBtn(ticker, pins.includes(ticker));
+}
+function updatePinBtn(ticker, isPinned) {
+  const btn = document.getElementById('pin-btn');
+  if (btn && btn.dataset.ticker === ticker) {
+    btn.textContent = isPinned ? '★ Pinned' : '☆ Pin';
+    btn.classList.toggle('pinned', isPinned);
+  }
+}
+function renderPinnedStrip() {
+  const strip = document.getElementById('pinned-strip');
+  const pins = getPinned();
+  if (!pins.length) { strip.style.display = 'none'; return; }
+  strip.style.display = 'flex';
+  strip.innerHTML = '<span style="font-size:10px;color:var(--yw);margin-right:4px;align-self:center">★ Pinned:</span>' +
+    pins.map(t => `<div class="pinned-chip" onclick="doSearch('${t}')">${t} <span style="color:var(--mu);font-size:9px" onclick="event.stopPropagation();togglePin('${t}')">✕</span></div>`).join('');
+}
+
+// ── Heatmap ───────────────────────────────────────────────────────────────
+let _heatFilter = 'ALL', _heatSort = 'conf';
+function renderHeat(filter) {
+  _heatFilter = filter || _heatFilter;
+  if (!_preds || !_preds.length) return;
+  const latest = {};
+  _preds.forEach(p => { if (!latest[p.ticker] || p.pred_ts > latest[p.ticker].pred_ts) latest[p.ticker] = p; });
+  let rows = Object.values(latest);
+  if (_heatFilter !== 'ALL') rows = rows.filter(p => p.action === _heatFilter);
+  if (_heatSort === 'conf') rows.sort((a,b) => parseFloat(b.confidence||0) - parseFloat(a.confidence||0));
+  else rows.sort((a,b) => a.ticker.localeCompare(b.ticker));
+  document.getElementById('heat-count').textContent = rows.length + ' tickers';
+  document.getElementById('heat-grid').innerHTML = rows.map(p => {
+    const act = (p.action||'HOLD').toUpperCase();
+    const cls = act==='BUY'?'heat-buy':act==='SELL'?'heat-sell':'heat-hold';
+    const conf = Math.round(parseFloat(p.confidence||0.5)*100);
+    return `<div class="heat-cell ${cls}" onclick="doSearch('${p.ticker}')" title="${p.ticker}: ${act} ${conf}% conf">
+      <div class="heat-ticker">${p.ticker}</div>
+      <div class="heat-signal">${act} ${conf}%</div>
+    </div>`;
+  }).join('');
+}
+function sortHeat(by) { _heatSort = by; renderHeat(); }
+
+// ── Sector rotation ───────────────────────────────────────────────────────
+function renderSectors(sectorData) {
+  const bars  = document.getElementById('sector-bars');
+  const detail= document.getElementById('sector-detail');
+  if (!sectorData || !Object.keys(sectorData).length) {
+    bars.innerHTML = `<div class="empty"><div class="empty-icon">🎯</div><div class="empty-msg">Sector data loads on morning cycle</div></div>`;
+    detail.innerHTML = '';
+    return;
+  }
+  const sorted = Object.entries(sectorData).sort((a,b) => b[1].buy_pct - a[1].buy_pct);
+  document.getElementById('sector-count').textContent = sorted.length + ' sectors';
+  bars.innerHTML = sorted.map(([sec, d]) => {
+    const sbCls = d.signal==='BULL'?'sb-bull':d.signal==='BEAR'?'sb-bear':'sb-neu';
+    return `<div class="sector-row">
+      <div class="sector-name">${sec}</div>
+      <div class="sector-bar-wrap">
+        <div class="sector-bar-buy" style="width:${d.buy_pct}%"></div>
+        <div class="sector-bar-sell" style="width:${d.sell_pct}%"></div>
+        <div class="sector-bar-hold" style="width:${d.hold_pct}%"></div>
+      </div>
+      <span style="font-size:9px;color:var(--mu);width:56px;text-align:right">${d.buy_pct}% buy</span>
+      <span class="sector-badge ${sbCls}">${d.signal}</span>
+    </div>`;
+  }).join('');
+  const bulls = sorted.filter(([,d]) => d.signal==='BULL').slice(0,4);
+  const bears = sorted.filter(([,d]) => d.signal==='BEAR').slice(0,4);
+  detail.innerHTML = `
+    <div style="margin-bottom:14px">
+      <div style="font-size:10px;color:var(--gr);margin-bottom:6px;font-weight:700">📈 BULL SECTORS</div>
+      ${bulls.map(([s,d]) => `<div style="margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--tx)">${s}</span><span style="color:var(--gr)">${d.buy_pct}% BUY</span></div>
+        <div style="font-size:9px;color:var(--mu)">Top: ${(d.top_buys||[]).join(', ')||'—'}</div>
+      </div>`).join('') || '<div style="color:var(--mu);font-size:11px">None</div>'}
+    </div>
+    <div>
+      <div style="font-size:10px;color:var(--rd);margin-bottom:6px;font-weight:700">📉 BEAR SECTORS</div>
+      ${bears.map(([s,d]) => `<div style="margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--tx)">${s}</span><span style="color:var(--rd)">${d.sell_pct}% SELL</span></div>
+        <div style="font-size:9px;color:var(--mu)">Top: ${(d.top_sells||[]).join(', ')||'—'}</div>
+      </div>`).join('') || '<div style="color:var(--mu);font-size:11px">None</div>'}
+    </div>`;
+}
+
+// ── Earnings calendar ─────────────────────────────────────────────────────
+function renderEarnings(cal, preds) {
+  const box = document.getElementById('earn-list');
+  if (!cal || !cal.length) {
+    box.innerHTML = `<div class="empty"><div class="empty-icon">📅</div><div class="empty-msg">Earnings calendar loads on morning cycle</div><div class="empty-sub">Covers ~40 liquid watchlist tickers</div></div>`;
+    document.getElementById('earn-count').textContent = '—';
+    return;
+  }
+  const latest = {};
+  (preds||[]).forEach(p => { if(!latest[p.ticker]||p.pred_ts>latest[p.ticker].pred_ts) latest[p.ticker]=p; });
+  document.getElementById('earn-count').textContent = cal.length + ' upcoming';
+  box.innerHTML = cal.slice(0,30).map(e => {
+    const p = latest[e.ticker];
+    const act = p ? (p.action||'HOLD').toUpperCase() : '—';
+    const daysColor = e.days_away <= 3 ? 'var(--rd)' : e.days_away <= 7 ? 'var(--yw)' : 'var(--mu)';
+    const urgency = e.days_away <= 3 ? '⚠️ ' : '';
+    return `<div class="earn-row">
+      <div class="earn-ticker" onclick="doSearch('${e.ticker}')" style="cursor:pointer">${e.ticker}</div>
+      <div class="earn-date">${e.date}</div>
+      <div class="earn-days" style="color:${daysColor}">${urgency}${e.days_away}d away</div>
+      <div class="earn-eps" style="color:var(--mu)">EPS est: ${e.eps_est||'—'}</div>
+      <div class="earn-signal">${p ? `<span class="badge b-${act.toLowerCase()}">${act}</span>` : '<span style="color:var(--mu);font-size:10px">—</span>'}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Smart money (insider + congress + short) ──────────────────────────────
+function showSmTab(tab) {
+  ['insider','congress','short'].forEach(t => {
+    document.getElementById('sm-'+t).style.display = t===tab ? '' : 'none';
+  });
+  document.querySelectorAll('.sm-tab').forEach((btn,i) => {
+    btn.classList.toggle('active', ['insider','congress','short'][i]===tab);
+  });
+}
+function renderSmartMoney(insiders, congress, shortInt) {
+  const total = (insiders||[]).length + (congress||[]).length;
+  document.getElementById('sm-count').textContent = total + ' trades';
+  // Insiders
+  const insiderTbody = document.getElementById('insider-tbody');
+  if (insiders && insiders.length) {
+    insiderTbody.innerHTML = insiders.slice(0,25).map(t => {
+      const isBuy = (t.transaction||'').toUpperCase().includes('A');
+      const col = isBuy ? 'var(--gr)' : 'var(--rd)';
+      const val = parseFloat(t.value||0);
+      return `<tr>
+        <td style="color:var(--mu);font-size:10px">${t.date||'—'}</td>
+        <td><strong style="color:var(--bl);cursor:pointer" onclick="doSearch('${t.ticker}')">${t.ticker}</strong></td>
+        <td style="font-size:10px">${t.name||'—'}</td>
+        <td style="font-size:9px;color:var(--mu)">${(t.title||'').substring(0,20)}</td>
+        <td style="color:${col};font-weight:700;font-size:10px">${isBuy?'Acquired':'Disposed'}</td>
+        <td style="font-size:10px;color:var(--mu)">${t.shares?Number(t.shares).toLocaleString():'—'}</td>
+        <td style="font-size:10px">${t.price?'$'+parseFloat(t.price).toFixed(2):'—'}</td>
+        <td style="color:${col};font-size:10px;font-weight:700">${val>=1e6?'$'+(val/1e6).toFixed(2)+'M':val>=1e3?'$'+(val/1e3).toFixed(0)+'K':t.value||'—'}</td>
+      </tr>`;
+    }).join('');
+  } else {
+    insiderTbody.innerHTML = `<tr><td colspan="8"><div class="empty"><div class="empty-icon">🏢</div><div class="empty-msg">Insider trading loads on morning cycle</div><div class="empty-sub">Uses QUIVER_QUANT_KEY</div></div></td></tr>`;
+  }
+  // Congress (in smart money tab)
+  const cong2 = document.getElementById('congress-tbody2');
+  const partyCol = p => p==='R'?'var(--rd)':p==='D'?'var(--bl)':'var(--mu)';
+  const txnCol = t => (t||'').toLowerCase().includes('purchase')?'var(--gr)':(t||'').toLowerCase().includes('sale')?'var(--rd)':'var(--mu)';
+  if (congress && congress.length) {
+    cong2.innerHTML = congress.slice(0,25).map(t => {
+      const party = (t.party||'').trim()[0]?.toUpperCase()||'—';
+      return `<tr>
+        <td style="color:var(--mu);font-size:10px">${t.date||'—'}</td>
+        <td style="font-size:11px"><strong>${t.politician||'—'}</strong></td>
+        <td><span style="color:${partyCol(party)};font-weight:700">${party}</span></td>
+        <td style="color:var(--mu);font-size:10px">${t.chamber||'—'}</td>
+        <td><strong style="color:var(--bl);cursor:pointer" onclick="doSearch('${t.ticker||''}')">${t.ticker||'—'}</strong></td>
+        <td style="color:${txnCol(t.transaction)};font-size:10px;font-weight:700">${t.transaction||'—'}</td>
+        <td style="color:var(--mu);font-size:10px">${t.amount||'—'}</td>
+      </tr>`;
+    }).join('');
+  } else {
+    cong2.innerHTML = `<tr><td colspan="7"><div class="empty"><div class="empty-icon">🏛️</div><div class="empty-msg">Congress trading loads on morning cycle</div></div></td></tr>`;
+  }
+  // Short interest
+  const shortTbody = document.getElementById('short-tbody');
+  if (shortInt && shortInt.length) {
+    shortTbody.innerHTML = shortInt.slice(0,25).map(s => {
+      const pct = parseFloat(s.short_pct||0);
+      const col = pct>30?'var(--rd)':pct>15?'var(--yw)':'var(--mu)';
+      return `<tr>
+        <td style="color:var(--mu);font-size:10px">${s.date||'—'}</td>
+        <td><strong style="color:var(--bl);cursor:pointer" onclick="doSearch('${s.ticker}')">${s.ticker}</strong></td>
+        <td style="color:var(--mu);font-size:10px">${s.short_volume?Number(s.short_volume).toLocaleString():'—'}</td>
+        <td style="color:var(--mu);font-size:10px">${s.total_volume?Number(s.total_volume).toLocaleString():'—'}</td>
+        <td style="color:${col};font-weight:700">${pct?pct.toFixed(1)+'%':'—'}</td>
+      </tr>`;
+    }).join('');
+  } else {
+    shortTbody.innerHTML = `<tr><td colspan="5"><div class="empty"><div class="empty-icon">📉</div><div class="empty-msg">Short interest loads on morning cycle</div></div></td></tr>`;
+  }
+}
+
+// ── Options flow ──────────────────────────────────────────────────────────
+function renderOptionsFlow(flow) {
+  const tbody = document.getElementById('opt-tbody');
+  document.getElementById('opt-count').textContent = (flow||[]).length + ' contracts';
+  if (!flow || !flow.length) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty"><div class="empty-icon">🌊</div><div class="empty-msg">Options flow loads on morning cycle</div><div class="empty-sub">Uses QUIVER_QUANT_KEY</div></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = flow.slice(0,30).map(o => {
+    const isCall = (o.call_put||'').toUpperCase() === 'C';
+    const cls = isCall ? 'flow-call' : 'flow-put';
+    const lbl = isCall ? '📈 CALL' : '📉 PUT';
+    const iv = parseFloat(o.implied_vol||0);
+    return `<tr>
+      <td style="color:var(--mu);font-size:10px">${o.date||'—'}</td>
+      <td><strong style="color:var(--bl);cursor:pointer" onclick="doSearch('${o.ticker}')">${o.ticker}</strong></td>
+      <td class="${cls}">${lbl}</td>
+      <td style="font-size:10px">${o.strike?'$'+o.strike:'—'}</td>
+      <td style="font-size:10px;color:var(--mu)">${o.expiry||'—'}</td>
+      <td style="font-size:10px">${o.volume?Number(o.volume).toLocaleString():'—'}</td>
+      <td style="font-size:10px;color:var(--mu)">${o.open_interest?Number(o.open_interest).toLocaleString():'—'}</td>
+      <td style="font-size:10px;color:${iv>0.5?'var(--rd)':iv>0.3?'var(--yw)':'var(--mu)'}">${iv?iv.toFixed(0)+'%':'—'}</td>
+      <td style="font-size:10px;color:${o.sentiment==='Bullish'?'var(--gr)':o.sentiment==='Bearish'?'var(--rd)':'var(--mu)'}">${o.sentiment||'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Portfolio optimizer ───────────────────────────────────────────────────
+function renderOptimizer() {
+  if (!_preds || !_preds.length) return;
+  const portSize = parseFloat(document.getElementById('port-size')?.value||10000);
+  const maxPct   = parseFloat(document.getElementById('max-pos-pct')?.value||20)/100;
+  const latest = {};
+  _preds.forEach(p => { if(!latest[p.ticker]||p.pred_ts>latest[p.ticker].pred_ts) latest[p.ticker]=p; });
+  const buys = Object.values(latest).filter(p => p.action==='BUY');
+  const vix = parseFloat(buys[0]?.vix||20);
+  const vixCap = vix>35?.4:vix>28?.6:vix>22?.8:1.0;
+  // Kelly weights
+  let positions = buys.map(p => {
+    const conf  = parseFloat(p.confidence||0.5);
+    const kelly = Math.min(conf * 0.5, maxPct, vixCap * maxPct);
+    return { ticker: p.ticker, confidence: conf, kelly, signal: p.action,
+             rsi: p.rsi, regime: p.regime };
+  }).filter(p => p.kelly > 0);
+  // Normalize so weights sum to ≤100%
+  const rawSum = positions.reduce((s,p)=>s+p.kelly,0);
+  if (rawSum > 1) positions = positions.map(p => ({...p, kelly: p.kelly/rawSum}));
+  positions.sort((a,b) => b.kelly-a.kelly);
+  document.getElementById('opt-signal-count').textContent = positions.length + ' BUY signals';
+  const list = document.getElementById('optimizer-list');
+  list.innerHTML = positions.slice(0,15).map(p => {
+    const dollars = (p.kelly * portSize).toFixed(0);
+    const pct = (p.kelly*100).toFixed(1);
+    return `<div class="opt-row">
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--tx)">${p.ticker} <span style="font-size:10px;color:var(--mu)">conf ${(p.confidence*100).toFixed(0)}%</span></div>
+        <div class="opt-alloc-bar" style="width:${Math.min(p.kelly*100*3,100)}%"></div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:12px;font-weight:700;color:var(--gr)">$${Number(dollars).toLocaleString()}</div>
+        <div style="font-size:10px;color:var(--mu)">${pct}%</div>
+      </div>
+    </div>`;
+  }).join('');
+  const deployed = positions.slice(0,15).reduce((s,p)=>s+p.kelly*portSize,0);
+  const cash = portSize - deployed;
+  document.getElementById('optimizer-summary').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--mu);font-size:11px">Portfolio size</span><span style="font-weight:700">$${portSize.toLocaleString()}</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--mu);font-size:11px">Active positions</span><span style="font-weight:700">${Math.min(positions.length,15)}</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--mu);font-size:11px">Capital deployed</span><span style="font-weight:700;color:var(--gr)">$${deployed.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--mu);font-size:11px">Cash reserve</span><span style="font-weight:700;color:var(--yw)">$${cash.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--mu);font-size:11px">VIX position cap</span><span style="font-weight:700;color:${vixCap<1?'var(--yw)':'var(--gr)'}">${(vixCap*100).toFixed(0)}%</span></div>
+    </div>`;
+}
+
+// ── Ticker comparison ─────────────────────────────────────────────────────
+function runCompare() {
+  const a = (document.getElementById('cmp-a').value||'').toUpperCase().trim();
+  const b = (document.getElementById('cmp-b').value||'').toUpperCase().trim();
+  const res = document.getElementById('compare-result');
+  if (!a || !b) { res.innerHTML = '<div style="color:var(--mu);font-size:12px;padding:12px">Enter two tickers above.</div>'; return; }
+  if (!_preds || !_preds.length) { res.innerHTML = '<div style="color:var(--mu)">No data loaded.</div>'; return; }
+  const latest = {};
+  _preds.forEach(p => { if(!latest[p.ticker]||p.pred_ts>latest[p.ticker].pred_ts) latest[p.ticker]=p; });
+  const pa = latest[a], pb = latest[b];
+  if (!pa && !pb) { res.innerHTML = `<div style="color:var(--mu);font-size:12px;padding:12px">Neither ${a} nor ${b} found in model.</div>`; return; }
+  function col(p) {
+    if (!p) return `<div class="compare-col" style="display:flex;align-items:center;justify-content:center;color:var(--mu)">Not in model</div>`;
+    const act = (p.action||'HOLD').toUpperCase();
+    const actCol = act==='BUY'?'var(--gr)':act==='SELL'?'var(--rd)':'var(--mu)';
+    const metrics = [
+      ['Signal', `<span style="color:${actCol};font-weight:700;font-size:14px">${act}</span>`],
+      ['Confidence', `${(parseFloat(p.confidence||0)*100).toFixed(0)}%`],
+      ['ML Score', `${(parseFloat(p.p_ensemble||0.5)*100).toFixed(0)}%`],
+      ['RSI', p.rsi||'—'],
+      ['Regime', {'0':'BEAR','1':'FLAT','2':'BULL'}[p.regime]||p.regime||'—'],
+      ['Entry Price', p.price_at_pred?'$'+parseFloat(p.price_at_pred).toFixed(2):'—'],
+      ['Target', p.target?'$'+parseFloat(p.target).toFixed(2):'—'],
+      ['Stop Loss', p.stop?'$'+parseFloat(p.stop).toFixed(2):'—'],
+      ['VIX', p.vix||'—'],
+      ['Yield Curve', p.yield_curve ? p.yield_curve+'%' : '—'],
+    ];
+    return `<div class="compare-col">
+      <div style="font-size:22px;font-weight:700;color:var(--tx);margin-bottom:12px">${p.ticker}</div>
+      ${metrics.map(([k,v]) => `<div class="compare-metric"><span style="color:var(--mu)">${k}</span><span>${v}</span></div>`).join('')}
+    </div>`;
+  }
+  res.innerHTML = `<div class="compare-grid">${col(pa)}${col(pb)}</div>`;
+}
+
+// ── Win rate leaderboard ──────────────────────────────────────────────────
+function renderWinRate(tickerAcc) {
+  // Win rate is shown in the Learned section ticker-acc-tbody; also expose via heatmap tooltip
+  // For the leaderboard, inject into the heatmap title area if data exists
+  if (!tickerAcc || !Object.keys(tickerAcc).length) return;
+  // Add win-rate data-attr to heat cells for tooltip enrichment
+  const cells = document.querySelectorAll('.heat-cell');
+  cells.forEach(cell => {
+    const t = cell.querySelector('.heat-ticker')?.textContent;
+    if (t && tickerAcc[t]) {
+      const acc = tickerAcc[t];
+      const wr = acc.rolling_accuracy || acc.accuracy;
+      if (wr) cell.title += ` · Win rate: ${Math.round(wr*100)}%`;
+    }
+  });
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────
 async function loadAll() {
   document.getElementById('last-updated').textContent = 'Refreshing…';
@@ -1676,9 +2278,19 @@ async function loadAll() {
   renderPolitical(d.congress_trades || [], d.geopolitical || [], d.industry_risk || {});
   renderLearned(d.rules, d.weights, d.features, d.calibration, d.ticker_accuracy);
 
+  // ── New panels ──────────────────────────────────────────────────────────
+  renderHeat('ALL');
+  renderSectors(d.sector_rotation || {});
+  renderEarnings(d.earnings_cal || [], preds);
+  renderSmartMoney(d.insider_trades || [], d.congress_trades || [], d.short_interest || []);
+  renderOptionsFlow(d.options_flow || []);
+  renderOptimizer();
+  renderWinRate(d.ticker_accuracy || {});
+  renderPinnedStrip();
+
   // Search hint
   const tickers = [...new Set(preds.map(p=>p.ticker))].sort();
-  document.getElementById('search-hint').textContent = `${tickers.length} tickers in watchlist: ${tickers.slice(0,8).join(', ')}${tickers.length>8?'…':''}`;
+  document.getElementById('search-hint').textContent = `${tickers.length} tickers in watchlist — ${tickers.slice(0,6).join(', ')}${tickers.length>6?'…':''}`;
 
   const gen = d.generated || '';
   document.getElementById('last-updated').textContent = 'Data: ' + gen;

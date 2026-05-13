@@ -525,22 +525,150 @@ try:
         "Utilities":       {"score": 44, "driver": "Rate regulation, grid investment",  "trend": "→"},
     }
 
+    # ── Insider trading — Quiver Quant Form 4 ────────────────────────────────
+    _insiders = []
+    if _QUIVER_KEY:
+        try:
+            print("  Fetching insider trading (Form 4)…")
+            _r = _req.get(
+                "https://api.quiverquant.com/beta/live/insidertrading",
+                headers={"Authorization": f"Token {_QUIVER_KEY}"},
+                timeout=15
+            )
+            if _r.status_code == 200:
+                for _t in _r.json()[:50]:
+                    _insiders.append({
+                        "date":        _t.get("Date",""),
+                        "ticker":      _t.get("Ticker",""),
+                        "name":        _t.get("Name",""),
+                        "title":       _t.get("Title",""),
+                        "transaction": _t.get("AcquiredDisposed",""),
+                        "shares":      _t.get("Shares",""),
+                        "price":       _t.get("SharePrice",""),
+                        "value":       _t.get("Value",""),
+                    })
+                print(f"  Insiders: {len(_insiders)} trades fetched")
+        except Exception as _ins_e:
+            print(f"  Insider fetch error: {_ins_e}")
+
+    # ── Short interest — Quiver Quant ─────────────────────────────────────────
+    _short_interest = []
+    if _QUIVER_KEY:
+        try:
+            print("  Fetching short interest data…")
+            _r = _req.get(
+                "https://api.quiverquant.com/beta/live/shortinterest",
+                headers={"Authorization": f"Token {_QUIVER_KEY}"},
+                timeout=15
+            )
+            if _r.status_code == 200:
+                for _s in _r.json()[:100]:
+                    _short_interest.append({
+                        "ticker":       _s.get("Ticker",""),
+                        "date":         _s.get("Date",""),
+                        "short_volume": _s.get("ShortVolume",""),
+                        "total_volume": _s.get("TotalVolume",""),
+                        "short_pct":    round(_s.get("ShortVolume",0) / max(_s.get("TotalVolume",1),1) * 100, 1)
+                                        if isinstance(_s.get("ShortVolume"),int) else "",
+                    })
+                print(f"  Short interest: {len(_short_interest)} entries")
+        except Exception as _si_e:
+            print(f"  Short interest error: {_si_e}")
+
+    # ── Options flow — Quiver Quant ────────────────────────────────────────────
+    _options_flow = []
+    if _QUIVER_KEY:
+        try:
+            print("  Fetching options flow…")
+            _r = _req.get(
+                "https://api.quiverquant.com/beta/live/options",
+                headers={"Authorization": f"Token {_QUIVER_KEY}"},
+                timeout=15
+            )
+            if _r.status_code == 200:
+                for _o in _r.json()[:60]:
+                    _options_flow.append({
+                        "date":          _o.get("Date",""),
+                        "ticker":        _o.get("Ticker",""),
+                        "call_put":      _o.get("CallPut",""),
+                        "strike":        _o.get("Strike",""),
+                        "expiry":        _o.get("Expiry",""),
+                        "volume":        _o.get("Volume",""),
+                        "open_interest": _o.get("OpenInterest",""),
+                        "implied_vol":   _o.get("ImpliedVolatility",""),
+                        "sentiment":     _o.get("Sentiment",""),
+                    })
+                print(f"  Options flow: {len(_options_flow)} entries")
+        except Exception as _opt_e:
+            print(f"  Options flow error: {_opt_e}")
+
+    # ── Earnings calendar — yfinance ──────────────────────────────────────────
+    _earnings_cal = []
+    try:
+        import yfinance as _yf
+        _earn_tickers = [
+            "AAPL","MSFT","NVDA","GOOGL","AMZN","META","TSLA","JPM","V","MA",
+            "UNH","LLY","XOM","HD","COST","AVGO","AMD","NFLX","PYPL","CRM",
+            "NOW","PLTR","COIN","BA","GS","MS","WMT","PG","KO","PEP",
+            "DIS","CMCSA","VZ","T","INTC","QCOM","MU","TXN","SLB","CVX"
+        ]
+        print(f"  Fetching earnings calendar for {len(_earn_tickers)} tickers…")
+        for _etk in _earn_tickers:
+            try:
+                _cal = _yf.Ticker(_etk).calendar
+                if _cal is None: continue
+                _edate = None
+                if hasattr(_cal, 'to_dict'):
+                    _cd = _cal.to_dict()
+                    for _k in ['Earnings Date','earningsDate']:
+                        if _k in _cd:
+                            _v = _cd[_k]
+                            _edate = str(_v[0])[:10] if isinstance(_v,list) and _v else str(_v)[:10] if _v else None
+                            break
+                    _eps = _cd.get('EPS Estimate','')
+                elif isinstance(_cal, dict):
+                    _edate = str(_cal.get('Earnings Date',''))[:10]
+                    _eps   = _cal.get('EPS Estimate','')
+                if _edate and len(_edate) >= 10:
+                    _days = (datetime.date.fromisoformat(_edate[:10]) - datetime.date.today()).days
+                    if _days >= -2:
+                        _earnings_cal.append({
+                            "ticker":    _etk,
+                            "date":      _edate[:10],
+                            "eps_est":   str(_eps)[:12] if _eps else "",
+                            "days_away": _days,
+                        })
+            except Exception:
+                pass
+        _earnings_cal.sort(key=lambda x: x["date"])
+        print(f"  Earnings calendar: {len(_earnings_cal)} upcoming events")
+    except Exception as _earn_e:
+        print(f"  Earnings calendar error: {_earn_e}")
+
     # ── Save enrichment files ─────────────────────────────────────────────
     Path("data/macro_extended.json").write_text(json.dumps(_ext, indent=2, default=str))
     Path("data/fomc.json").write_text(json.dumps(_fomc_data, indent=2, default=str))
     Path("data/congress_trades.json").write_text(json.dumps(_congress, indent=2, default=str))
     Path("data/geopolitical_news.json").write_text(json.dumps(_geo_news, indent=2, default=str))
     Path("data/industry_risk.json").write_text(json.dumps(_industry_risk, indent=2, default=str))
+    Path("data/insider_trades.json").write_text(json.dumps(_insiders, indent=2, default=str))
+    Path("data/short_interest.json").write_text(json.dumps(_short_interest, indent=2, default=str))
+    Path("data/options_flow.json").write_text(json.dumps(_options_flow, indent=2, default=str))
+    Path("data/earnings_calendar.json").write_text(json.dumps(_earnings_cal, indent=2, default=str))
     print("  Enrichment files saved to data/")
 
 except Exception as _enrich_e:
     print(f"  Macro enrichment error: {_enrich_e}")
     traceback.print_exc()
-    _ext          = {}
-    _fomc_data    = {}
-    _congress     = []
-    _geo_news     = []
-    _industry_risk= {}
+    _ext           = {}
+    _fomc_data     = {}
+    _congress      = []
+    _geo_news      = []
+    _industry_risk = {}
+    _insiders      = []
+    _short_interest= []
+    _options_flow  = []
+    _earnings_cal  = []
 
 # ── Generate docs/data.json for dashboard ────────────────────────────────
 try:
@@ -571,6 +699,100 @@ try:
                     "regime", "sentiment", "crypto_fg"]:
             _macro_snap[_mk] = _lp.get(_mk, "")
 
+    # ── Sector rotation scoring ───────────────────────────────────────────────
+    _SECTOR_MAP = {
+        "Technology":       ["AAPL","MSFT","NVDA","GOOGL","AMZN","META","AVGO","ORCL","ADBE",
+                             "CRM","NOW","PLTR","DDOG","ZS","CRWD","PANW","INTU","CDNS","SNPS",
+                             "FTNT","ANET","ACN","IBM","CSCO","TYL","ROP","WDAY","NET","SNOW"],
+        "Financials":       ["JPM","V","MA","BAC","GS","MS","BLK","AXP","WFC","C","SCHW",
+                             "PGR","CB","COF","USB","TFC","PNC","ICE","CME","SPGI","MCO","AON"],
+        "Healthcare":       ["UNH","LLY","JNJ","ABBV","MRK","TMO","ABT","DHR","PFE","AMGN",
+                             "CVS","CI","HUM","BSX","MDT","SYK","ISRG","VRTX","REGN","BMY","GILD"],
+        "Consumer Disc":    ["HD","NKE","LOW","TJX","ROST","SBUX","CMG","MCD","COST","TGT",
+                             "GM","F","UBER","BKNG","ABNB","MAR","HLT","DG","DLTR","YUM"],
+        "Semiconductors":   ["AMD","INTC","QCOM","AMAT","MU","TXN","LRCX","KLAC","ADI","MRVL",
+                             "ASML","TSM","ON","MCHP","ENPH","FSLR","TER","SWKS","MPWR"],
+        "Energy":           ["XOM","CVX","COP","SLB","EOG","HAL","OXY","PSX","MPC","VLO",
+                             "DVN","APA","KMI","WMB","BKR","LNG"],
+        "Industrials":      ["BA","CAT","DE","HON","GE","RTX","LMT","NOC","UPS","FDX",
+                             "MMM","EMR","ETN","ITW","PH","CMI","GD","TDG","CTAS","NSC"],
+        "Materials":        ["LIN","APD","SHW","PPG","NEM","FCX","NUE","ALB","LYB","ECL","CF"],
+        "Real Estate":      ["AMT","PLD","EQIX","CCI","WELL","SPG","O","DLR","PSA","EXR","VICI"],
+        "Utilities":        ["NEE","DUK","SO","AEP","D","EXC","SRE","XEL","AWK","WEC","ED"],
+        "Communication":    ["NFLX","DIS","CMCSA","VZ","T","TMUS","CHTR","EA","TTWO","LYV"],
+        "Consumer Staples": ["WMT","PG","KO","PEP","MDLZ","CL","MO","PM","EL","GIS","TSN"],
+    }
+    _sector_rotation = {}
+    if _preds_list:
+        _latest_by_tk = {p["ticker"]: p for p in _preds_list}
+        for _sec, _tks in _SECTOR_MAP.items():
+            _buys = _sells = _holds = _total = 0
+            _scores = []
+            _buy_names = []
+            _sell_names = []
+            for _tk in _tks:
+                _p = _latest_by_tk.get(_tk)
+                if not _p: continue
+                _total += 1
+                _act = _p.get("action","HOLD")
+                if _act == "BUY":  _buys += 1; _buy_names.append(_tk)
+                elif _act == "SELL": _sells += 1; _sell_names.append(_tk)
+                else: _holds += 1
+                try: _scores.append(float(_p.get("p_ensemble","0.5") or 0.5))
+                except: pass
+            if _total > 0:
+                _bp = round(_buys/_total*100)
+                _sp = round(_sells/_total*100)
+                _sector_rotation[_sec] = {
+                    "buy_pct":   _bp,
+                    "sell_pct":  _sp,
+                    "hold_pct":  100-_bp-_sp,
+                    "total":     _total,
+                    "avg_score": round(sum(_scores)/len(_scores),3) if _scores else 0.5,
+                    "signal":    "BULL" if _bp >= 55 else "BEAR" if _sp >= 55 else "NEUTRAL",
+                    "top_buys":  _buy_names[:5],
+                    "top_sells": _sell_names[:5],
+                }
+    Path("data/sector_rotation.json").write_text(json.dumps(_sector_rotation, indent=2, default=str))
+    print(f"  Sector rotation: {len(_sector_rotation)} sectors scored")
+
+    # ── Discord signal alert ──────────────────────────────────────────────────
+    _DISCORD_URL = os.environ.get("DISCORD_WEBHOOK_URL", "")
+    if _DISCORD_URL and _preds_list:
+        try:
+            import requests as _dr
+            _latest_by_tk2 = {p["ticker"]: p for p in _preds_list}
+            _d_buys  = sorted([(t,p) for t,p in _latest_by_tk2.items() if p.get("action")=="BUY"],
+                              key=lambda x: float(x[1].get("confidence",0) or 0), reverse=True)
+            _d_sells = sorted([(t,p) for t,p in _latest_by_tk2.items() if p.get("action")=="SELL"],
+                              key=lambda x: float(x[1].get("confidence",0) or 0), reverse=True)
+            _top_b = "\n".join([f"**{t}** — conf {float(p.get('confidence',0)):.0%}  RSI {p.get('rsi','?')}"
+                                for t,p in _d_buys[:8]]) or "None"
+            _top_s = "\n".join([f"**{t}** — conf {float(p.get('confidence',0)):.0%}"
+                                for t,p in _d_sells[:5]]) or "None"
+            _lp2 = _preds_list[-1] if _preds_list else {}
+            _reg_label = {"0":"🔴 BEAR","1":"🟡 FLAT","2":"🟢 BULL"}.get(str(_lp2.get("regime","1")),"🟡 FLAT")
+            _bull_sectors = [s for s,v in _sector_rotation.items() if v.get("signal")=="BULL"]
+            _bear_sectors = [s for s,v in _sector_rotation.items() if v.get("signal")=="BEAR"]
+            _payload = {
+                "embeds": [{
+                    "title": f"🦄 Radiant Unicorn — {RUN_TYPE.upper()} Cycle Complete",
+                    "color": 3066993 if len(_d_buys) >= len(_d_sells) else 15158332,
+                    "fields": [
+                        {"name": f"🟢 BUY Signals ({len(_d_buys)} total)", "value": _top_b, "inline": False},
+                        {"name": f"🔴 SELL Signals ({len(_d_sells)} total)", "value": _top_s, "inline": False},
+                        {"name": "📊 Market", "value": f"Regime: {_reg_label} | VIX: {_lp2.get('vix','?')} | Yield Curve: {_lp2.get('yield_curve','?')}%", "inline": False},
+                        {"name": "📈 Bull Sectors", "value": ", ".join(_bull_sectors) or "None", "inline": True},
+                        {"name": "📉 Bear Sectors", "value": ", ".join(_bear_sectors) or "None", "inline": True},
+                    ],
+                    "footer": {"text": f"Quant Terminal v25 · {RUN_TYPE} · {datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}"},
+                }]
+            }
+            _disc_r = _dr.post(_DISCORD_URL, json=_payload, timeout=10)
+            print(f"  Discord alert sent: {_disc_r.status_code}")
+        except Exception as _disc_e:
+            print(f"  Discord alert error: {_disc_e}")
+
     _dash_data = {
         "generated":      datetime.datetime.utcnow().isoformat()[:16] + " UTC",
         "run_type":       RUN_TYPE,
@@ -583,6 +805,11 @@ try:
         "congress_trades":_congress,
         "geopolitical":   _geo_news,
         "industry_risk":  _industry_risk,
+        "insider_trades": _insiders,
+        "short_interest": _short_interest,
+        "options_flow":   _options_flow,
+        "earnings_cal":   _earnings_cal,
+        "sector_rotation":_sector_rotation,
         "rules":          _read_json("data/weights/learned_rules.json"),
         "weights":        _read_json("data/weights/adaptive_weights.json"),
         "features":       _read_json("data/weights/feature_importance.json"),
