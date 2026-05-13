@@ -386,7 +386,10 @@ try:
         "ig_spread":           _fred("BAMLC0A0CM"),      # IG credit spread
         "oil_wti":             _fred("DCOILWTICO"),      # WTI crude oil
         "nat_gas":             _fred("DHHNGSP"),         # Natural gas
-        "gold":                _fred("GOLDAMGBD228NLBM"),# Gold price
+        "gold":                _fred("GOLDAMGBD228NLBM"),# Gold price (USD/troy oz)
+        "silver":              _fred("SLVPAX"),          # Silver price (USD/troy oz)
+        "copper":              _fred("PCOPPUSDM"),       # Copper (USD/lb, monthly)
+        "wheat":               _fred("PWHEAMTUSDM"),     # Wheat (USD/mt, monthly)
         "m2_growth":           _fred("M2SL"),            # M2 money supply
         "initial_claims":      _fred("ICSA"),            # Weekly jobless claims
         "housing_starts":      _fred("HOUST"),           # Housing starts (K)

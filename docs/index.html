@@ -632,6 +632,36 @@ tr:hover td{background:rgba(88,166,255,.04)}
         <div class="card-value" id="m-sent">—</div>
         <div class="card-sub" id="m-sent-s">U. of Michigan index</div>
       </div>
+      <div class="card">
+        <div class="card-label">WTI Crude Oil</div>
+        <div class="card-value" id="m-oil">—</div>
+        <div class="card-sub" id="m-oil-s">USD per barrel</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Gold</div>
+        <div class="card-value" id="m-gold">—</div>
+        <div class="card-sub" id="m-gold-s">USD per troy oz</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Silver</div>
+        <div class="card-value" id="m-silver">—</div>
+        <div class="card-sub" id="m-silver-s">USD per troy oz</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Natural Gas</div>
+        <div class="card-value" id="m-natgas">—</div>
+        <div class="card-sub" id="m-natgas-s">USD per MMBtu</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Copper</div>
+        <div class="card-value" id="m-copper">—</div>
+        <div class="card-sub" id="m-copper-s">USD per lb</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Wheat</div>
+        <div class="card-value" id="m-wheat">—</div>
+        <div class="card-sub" id="m-wheat-s">USD per metric ton</div>
+      </div>
     </div>
 
     <div class="two-col">
@@ -1846,13 +1876,50 @@ function renderMacro(preds) {
     document.getElementById('m-sent-s').textContent = sent > 80 ? 'Optimistic consumers' : sent > 65 ? 'Mixed sentiment' : 'Pessimistic / cautious';
   }
 
+  // ── Commodity cards ───────────────────────────────────────────────────────
+  const oil    = parseFloat(mx.oil_wti  || 0);
+  const gold   = parseFloat(mx.gold     || 0);
+  const silver = parseFloat(mx.silver   || 0);
+  const natgas = parseFloat(mx.nat_gas  || 0);
+  const copper = parseFloat(mx.copper   || 0);
+  const wheat  = parseFloat(mx.wheat    || 0);
+
+  if (oil) {
+    document.getElementById('m-oil').textContent = '$' + oil.toFixed(2);
+    document.getElementById('m-oil').style.color = oil > 100 ? 'var(--rd)' : oil > 80 ? 'var(--yw)' : 'var(--gr)';
+    document.getElementById('m-oil-s').textContent = oil > 100 ? 'Inflationary — above $100' : oil > 80 ? 'Elevated — watch inflation' : 'Supportive range';
+  }
+  if (gold) {
+    document.getElementById('m-gold').textContent = '$' + Math.round(gold).toLocaleString();
+    document.getElementById('m-gold').style.color = gold > 3000 ? 'var(--yw)' : gold > 2000 ? 'var(--or)' : 'var(--tx)';
+    document.getElementById('m-gold-s').textContent = gold > 3000 ? 'Risk-off flight to safety' : gold > 2000 ? 'Elevated — uncertainty hedge' : 'Normal range';
+  }
+  if (silver) {
+    document.getElementById('m-silver').textContent = '$' + silver.toFixed(2);
+    document.getElementById('m-silver').style.color = silver > 35 ? 'var(--yw)' : silver > 25 ? 'var(--or)' : 'var(--tx)';
+    document.getElementById('m-silver-s').textContent = silver > 35 ? 'Elevated — industrial demand' : silver > 25 ? 'Moderate' : 'Normal range';
+  }
+  if (natgas) {
+    document.getElementById('m-natgas').textContent = '$' + natgas.toFixed(2);
+    document.getElementById('m-natgas').style.color = natgas > 4 ? 'var(--rd)' : natgas > 2.5 ? 'var(--yw)' : 'var(--gr)';
+    document.getElementById('m-natgas-s').textContent = natgas > 4 ? 'High — energy inflation risk' : natgas > 2.5 ? 'Moderate range' : 'Low — cheap energy';
+  }
+  if (copper) {
+    document.getElementById('m-copper').textContent = '$' + copper.toFixed(2);
+    document.getElementById('m-copper').style.color = copper > 4.5 ? 'var(--gr)' : copper > 3.5 ? 'var(--yw)' : 'var(--rd)';
+    document.getElementById('m-copper-s').textContent = copper > 4.5 ? 'Strong — global growth signal' : copper > 3.5 ? 'Moderate demand' : 'Weak — slowdown risk';
+  }
+  if (wheat) {
+    document.getElementById('m-wheat').textContent = '$' + Math.round(wheat).toLocaleString();
+    document.getElementById('m-wheat').style.color = wheat > 300 ? 'var(--rd)' : wheat > 220 ? 'var(--yw)' : 'var(--gr)';
+    document.getElementById('m-wheat-s').textContent = wheat > 300 ? 'Elevated — food inflation risk' : wheat > 220 ? 'Moderate' : 'Low';
+  }
+
   // Expanded economic signal checklist
   const hy   = parseFloat(mx.hy_spread || 0);
-  const oil  = parseFloat(mx.oil_wti || 0);
   const y2   = parseFloat(mx.y2 || 0);
   const gdp  = parseFloat(mx.gdp_growth || 0);
   const init = parseFloat(mx.initial_claims || 0);
-  const gold = parseFloat(mx.gold || 0);
 
   const signals = [
     {label:'Market Regime (HMM)',   val:regLabel,                           ok:reg===2,        warn:reg===0         },
@@ -1865,8 +1932,11 @@ function renderMacro(preds) {
     {label:'10Y Treasury Yield',    val:y10?y10.toFixed(2)+'%':'—',        ok:y10<3.5,        warn:y10>5           },
     {label:'2Y Treasury Yield',     val:y2?y2.toFixed(2)+'%':'—',          ok:y2<ffr,         warn:y2>ffr+0.5      },
     {label:'HY Credit Spread',      val:hy?hy.toFixed(2)+'%':'—',          ok:hy<4,           warn:hy>6            },
-    {label:'WTI Oil Price',         val:oil?'$'+oil.toFixed(1):'—',        ok:oil<80,         warn:oil>100         },
-    {label:'Gold Price',            val:gold?'$'+Math.round(gold):'—',     ok:false,          warn:gold>3000       },
+    {label:'WTI Crude Oil',         val:oil?'$'+oil.toFixed(2):'—',        ok:oil<80,         warn:oil>100         },
+    {label:'Gold',                  val:gold?'$'+Math.round(gold).toLocaleString():'—', ok:false, warn:gold>3000  },
+    {label:'Silver',                val:silver?'$'+silver.toFixed(2):'—',  ok:false,          warn:silver>35       },
+    {label:'Natural Gas',           val:natgas?'$'+natgas.toFixed(2):'—',  ok:natgas<2.5,     warn:natgas>4        },
+    {label:'Copper',                val:copper?'$'+copper.toFixed(2):'—',  ok:copper>4,       warn:copper<3        },
     {label:'GDP Growth (Last Q)',   val:gdp?gdp.toFixed(1)+'%':'—',        ok:gdp>=2,         warn:gdp<0           },
     {label:'Initial Jobless Claims',val:init?Math.round(init).toLocaleString():'—', ok:init<220000, warn:init>280000 },
     {label:'Consumer Sentiment',    val:sent?sent.toFixed(0):'—',          ok:sent>80,        warn:sent<60         },
