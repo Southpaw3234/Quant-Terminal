@@ -121,9 +121,9 @@ if _os.environ.get("GH_ACTIONS"):
     FAST_MODE           = (RUN_TYPE_GH != "morning")
     GARCH_PATHS         = 100 if RUN_TYPE_GH == "morning" else 30
     QUICK_TUNE_TRIALS   = 2
-    FULL_TUNE_TRIALS_XGB = 3
-    FULL_TUNE_TRIALS_LGB = 3
-    FULL_TUNE_TRIALS_CAT = 3
+    FULL_TUNE_TRIALS_XGB = 15
+    FULL_TUNE_TRIALS_LGB = 15
+    FULL_TUNE_TRIALS_CAT = 15
     print(f"GH_ACTIONS {RUN_TYPE_GH}: FAST_MODE={FAST_MODE} GARCH_PATHS={GARCH_PATHS}")
 """
 
@@ -132,9 +132,19 @@ ALWAYS_SKIP = {0, 1, 16, 17, 18, 19, 20, 21, 22, 23}
 
 SKIP_BY_TYPE = {
     "morning":  ALWAYS_SKIP,
-    "intraday": ALWAYS_SKIP | {7, 8, 9},           # skip model training
+    "intraday": ALWAYS_SKIP | {7, 8, 9},           # skip model training; cell 13 runs stops-only
     "evening":  ALWAYS_SKIP | {7, 8, 9, 10, 11, 12, 13},  # skip through paper trade
 }
+
+# Fix #6: intraday runs execute cell 13 in stops-only mode (check_stops_and_expiry + exit)
+# Injected into the notebook namespace before cell 13 executes on intraday runs.
+INTRADAY_STOPS_PATCH = """
+import os as _isp_os
+if _isp_os.environ.get('GH_ACTIONS') and _isp_os.environ.get('RUN_TYPE','morning') == 'intraday':
+    INTRADAY_STOPS_ONLY = True
+else:
+    INTRADAY_STOPS_ONLY = False
+"""
 SKIP_CELLS = SKIP_BY_TYPE.get(RUN_TYPE, ALWAYS_SKIP)
 
 CELL_TAGS = {
@@ -193,6 +203,9 @@ for i, cell in enumerate(cells):
     src = "".join(cell["source"])
     if i == 3:
         src = src + "\n\n" + GH_PATCH
+    # Fix #6: inject intraday stops flag before cell 13 on intraday runs
+    if i == 13 and RUN_TYPE == "intraday":
+        src = INTRADAY_STOPS_PATCH + "\n" + src
 
     print(f"\n{'--'*28}")
     print(f"[CELL {i}] {CELL_TAGS.get(i, f'Cell {i}')}")
