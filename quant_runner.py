@@ -718,11 +718,11 @@ try:
         except Exception as _si_e:
             print(f"  Short interest error: {_si_e}")
 
-    # ── Options flow — Quiver Quant ────────────────────────────────────────────
+    # ── Options flow — Quiver Quant (preferred) or yfinance unusual-vol fallback
     _options_flow = []
     if _QUIVER_KEY:
         try:
-            print("  Fetching options flow…")
+            print("  Fetching options flow (Quiver Quant)…")
             _r = _req.get(
                 "https://api.quiverquant.com/beta/live/options",
                 headers={"Authorization": f"Token {_QUIVER_KEY}"},
@@ -740,10 +740,69 @@ try:
                         "open_interest": _o.get("OpenInterest",""),
                         "implied_vol":   _o.get("ImpliedVolatility",""),
                         "sentiment":     _o.get("Sentiment",""),
+                        "source":        "quiver",
                     })
-                print(f"  Options flow: {len(_options_flow)} entries")
+                print(f"  Options flow (Quiver): {len(_options_flow)} entries")
         except Exception as _opt_e:
             print(f"  Options flow error: {_opt_e}")
+
+    if not _options_flow:
+        # ── yfinance unusual-volume fallback (free, no key) ──────────────────
+        # "Unusual flow" = today's volume >> open interest on a single contract.
+        # Volume/OI > 1.5 with absolute volume > 100 is the standard threshold
+        # used by Unusual Whales, Barchart, etc.
+        print("  Scanning options flow via yfinance (unusual vol/OI)…")
+        try:
+            import yfinance as _yf_opt
+            _opt_tickers = [
+                "SPY","QQQ","IWM","AAPL","MSFT","NVDA","GOOGL","AMZN","META",
+                "TSLA","JPM","AMD","NFLX","AVGO","CRM","PLTR","COIN","GS","BA",
+                "XOM","V","MA","UNH","HD","COST","MU","INTC","QCOM","TXN","CVX"
+            ]
+            _today_iso = datetime.date.today().isoformat()
+            _flow_raw  = []
+            for _otk in _opt_tickers:
+                try:
+                    _to = _yf_opt.Ticker(_otk)
+                    _exps = (_to.options or [])[:3]   # nearest 3 expiries
+                    for _exp in _exps:
+                        try:
+                            _chain = _to.option_chain(_exp)
+                            for _side, _df in (("CALL", _chain.calls), ("PUT", _chain.puts)):
+                                if _df is None or _df.empty:
+                                    continue
+                                _df = _df.copy()
+                                _df["_oi"]     = _df["openInterest"].clip(lower=1)
+                                _df["_vol_oi"] = _df["volume"] / _df["_oi"]
+                                _unusual = _df[
+                                    (_df["_vol_oi"] >= 1.5) &
+                                    (_df["volume"]  >= 100)
+                                ]
+                                for _, _r in _unusual.nlargest(3, "volume").iterrows():
+                                    _iv = _r.get("impliedVolatility", 0) or 0
+                                    _flow_raw.append({
+                                        "date":          _today_iso,
+                                        "ticker":        _otk,
+                                        "call_put":      _side,
+                                        "strike":        str(_r.get("strike", "")),
+                                        "expiry":        _exp,
+                                        "volume":        int(_r.get("volume", 0)),
+                                        "open_interest": int(_r.get("openInterest", 0) or 0),
+                                        "implied_vol":   round(float(_iv) * 100, 1),
+                                        "vol_oi_ratio":  round(float(_r["_vol_oi"]), 2),
+                                        "sentiment":     "Bullish" if _side == "CALL" else "Bearish",
+                                        "source":        "yfinance",
+                                    })
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
+            # sort by raw volume desc, keep top 60
+            _flow_raw.sort(key=lambda x: x.get("volume", 0), reverse=True)
+            _options_flow = _flow_raw[:60]
+            print(f"  Options flow (yfinance unusual): {len(_options_flow)} contracts")
+        except Exception as _yf_opt_e:
+            print(f"  Options flow yfinance error: {_yf_opt_e}")
 
     # ── Earnings calendar — yfinance (get_earnings_dates, 0.2.x compatible) ──
     _earnings_cal = []

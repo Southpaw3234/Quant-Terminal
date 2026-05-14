@@ -1084,7 +1084,7 @@ tr:hover td{background:rgba(88,166,255,.04)}
     <div style="font-size:11px;color:var(--mu);margin-bottom:14px">Unusual options activity — large call/put volume relative to open interest signals institutional positioning.</div>
     <div class="tbl-wrap">
       <table>
-        <thead><tr><th>Date</th><th>Ticker</th><th>Type</th><th>Strike</th><th>Expiry</th><th>Volume</th><th>OI</th><th>IV</th><th>Sentiment</th></tr></thead>
+        <thead><tr><th>Date</th><th>Ticker</th><th>Type</th><th>Strike</th><th>Expiry</th><th>Volume</th><th>OI</th><th>Vol/OI</th><th>IV</th></tr></thead>
         <tbody id="opt-tbody"></tbody>
       </table>
     </div>
@@ -2284,14 +2284,17 @@ function renderOptionsFlow(flow) {
   const tbody = document.getElementById('opt-tbody');
   document.getElementById('opt-count').textContent = (flow||[]).length + ' contracts';
   if (!flow || !flow.length) {
-    tbody.innerHTML = `<tr><td colspan="9"><div class="empty"><div class="empty-icon">🌊</div><div class="empty-msg">Options flow loads on morning cycle</div><div class="empty-sub">Uses QUIVER_QUANT_KEY</div></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty"><div class="empty-icon">🌊</div><div class="empty-msg">Options flow loads on next morning run</div><div class="empty-sub">Scans unusual volume/OI across 30 tickers</div></div></td></tr>`;
     return;
   }
   tbody.innerHTML = flow.slice(0,30).map(o => {
-    const isCall = (o.call_put||'').toUpperCase() === 'C';
+    const cp = (o.call_put||'').toUpperCase();
+    const isCall = cp === 'C' || cp === 'CALL';
     const cls = isCall ? 'flow-call' : 'flow-put';
     const lbl = isCall ? '📈 CALL' : '📉 PUT';
-    const iv = parseFloat(o.implied_vol||0);
+    const iv  = parseFloat(o.implied_vol||0);
+    const voi = parseFloat(o.vol_oi_ratio||0);
+    const voiStr = voi ? `<span style="color:${voi>=3?'var(--rd)':voi>=2?'var(--yw)':'var(--mu)'}">${voi.toFixed(1)}×</span>` : '—';
     return `<tr>
       <td style="color:var(--mu);font-size:10px">${o.date||'—'}</td>
       <td><strong style="color:var(--bl);cursor:pointer" onclick="doSearch('${o.ticker}')">${o.ticker}</strong></td>
@@ -2300,8 +2303,8 @@ function renderOptionsFlow(flow) {
       <td style="font-size:10px;color:var(--mu)">${o.expiry||'—'}</td>
       <td style="font-size:10px">${o.volume?Number(o.volume).toLocaleString():'—'}</td>
       <td style="font-size:10px;color:var(--mu)">${o.open_interest?Number(o.open_interest).toLocaleString():'—'}</td>
+      <td style="font-size:10px">${voiStr}</td>
       <td style="font-size:10px;color:${iv>0.5?'var(--rd)':iv>0.3?'var(--yw)':'var(--mu)'}">${iv?iv.toFixed(0)+'%':'—'}</td>
-      <td style="font-size:10px;color:${o.sentiment==='Bullish'?'var(--gr)':o.sentiment==='Bearish'?'var(--rd)':'var(--mu)'}">${o.sentiment||'—'}</td>
     </tr>`;
   }).join('');
 }
