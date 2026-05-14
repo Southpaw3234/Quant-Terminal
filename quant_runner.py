@@ -418,10 +418,11 @@ try:
                     _tick = _yf_m.Ticker(_sym)
                     _px   = None
                     try:
-                        _px = _tick.fast_info.get("lastPrice")
+                        # fast_info is a FastInfo object, not a dict — use getattr
+                        _px = getattr(_tick.fast_info, "last_price", None)
                     except Exception:
                         pass
-                    if not _px:
+                    if _px is None or _px <= 0:
                         _hist = _yf_m.download(_sym, period="5d", progress=False)
                         if not _hist.empty:
                             _px = float(_hist["Close"].dropna().iloc[-1])
@@ -612,6 +613,7 @@ try:
                 "UNH","LLY","XOM","HD","INTC","QCOM","MU","TXN","BA","CVX"
             ]
             _cutoff_ins = (datetime.date.today() - datetime.timedelta(days=30)).isoformat()
+            import time as _edgar_time
             _tx_codes = {
                 "P": "Purchase", "S": "Sale", "A": "Award", "D": "Dispose",
                 "F": "Tax withheld", "G": "Gift", "M": "Option exercise",
@@ -687,6 +689,7 @@ try:
                             pass
                 except Exception:
                     pass
+                _edgar_time.sleep(0.15)   # SEC rate limit: max ~8 req/s per IP
             # sort newest first, cap at 100
             _insiders.sort(key=lambda x: x.get("date",""), reverse=True)
             _insiders = _insiders[:100]
@@ -754,17 +757,19 @@ try:
         print("  Scanning options flow via yfinance (unusual vol/OI)…")
         try:
             import yfinance as _yf_opt
+            # Limit to 12 high-liquidity tickers to keep CI runtime under 5 min.
+            # Each ticker × 3 expiries × 2 sides = 6 HTTP requests → 72 total.
             _opt_tickers = [
-                "SPY","QQQ","IWM","AAPL","MSFT","NVDA","GOOGL","AMZN","META",
-                "TSLA","JPM","AMD","NFLX","AVGO","CRM","PLTR","COIN","GS","BA",
-                "XOM","V","MA","UNH","HD","COST","MU","INTC","QCOM","TXN","CVX"
+                "SPY","QQQ","AAPL","MSFT","NVDA","TSLA",
+                "AMZN","META","AMD","GOOGL","JPM","COIN"
             ]
             _today_iso = datetime.date.today().isoformat()
             _flow_raw  = []
+            import time as _opt_time
             for _otk in _opt_tickers:
                 try:
                     _to = _yf_opt.Ticker(_otk)
-                    _exps = (_to.options or [])[:3]   # nearest 3 expiries
+                    _exps = (_to.options or [])[:2]   # nearest 2 expiries only
                     for _exp in _exps:
                         try:
                             _chain = _to.option_chain(_exp)
@@ -797,6 +802,7 @@ try:
                             pass
                 except Exception:
                     pass
+                _opt_time.sleep(0.2)   # avoid Yahoo Finance rate limiter
             # sort by raw volume desc, keep top 60
             _flow_raw.sort(key=lambda x: x.get("volume", 0), reverse=True)
             _options_flow = _flow_raw[:60]
@@ -816,6 +822,7 @@ try:
         ]
         _today_dt   = datetime.date.today()
         _lookahead  = _today_dt + datetime.timedelta(days=90)
+        import time as _earn_time
         print(f"  Fetching earnings calendar for {len(_earn_tickers)} tickers…")
         for _etk in _earn_tickers:
             _edate, _eps = None, ""
@@ -865,6 +872,7 @@ try:
                         })
                 except Exception:
                     pass
+            _earn_time.sleep(0.25)   # avoid Yahoo Finance rate limiter (40 tickers)
         _earnings_cal.sort(key=lambda x: x["date"])
         print(f"  Earnings calendar: {len(_earnings_cal)} upcoming events")
     except Exception as _earn_e:

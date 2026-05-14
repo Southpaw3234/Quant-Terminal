@@ -24,6 +24,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: quant-terminal
+  cancel-in-progress: false   # never cancel a live trading run mid-flight
+
 jobs:
   trade:
     runs-on: ubuntu-latest
