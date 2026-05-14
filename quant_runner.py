@@ -564,11 +564,11 @@ try:
         "Utilities":       {"score": 44, "driver": "Rate regulation, grid investment",  "trend": "→"},
     }
 
-    # ── Insider trading — Quiver Quant Form 4 ────────────────────────────────
+    # ── Insider trading — Quiver Quant (preferred) or SEC EDGAR (free fallback)
     _insiders = []
     if _QUIVER_KEY:
         try:
-            print("  Fetching insider trading (Form 4)…")
+            print("  Fetching insider trading (Quiver Quant)…")
             _r = _req.get(
                 "https://api.quiverquant.com/beta/live/insidertrading",
                 headers={"Authorization": f"Token {_QUIVER_KEY}"},
@@ -585,10 +585,114 @@ try:
                         "shares":      _t.get("Shares",""),
                         "price":       _t.get("SharePrice",""),
                         "value":       _t.get("Value",""),
+                        "source":      "quiver",
                     })
-                print(f"  Insiders: {len(_insiders)} trades fetched")
+                print(f"  Insiders (Quiver): {len(_insiders)} trades fetched")
         except Exception as _ins_e:
             print(f"  Insider fetch error: {_ins_e}")
+
+    if not _insiders:
+        # ── SEC EDGAR Form 4 fallback (free, no key needed) ──────────────────
+        print("  Fetching SEC EDGAR Form 4 insider trades (no API key)…")
+        try:
+            import xml.etree.ElementTree as _ET
+            _edgar_hdrs = {"User-Agent": "QuantTerminal dashboard research@example.com",
+                           "Accept-Encoding": "gzip, deflate"}
+            # 1. CIK lookup map
+            _cik_r = _req.get("https://www.sec.gov/files/company_tickers.json",
+                              headers=_edgar_hdrs, timeout=12)
+            _cik_map = {}
+            if _cik_r.ok:
+                for _ce in _cik_r.json().values():
+                    _cik_map[str(_ce["ticker"]).upper()] = str(_ce["cik_str"]).zfill(10)
+            # 2. Watchlist to query (top names most likely to have insider activity)
+            _ins_tickers = [
+                "AAPL","MSFT","NVDA","GOOGL","AMZN","META","TSLA","JPM","V","MA",
+                "AMD","NFLX","AVGO","CRM","NOW","PLTR","GS","MS","WMT","COST",
+                "UNH","LLY","XOM","HD","INTC","QCOM","MU","TXN","BA","CVX"
+            ]
+            _cutoff_ins = (datetime.date.today() - datetime.timedelta(days=30)).isoformat()
+            _tx_codes = {
+                "P": "Purchase", "S": "Sale", "A": "Award", "D": "Dispose",
+                "F": "Tax withheld", "G": "Gift", "M": "Option exercise",
+                "X": "Option exercise",
+            }
+            for _itk in _ins_tickers:
+                _cik = _cik_map.get(_itk)
+                if not _cik:
+                    continue
+                try:
+                    _sub_r = _req.get(
+                        f"https://data.sec.gov/submissions/CIK{_cik}.json",
+                        headers=_edgar_hdrs, timeout=12)
+                    if not _sub_r.ok:
+                        continue
+                    _recent = _sub_r.json().get("filings", {}).get("recent", {})
+                    _f_forms = _recent.get("form", [])
+                    _f_dates = _recent.get("filingDate", [])
+                    _f_accns = _recent.get("accessionNumber", [])
+                    _f_docs  = _recent.get("primaryDocument", [])
+                    for _fi, (_ff, _fd, _fa, _fdoc) in enumerate(
+                            zip(_f_forms, _f_dates, _f_accns, _f_docs)):
+                        if _ff != "4":
+                            continue
+                        if _fd < _cutoff_ins:
+                            break      # filings sorted newest-first
+                        _accn_clean = _fa.replace("-", "")
+                        _xml_url = (f"https://www.sec.gov/Archives/edgar/data/"
+                                    f"{int(_cik)}/{_accn_clean}/{_fdoc}")
+                        try:
+                            _xr = _req.get(_xml_url, headers=_edgar_hdrs, timeout=8)
+                            if not _xr.ok:
+                                continue
+                            _tree = _ET.fromstring(_xr.content)
+                            # Insider name + title
+                            _oname = _otitle = ""
+                            _ro = _tree.find(".//reportingOwner")
+                            if _ro is not None:
+                                _n = _ro.find(".//reportingOwnerId/rptOwnerName")
+                                if _n is not None:
+                                    _oname = (_n.text or "").strip()
+                                _t = _ro.find(".//reportingOwnerRelationship/officerTitle")
+                                if _t is not None:
+                                    _otitle = (_t.text or "").strip()
+                            # Non-derivative transactions
+                            for _tx in _tree.findall(".//nonDerivativeTransaction"):
+                                _code_el = _tx.find(".//transactionCoding/transactionCode")
+                                _sh_el   = _tx.find(".//transactionAmounts/transactionShares/value")
+                                _px_el   = _tx.find(".//transactionAmounts/transactionPricePerShare/value")
+                                if _code_el is None:
+                                    continue
+                                _c = (_code_el.text or "").strip().upper()
+                                if _c not in _tx_codes:
+                                    continue
+                                _sh  = _sh_el.text.strip()  if _sh_el  is not None else ""
+                                _px  = _px_el.text.strip()  if _px_el  is not None else ""
+                                try:
+                                    _val = str(round(float(_sh or 0) * float(_px or 0)))
+                                except Exception:
+                                    _val = ""
+                                _insiders.append({
+                                    "date":        _fd,
+                                    "ticker":      _itk,
+                                    "name":        _oname,
+                                    "title":       _otitle,
+                                    "transaction": _tx_codes[_c],
+                                    "shares":      _sh,
+                                    "price":       _px,
+                                    "value":       _val,
+                                    "source":      "sec_edgar",
+                                })
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
+            # sort newest first, cap at 100
+            _insiders.sort(key=lambda x: x.get("date",""), reverse=True)
+            _insiders = _insiders[:100]
+            print(f"  SEC EDGAR insiders: {len(_insiders)} transactions")
+        except Exception as _sec_e:
+            print(f"  SEC EDGAR insider error: {_sec_e}")
 
     # ── Short interest — Quiver Quant ─────────────────────────────────────────
     _short_interest = []
@@ -641,7 +745,7 @@ try:
         except Exception as _opt_e:
             print(f"  Options flow error: {_opt_e}")
 
-    # ── Earnings calendar — yfinance ──────────────────────────────────────────
+    # ── Earnings calendar — yfinance (get_earnings_dates, 0.2.x compatible) ──
     _earnings_cal = []
     try:
         import yfinance as _yf
@@ -651,34 +755,57 @@ try:
             "NOW","PLTR","COIN","BA","GS","MS","WMT","PG","KO","PEP",
             "DIS","CMCSA","VZ","T","INTC","QCOM","MU","TXN","SLB","CVX"
         ]
+        _today_dt   = datetime.date.today()
+        _lookahead  = _today_dt + datetime.timedelta(days=90)
         print(f"  Fetching earnings calendar for {len(_earn_tickers)} tickers…")
         for _etk in _earn_tickers:
+            _edate, _eps = None, ""
             try:
-                _cal = _yf.Ticker(_etk).calendar
-                if _cal is None: continue
-                _edate = None
-                if hasattr(_cal, 'to_dict'):
-                    _cd = _cal.to_dict()
-                    for _k in ['Earnings Date','earningsDate']:
-                        if _k in _cd:
-                            _v = _cd[_k]
-                            _edate = str(_v[0])[:10] if isinstance(_v,list) and _v else str(_v)[:10] if _v else None
-                            break
-                    _eps = _cd.get('EPS Estimate','')
-                elif isinstance(_cal, dict):
-                    _edate = str(_cal.get('Earnings Date',''))[:10]
-                    _eps   = _cal.get('EPS Estimate','')
-                if _edate and len(_edate) >= 10:
-                    _days = (datetime.date.fromisoformat(_edate[:10]) - datetime.date.today()).days
-                    if _days >= -2:
+                # Primary: get_earnings_dates() — reliable in yfinance 0.2.x
+                _ed = _yf.Ticker(_etk).get_earnings_dates(limit=8)
+                if _ed is not None and not _ed.empty:
+                    # strip timezone so we can compare to date()
+                    _ed.index = _ed.index.tz_localize(None) if hasattr(_ed.index, 'tz') and _ed.index.tz else _ed.index
+                    _future = _ed[_ed.index.date >= _today_dt - datetime.timedelta(days=2)]
+                    if not _future.empty:
+                        _row   = _future.iloc[-1]   # earliest upcoming row
+                        _edate = _future.index[-1].date().isoformat()
+                        _raw_eps = _row.get("EPS Estimate") if hasattr(_row, "get") else None
+                        if _raw_eps is not None:
+                            try:
+                                _eps = "" if str(_raw_eps) in ("nan","None","") else f"{float(_raw_eps):.2f}"
+                            except Exception:
+                                _eps = ""
+            except Exception:
+                pass
+            if not _edate:
+                # Fallback: .calendar dict (older yfinance / some tickers)
+                try:
+                    _cal = _yf.Ticker(_etk).calendar
+                    if isinstance(_cal, dict) and _cal:
+                        _ev = _cal.get("Earnings Date") or _cal.get("earningsDate")
+                        if _ev:
+                            _edate = str(_ev[0] if isinstance(_ev, list) else _ev)[:10]
+                        _raw_eps = _cal.get("EPS Estimate","")
+                        try:
+                            _eps = "" if str(_raw_eps) in ("nan","None","") else f"{float(_raw_eps):.2f}"
+                        except Exception:
+                            _eps = ""
+                except Exception:
+                    pass
+            if _edate and len(_edate) >= 10:
+                try:
+                    _edate_obj = datetime.date.fromisoformat(_edate[:10])
+                    _days = (_edate_obj - _today_dt).days
+                    if -2 <= _days <= 90:
                         _earnings_cal.append({
                             "ticker":    _etk,
                             "date":      _edate[:10],
-                            "eps_est":   str(_eps)[:12] if _eps else "",
+                            "eps_est":   _eps,
                             "days_away": _days,
                         })
-            except Exception:
-                pass
+                except Exception:
+                    pass
         _earnings_cal.sort(key=lambda x: x["date"])
         print(f"  Earnings calendar: {len(_earnings_cal)} upcoming events")
     except Exception as _earn_e:
