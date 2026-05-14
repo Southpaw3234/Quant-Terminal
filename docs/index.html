@@ -33,6 +33,12 @@ body{background:var(--bg);color:var(--tx);font-family:var(--fn);font-size:13px;l
 .btn{background:none;border:1px solid var(--br);color:var(--mu);padding:4px 10px;
   border-radius:6px;cursor:pointer;font-family:var(--fn);font-size:11px;transition:all .15s}
 .btn:hover{border-color:var(--bl);color:var(--bl)}
+/* ── PREDICTION TABS ── */
+.pred-tabs{display:flex;gap:4px;flex-wrap:wrap}
+.pred-tab{background:none;border:1px solid var(--br);color:var(--mu);padding:3px 10px;
+  border-radius:14px;cursor:pointer;font-family:var(--fn);font-size:11px;transition:all .15s;white-space:nowrap}
+.pred-tab:hover{border-color:var(--bl);color:var(--bl)}
+.pred-tab.active{background:var(--bl);border-color:var(--bl);color:#fff;font-weight:600}
 
 /* ── SECTIONS ── */
 .section{padding:32px 24px;max-width:1400px;margin:0 auto}
@@ -533,31 +539,36 @@ tr:hover td{background:rgba(88,166,255,.04)}
 
     <!-- Predictions table -->
     <div class="panel">
-      <div class="panel-hdr">
-        <span class="panel-title">All Predictions</span>
-        <div style="display:flex;gap:6px">
-          <button class="btn" onclick="exportCSV()" title="Download signals as CSV">⬇ Export CSV</button>
-          <select id="f-action" class="btn" onchange="filterPreds()" style="padding:3px 8px">
-            <option value="">All signals</option>
-            <option value="BUY">BUY</option>
-            <option value="SELL">SELL</option>
-            <option value="HOLD">HOLD</option>
-          </select>
+      <div class="panel-hdr" style="flex-wrap:wrap;gap:8px">
+        <span class="panel-title">Predictions</span>
+        <!-- Signal-type tabs -->
+        <div class="pred-tabs" id="pred-tabs">
+          <button class="pred-tab active" onclick="setPredTab('BUY',this)">📈 BUY</button>
+          <button class="pred-tab" onclick="setPredTab('SELL',this)">📉 SELL</button>
+          <button class="pred-tab" onclick="setPredTab('HOLD',this)">⏸ HOLD</button>
+          <button class="pred-tab" onclick="setPredTab('',this)">All</button>
+        </div>
+        <div style="display:flex;gap:6px;margin-left:auto">
           <select id="f-scored" class="btn" onchange="filterPreds()" style="padding:3px 8px">
             <option value="">All outcomes</option>
             <option value="scored">Scored only</option>
             <option value="pending">Pending</option>
           </select>
+          <button class="btn" onclick="exportCSV()" title="Download signals as CSV">⬇ CSV</button>
         </div>
       </div>
-      <div class="tbl-wrap">
+      <div class="tbl-wrap" id="pred-tbl-wrap" style="max-height:340px;overflow-y:auto;transition:max-height .35s ease">
         <table>
           <thead>
-            <tr><th>Date</th><th>Ticker</th><th>Signal</th><th>Confidence</th><th>Price</th>
-            <th>RSI</th><th>VIX</th><th>Regime</th><th>ML Score</th><th>Result</th><th>Return</th></tr>
+            <tr><th>Date</th><th>Ticker</th><th>Signal</th><th>Conf</th><th>Price</th>
+            <th>RSI</th><th>Regime</th><th>ML Score</th><th>Result</th><th>Return</th></tr>
           </thead>
           <tbody id="pred-tbody"></tbody>
         </table>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px 4px;border-top:1px solid var(--br)">
+        <span style="font-size:11px;color:var(--mu)" id="pred-showing-label"></span>
+        <button class="btn" id="pred-expand-btn" onclick="togglePredExpand()" style="font-size:11px;padding:3px 10px">Show all ▾</button>
       </div>
     </div>
 
@@ -1251,19 +1262,53 @@ function renderPnLChart(hist) {
 }
 
 // ── Predictions ───────────────────────────────────────────────────────────
+let _predTab = 'BUY';   // default tab
+let _predExpanded = false;
+const PRED_PAGE = 15;   // rows shown when collapsed
+
+function setPredTab(val, btn) {
+  _predTab = val;
+  _predExpanded = false;
+  document.querySelectorAll('.pred-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  // reset scroll + height
+  const wrap = document.getElementById('pred-tbl-wrap');
+  wrap.style.maxHeight = '340px';
+  document.getElementById('pred-expand-btn').textContent = 'Show all ▾';
+  filterPreds();
+}
+
+function togglePredExpand() {
+  _predExpanded = !_predExpanded;
+  const wrap = document.getElementById('pred-tbl-wrap');
+  wrap.style.maxHeight = _predExpanded ? 'none' : '340px';
+  document.getElementById('pred-expand-btn').textContent = _predExpanded ? 'Collapse ▴' : 'Show all ▾';
+  filterPreds();
+}
+
 function renderPredRows(preds) {
   const tbody = document.getElementById('pred-tbody');
-  if (!preds.length) { tbody.innerHTML=`<tr><td colspan="11"><div class="empty"><div class="empty-msg">No predictions match filter</div></div></td></tr>`; return; }
-  tbody.innerHTML = [...preds].reverse().slice(0,300).map(p => {
+  const colSpan = 10;
+  if (!preds.length) {
+    tbody.innerHTML = `<tr><td colspan="${colSpan}"><div class="empty"><div class="empty-msg">No predictions match filter</div></div></td></tr>`;
+    document.getElementById('pred-showing-label').textContent = '';
+    return;
+  }
+  const sorted = [...preds].reverse();
+  const shown  = _predExpanded ? sorted : sorted.slice(0, PRED_PAGE);
+  const lbl    = document.getElementById('pred-showing-label');
+  lbl.textContent = `Showing ${shown.length} of ${sorted.length}`;
+  // hide expand button if nothing to expand
+  document.getElementById('pred-expand-btn').style.display = sorted.length <= PRED_PAGE ? 'none' : '';
+  tbody.innerHTML = shown.map(p => {
     const sc=p.scored==='True'||p.scored==='true', ok=p.was_correct==='True'||p.was_correct==='true';
-    const res = sc ? (ok?'<span class="pos">✓ Correct</span>':'<span class="neg">✗ Wrong</span>') : '<span style="color:var(--mu)">Pending</span>';
-    const r=parseFloat(p.rsi||0), v=parseFloat(p.vix||0);
+    const res = sc ? (ok?'<span class="pos">✓</span>':'<span class="neg">✗</span>') : '<span style="color:var(--mu);font-size:10px">pend</span>';
+    const r=parseFloat(p.rsi||0);
     return `<tr>
-      <td style="color:var(--mu);font-size:10px">${fd(p.pred_ts)}</td>
+      <td style="color:var(--mu);font-size:10px;white-space:nowrap">${fd(p.pred_ts)}</td>
       <td><strong>${p.ticker}</strong></td><td>${signal(p.action)}</td><td>${confBar(p.confidence)}</td>
       <td style="color:var(--mu)">${f$(p.price_at_pred)}</td>
-      <td style="color:${r>70?'var(--rd)':r<30?'var(--gr)':'var(--mu)'}">${r.toFixed(1)}</td>
-      <td style="color:${v>25?'var(--rd)':v>20?'var(--yw)':'var(--mu)'}">${v.toFixed(1)}</td>
+      <td style="color:${r>70?'var(--rd)':r<30?'var(--gr)':'var(--mu)'}">${r.toFixed(0)}</td>
       <td>${regime(p.regime)}</td><td>${confBar(p.p_ensemble)}</td><td>${res}</td>
       <td>${p.actual_return?fP(p.actual_return):'—'}</td>
     </tr>`;
@@ -1272,9 +1317,8 @@ function renderPredRows(preds) {
 
 function filterPreds() {
   let p = [..._preds];
-  const a = document.getElementById('f-action').value;
+  if (_predTab) p = p.filter(x=>x.action===_predTab);
   const s = document.getElementById('f-scored').value;
-  if (a) p = p.filter(x=>x.action===a);
   if (s==='scored') p = p.filter(x=>x.scored==='True'||x.scored==='true');
   if (s==='pending') p = p.filter(x=>x.scored!=='True'&&x.scored!=='true');
   renderPredRows(p);
