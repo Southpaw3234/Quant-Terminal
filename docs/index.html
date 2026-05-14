@@ -1704,21 +1704,87 @@ function renderPolitical(congress, geoNews, industryRisk) {
     irBox.innerHTML = `<div class="empty"><div class="empty-icon">🏭</div><div class="empty-msg">Loads on morning cycle</div></div>`;
   }
 
-  // Geopolitical news
+  // Geopolitical news — expandable cards with impact analysis
   const gnBox = document.getElementById('geo-news-box');
   const catLabels = {geopolitical:'🌍 Geopolitical', fed_policy:'🏦 Fed Policy',
                      political:'🏛️ Political', global_trade:'📦 Trade', macro:'📊 Macro'};
+
+  function _geoImpact(title, summary) {
+    const txt = (title + ' ' + (summary||'')).toLowerCase();
+    const bearish = ['crash','recession','tariff','sanction','conflict','war','deficit','inflation','drop','fall',
+                     'decline','risk','threat','concern','turmoil','crisis','ban','restrict','tension','slump'];
+    const bullish = ['deal','agreement','rally','growth','stimulus','cut rates','rate cut','recovery','boom',
+                     'upgrade','invest','optimism','breakthrough','surge','gain','expand','reform','ease'];
+    const bs = bullish.filter(w => txt.includes(w)).length;
+    const br = bearish.filter(w => txt.includes(w)).length;
+    if (br > bs + 1) return {label:'Bearish', color:'var(--rd)', bg:'rgba(248,81,73,.1)'};
+    if (bs > br + 1) return {label:'Bullish', color:'var(--gr)', bg:'rgba(63,185,80,.1)'};
+    return {label:'Neutral', color:'var(--mu)', bg:'rgba(139,148,158,.1)'};
+  }
+
+  function _geoKeyPoints(title, summary) {
+    // Extract 2-3 key analytical points from the summary text
+    const txt = (summary || '').trim();
+    if (!txt) return [];
+    // Split on sentence boundaries; pick up to 3 meaningful sentences
+    const sentences = txt.replace(/([.!?])\s+/g, '$1|').split('|')
+      .map(s => s.trim()).filter(s => s.length > 40 && s.length < 300);
+    return sentences.slice(0, 3);
+  }
+
   if (geoNews && geoNews.length) {
-    const limited = geoNews.slice(0, 12);
-    gnBox.innerHTML = limited.map(n => {
-      const cat = catLabels[n.category] || '📰 News';
-      return `<div style="padding:8px 0;border-bottom:1px solid rgba(48,54,61,.4)">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
-          <span style="font-size:9px;color:var(--bl);background:rgba(88,166,255,.1);padding:1px 6px;border-radius:8px">${cat}</span>
-          <span style="font-size:9px;color:var(--mu2)">${n.source} · ${n.published}</span>
+    const limited = geoNews.slice(0, 14);
+    gnBox.innerHTML = limited.map((n, i) => {
+      const cat    = catLabels[n.category] || '📰 News';
+      const impact = _geoImpact(n.title, n.summary);
+      const pts    = _geoKeyPoints(n.title, n.summary);
+      const uid    = 'geo-exp-' + i;
+      return `
+      <div style="border-bottom:1px solid rgba(48,54,61,.4);padding:0">
+        <!-- Clickable header row -->
+        <div onclick="(function(el){
+              var b=document.getElementById('${uid}');
+              var open=b.style.display==='block';
+              b.style.display=open?'none':'block';
+              el.querySelector('.geo-chev').textContent=open?'›':'⌄';
+            })(this)"
+          style="display:flex;align-items:flex-start;gap:8px;padding:9px 2px;cursor:pointer;user-select:none">
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">
+              <span style="font-size:9px;color:var(--bl);background:rgba(88,166,255,.1);padding:1px 6px;border-radius:8px;flex-shrink:0">${cat}</span>
+              <span style="font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;color:${impact.color};background:${impact.bg};flex-shrink:0">${impact.label}</span>
+              <span style="font-size:9px;color:var(--mu2);flex-shrink:0">${n.source} · ${n.published}</span>
+            </div>
+            <div style="font-size:11px;color:var(--tx);line-height:1.5;font-weight:500">${n.title}</div>
+          </div>
+          <span class="geo-chev" style="color:var(--mu);font-size:14px;margin-top:2px;flex-shrink:0;transition:transform .2s">›</span>
         </div>
-        <div style="font-size:11px;color:var(--tx);line-height:1.4">${n.title}</div>
-        ${n.summary ? `<div style="font-size:10px;color:var(--mu);margin-top:3px;line-height:1.4">${n.summary.substring(0,120)}${n.summary.length>120?'…':''}</div>` : ''}
+
+        <!-- Expandable analysis panel -->
+        <div id="${uid}" style="display:none;padding:0 4px 12px 4px">
+          ${pts.length ? `
+          <div style="background:rgba(22,27,34,.6);border:1px solid rgba(48,54,61,.6);border-radius:6px;padding:10px 12px;margin-bottom:8px">
+            <div style="font-size:9px;color:var(--mu);text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px;font-weight:600">Key Points</div>
+            ${pts.map(p => `
+              <div style="display:flex;gap:8px;margin-bottom:5px;align-items:flex-start">
+                <span style="color:var(--bl);font-size:10px;flex-shrink:0;margin-top:1px">▸</span>
+                <span style="font-size:11px;color:var(--tx);line-height:1.5">${p}</span>
+              </div>`).join('')}
+          </div>` : n.summary ? `
+          <div style="background:rgba(22,27,34,.6);border:1px solid rgba(48,54,61,.6);border-radius:6px;padding:10px 12px;margin-bottom:8px">
+            <div style="font-size:11px;color:var(--mu);line-height:1.6">${n.summary}</div>
+          </div>` : ''}
+
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <span style="font-size:9px;color:var(--mu2)">Market Impact:</span>
+              <span style="font-size:9px;font-weight:700;color:${impact.color}">${impact.label}</span>
+            </div>
+            ${n.url ? `<a href="${n.url}" target="_blank" rel="noopener"
+              style="font-size:10px;color:var(--bl);text-decoration:none;display:flex;align-items:center;gap:3px;margin-left:auto">
+              Read Full Article <span style="font-size:11px">↗</span></a>` : ''}
+          </div>
+        </div>
       </div>`;
     }).join('');
   } else {
