@@ -397,6 +397,42 @@ try:
     }
     print(f"  FRED: {sum(v is not None for v in _ext.values())}/{len(_ext)} series fetched")
 
+    # ── yfinance fallbacks for commodities/yields when FRED key not set ────
+    _yf_map = {
+        "oil_wti": "CL=F",
+        "gold":    "GC=F",
+        "silver":  "SI=F",
+        "nat_gas": "NG=F",
+        "copper":  "HG=F",
+        "y10":     "^TNX",
+        "y30":     "^TYX",
+    }
+    _yf_needed = [k for k in _yf_map if _ext.get(k) is None]
+    if _yf_needed:
+        try:
+            import yfinance as _yf_m
+            print(f"  yfinance: fetching {_yf_needed} as FRED fallbacks…")
+            for _k in _yf_needed:
+                try:
+                    _sym  = _yf_map[_k]
+                    _tick = _yf_m.Ticker(_sym)
+                    _px   = None
+                    try:
+                        _px = _tick.fast_info.get("lastPrice")
+                    except Exception:
+                        pass
+                    if not _px:
+                        _hist = _yf_m.download(_sym, period="5d", progress=False)
+                        if not _hist.empty:
+                            _px = float(_hist["Close"].dropna().iloc[-1])
+                    if _px:
+                        _ext[_k] = round(float(_px), 4)
+                except Exception as _yfe:
+                    print(f"    yfinance {_k}: {_yfe}")
+            print(f"  yfinance fallback: {sum(_ext.get(k) is not None for k in _yf_needed)}/{len(_yf_needed)} filled")
+        except ImportError:
+            print("  yfinance not installed — commodity prices unavailable")
+
     # ── FOMC 2025-2026 schedule (hardcoded public calendar) ───────────────
     _fomc_all = [
         # 2025
