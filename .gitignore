@@ -23,3 +23,6 @@ trading_model_v23.2.ipynb
 trading_model_v23.3.ipynb
 trading_model_v23.4.ipynb
 trading_model_v23.ipynb
+
+# Dashboard data feed — pushed to orphan `data` branch each cycle, never accumulated in master
+docs/data.json

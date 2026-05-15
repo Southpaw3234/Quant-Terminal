@@ -113,15 +113,38 @@ jobs:
           path: data/models/
           key: model-cache-${{ github.run_id }}
 
-      - name: Commit updated state files
+      - name: Push dashboard data to orphan data branch
         env:
           GIT_USER_EMAIL: 'quant-bot@github-actions'
           GIT_USER_NAME:  'Quant Terminal Bot'
         run: |
           git config user.email "$GIT_USER_EMAIL"
           git config user.name  "$GIT_USER_NAME"
-          # Stage generated files FIRST so rebase has a clean working tree
-          git add data/paper_trades/ data/predictions/ data/weights/ docs/ || true
+          # Push docs/data.json to an orphan `data` branch that is force-replaced each
+          # cycle. This single-commit branch never accumulates history, keeping master
+          # clean and the repo well under GitHub's 1 GB limit.
+          if [ -f docs/data.json ]; then
+            git checkout --orphan data-tmp
+            git reset
+            git add docs/data.json
+            git commit -m "data: ${{ steps.run_type.outputs.type }} $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git push origin data-tmp:data --force
+            git checkout master
+            git branch -D data-tmp
+            echo "data.json pushed to data branch OK"
+          else
+            echo "docs/data.json not found — skipping data branch push"
+          fi
+
+      - name: Commit updated state files to master
+        env:
+          GIT_USER_EMAIL: 'quant-bot@github-actions'
+          GIT_USER_NAME:  'Quant Terminal Bot'
+        run: |
+          git config user.email "$GIT_USER_EMAIL"
+          git config user.name  "$GIT_USER_NAME"
+          # Stage state files — explicitly exclude docs/data.json (lives on data branch)
+          git add data/paper_trades/ data/predictions/ data/weights/ docs/index.html || true
           # Stash any remaining unstaged changes to avoid rebase conflict
           git stash --include-untracked || true
           git pull --rebase origin master || true

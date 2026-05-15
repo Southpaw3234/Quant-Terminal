@@ -1,2 +1,6 @@
 [build]
+  # Fetch latest dashboard data from the orphan `data` branch (force-pushed each cycle,
+  # never accumulates in master history).  For private repos: set GITHUB_TOKEN in
+  # Netlify Site Settings → Environment Variables and add -H "Authorization: token $GITHUB_TOKEN"
+  command = "curl -fsSL https://raw.githubusercontent.com/Southpaw3234/Quant-Terminal/data/docs/data.json -o docs/data.json 2>/dev/null && echo 'data.json fetched OK' || echo 'WARNING: data.json fetch failed - dashboard data may be stale'"
   publish = "docs"
