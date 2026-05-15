@@ -126,7 +126,7 @@ jobs:
           if [ -f docs/data.json ]; then
             git checkout --orphan data-tmp
             git reset
-            git add docs/data.json
+            git add -f docs/data.json
             git commit -m "data: ${{ steps.run_type.outputs.type }} $(date -u +'%Y-%m-%d %H:%M UTC')"
             git push origin data-tmp:data --force
             git checkout master
