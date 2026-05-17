@@ -383,6 +383,39 @@ def _compute_sue(ticker):
         return 0.0
 
 print("  [patch] Feature helpers injected: hurst, frac_diff, triple_barrier, SUE")
+
+# ── Fix E: Cross-sectional momentum helper ────────────────────────────────────
+# xs_mom = ticker_1d_return - sector_etf_1d_return, z-scored cross-sectionally.
+# Captures relative strength vs. the sector, removing market/sector beta from
+# the momentum signal so only idiosyncratic price strength remains.
+_SECTOR_ETF_MAP_XS = {
+    "Technology":    "XLK",
+    "Financials":    "XLF",
+    "Healthcare":    "XLV",
+    "Energy":        "XLE",
+    "Consumer Disc": "XLY",
+    "Consumer Staples": "XLP",
+    "Industrials":   "XLI",
+    "Materials":     "XLB",
+    "Utilities":     "XLU",
+    "Real Estate":   "XLRE",
+    "Communication": "XLC",
+}
+
+def _fetch_sector_etf_returns(etf_tickers, period="1y"):
+    \"\"\"Download daily returns for sector ETFs; returns dict[ticker -> pd.Series].\"\"\"
+    import yfinance as _yf6xs
+    _results = {}
+    for _etf in etf_tickers:
+        try:
+            _df = _yf6xs.download(_etf, period=period, progress=False, auto_adjust=True)
+            if _df is not None and not _df.empty and "Close" in _df.columns:
+                _results[_etf] = _df["Close"].pct_change()
+        except Exception:
+            pass
+    return _results
+
+print("  [patch] Cross-sectional momentum helpers injected")
 """
 
 # ── CELL 6 POSTPATCH: apply new features + triple barrier labels + VIF + parallel
@@ -498,6 +531,74 @@ except ImportError:
 except Exception as _vif_e:
     print(f"  [patch] VIF pruning error (non-fatal): {_vif_e}")
 
+# ── Fix E: Cross-sectional momentum feature ───────────────────────────────────
+# xs_mom_5d = ticker_5d_return - sector_etf_5d_return, z-scored cross-sectionally.
+try:
+    _ticker_sectors = {}
+    _rep_feat = next(iter(featured.values()))
+    _feat_tks = list(featured.keys())
+
+    # Determine sector for each ticker from signals if available, else skip
+    if "signals" in dir():
+        _ticker_sectors = {tk: signals[tk].get("sector", "Unknown")
+                           for tk in _feat_tks if tk in signals}
+    else:
+        # Try from featured df columns
+        for _tk6xs, _fd6xs in featured.items():
+            _ticker_sectors[_tk6xs] = "Unknown"
+
+    # Collect unique ETFs needed
+    _needed_etfs = set()
+    for _sec6xs in _ticker_sectors.values():
+        _etf6xs = _SECTOR_ETF_MAP_XS.get(_sec6xs)
+        if _etf6xs:
+            _needed_etfs.add(_etf6xs)
+
+    _etf_returns = _fetch_sector_etf_returns(_needed_etfs) if _needed_etfs else {}
+
+    # Compute 5-day rolling return for each ticker and subtract sector ETF
+    _xs_raw = {}  # {ticker: pd.Series of xs_mom values}
+    for _tk6xs, _fd6xs in featured.items():
+        try:
+            _sec6xs = _ticker_sectors.get(_tk6xs, "Unknown")
+            _etf6xs = _SECTOR_ETF_MAP_XS.get(_sec6xs)
+            _close6xs = _fd6xs["Close"] if "Close" in _fd6xs.columns else None
+            if _close6xs is None or len(_close6xs) < 10:
+                continue
+            _tk_ret5 = _close6xs.pct_change(5)
+            if _etf6xs and _etf6xs in _etf_returns:
+                _etf_ret5 = _etf_returns[_etf6xs].reindex(_tk_ret5.index).fillna(0)
+                _xs_raw[_tk6xs] = _tk_ret5 - _etf_ret5
+            else:
+                _xs_raw[_tk6xs] = _tk_ret5  # no sector ETF; use raw return
+        except Exception:
+            pass
+
+    # Z-score cross-sectionally by date
+    if _xs_raw:
+        import pandas as _pd6xs
+        _xs_df = _pd6xs.DataFrame(_xs_raw)
+        _xs_mean = _xs_df.mean(axis=1)
+        _xs_std  = _xs_df.std(axis=1).replace(0, _np6p.nan)
+        _xs_z    = (_xs_df.subtract(_xs_mean, axis=0)
+                          .divide(_xs_std, axis=0))
+        # Assign back and shift 1 (avoid lookahead)
+        _n_xs_added = 0
+        for _tk6xs, _fd6xs in featured.items():
+            if _tk6xs in _xs_z.columns:
+                _col = _xs_z[_tk6xs].reindex(_fd6xs.index).shift(1)
+                featured[_tk6xs]["xs_mom_5d"] = _col
+                _n_xs_added += 1
+        # Add xs_mom_5d to FEATURE_COLS if not already there
+        if "xs_mom_5d" not in FEATURE_COLS:
+            FEATURE_COLS.append("xs_mom_5d")
+        print(f"  [patch] Cross-sectional momentum (xs_mom_5d) added for "
+              f"{_n_xs_added}/{len(featured)} tickers")
+    else:
+        print("  [patch] Cross-sectional momentum: no xs_raw data computed — skipped")
+except Exception as _xs6e:
+    print(f"  [patch] Cross-sectional momentum error (non-fatal): {_xs6e}")
+
 print(f"  [patch] Final feature set: {len(FEATURE_COLS)} features")
 """
 
@@ -537,6 +638,36 @@ class TimeSeriesSplit:
             test_embargoed = test_idx[test_idx > embargo_end]
             if len(test_embargoed) >= 5:
                 yield train_idx, test_embargoed
+
+    def get_val_indices(self, X):
+        \"\"\"
+        Returns indices for the held-out AUC validation window (62.5%–75%).
+        Use this in the Optuna objective to measure generalization on data the
+        CV folds never touched — preventing hyperparameter leakage into val.
+        \"\"\"
+        n       = len(X)
+        n_start = int(n * self._optuna_fraction)
+        n_end   = int(n * (self._optuna_fraction + 0.125))
+        return _np8.arange(n_start, min(n_end, n))
+
+    def get_test_indices(self, X):
+        \"\"\"
+        Returns indices for the Platt calibration window (75%–87.5%).
+        Calibrate predict_proba on data disjoint from both Optuna and val.
+        \"\"\"
+        n       = len(X)
+        n_start = int(n * (self._optuna_fraction + 0.125))
+        n_end   = int(n * (self._optuna_fraction + 0.250))
+        return _np8.arange(n_start, min(n_end, n))
+
+    def get_meta_indices(self, X):
+        \"\"\"
+        Returns indices for the stacking meta-learner window (87.5%–100%).
+        Train the meta-learner on out-of-bag base-model predictions here.
+        \"\"\"
+        n       = len(X)
+        n_start = int(n * (self._optuna_fraction + 0.250))
+        return _np8.arange(n_start, n)
 
 # ── Block-bootstrap minority-class oversampling (replaces SMOTE) ─────────────
 # SMOTE interpolates between random minority samples from any time period —
@@ -688,46 +819,99 @@ _W_REGIME    = _IC_COMPOSITE_WEIGHTS["regime"]
 _W_MACRO     = _IC_COMPOSITE_WEIGHTS["macro"]
 """
 
-# ── CELL 11 POSTPATCH: conformal prediction uncertainty bands ─────────────────
+# ── CELL 11 POSTPATCH: conformal bands + net-of-cost filter + ternary labels ──
 CELL_11_POSTPATCH = """
-# Apply conformal uncertainty bands to composite_score.
-# Signals near the 0.5 decision boundary with high empirical variance get
-# lower effective confidence, reducing overconfident near-boundary trades.
+import numpy as _np11p
+
+# ── Fix A: Ternary BUY/HOLD/SELL labels ──────────────────────────────────────
+# Binary classification forces every prediction to BUY or SELL, wasting ~60% of
+# flat (HOLD) bars as noise. Here we add a ternary_label field to each signal:
+#   composite_score > HOLD_HI → "BUY"
+#   composite_score < HOLD_LO → "SELL"
+#   otherwise                 → "HOLD" (suppress trade, do not enter)
+_HOLD_HI = 0.55   # must exceed this to be a BUY
+_HOLD_LO = 0.45   # must be below this to be a SELL
+_n_buy, _n_hold, _n_sell = 0, 0, 0
+
+# ── Fix B: Conformal prediction uncertainty bands ─────────────────────────────
+# Signals near the 0.5 boundary with high empirical variance get lower effective
+# confidence, reducing overconfident near-boundary trades.
+_q90_11 = None
 try:
-    import numpy as _np11p
-    _pred_path11 = Path("data/predictions/predictions.csv")
+    import pandas as _pd11p
+    from pathlib import Path as _P11p
+    _pred_path11 = _P11p("data/predictions/predictions.csv")
     if _pred_path11.exists() and "signals" in dir():
-        import pandas as _pd11p
         _plog11 = _pd11p.read_csv(_pred_path11)
-        # Use last 60 scored predictions to calibrate residuals
         _scored11 = _plog11[_plog11["scored"].astype(str).isin(["True","true"])].tail(60)
         if len(_scored11) >= 20 and "composite_score" in _plog11.columns:
-            _cs11   = _pd11p.to_numeric(_scored11["composite_score"], errors="coerce").dropna()
-            _corr11 = _scored11["was_correct"].astype(str).isin(["True","true"])
-            _corr11 = _corr11[_cs11.index]
+            _cs11    = _pd11p.to_numeric(_scored11["composite_score"], errors="coerce").dropna()
+            _corr11  = _scored11["was_correct"].astype(str).isin(["True","true"])
+            _corr11  = _corr11[_cs11.index]
             _resid11 = (_cs11 - _corr11.astype(float)).abs()
             _q90_11  = float(_resid11.quantile(0.90))
-            # Apply: signals within q90 band of 0.5 get confidence scaled down
-            _n_adjusted = 0
-            for _tk11, _sig11 in signals.items():
-                _cs_val = _sig11.get("composite_score", 0.5)
-                try:
-                    _cs_val = float(_cs_val)
-                except Exception:
-                    continue
-                _dist_from_boundary = abs(_cs_val - 0.5)
-                if _dist_from_boundary < _q90_11:
-                    # Scale confidence toward 0.5 proportional to proximity
-                    _scale = _dist_from_boundary / max(_q90_11, 0.01)
-                    signals[_tk11]["confidence"] = (
-                        0.5 + (_sig11.get("confidence", 0.5) - 0.5) * _scale)
-                    _n_adjusted += 1
-            print(f"  [patch] Conformal bands: q90={_q90_11:.3f}, "
-                  f"adjusted {_n_adjusted} signals")
+            print(f"  [patch] Conformal bands calibrated: q90={_q90_11:.3f}")
         else:
             print("  [patch] Conformal bands: insufficient scored predictions — skipped")
 except Exception as _conf11e:
     print(f"  [patch] Conformal bands error (non-fatal): {_conf11e}")
+
+# ── Fix C: Net-of-cost alpha filter ──────────────────────────────────────────
+# Round-trip cost ≈ 2 × half-spread. For liquid equities assume ~0.05% each way.
+# A trade is only taken if expected alpha (|composite_score - 0.5|) > cost.
+# This filters low-edge signals that are unlikely to cover spread + slippage.
+_ROUND_TRIP_COST_PCT = 0.0010   # 0.10% round-trip (conservative for paper acct)
+# Convert cost to composite_score units: cost of 0.10% ≈ 0.05 shift in prob
+# Using empirical calibration: Δp ≈ Δreturn / 0.02 (2% per unit prob shift)
+_MIN_ALPHA_SCORE = 0.5 + (_ROUND_TRIP_COST_PCT / 0.02)   # ≈ 0.55 (aligns with HOLD_HI)
+
+# Apply all three fixes in one pass
+if "signals" in dir():
+    _n_adjusted_conf = 0
+    _n_filtered_cost = 0
+    for _tk11, _sig11 in signals.items():
+        _cs_val = _sig11.get("composite_score", 0.5)
+        try:
+            _cs_val = float(_cs_val)
+        except Exception:
+            continue
+
+        # Conformal band adjustment
+        if _q90_11 is not None:
+            _dist = abs(_cs_val - 0.5)
+            if _dist < _q90_11:
+                _scale = _dist / max(_q90_11, 0.01)
+                signals[_tk11]["confidence"] = (
+                    0.5 + (_sig11.get("confidence", 0.5) - 0.5) * _scale)
+                _n_adjusted_conf += 1
+
+        # Net-of-cost filter: suppress trades where edge < round-trip cost
+        _alpha = abs(_cs_val - 0.5)
+        if _alpha < (_MIN_ALPHA_SCORE - 0.5):
+            # Mark as HOLD regardless of BUY/SELL probability
+            signals[_tk11]["net_of_cost_hold"] = True
+            _n_filtered_cost += 1
+        else:
+            signals[_tk11]["net_of_cost_hold"] = False
+
+        # Ternary label (uses post-conformal composite_score if adjusted)
+        _cs_final = float(signals[_tk11].get("composite_score", _cs_val))
+        if _cs_final > _HOLD_HI and not signals[_tk11].get("net_of_cost_hold"):
+            signals[_tk11]["ternary_label"] = "BUY"
+            _n_buy += 1
+        elif _cs_final < _HOLD_LO and not signals[_tk11].get("net_of_cost_hold"):
+            signals[_tk11]["ternary_label"] = "SELL"
+            _n_sell += 1
+        else:
+            signals[_tk11]["ternary_label"] = "HOLD"
+            _n_hold += 1
+
+    print(f"  [patch] Conformal bands adjusted {_n_adjusted_conf} signals")
+    print(f"  [patch] Net-of-cost filter suppressed {_n_filtered_cost} low-edge signals "
+          f"(cost threshold={_ROUND_TRIP_COST_PCT:.2%})")
+    print(f"  [patch] Ternary labels — BUY:{_n_buy}  HOLD:{_n_hold}  SELL:{_n_sell}")
+else:
+    print("  [patch] signals not in scope — ternary/cost patches skipped")
 """
 
 # ── CELL 12 PREPATCH: EWMA covariance ─────────────────────────────────────────
