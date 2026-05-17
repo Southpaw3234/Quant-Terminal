@@ -2512,6 +2512,9 @@ async function loadAll() {
   renderOptimizer();
   renderWinRate(d.ticker_accuracy || {});
   renderPinnedStrip();
+  renderIC(d.ic_decomposition || null, d.ic_composite_weights || null);
+  renderHedges(d.hedge_positions || null);
+  renderSnapshot(d.snapshot_60d || null);
 
   // Search hint
   const tickers = [...new Set(preds.map(p=>p.ticker))].sort();
