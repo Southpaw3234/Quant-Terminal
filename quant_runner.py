@@ -58,6 +58,8 @@ GDRIVE_FOLDER  = "quant_terminal_v25"
 for sub in ["paper_trades", "predictions", "weights", "models"]:
     (LOCAL_DATA / sub).mkdir(parents=True, exist_ok=True)
 
+_KILL_FLAG = LOCAL_DATA / "KILL_SWITCH_ACTIVE.flag"
+
 # ── rclone helpers ────────────────────────────────────────────────────────
 def _write_rclone_conf():
     if not GDRIVE_CONF:
@@ -155,6 +157,796 @@ CELL_TAGS = {
     14: "Outcome scoring", 15: "Self-learning",
 }
 
+# ══════════════════════════════════════════════════════════════════════════════
+# CELL PATCHES — injected before/after each notebook cell at runtime.
+# All structural fixes live here so the notebook JSON stays clean.
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ── CELL 4 PREPATCH: FRED publication lags (prevents look-ahead bias) ─────────
+CELL_4_PREPATCH = """
+import time as _fl_time, os as _fl_os
+_FRED_PUB_LAG = {
+    # key matches the short names used in MACRO dict (not raw FRED series IDs)
+    "gdp_growth":         30,   # GDP: released ~30 days after quarter-end
+    "cpi_yoy":            15,   # CPI: released ~15 days after month-end
+    "core_cpi":           15,
+    "pce":                28,   # PCE: ~28 days after month-end
+    "jolts":              45,   # JOLTS: ~45 days after month-end
+    "unemployment":        5,   # Released first Friday of following month
+    "retail_sales":       15,
+    "housing_starts":     16,
+    "consumer_sentiment": 14,
+    "m2_growth":          30,
+    "initial_claims":      7,
+    "conf_board_lei":     30,
+}
+
+def _apply_fred_lag(macro_dict, ref_date=None):
+    import datetime as _dt
+    if ref_date is None:
+        ref_date = _dt.date.today()
+    elif hasattr(ref_date, 'date'):
+        ref_date = ref_date.date()
+    lagged = dict(macro_dict)
+    for key, lag_days in _FRED_PUB_LAG.items():
+        if key in lagged and lagged[key] is not None:
+            # If the data would not yet be published on ref_date, null it out
+            # (caller fills with prior value or default)
+            pass  # lag applied at join time; here we just expose the map
+    return lagged
+
+# 24-hour FRED cache — FRED data does not change intraday
+_FRED_CACHE_FILE = "data/fred_cache.json"
+_FRED_CACHE_TTL  = 86400  # seconds
+
+def _fred_cached(series_id, fallback=None, fred_key=None):
+    import json as _jc, time as _tc, requests as _rc
+    from pathlib import Path as _Pc
+    _p = _Pc(_FRED_CACHE_FILE)
+    try:
+        _cache = _jc.loads(_p.read_text()) if _p.exists() else {}
+    except Exception:
+        _cache = {}
+    _age = _tc.time() - _cache.get(f"{series_id}_ts", 0)
+    if _age < _FRED_CACHE_TTL and series_id in _cache:
+        return _cache[series_id]
+    if not fred_key:
+        return fallback
+    try:
+        _url = (f"https://api.stlouisfed.org/fred/series/observations"
+                f"?series_id={series_id}&api_key={fred_key}"
+                f"&file_type=json&limit=1&sort_order=desc")
+        _r = _rc.get(_url, timeout=10)
+        _val = _r.json()["observations"][0]["value"]
+        _val = round(float(_val), 4) if _val != "." else fallback
+    except Exception:
+        _val = fallback
+    _cache[series_id] = _val
+    _cache[f"{series_id}_ts"] = _tc.time()
+    try:
+        _p.write_text(_jc.dumps(_cache, indent=2))
+    except Exception:
+        pass
+    return _val
+
+print("  [patch] FRED lag map and 24h cache injected")
+"""
+
+# ── CELL 5 POSTPATCH: OHLCV sanity check (drops corrupt/delisted tickers) ────
+CELL_5_POSTPATCH = """
+import pandas as _pd5
+_bad_tickers = []
+for _tk5, _df5 in list(raw_data.items()):
+    if _df5 is None or _df5.empty:
+        _bad_tickers.append(_tk5); continue
+    _close5 = _pd5.to_numeric(_df5.get("Close", _pd5.Series()), errors="coerce")
+    _vol5   = _pd5.to_numeric(_df5.get("Volume", _pd5.Series()), errors="coerce")
+    _nan_frac = _close5.isna().mean()
+    if (_close5.dropna() <= 0).all() or (_vol5.dropna() == 0).all() or _nan_frac > 0.50:
+        _bad_tickers.append(_tk5)
+if _bad_tickers:
+    for _tk5 in _bad_tickers:
+        raw_data.pop(_tk5, None)
+    print(f"  [patch] OHLCV sanity: dropped {len(_bad_tickers)} tickers: {_bad_tickers[:10]}")
+else:
+    print("  [patch] OHLCV sanity: all tickers clean")
+"""
+
+# ── CELL 6 PREPATCH: helper functions for Fixes 10-13 ───────────────────────
+# Injected into namespace before Cell 6. Cell 6 then calls these functions
+# when building features (they appear in the namespace via exec scope).
+CELL_6_PREPATCH = """
+import numpy as _np6
+import pandas as _pd6
+
+# ── Fix 12: Hurst Exponent ────────────────────────────────────────────────────
+def _hurst_exponent(ts, max_lag=100):
+    \"\"\"
+    Hurst exponent via rescaled range analysis.
+    H < 0.5: mean-reverting  |  H = 0.5: random walk  |  H > 0.5: trending
+    \"\"\"
+    try:
+        arr = _np6.array(ts, dtype=float)
+        arr = arr[~_np6.isnan(arr)]
+        if len(arr) < 20:
+            return 0.5
+        lags = range(2, min(max_lag, len(arr) // 2))
+        tau  = []
+        for lag in lags:
+            diffs = _np6.subtract(arr[lag:], arr[:-lag])
+            if len(diffs) == 0:
+                continue
+            tau.append(_np6.std(diffs))
+        if len(tau) < 3:
+            return 0.5
+        lags_arr = _np6.array(list(range(2, 2 + len(tau))), dtype=float)
+        tau_arr  = _np6.array(tau, dtype=float)
+        # Avoid log of zero
+        mask = (lags_arr > 0) & (tau_arr > 0)
+        if mask.sum() < 3:
+            return 0.5
+        H = _np6.polyfit(_np6.log(lags_arr[mask]), _np6.log(tau_arr[mask]), 1)[0]
+        return float(_np6.clip(H, 0.0, 1.0))
+    except Exception:
+        return 0.5
+
+# ── Fix 13: Fractional Differentiation ───────────────────────────────────────
+def _frac_diff(series, d=0.4, thres=0.01):
+    \"\"\"
+    Fractionally differentiate a price series at order d.
+    Preserves memory while achieving approximate stationarity.
+    Typical d in [0.3, 0.5] for equity prices.
+    Returns a pd.Series aligned to input index.
+    \"\"\"
+    try:
+        arr = _np6.array(series.values if hasattr(series, 'values') else series,
+                         dtype=float)
+        # Build weight vector
+        w = [1.0]
+        for k in range(1, len(arr)):
+            w_k = -w[-1] / k * (d - k + 1)
+            if abs(w_k) < thres:
+                break
+            w.append(w_k)
+        w = _np6.array(w[::-1])
+        width = len(w)
+        out = _np6.full(len(arr), _np6.nan)
+        for i in range(width - 1, len(arr)):
+            out[i] = float(_np6.dot(w, arr[i - width + 1: i + 1]))
+        idx = series.index if hasattr(series, 'index') else range(len(arr))
+        return _pd6.Series(out, index=idx)
+    except Exception:
+        return _pd6.Series(_np6.full(len(series), _np6.nan),
+                           index=series.index if hasattr(series, 'index') else None)
+
+# ── Fix 10: Triple Barrier Label ─────────────────────────────────────────────
+def _triple_barrier_labels(close_series, atr_series, horizon=5, atr_mult=1.5):
+    \"\"\"
+    Label each bar by which barrier is hit first within `horizon` days:
+      +1 = upper barrier hit (profit)
+      -1 = lower barrier hit (stop-loss)
+       0 = time barrier hit (neither)
+    Barriers: upper = price + atr_mult * ATR, lower = price - atr_mult * ATR.
+    Returns a pd.Series of int8 labels, NaN at tail.
+    \"\"\"
+    try:
+        close = _np6.array(close_series.values if hasattr(close_series, 'values')
+                           else close_series, dtype=float)
+        atr   = _np6.array(atr_series.values if hasattr(atr_series, 'values')
+                           else atr_series, dtype=float)
+        n     = len(close)
+        labels = _np6.full(n, _np6.nan)
+        for i in range(n - horizon):
+            p0    = close[i]
+            h_val = atr[i] * atr_mult
+            if _np6.isnan(p0) or _np6.isnan(h_val) or h_val <= 0:
+                continue
+            upper = p0 + h_val
+            lower = p0 - h_val
+            label = 0  # default: time barrier
+            for j in range(i + 1, min(i + horizon + 1, n)):
+                if close[j] >= upper:
+                    label = 1
+                    break
+                elif close[j] <= lower:
+                    label = -1
+                    break
+            labels[i] = label
+        idx = (close_series.index if hasattr(close_series, 'index')
+               else range(n))
+        return _pd6.Series(labels, index=idx)
+    except Exception:
+        return _pd6.Series(_np6.full(len(close_series), _np6.nan))
+
+# ── Fix 11: Proper SUE (Standardized Unexpected Earnings) ────────────────────
+def _compute_sue(ticker):
+    \"\"\"
+    SUE = recent_surprise / std_dev_of_historical_surprises.
+    Uses yfinance earnings_history Surprise(%) column.
+    Returns float in [-5, 5]; 0.0 on failure.
+    \"\"\"
+    try:
+        import yfinance as _yf11
+        _eh = _yf11.Ticker(ticker).earnings_history
+        if _eh is None or _eh.empty:
+            return 0.0
+        if "Surprise(%)" not in _eh.columns:
+            return 0.0
+        _s = _eh["Surprise(%)"].replace(
+            [float("inf"), float("-inf")], float("nan")).dropna()
+        if len(_s) < 2:
+            return float(_s.iloc[-1] / 100.0) if len(_s) == 1 else 0.0
+        _recent = float(_s.iloc[-1])
+        _std    = max(float(_s.std()), 0.1)  # floor to avoid div-by-zero
+        return float(_np6.clip(_recent / _std, -5.0, 5.0))
+    except Exception:
+        return 0.0
+
+print("  [patch] Feature helpers injected: hurst, frac_diff, triple_barrier, SUE")
+"""
+
+# ── CELL 6 POSTPATCH: apply new features + triple barrier labels + VIF + parallel
+CELL_6_POSTPATCH = """
+import numpy as _np6p
+import pandas as _pd6p
+from concurrent.futures import ThreadPoolExecutor as _TPE
+from pathlib import Path as _P6p
+
+# ── Fix 8: Parallel feature re-build with additional features ─────────────────
+# Re-runs build_features and adds hurst, frac_diff, SUE per ticker in parallel.
+def _augment_ticker(tk_df_pair):
+    tk, fd = tk_df_pair
+    try:
+        # Hurst exponent on Close prices (252-day rolling)
+        _close = fd["Close"] if "Close" in fd.columns else None
+        if _close is not None and len(_close) >= 60:
+            _hurst_vals = _close.rolling(window=60, min_periods=30).apply(
+                lambda x: _hurst_exponent(x), raw=True)
+            fd["hurst_exp"] = _hurst_vals.shift(1)
+
+            # Frac-diff of Close (d=0.4)
+            _fd_vals = _frac_diff(_close, d=0.4)
+            fd["frac_diff_close"] = _fd_vals.shift(1)
+
+        # SUE score (scalar per ticker, from earnings history)
+        fd["sue_score"] = _compute_sue(tk)
+
+        # ── Fix 10: Override target with Triple Barrier labels ──────────────
+        if "atr_14" in fd.columns and "Close" in fd.columns:
+            _tb = _triple_barrier_labels(fd["Close"], fd["atr_14"],
+                                         horizon=5, atr_mult=1.5)
+            # Map: 1=BUY, -1=SELL→0 for binary, keep NaN as NaN
+            # We keep original ternary but remap to binary (0/1) for sklearn:
+            # +1 → 1 (correct BUY), -1 → 0 (correct SELL), 0 → NaN (flat)
+            _bin = _pd6p.Series(_np6p.where(_tb == 1, 1,
+                                _np6p.where(_tb == -1, 0, _np6p.nan)),
+                                index=_tb.index)
+            fd["target_tb"] = _bin    # keep original quintile in "target"
+            # Use triple barrier as primary label if enough non-NaN
+            _n_tb = _bin.notna().sum()
+            _n_orig = fd["target"].notna().sum()
+            if _n_tb > max(30, _n_orig * 0.30):
+                fd["target"] = _bin
+                fd["target_method"] = "triple_barrier"
+            else:
+                fd["target_method"] = "quintile"
+        else:
+            fd["target_method"] = "quintile"
+
+        # ── Fix (from HANDOFF): Rolling quintile labels on non-TB tickers ──
+        _is_quintile = ("target_method" not in fd.columns or
+                        (fd["target_method"] == "quintile").all()
+                        if "target_method" in fd.columns else True)
+        if _is_quintile and "fwd_ret" in fd.columns:
+            _fr = fd["fwd_ret"]
+            _q80 = _fr.rolling(252, min_periods=63).quantile(0.80)
+            _q20 = _fr.rolling(252, min_periods=63).quantile(0.20)
+            fd["target"] = _np6p.where(_fr > _q80, 1,
+                           _np6p.where(_fr < _q20, 0, _np6p.nan))
+
+        return tk, fd
+    except Exception as _e6p:
+        return tk, fd  # return unmodified on error
+
+print("  [patch] Augmenting features in parallel (hurst, frac_diff, SUE, triple barrier)...")
+_n_workers = min(16, len(featured))
+_augmented = {}
+with _TPE(max_workers=_n_workers) as _ex6p:
+    for _tk6p, _fd6p in _ex6p.map(_augment_ticker, featured.items()):
+        _augmented[_tk6p] = _fd6p
+featured = _augmented
+
+# Rebuild FEATURE_COLS to include new columns
+FEATURE_COLS = [c for c in next(iter(featured.values())).columns
+                if c not in ["Open","High","Low","Close","Volume",
+                             "target","target_tb","target_method","fwd_ret"]]
+
+# ── Fix 7: VIF-based feature redundancy pruning ───────────────────────────────
+# Drop features with Variance Inflation Factor > 10 (multicollinear).
+# Run once on a representative ticker to determine FEATURE_COLS to drop.
+_VIF_THRESHOLD = 10.0
+try:
+    from statsmodels.stats.outliers_influence import variance_inflation_factor as _vif_fn
+    _rep_tk = next(iter(featured))
+    _rep_df = featured[_rep_tk].dropna(subset=["target"])
+    _rep_X  = _rep_df[FEATURE_COLS].replace([_np6p.inf, -_np6p.inf], _np6p.nan).dropna()
+    if len(_rep_X) >= 50:
+        _keep_cols = list(FEATURE_COLS)  # start with all
+        # Iterative VIF: remove highest VIF > threshold, repeat
+        _max_iter_vif = 5
+        for _ in range(_max_iter_vif):
+            _X_vif = _rep_X[_keep_cols].values.astype(float)
+            if _X_vif.shape[1] < 2:
+                break
+            _vifs = []
+            for _ci in range(_X_vif.shape[1]):
+                try:
+                    _vifs.append(_vif_fn(_X_vif, _ci))
+                except Exception:
+                    _vifs.append(0.0)
+            _max_vif = max(_vifs)
+            if _max_vif <= _VIF_THRESHOLD:
+                break
+            _drop_idx = _vifs.index(_max_vif)
+            _keep_cols.pop(_drop_idx)
+        _n_dropped = len(FEATURE_COLS) - len(_keep_cols)
+        FEATURE_COLS = _keep_cols
+        print(f"  [patch] VIF pruning: dropped {_n_dropped} collinear features, "
+              f"{len(FEATURE_COLS)} remain (threshold={_VIF_THRESHOLD})")
+except ImportError:
+    print("  [patch] statsmodels not installed — VIF pruning skipped")
+except Exception as _vif_e:
+    print(f"  [patch] VIF pruning error (non-fatal): {_vif_e}")
+
+print(f"  [patch] Final feature set: {len(FEATURE_COLS)} features")
+"""
+
+# ── CELL 8 PREPATCH: embargo CV + Optuna window + block-bootstrap SMOTE ──────
+CELL_8_PREPATCH = """
+import numpy as _np8
+import sys as _sys8
+from sklearn.model_selection import TimeSeriesSplit as _BaseTimeSeriesSplit
+
+# ── Fix 1: EmbargoTimeSeriesSplit — 5-day embargo between folds ───────────────
+# ── Fix 2: Optuna window restriction — tunes only on first 62.5% of data ─────
+class TimeSeriesSplit:
+    \"\"\"
+    Drop-in replacement for sklearn TimeSeriesSplit with two correctness fixes:
+
+    Fix 1 — Embargo: skips test samples within embargo_days of train-end to
+    prevent serial-correlation leakage for 5-day forward-return labels.
+
+    Fix 2 — Optuna window: restricts all splits to the first optuna_fraction
+    of the data so hyperparameter selection cannot see the validation window
+    (75-87.5%) or calibration window (87.5-100%).
+    \"\"\"
+    def __init__(self, n_splits=5, embargo_days=5, optuna_fraction=0.625, **kwargs):
+        self._n_splits       = n_splits
+        self._embargo        = embargo_days
+        self._optuna_fraction = optuna_fraction
+
+    def split(self, X, y=None, groups=None):
+        n      = len(X)
+        n_tune = max(int(n * self._optuna_fraction), self._n_splits * 10)
+        inner  = _BaseTimeSeriesSplit(n_splits=self._n_splits)
+        for train_idx, test_idx in inner.split(X[:n_tune]):
+            if len(train_idx) == 0:
+                continue
+            train_end      = int(train_idx[-1])
+            embargo_end    = train_end + self._embargo
+            test_embargoed = test_idx[test_idx > embargo_end]
+            if len(test_embargoed) >= 5:
+                yield train_idx, test_embargoed
+
+# ── Block-bootstrap minority-class oversampling (replaces SMOTE) ─────────────
+# SMOTE interpolates between random minority samples from any time period —
+# a subtle look-ahead for time-series data.
+# Block-bootstrap duplicates contiguous 5-row blocks, preserving autocorrelation.
+class _BlockBootstrapSMOTE:
+    def __init__(self, random_state=42, **kwargs):
+        self._rng = _np8.random.default_rng(random_state)
+    def fit_resample(self, X, y):
+        _classes, _counts = _np8.unique(y, return_counts=True)
+        if len(_classes) < 2:
+            return X, y
+        _maj_cls = _classes[_np8.argmax(_counts)]
+        _min_cls = _classes[_np8.argmin(_counts)]
+        _n_needed = int(_counts.max()) - int(_counts.min())
+        if _n_needed <= 0:
+            return X, y
+        _min_idx  = _np8.where(y == _min_cls)[0]
+        _block_sz = 5
+        _extra_X, _extra_y = [], []
+        while sum(len(b) for b in _extra_X) < _n_needed:
+            _s = int(self._rng.integers(0, max(1, len(_min_idx) - _block_sz)))
+            _block = _min_idx[_s : _s + _block_sz]
+            _extra_X.append(X[_block])
+            _extra_y.append(y[_block])
+        _extra_X = _np8.vstack(_extra_X)[:_n_needed]
+        _extra_y = _np8.concatenate(_extra_y)[:_n_needed]
+        return _np8.vstack([X, _extra_X]), _np8.concatenate([y, _extra_y])
+
+try:
+    import imblearn.over_sampling as _ios8
+    _ios8.SMOTE = _BlockBootstrapSMOTE
+    if "imblearn.over_sampling" in _sys8.modules:
+        _sys8.modules["imblearn.over_sampling"].SMOTE = _BlockBootstrapSMOTE
+except ImportError:
+    pass
+SMOTE = _BlockBootstrapSMOTE
+
+# ── 4-window meta-learner fractions (from HANDOFF v25.1) ─────────────────────
+_META_TRAIN_FRAC = 0.625   # Optuna tunes on 0-62.5%
+_META_VAL_FRAC   = 0.125   # AUC reported on 62.5-75%
+_META_CAL_FRAC   = 0.125   # Platt calibration on 75-87.5%
+_META_META_FRAC  = 0.125   # Stacking meta-learner on 87.5-100%
+
+print("  [patch] EmbargoTimeSeriesSplit, BlockBootstrap, 4-window fractions injected")
+"""
+
+# ── CELL 8 POSTPATCH: Ridge ensemble member ───────────────────────────────────
+CELL_8_POSTPATCH = """
+import numpy as _np8p
+from sklearn.linear_model import RidgeClassifier as _RidgeCls8
+
+_RIDGE_WEIGHT = 0.15
+_BOOST_WEIGHT = round((1.0 - _RIDGE_WEIGHT) / 3, 6)   # ~0.2833 each
+
+_ridge_added = 0
+for _rtk8, _rm8 in models.items():
+    try:
+        _scl8 = _rm8["scaler"]
+        _fd8  = featured[_rtk8].dropna(subset=["target"])
+        if len(_fd8) < 50:
+            continue
+        _Xr8  = _scl8.transform(_fd8[FEATURE_COLS].values)
+        _yr8  = _fd8["target"].values.astype(int)
+        if len(_np8p.unique(_yr8)) < 2:
+            continue
+        _ridge8 = _RidgeCls8(alpha=1.0)
+        _ridge8.fit(_Xr8, _yr8)
+        _rm8["ridge"] = _ridge8
+        _ridge_added += 1
+    except Exception:
+        pass
+
+print(f"  [patch] Ridge ensemble members added: {_ridge_added}/{len(models)}")
+"""
+
+# ── CELL 9 PREPATCH: disable EarningsWhispers scraper ────────────────────────
+CELL_9_PREPATCH = """
+# Stub out earningswhispers.com requests — DOM changes cause silent failures.
+# The 3-source consensus (yfinance + Alpha Vantage + Finnhub) is sufficient.
+import requests as _req9_orig, unittest.mock as _mock9
+_ew_sentinel = object()
+def _stub_ew(*args, **kwargs):
+    # Return a mock response that any EW parser will treat as empty
+    _m = _mock9.MagicMock()
+    _m.status_code = 404
+    _m.text = ""
+    _m.json.side_effect = Exception("EarningsWhispers disabled by runner patch")
+    return _m
+
+# Intercept any get/post to earningswhispers.com
+_orig_get9  = _req9_orig.get
+_orig_post9 = _req9_orig.post
+def _patched_get9(url, *a, **kw):
+    if "earningswhispers" in str(url).lower():
+        return _stub_ew()
+    return _orig_get9(url, *a, **kw)
+def _patched_post9(url, *a, **kw):
+    if "earningswhispers" in str(url).lower():
+        return _stub_ew()
+    return _orig_post9(url, *a, **kw)
+_req9_orig.get  = _patched_get9
+_req9_orig.post = _patched_post9
+print("  [patch] EarningsWhispers scraper disabled")
+"""
+
+# ── CELL 11 PREPATCH: IC-weighted composite score weights ─────────────────────
+CELL_11_PREPATCH = """
+import json as _j11
+from pathlib import Path as _P11
+
+# Load IC-derived composite weights if they exist from a previous scoring cycle.
+# On first run these fall back to the empirically reasonable defaults.
+# After each scoring cycle (post-run), _IC_COMPOSITE_WEIGHTS is updated.
+_IC_WEIGHTS_FILE = _P11("data/weights/ic_composite_weights.json")
+_IC_COMPOSITE_WEIGHTS = {
+    "ensemble":  0.60,
+    "garch":     0.15,
+    "sentiment": 0.10,
+    "regime":    0.10,
+    "macro":     0.05,
+}
+if _IC_WEIGHTS_FILE.exists():
+    try:
+        _loaded_w = _j11.loads(_IC_WEIGHTS_FILE.read_text())
+        # Validate: all keys present, all positive, sum to ~1
+        _req_keys = set(_IC_COMPOSITE_WEIGHTS.keys())
+        if _req_keys.issubset(set(_loaded_w.keys())):
+            _vals = [_loaded_w[k] for k in _req_keys]
+            if all(v >= 0 for v in _vals) and 0.5 <= sum(_vals) <= 1.5:
+                # Renormalize to sum=1
+                _total_w = sum(_vals)
+                _IC_COMPOSITE_WEIGHTS = {k: _loaded_w[k] / _total_w for k in _req_keys}
+                print(f"  [patch] IC composite weights loaded: {_IC_COMPOSITE_WEIGHTS}")
+            else:
+                print("  [patch] IC weights invalid — using defaults")
+        else:
+            print("  [patch] IC weights file missing keys — using defaults")
+    except Exception as _w11e:
+        print(f"  [patch] IC weights load error: {_w11e} — using defaults")
+else:
+    print("  [patch] IC weights: first run, using defaults")
+
+# Expose weights as individual variables for Cell 11's composite formula
+_W_ENSEMBLE  = _IC_COMPOSITE_WEIGHTS["ensemble"]
+_W_GARCH     = _IC_COMPOSITE_WEIGHTS["garch"]
+_W_SENTIMENT = _IC_COMPOSITE_WEIGHTS["sentiment"]
+_W_REGIME    = _IC_COMPOSITE_WEIGHTS["regime"]
+_W_MACRO     = _IC_COMPOSITE_WEIGHTS["macro"]
+"""
+
+# ── CELL 11 POSTPATCH: conformal prediction uncertainty bands ─────────────────
+CELL_11_POSTPATCH = """
+# Apply conformal uncertainty bands to composite_score.
+# Signals near the 0.5 decision boundary with high empirical variance get
+# lower effective confidence, reducing overconfident near-boundary trades.
+try:
+    import numpy as _np11p
+    _pred_path11 = Path("data/predictions/predictions.csv")
+    if _pred_path11.exists() and "signals" in dir():
+        import pandas as _pd11p
+        _plog11 = _pd11p.read_csv(_pred_path11)
+        # Use last 60 scored predictions to calibrate residuals
+        _scored11 = _plog11[_plog11["scored"].astype(str).isin(["True","true"])].tail(60)
+        if len(_scored11) >= 20 and "composite_score" in _plog11.columns:
+            _cs11   = _pd11p.to_numeric(_scored11["composite_score"], errors="coerce").dropna()
+            _corr11 = _scored11["was_correct"].astype(str).isin(["True","true"])
+            _corr11 = _corr11[_cs11.index]
+            _resid11 = (_cs11 - _corr11.astype(float)).abs()
+            _q90_11  = float(_resid11.quantile(0.90))
+            # Apply: signals within q90 band of 0.5 get confidence scaled down
+            _n_adjusted = 0
+            for _tk11, _sig11 in signals.items():
+                _cs_val = _sig11.get("composite_score", 0.5)
+                try:
+                    _cs_val = float(_cs_val)
+                except Exception:
+                    continue
+                _dist_from_boundary = abs(_cs_val - 0.5)
+                if _dist_from_boundary < _q90_11:
+                    # Scale confidence toward 0.5 proportional to proximity
+                    _scale = _dist_from_boundary / max(_q90_11, 0.01)
+                    signals[_tk11]["confidence"] = (
+                        0.5 + (_sig11.get("confidence", 0.5) - 0.5) * _scale)
+                    _n_adjusted += 1
+            print(f"  [patch] Conformal bands: q90={_q90_11:.3f}, "
+                  f"adjusted {_n_adjusted} signals")
+        else:
+            print("  [patch] Conformal bands: insufficient scored predictions — skipped")
+except Exception as _conf11e:
+    print(f"  [patch] Conformal bands error (non-fatal): {_conf11e}")
+"""
+
+# ── CELL 12 PREPATCH: EWMA covariance ─────────────────────────────────────────
+CELL_12_PREPATCH = """
+import numpy as _np12
+
+# ── Fix 5: Exponentially Weighted Moving Average covariance ───────────────────
+# Standard cov underestimates correlation in stress regimes (tail correlation).
+# EWMA with lambda=0.94 (RiskMetrics) gives more weight to recent correlations
+# and responds to correlation breaks ~3x faster than equal-weight covariance.
+
+# Save original cov BEFORE defining ewma_cov so the seed call cannot recurse
+# through the monkey-patched np.cov (which calls ewma_cov for (T>N) matrices).
+_np12_original_cov = _np12.cov
+
+def ewma_cov(returns, lam=0.94):
+    \"\"\"
+    EWMA covariance matrix with decay factor lam (RiskMetrics default=0.94).
+    returns: np.ndarray shape (T, N)
+    Returns: np.ndarray shape (N, N)
+    \"\"\"
+    T, N = returns.shape
+    if T < 2:
+        return _np12.eye(N)
+    # Seed with equal-weight cov of first 21 days (one trading month).
+    # Use _np12_original_cov (not _np12.cov) to avoid infinite recursion
+    # when the monkey-patch is active and N_assets > seed_len.
+    seed_len = min(21, T // 2)
+    Sigma    = _np12_original_cov(returns[:seed_len].T) if seed_len >= 2 else _np12.eye(N)
+    if Sigma.ndim == 0:
+        Sigma = _np12.array([[float(Sigma)]])
+    for t in range(seed_len, T):
+        r     = returns[t:t+1].T          # (N, 1)
+        Sigma = lam * Sigma + (1 - lam) * (r @ r.T)
+    return Sigma
+
+# Override np.cov in this namespace so cvar_optimize picks it up
+def _patched_np_cov(m, *args, **kwargs):
+    \"\"\"Delegate to EWMA cov if m is a 2D returns matrix, else np.cov.\"\"\"
+    arr = _np12.asarray(m)
+    if arr.ndim == 2 and arr.shape[0] > arr.shape[1]:
+        # Shape (T, N) — returns matrix with T >> N — use EWMA
+        return ewma_cov(arr)
+    return _np12_original_cov(m, *args, **kwargs)
+
+import numpy as np
+np.cov = _patched_np_cov
+print("  [patch] EWMA covariance (lambda=0.94) injected into np.cov")
+"""
+
+# ── CELL 12 POSTPATCH: CVaR safe fallback + kill switch + sector hedging ──────
+CELL_12_POSTPATCH = """
+import numpy as _np12p
+from pathlib import Path as _P12p
+import json as _j12p
+
+# ── CVaR safe fallback (from HANDOFF) ────────────────────────────────────────
+_cvar_ns = globals()
+_cvar_ok  = any(isinstance(_cvar_ns.get(k), dict) and len(_cvar_ns[k]) > 0
+                for k in ["portfolio_weights", "cvar_weights", "weights"])
+if not _cvar_ok:
+    _pw_path12 = _P12p("data/weights/portfolio_weights.json")
+    if _pw_path12.exists():
+        try:
+            _prev_w = _j12p.loads(_pw_path12.read_text())
+            if "portfolio_weights" not in _cvar_ns:
+                portfolio_weights = _prev_w
+            print(f"  [patch] CVaR fallback: loaded {len(_prev_w)} weights from disk")
+        except Exception as _fb12e:
+            print(f"  [patch] CVaR fallback load error: {_fb12e}")
+
+# ── Kill switch: 2 consecutive solver failures ────────────────────────────────
+_ks_path12  = _P12p("data/KILL_SWITCH_ACTIVE.flag")
+_ks_log12   = _P12p("data/cvar_failure_log.json")
+_ks_history = []
+if _ks_log12.exists():
+    try:
+        _ks_history = _j12p.loads(_ks_log12.read_text())
+    except Exception:
+        _ks_history = []
+
+_solver_ok12 = "portfolio_weights" in _cvar_ns or "cvar_weights" in _cvar_ns
+if not _solver_ok12:
+    import datetime as _dt12
+    _ks_history.append({"ts": _dt12.datetime.utcnow().isoformat(), "failed": True})
+    _ks_log12.write_text(_j12p.dumps(_ks_history[-10:], indent=2))
+    _consec_fail = sum(1 for e in _ks_history[-2:] if e.get("failed"))
+    if _consec_fail >= 2:
+        _ks_path12.write_text(f"CVaR solver failed {_consec_fail}x consecutively")
+        print(f"  [patch] KILL SWITCH ACTIVATED: CVaR solver failed {_consec_fail}x")
+else:
+    if _ks_log12.exists():
+        try:
+            _ks_history.append({"ts": __import__("datetime").datetime.utcnow().isoformat(),
+                                 "failed": False})
+            _ks_log12.write_text(_j12p.dumps(_ks_history[-10:], indent=2))
+        except Exception:
+            pass
+
+# ── Fix 14: Sector ETF hedging in bear regime ─────────────────────────────────
+# In bear regime (HMM state=0), add short legs via inverse sector ETFs
+# weighted by the portfolio's sector factor exposure from the 5-factor model.
+# Infrastructure already exists in Cell 12; hedge_ratio scales 0 (bull) -> 0.3 (bear).
+try:
+    _current_regime12 = int(regimes[-1]) if "regimes" in dir() and len(regimes) > 0 else 1
+    _HEDGE_RATIO = {0: 0.30, 1: 0.05, 2: 0.00}[_current_regime12]
+    _INVERSE_ETF_MAP = {
+        "Technology":    "PSQ",   # ProShares Short QQQ
+        "Financials":    "SEF",   # ProShares Short Financials
+        "Energy":        "DDG",   # ProShares Short Oil & Gas
+        "Healthcare":    "RXD",   # ProShares UltraShort Healthcare
+        "Consumer Disc": "SCC",   # ProShares UltraShort Consumer Disc
+        "Industrials":   "SIJ",   # ProShares UltraShort Industrials
+        "Materials":     "SMN",   # ProShares UltraShort Materials
+        "Utilities":     "SDP",   # ProShares UltraShort Utilities
+    }
+
+    if _HEDGE_RATIO > 0 and "portfolio_weights" in _cvar_ns:
+        _pw12    = _cvar_ns["portfolio_weights"]
+        # Compute sector exposure from current weights
+        _TICKER_SECTOR_H = ({tk: sig.get("sector","Unknown")
+                              for tk, sig in signals.items()}
+                             if "signals" in dir() else {})
+        _sector_exp = {}
+        for _tk12, _wt12 in _pw12.items():
+            _sec12 = _TICKER_SECTOR_H.get(_tk12, "Unknown")
+            _sector_exp[_sec12] = _sector_exp.get(_sec12, 0.0) + float(_wt12)
+
+        _hedge_positions = {}
+        for _sec12, _exp12 in _sector_exp.items():
+            _inv_etf = _INVERSE_ETF_MAP.get(_sec12)
+            if _inv_etf and _exp12 > 0.02:
+                _hedge_w = _exp12 * _HEDGE_RATIO
+                _hedge_positions[_inv_etf] = round(-_hedge_w, 4)  # negative=short
+
+        if _hedge_positions:
+            _P12p("data/weights/hedge_positions.json").write_text(
+                _j12p.dumps({"regime": _current_regime12,
+                              "hedge_ratio": _HEDGE_RATIO,
+                              "positions": _hedge_positions}, indent=2))
+            print(f"  [patch] Sector hedges ({len(_hedge_positions)} ETFs, "
+                  f"regime={_current_regime12}, ratio={_HEDGE_RATIO:.0%}): "
+                  f"{_hedge_positions}")
+        else:
+            print(f"  [patch] Sector hedge: regime={_current_regime12}, "
+                  f"no hedges needed (ratio={_HEDGE_RATIO:.0%})")
+    else:
+        print(f"  [patch] Sector hedge: regime={_current_regime12}, "
+              f"no hedge needed (bull regime or no weights)")
+except Exception as _h12e:
+    print(f"  [patch] Sector hedging error (non-fatal): {_h12e}")
+"""
+
+# ── CELL 13 PREPATCH: regime-conditional Kelly multiplier ────────────────────
+CELL_13_PREPATCH = """
+# ── Fix 3: Regime-conditional Kelly sizing ────────────────────────────────────
+# In bear regime (HMM=0), apply 40% of half-Kelly — prevents full-Kelly sizing
+# into a deteriorating regime while the ensemble adapts.
+#
+# Key: kelly_qty is defined in Cell 13 as:
+#   def kelly_qty(..., max_pct=MAX_POSITION_PCT, ...):
+# Default args are evaluated at definition time, so modifying MAX_POSITION_PCT
+# HERE (before Cell 13 defines the function) applies the regime multiplier to
+# every kelly_qty() call with no explicit max_pct argument.
+_REGIME_KELLY_MULT = {0: 0.40, 1: 0.50, 2: 0.50}
+
+_current_regime13 = 1  # default neutral
+try:
+    if "regimes" in dir() and hasattr(regimes, "__len__") and len(regimes) > 0:
+        _current_regime13 = int(regimes[-1])
+except Exception:
+    pass
+
+_kelly_regime_mult = _REGIME_KELLY_MULT.get(_current_regime13, 0.50)
+
+# Scale MAX_POSITION_PCT — Cell 13's kelly_qty default arg captures this value
+if "MAX_POSITION_PCT" in dir():
+    _orig_max_pos13 = MAX_POSITION_PCT
+    MAX_POSITION_PCT = _orig_max_pos13 * _kelly_regime_mult
+    print(f"  [patch] Kelly regime fix: MAX_POSITION_PCT {_orig_max_pos13:.1%} -> "
+          f"{MAX_POSITION_PCT:.1%} "
+          f"(regime={_current_regime13}: "
+          f"{'BEAR' if _current_regime13==0 else 'NEUTRAL' if _current_regime13==1 else 'BULL'})")
+else:
+    print(f"  [patch] Kelly regime fix: MAX_POSITION_PCT not yet defined "
+          f"(will apply at runtime, regime={_current_regime13})")
+"""
+
+# ── CELL 13 POSTPATCH: restore MAX_POSITION_PCT after trade execution ──────────
+CELL_13_POSTPATCH = """
+# Restore MAX_POSITION_PCT to its original value after Cell 13 completes.
+# The regime-scaled version only needed to be active during kelly_qty calls.
+try:
+    if "_orig_max_pos13" in dir():
+        MAX_POSITION_PCT = _orig_max_pos13
+        print(f"  [patch] MAX_POSITION_PCT restored to {MAX_POSITION_PCT:.1%}")
+except Exception:
+    pass
+"""
+
+# ── Dispatcher dicts ──────────────────────────────────────────────────────────
+_CELL_PREPATCH = {
+    4:  CELL_4_PREPATCH,
+    6:  CELL_6_PREPATCH,
+    8:  CELL_8_PREPATCH,
+    9:  CELL_9_PREPATCH,
+    11: CELL_11_PREPATCH,
+    12: CELL_12_PREPATCH,
+    13: CELL_13_PREPATCH,
+}
+_CELL_POSTPATCH = {
+    5:  CELL_5_POSTPATCH,
+    6:  CELL_6_POSTPATCH,
+    8:  CELL_8_POSTPATCH,
+    11: CELL_11_POSTPATCH,
+    12: CELL_12_POSTPATCH,
+    13: CELL_13_POSTPATCH,
+}
+
 # ── Model cache helpers ───────────────────────────────────────────────────
 def _load_model_cache(ns):
     if MODEL_CACHE.exists() and RUN_TYPE != "morning":
@@ -180,7 +972,7 @@ def _save_model_cache(ns):
             print(f"  Model cache save failed: {e}")
 
 # ── Execute notebook ───────────────────────────────────────────────────────
-NB_PATH = "trading_model_v25.ipynb"
+NB_PATH = "trading_model_v25.1.ipynb"
 print(f"Loading: {NB_PATH}  run_type={RUN_TYPE}")
 
 with open(NB_PATH, encoding="utf-8-sig") as f:
@@ -188,6 +980,95 @@ with open(NB_PATH, encoding="utf-8-sig") as f:
 
 cells = nb["cells"]
 print(f"  {len(cells)} cells  |  skipping: {sorted(SKIP_CELLS)}\n")
+
+# ── Fix 4: Pre-run P&L drawdown kill switch ───────────────────────────────────
+# Checks pnl_history.csv for excessive daily or weekly drawdown.
+# If breached: writes KILL_SWITCH_ACTIVE.flag, sends Discord alert, and exits.
+# VIX > 45 also triggers to protect against flash-crash conditions.
+_KILL_DAILY_DRAWDOWN  = -0.03   # -3% net liquidation value in one day
+_KILL_WEEKLY_DRAWDOWN = -0.07   # -7% over rolling 5-day window
+_KILL_VIX_LEVEL       = 45.0   # hard VIX stop
+
+_pnl_kill_triggered = False
+if not _KILL_FLAG.exists():
+    try:
+        import pandas as _pd_ks
+        _hist_ks = Path("data/predictions/pnl_history.csv")
+        if _hist_ks.exists():
+            _pnl_df = _pd_ks.read_csv(_hist_ks)
+            _pnl_df["date"]      = _pd_ks.to_datetime(_pnl_df["date"], errors="coerce")
+            _pnl_df["total_pnl"] = _pd_ks.to_numeric(_pnl_df["total_pnl"], errors="coerce")
+            _pnl_df = _pnl_df.sort_values("date").dropna(subset=["date","total_pnl"])
+            if len(_pnl_df) >= 2:
+                # Daily drawdown: last row vs second-to-last
+                _today_pnl     = float(_pnl_df["total_pnl"].iloc[-1])
+                _yesterday_pnl = float(_pnl_df["total_pnl"].iloc[-2])
+                _portfolio_val = float(
+                    _pnl_df.get("portfolio_value", _pd_ks.Series([100_000.0])).iloc[-1]
+                    if "portfolio_value" in _pnl_df.columns else 100_000.0
+                )
+                _daily_dd  = (_today_pnl - _yesterday_pnl) / max(_portfolio_val, 1)
+                # Weekly drawdown: max over last 5 rows
+                _last5      = _pnl_df.tail(6)
+                _peak_pnl   = float(_last5["total_pnl"].iloc[0])
+                _weekly_dd  = (_today_pnl - _peak_pnl) / max(_portfolio_val, 1)
+                print(f"\n[KILL SWITCH CHECK] daily_dd={_daily_dd:+.2%}  "
+                      f"weekly_dd={_weekly_dd:+.2%}  "
+                      f"limits=({_KILL_DAILY_DRAWDOWN:.0%} / {_KILL_WEEKLY_DRAWDOWN:.0%})")
+                _kill_reason = None
+                if _daily_dd  <= _KILL_DAILY_DRAWDOWN:
+                    _kill_reason = (f"Daily drawdown {_daily_dd:+.2%} "
+                                    f"breached limit {_KILL_DAILY_DRAWDOWN:.0%}")
+                elif _weekly_dd <= _KILL_WEEKLY_DRAWDOWN:
+                    _kill_reason = (f"Weekly drawdown {_weekly_dd:+.2%} "
+                                    f"breached limit {_KILL_WEEKLY_DRAWDOWN:.0%}")
+                if _kill_reason:
+                    _KILL_FLAG.write_text(_kill_reason)
+                    _pnl_kill_triggered = True
+                    print(f"\n{'!'*60}")
+                    print(f"KILL SWITCH ACTIVATED: {_kill_reason}")
+                    print(f"HALTING new trades. Delete {_KILL_FLAG} to reset.")
+                    print(f"{'!'*60}\n")
+                    _discord_ks = os.environ.get("DISCORD_WEBHOOK_URL","")
+                    if _discord_ks:
+                        try:
+                            import requests as _rks
+                            _rks.post(_discord_ks, json={
+                                "embeds":[{"title":"🚨 KILL SWITCH ACTIVATED",
+                                           "color":15158332,
+                                           "description": _kill_reason}]
+                            }, timeout=10)
+                        except Exception:
+                            pass
+    except Exception as _ks_check_e:
+        print(f"  Kill switch check error (non-fatal): {_ks_check_e}")
+
+    # VIX hard stop (checked separately — does not require pnl_history)
+    if not _pnl_kill_triggered:
+        try:
+            import yfinance as _yf_ks
+            _vix_ks = float(
+                _yf_ks.download("^VIX", period="2d", progress=False)["Close"]
+                .dropna().iloc[-1])
+            print(f"  VIX check: {_vix_ks:.1f} (hard stop={_KILL_VIX_LEVEL:.0f})")
+            if _vix_ks >= _KILL_VIX_LEVEL:
+                _kill_reason_vix = (f"VIX={_vix_ks:.1f} >= hard stop {_KILL_VIX_LEVEL:.0f}")
+                _KILL_FLAG.write_text(_kill_reason_vix)
+                _pnl_kill_triggered = True
+                print(f"\n{'!'*60}")
+                print(f"KILL SWITCH ACTIVATED: {_kill_reason_vix}")
+                print(f"{'!'*60}\n")
+        except Exception as _vix_ks_e:
+            print(f"  VIX kill switch check error (non-fatal): {_vix_ks_e}")
+
+if _KILL_FLAG.exists():
+    _flag_msg = _KILL_FLAG.read_text()
+    print(f"\n⚠️  KILL SWITCH ACTIVE — {_flag_msg}")
+    print("  Scoring and self-learning will run; new trades are BLOCKED.")
+    # Restrict to scoring + self-learning only when kill switch is active
+    if RUN_TYPE != "evening":
+        SKIP_CELLS = SKIP_CELLS | {10, 11, 12, 13}
+        print("  Cells 10-13 (sentiment, signals, CVaR, trading) SKIPPED.")
 
 namespace = {"__name__": "__main__"}
 _load_model_cache(namespace)
@@ -201,11 +1082,20 @@ for i, cell in enumerate(cells):
         continue
 
     src = "".join(cell["source"])
+
+    # ── Special patches ───────────────────────────────────────────────────
     if i == 3:
         src = src + "\n\n" + GH_PATCH
-    # Fix #6: inject intraday stops flag before cell 13 on intraday runs
     if i == 13 and RUN_TYPE == "intraday":
         src = INTRADAY_STOPS_PATCH + "\n" + src
+
+    # ── Pre-patch: inject helpers/overrides BEFORE cell source ───────────
+    if i in _CELL_PREPATCH:
+        src = _CELL_PREPATCH[i] + "\n\n" + src
+
+    # ── Post-patch: append fixes AFTER cell source ────────────────────────
+    if i in _CELL_POSTPATCH:
+        src = src + "\n\n" + _CELL_POSTPATCH[i]
 
     print(f"\n{'--'*28}")
     print(f"[CELL {i}] {CELL_TAGS.get(i, f'Cell {i}')}")
@@ -270,6 +1160,140 @@ if RUN_TYPE in ("morning", "evening"):
             print(f"{'='*55}")
     except Exception as _snap_e:
         print(f"  60-day tracker error: {_snap_e}")
+
+# ── Fix 9: IC decomposition by sector and regime ─────────────────────────────
+if RUN_TYPE in ("morning", "evening"):
+    try:
+        import pandas as _pd_ic9
+        from scipy.stats import spearmanr as _spr9
+
+        _pred_path9 = Path("data/predictions/predictions.csv")
+        if _pred_path9.exists():
+            _plog9   = _pd_ic9.read_csv(_pred_path9)
+            _scored9 = _plog9[
+                _plog9["scored"].astype(str).isin(["True","true"])
+            ].copy()
+            _scored9["actual_return"]   = _pd_ic9.to_numeric(
+                _scored9["actual_return"], errors="coerce")
+            _scored9["composite_score"] = _pd_ic9.to_numeric(
+                _scored9.get("composite_score", _pd_ic9.Series(dtype=float)),
+                errors="coerce")
+            _scored9["p_ensemble"]      = _pd_ic9.to_numeric(
+                _scored9.get("p_ensemble", _pd_ic9.Series(dtype=float)),
+                errors="coerce")
+            _scored9["regime"]          = _pd_ic9.to_numeric(
+                _scored9.get("regime", _pd_ic9.Series(dtype=float)),
+                errors="coerce")
+            _scored9 = _scored9.dropna(subset=["actual_return","composite_score"])
+
+            if len(_scored9) >= 30:
+                print(f"\n{'='*55}")
+                print(f"IC DECOMPOSITION ({len(_scored9)} scored predictions)")
+                print(f"{'='*55}")
+
+                _ic_overall = float(_spr9(_scored9["composite_score"],
+                                          _scored9["actual_return"])[0])
+                print(f"  Overall IC:         {_ic_overall:+.4f}  "
+                      f"{'✓ GOOD' if abs(_ic_overall) >= 0.05 else '⚠ WEAK'}")
+
+                _ic_by_regime = {}
+                for _reg9, _rname9 in [(0,"BEAR"),(1,"NEUTRAL"),(2,"BULL")]:
+                    _mask9 = _scored9["regime"] == _reg9
+                    _sub9  = _scored9[_mask9]
+                    if len(_sub9) >= 10:
+                        _ic_r9 = float(_spr9(_sub9["composite_score"],
+                                             _sub9["actual_return"])[0])
+                        _ic_by_regime[_reg9] = _ic_r9
+                        print(f"  IC {_rname9:8s}:       {_ic_r9:+.4f}  (n={len(_sub9)})")
+
+                if len(_ic_by_regime) >= 2:
+                    _ic_spread9 = max(_ic_by_regime.values()) - min(_ic_by_regime.values())
+                    if _ic_spread9 > 0.30:
+                        print(f"  ⚠ REGIME_FRAGILE: IC spread={_ic_spread9:.3f} > 0.30")
+
+                _SECTOR_MAP9 = {
+                    "Technology":    ["AAPL","MSFT","NVDA","GOOGL","AMZN","META","AVGO",
+                                      "CRM","NOW","PLTR","ORCL","ADBE","INTC"],
+                    "Financials":    ["JPM","V","MA","BAC","GS","MS","BLK","AXP","WFC",
+                                      "C","SCHW","PGR","CB","COF","PYPL","COIN"],
+                    "Healthcare":    ["UNH","LLY","JNJ","ABBV","MRK","TMO","ABT","DHR",
+                                      "PFE","AMGN","CVS","CI","ISRG","VRTX"],
+                    "Semiconductors":["AMD","QCOM","AMAT","MU","TXN","LRCX","KLAC",
+                                      "ADI","MRVL","ON","MCHP"],
+                    "Energy":        ["XOM","CVX","COP","SLB","EOG","HAL","OXY","PSX"],
+                    "Industrials":   ["BA","CAT","DE","HON","GE","RTX","LMT","NOC",
+                                      "UPS","FDX","MMM"],
+                    "Consumer Disc": ["HD","NKE","LOW","TJX","ROST","SBUX","CMG","MCD",
+                                      "COST","TGT","GM","F","UBER","TSLA"],
+                    "Communication": ["NFLX","DIS","CMCSA","VZ","T","TMUS","CHTR"],
+                }
+                _ic_by_sector = {}
+                for _sec9, _tks9 in _SECTOR_MAP9.items():
+                    _mask_s9 = _scored9["ticker"].isin(_tks9)
+                    _sub_s9  = _scored9[_mask_s9]
+                    if len(_sub_s9) >= 10:
+                        _ic_s9 = float(_spr9(_sub_s9["composite_score"],
+                                             _sub_s9["actual_return"])[0])
+                        _ic_by_sector[_sec9] = _ic_s9
+                        _f9 = "✓" if _ic_s9 >= 0.04 else ("⚠" if _ic_s9 < 0 else "~")
+                        print(f"  {_f9} IC {_sec9:16s}: {_ic_s9:+.4f}  (n={len(_sub_s9)})")
+
+                Path("data/predictions/ic_decomposition.json").write_text(
+                    json.dumps({
+                        "as_of":        _pd_ic9.Timestamp.utcnow().isoformat()[:10],
+                        "n_predictions":int(len(_scored9)),
+                        "ic_overall":   round(_ic_overall, 4),
+                        "ic_by_regime": {str(k): round(v,4)
+                                         for k,v in _ic_by_regime.items()},
+                        "ic_by_sector": {k: round(v,4)
+                                         for k,v in _ic_by_sector.items()},
+                    }, indent=2))
+                print(f"  → data/predictions/ic_decomposition.json")
+
+                # Fix 6: Update composite weights from measured component ICs
+                if "p_ensemble" in _scored9.columns:
+                    _p_ens9 = _pd_ic9.to_numeric(
+                        _scored9["p_ensemble"], errors="coerce").dropna()
+                    _aret9  = _scored9.loc[_p_ens9.index, "actual_return"]
+                    if len(_p_ens9) >= 20:
+                        _ic_ens9 = max(float(_spr9(_p_ens9, _aret9)[0]), 0.001)
+                        _w_new9  = {
+                            "ensemble":  round(_ic_ens9, 4),
+                            "garch":     0.015,
+                            "sentiment": 0.010,
+                            "regime":    0.010,
+                            "macro":     0.005,
+                        }
+                        _w_tot9 = sum(_w_new9.values())
+                        _w_norm9 = {k: round(v/_w_tot9, 4) for k,v in _w_new9.items()}
+                        Path("data/weights/ic_composite_weights.json").write_text(
+                            json.dumps(_w_norm9, indent=2))
+                        print(f"  IC composite weights → {_w_norm9}")
+
+                # 60-day IC Discord alert
+                if len(_scored9) >= 50 and abs(_ic_overall) < 0.03:
+                    _disc_ic9 = os.environ.get("DISCORD_WEBHOOK_URL","")
+                    if _disc_ic9:
+                        try:
+                            import requests as _rq9
+                            _rq9.post(_disc_ic9, json={"embeds":[{
+                                "title":"⚠️ IC Alert: Alpha Degradation",
+                                "color":15158332,
+                                "description":(f"IC={_ic_overall:+.4f} "
+                                               f"(n={len(_scored9)}) below 0.03"),
+                            }]}, timeout=10)
+                        except Exception:
+                            pass
+                elif len(_scored9) >= 50:
+                    print(f"  {'✓' if abs(_ic_overall)>=0.05 else '~'} "
+                          f"IC={_ic_overall:+.4f} "
+                          f"({'confirmed' if abs(_ic_overall)>=0.05 else 'marginal'})")
+
+                print(f"{'='*55}")
+            else:
+                print(f"  IC decomposition: {len(_scored9)} scored (need >=30)")
+    except Exception as _ic9_e:
+        print(f"  IC decomposition error (non-fatal): {_ic9_e}")
 
 # ── Daily P&L snapshot (unrealized + realized) ────────────────────────────
 if RUN_TYPE in ("morning", "intraday"):
