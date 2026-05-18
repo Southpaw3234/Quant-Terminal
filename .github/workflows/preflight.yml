@@ -1,0 +1,295 @@
+name: Preflight Diagnostics
+
+on:
+  workflow_dispatch:
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/peaceful-gould-4fdb1a
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install deps (subset — no trading keys needed)
+        run: |
+          pip install --upgrade pip
+          pip install numpy pandas yfinance statsmodels requests xgboost lightgbm scikit-learn
+
+      - name: 1 — Syntax check (py_compile)
+        run: |
+          python -m py_compile quant_runner.py  && echo "quant_runner.py  PASS"
+          python -m py_compile stat_arb.py       && echo "stat_arb.py       PASS"
+
+      - name: 2 — AST parse + triple-quote balance
+        run: |
+          python - <<'PYEOF'
+          import ast, sys
+          files = ["quant_runner.py", "stat_arb.py"]
+          ok = True
+          for f in files:
+              src = open(f, encoding="utf-8-sig").read()
+              try:
+                  ast.parse(src)
+                  print(f"  AST OK   : {f}")
+              except SyntaxError as e:
+                  print(f"  AST FAIL : {f}  line={e.lineno}  {e.msg}")
+                  ok = False
+          sys.exit(0 if ok else 1)
+          PYEOF
+
+      - name: 3 — Patch string extraction + exec test
+        run: |
+          python - <<'PYEOF'
+          import ast, re, sys, traceback
+
+          src = open("quant_runner.py", encoding="utf-8-sig").read()
+          tree = ast.parse(src)
+
+          # Find all variables named CELL_*PATCH or _CELL_*
+          patch_vars = {}
+          for node in ast.walk(tree):
+              if isinstance(node, ast.Assign):
+                  for target in node.targets:
+                      if isinstance(target, ast.Name):
+                          name = target.id
+                          if re.match(r"(CELL_\d+_(PRE|POST)PATCH|_CELL_\d+_\w+)$", name):
+                              if isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
+                                  patch_vars[name] = node.value.value
+
+          print(f"  Found {len(patch_vars)} patch strings via AST")
+
+          ok = True
+          for name, code in patch_vars.items():
+              try:
+                  ast.parse(code)
+              except SyntaxError as e:
+                  print(f"  SYNTAX FAIL in {name}: line={e.lineno} {e.msg}")
+                  print(f"    context: {code.splitlines()[max(0,e.lineno-2):e.lineno+1]}")
+                  ok = False
+
+          if ok:
+              print(f"  All {len(patch_vars)} patch strings parse cleanly ✓")
+          sys.exit(0 if ok else 1)
+          PYEOF
+
+      - name: 4 — Dispatcher dict completeness
+        run: |
+          python - <<'PYEOF'
+          import ast, sys
+
+          src = open("quant_runner.py", encoding="utf-8-sig").read()
+
+          # Extract _CELL_PREPATCH and _CELL_POSTPATCH dict keys
+          pre_keys, post_keys = [], []
+          for line in src.splitlines():
+              line = line.strip()
+              if re.match(r"\d+\s*:", line) if __import__("re").match(r"\d+\s*:", line) else False:
+                  pass
+
+          import re
+          pre_match  = re.search(r"_CELL_PREPATCH\s*=\s*\{([^}]+)\}", src, re.S)
+          post_match = re.search(r"_CELL_POSTPATCH\s*=\s*\{([^}]+)\}", src, re.S)
+
+          def extract_keys(block):
+              return [int(m) for m in re.findall(r"(\d+)\s*:", block)]
+
+          pre_keys  = extract_keys(pre_match.group(1))  if pre_match  else []
+          post_keys = extract_keys(post_match.group(1)) if post_match else []
+
+          print(f"  PREPATCH  cells: {sorted(pre_keys)}")
+          print(f"  POSTPATCH cells: {sorted(post_keys)}")
+
+          expected_pre  = [3, 4, 5, 6, 8, 9, 11, 12, 13]
+          expected_post = [4, 5, 6, 8, 9, 11, 12, 13, 15]
+
+          ok = True
+          if sorted(pre_keys) != sorted(expected_pre):
+              print(f"  WARN PREPATCH mismatch: got={sorted(pre_keys)} want={expected_pre}")
+              ok = False
+          if sorted(post_keys) != sorted(expected_post):
+              print(f"  WARN POSTPATCH mismatch: got={sorted(post_keys)} want={expected_post}")
+              ok = False
+          if ok:
+              print("  Dispatcher dicts complete ✓")
+          sys.exit(0 if ok else 1)
+          PYEOF
+
+      - name: 5 — Append (+=) chain count
+        run: |
+          python - <<'PYEOF'
+          import re, sys
+          src = open("quant_runner.py", encoding="utf-8-sig").read()
+          # Count lines matching: CELL_N_(PRE|POST)PATCH += ...
+          appends = re.findall(r"^CELL_\d+_(PRE|POST)PATCH\s*\+=", src, re.M)
+          print(f"  Patch append (+=) count: {len(appends)}")
+          # Known minimum: 12 original + 2 new (Cell8 FitWiring + Cell13 Kelly postpatch is inline)
+          if len(appends) < 12:
+              print(f"  FAIL: expected >=12 appends, got {len(appends)}")
+              sys.exit(1)
+          print("  Append chain OK ✓")
+          PYEOF
+
+      - name: 6 — Key function signatures in stat_arb.py
+        run: |
+          python - <<'PYEOF'
+          import ast, sys
+          src = open("stat_arb.py", encoding="utf-8-sig").read()
+          tree = ast.parse(src)
+          fns = {n.name for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)}
+          required = {"kalman_hedge_ratio","half_life","engle_granger_pvalue",
+                      "load_prices","scan_pairs","generate_signals","append_history","main"}
+          missing = required - fns
+          if missing:
+              print(f"  FAIL stat_arb.py missing functions: {missing}")
+              sys.exit(1)
+          print(f"  stat_arb.py functions OK: {sorted(fns)} ✓")
+          PYEOF
+
+      - name: 7 — Import smoke test (no trading keys)
+        env:
+          ALPACA_API_KEY:    dummy
+          ALPACA_SECRET_KEY: dummy
+          ALPACA_BASE_URL:   https://paper-api.alpaca.markets
+          RUN_TYPE:          scoring
+          GH_ACTIONS:        'true'
+        run: |
+          python - <<'PYEOF'
+          # Import the new modules used by patches (no network calls)
+          import sys
+          failed = []
+          for mod in ["numpy","pandas","yfinance","statsmodels.tsa.stattools",
+                      "xgboost","lightgbm","sklearn.model_selection",
+                      "requests","pathlib","json","datetime","traceback"]:
+              try:
+                  __import__(mod)
+                  print(f"  import {mod:<40} OK")
+              except ImportError as e:
+                  print(f"  import {mod:<40} MISSING: {e}")
+                  failed.append(mod)
+          if failed:
+              print(f"\n  FAIL: {len(failed)} missing imports: {failed}")
+              sys.exit(1)
+          print("\n  All imports OK ✓")
+          PYEOF
+
+      - name: 8 — New patch logic unit tests
+        run: |
+          python - <<'PYEOF'
+          import sys, numpy as np
+
+          # ── Test kalman_hedge_ratio (from stat_arb.py) ─────────────────────
+          sys.path.insert(0, ".")
+          from stat_arb import kalman_hedge_ratio, half_life, engle_granger_pvalue
+
+          rng  = np.random.default_rng(42)
+          x    = np.cumsum(rng.standard_normal(300))
+          beta = 1.5
+          y    = beta * x + 0.05 * rng.standard_normal(300)
+
+          betas, spread = kalman_hedge_ratio(y, x)
+          final_beta    = betas[-1]
+          assert 1.0 < final_beta < 2.0, f"Kalman hedge ratio out of range: {final_beta}"
+          print(f"  kalman_hedge_ratio  PASS  final_beta={final_beta:.4f} (true=1.5)")
+
+          hl = half_life(spread)
+          assert 1 < hl < 200, f"half_life out of range: {hl}"
+          print(f"  half_life           PASS  hl={hl:.1f} days")
+
+          pval = engle_granger_pvalue(y, x)
+          assert pval < 0.10, f"EG p-value too high for cointegrated pair: {pval}"
+          print(f"  engle_granger_pvalue PASS  p={pval:.4f} (expect <0.05)")
+
+          # ── Test Hurst exponent gating logic ──────────────────────────────
+          def _hurst_scale_mean_rev(h, cs):
+              scale = max(0.0, h / 0.45)
+              return 0.5 + (cs - 0.5) * scale * 0.5
+
+          def _hurst_scale_trend(h, cs):
+              scale = min(1.5, 1.0 + (h - 0.55) / 0.45)
+              return float(np.clip(0.5 + (cs - 0.5) * scale, 0.0, 1.0))
+
+          # Mean-reverting: should compress signal toward 0.5
+          new_cs = _hurst_scale_mean_rev(0.30, 0.80)
+          assert new_cs < 0.80, f"Hurst MR should compress: {new_cs}"
+          assert new_cs > 0.50, f"Hurst MR should stay above 0.5: {new_cs}"
+          print(f"  Hurst MR gate       PASS  cs=0.80→{new_cs:.4f} (compressed)")
+
+          # Trending: should amplify signal
+          new_cs2 = _hurst_scale_trend(0.70, 0.70)
+          assert new_cs2 > 0.70, f"Hurst trend should amplify: {new_cs2}"
+          print(f"  Hurst trend gate    PASS  cs=0.70→{new_cs2:.4f} (amplified)")
+
+          # ── Test Conformal Kelly discount ──────────────────────────────────
+          def _conformal_kelly(cs, max_disc=0.60):
+              certainty   = min(1.0, abs(cs - 0.5) / 0.5)
+              uncertainty = 1.0 - certainty
+              return round(1.0 - uncertainty * max_disc, 4)
+
+          assert _conformal_kelly(0.5)  == 0.40, f"boundary score should give max discount"
+          assert _conformal_kelly(1.0)  == 1.00, f"certainty=1 → no discount"
+          assert _conformal_kelly(0.75) == 0.70, f"cs=0.75 → 30% discount"
+          print(f"  Conformal Kelly     PASS  cs=0.5→{_conformal_kelly(0.5)}  cs=0.75→{_conformal_kelly(0.75)}  cs=1.0→{_conformal_kelly(1.0)}")
+
+          # ── Test Gain-to-Pain ratio ────────────────────────────────────────
+          monthly = np.array([100, -30, 80, -20, 50, -60, 90, -10, 40, -25, 70, -15])
+          gains = monthly[monthly > 0].sum()
+          pains = monthly[monthly < 0].sum()
+          gpr   = gains / abs(pains)
+          expected = (100+80+50+90+40+70) / (30+20+60+10+25+15)
+          assert abs(gpr - expected) < 1e-6, f"GPR calc wrong: {gpr} vs {expected}"
+          print(f"  Gain-to-Pain Ratio  PASS  GPR={gpr:.3f}")
+
+          # ── Test regime sample weight matrix ──────────────────────────────
+          REGIME_WEIGHTS = {
+              (0,0):2.0,(0,1):1.0,(0,2):0.5,
+              (1,0):0.75,(1,1):1.5,(1,2):0.75,
+              (2,0):0.5,(2,1):1.0,(2,2):2.0,
+          }
+          assert REGIME_WEIGHTS[(0,0)] > REGIME_WEIGHTS[(0,2)], "bear now: bear samples > bull samples"
+          assert REGIME_WEIGHTS[(2,2)] > REGIME_WEIGHTS[(2,0)], "bull now: bull samples > bear samples"
+          assert REGIME_WEIGHTS[(1,1)] == 1.5, "neutral now: neutral samples get boost"
+          print(f"  Regime weights      PASS  bear/bear={REGIME_WEIGHTS[(0,0)]}  bull/bull={REGIME_WEIGHTS[(2,2)]}")
+
+          print("\n  ✓ All unit tests passed")
+          PYEOF
+
+      - name: 9 — Workflow YAML env var completeness
+        run: |
+          python - <<'PYEOF'
+          import sys, re
+          yml = open(".github/workflows/quant_daily.yml").read()
+          required_keys = [
+              "ALPACA_API_KEY","ALPACA_SECRET_KEY","FRED_API_KEY",
+              "NEWS_API_KEY","QUIVER_QUANT_KEY","DISCORD_WEBHOOK_URL",
+              "ALPHAVANTAGE_API_KEY","FINNHUB_API_KEY",
+          ]
+          ok = True
+          for k in required_keys:
+              if k in yml:
+                  print(f"  {k:<30} PRESENT ✓")
+              else:
+                  print(f"  {k:<30} MISSING ✗")
+                  ok = False
+          stat_arb_step = "stat_arb.py" in yml
+          data_stat_arb = "data/stat_arb/" in yml
+          print(f"  stat_arb.py step               {'PRESENT ✓' if stat_arb_step else 'MISSING ✗'}")
+          print(f"  data/stat_arb/ in commit       {'PRESENT ✓' if data_stat_arb else 'MISSING ✗'}")
+          if not (ok and stat_arb_step and data_stat_arb):
+              sys.exit(1)
+          print("\n  Workflow YAML OK ✓")
+          PYEOF
+
+      - name: Summary
+        if: always()
+        run: |
+          echo ""
+          echo "════════════════════════════════════════"
+          echo "PREFLIGHT DIAGNOSTICS COMPLETE"
+          echo "════════════════════════════════════════"

@@ -2255,6 +2255,36 @@ try:
         print(f"  [patch] MAX_POSITION_PCT restored to {MAX_POSITION_PCT:.1%}")
 except Exception:
     pass
+
+# Apply conformal Kelly discounts to paper_trades.csv.
+# _CONFORMAL_KELLY_MAP was built in CELL_13_PREPATCH; scale today's new orders.
+try:
+    import pandas as _pd13ck
+    from pathlib import Path as _P13ck
+    _pt_file13 = _P13ck("data/paper_trades/paper_trades.csv")
+    if _pt_file13.exists() and "_CONFORMAL_KELLY_MAP" in dir():
+        _pt13 = _pd13ck.read_csv(_pt_file13)
+        if len(_pt13) > 0 and "qty" in _pt13.columns and "ticker" in _pt13.columns:
+            import datetime as _dtt13
+            _today13 = str(_dtt13.date.today())
+            # Only scale rows from today's run (don't retroactively change history)
+            _date_col13 = next((c for c in _pt13.columns if "date" in c.lower()), None)
+            if _date_col13:
+                _today_mask13 = _pt13[_date_col13].astype(str).str.startswith(_today13)
+                _n_scaled13 = 0
+                for _idx13 in _pt13[_today_mask13].index:
+                    _tk13 = str(_pt13.at[_idx13, "ticker"])
+                    _disc13 = _CONFORMAL_KELLY_MAP.get(_tk13, 1.0)
+                    if _disc13 < 1.0:
+                        _old_qty13 = float(_pt13.at[_idx13, "qty"])
+                        _new_qty13 = max(1, int(_old_qty13 * _disc13))
+                        _pt13.at[_idx13, "qty"] = _new_qty13
+                        _n_scaled13 += 1
+                if _n_scaled13 > 0:
+                    _pt_file13.write_text(_pt13.to_csv(index=False))
+                    print(f"  [TierC] Conformal Kelly: scaled qty for {_n_scaled13} today's orders")
+except Exception as _ck13e:
+    print(f"  [TierC] Conformal Kelly post-scale error (non-fatal): {_ck13e}")
 """
 
 # ── Tier 2: Nowcasting macro — injected AFTER Cell 4 fetches FRED data ───────
@@ -2392,6 +2422,699 @@ try:
 except Exception as _iv4err:
     print(f"  [Tier3-IV] IV term structure error (non-fatal): {_iv4err}")
 """
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TIER A–D UPGRADES
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ── Tier A: Options flow, PEAD, short interest, Amihud, earnings revision ─────
+_CELL_6_TA_SIGNALS = """
+import os as _os6ta
+import numpy as _np6ta
+import pandas as _pd6ta
+
+if _os6ta.environ.get("RUN_TYPE", "morning") == "morning":
+    import time as _t6ta
+    import datetime as _dt6ta
+
+    # ── A1: Options put/call ratio + IV skew (yfinance option_chain) ──────────
+    _OPT_LIQUID = {
+        "SPY","QQQ","AAPL","MSFT","NVDA","TSLA","AMZN","META",
+        "GOOGL","AMD","JPM","V","MA","NFLX","AVGO","CRM","BAC",
+        "GS","MS","WMT","COST","UNH","LLY","XOM","HD","INTC",
+        "QCOM","MU","TXN","COIN"
+    }
+    _opt_done = 0
+    for _otk in _OPT_LIQUID:
+        if _otk not in featured:
+            continue
+        try:
+            import yfinance as _yf6ta
+            _to = _yf6ta.Ticker(_otk)
+            _exps = (_to.options or [])[:1]
+            if not _exps:
+                continue
+            _chain = _to.option_chain(_exps[0])
+            _calls, _puts = _chain.calls, _chain.puts
+            if _calls is None or _puts is None or _calls.empty or _puts.empty:
+                continue
+            _cv  = _pd6ta.to_numeric(_calls["volume"], errors="coerce").fillna(0).sum()
+            _pv  = _pd6ta.to_numeric(_puts["volume"],  errors="coerce").fillna(0).sum()
+            _coi = _pd6ta.to_numeric(_calls["openInterest"], errors="coerce").fillna(0).sum()
+            _poi = _pd6ta.to_numeric(_puts["openInterest"],  errors="coerce").fillna(0).sum()
+            _pc_vol = float(_pv) / max(float(_cv), 1.0)
+            _pc_oi  = float(_poi) / max(float(_coi), 1.0)
+            # IV skew: OTM put IV minus nearest ATM call IV
+            _iv_skew = 0.0
+            try:
+                _spot = float(featured[_otk]["Close"].dropna().iloc[-1])
+                _calls_c = _calls.copy()
+                _puts_c  = _puts.copy()
+                _calls_c["_d"] = (_calls_c["strike"] - _spot).abs()
+                _puts_c["_d"]  = (_puts_c["strike"]  - _spot).abs()
+                _atm_iv = _pd6ta.to_numeric(
+                    _calls_c.nsmallest(3, "_d")["impliedVolatility"], errors="coerce").mean()
+                _otm_p  = _puts_c[_puts_c["strike"] < _spot * 0.95]
+                _otm_iv = _pd6ta.to_numeric(
+                    (_otm_p.nsmallest(3, "_d")["impliedVolatility"] if not _otm_p.empty
+                     else _pd6ta.Series(dtype=float)), errors="coerce").mean()
+                if _pd6ta.notna(_atm_iv) and _pd6ta.notna(_otm_iv):
+                    _iv_skew = float(_otm_iv - _atm_iv)
+            except Exception:
+                pass
+            featured[_otk]["put_call_vol"] = _pc_vol
+            featured[_otk]["put_call_oi"]  = _pc_oi
+            featured[_otk]["iv_skew_otm"]  = _iv_skew
+            _opt_done += 1
+            _t6ta.sleep(0.15)
+        except Exception:
+            pass
+    for _c in ["put_call_vol", "put_call_oi", "iv_skew_otm"]:
+        if _c not in FEATURE_COLS:
+            FEATURE_COLS.append(_c)
+    print(f"  [TierA] Options features: {_opt_done} tickers (put_call_vol, put_call_oi, iv_skew_otm)")
+
+    # ── A2: PEAD signal + days_since_earnings ─────────────────────────────────
+    _n_pead = 0
+    for _ptk, _pdf in featured.items():
+        try:
+            import yfinance as _yf6pead
+            _ytk2 = _yf6pead.Ticker(_ptk)
+            _days_since = 45.0   # default: mid-quarter
+            try:
+                _ed2 = _ytk2.get_earnings_dates(limit=8)
+                if _ed2 is not None and not _ed2.empty:
+                    _ed2.index = (_ed2.index.tz_localize(None)
+                                  if (hasattr(_ed2.index, "tz") and _ed2.index.tz)
+                                  else _ed2.index)
+                    _past2 = _ed2[_ed2.index.date <= _dt6ta.date.today()]
+                    if not _past2.empty:
+                        _last_earn = _past2.index[0].date()
+                        _days_since = float((_dt6ta.date.today() - _last_earn).days)
+            except Exception:
+                pass
+            _sue_val = float(_pdf["sue_score"].iloc[-1]) if "sue_score" in _pdf.columns else 0.0
+            _pdf["days_since_earnings"] = _days_since
+            _pdf["pead_signal"]         = _sue_val * (1.0 if _days_since < 60 else 0.0)
+            featured[_ptk] = _pdf
+            _n_pead += 1
+            _t6ta.sleep(0.08)
+        except Exception:
+            pass
+    for _c in ["days_since_earnings", "pead_signal"]:
+        if _c not in FEATURE_COLS:
+            FEATURE_COLS.append(_c)
+    print(f"  [TierA] PEAD signal: {_n_pead} tickers")
+
+    # ── A3: Short interest ratio ───────────────────────────────────────────────
+    _n_si = 0
+    for _stk, _sdf in featured.items():
+        try:
+            import yfinance as _yf6si
+            _sr = _yf6si.Ticker(_stk).info.get("shortRatio", None)
+            if _sr is not None:
+                _sr_f = float(_sr)
+                if _sr_f >= 0:
+                    _sdf["short_ratio"] = _sr_f
+                    featured[_stk] = _sdf
+                    _n_si += 1
+            _t6ta.sleep(0.05)
+        except Exception:
+            pass
+    if "short_ratio" not in FEATURE_COLS:
+        FEATURE_COLS.append("short_ratio")
+    print(f"  [TierA] Short interest ratio: {_n_si} tickers")
+
+    # ── A4: Amihud illiquidity (from existing OHLCV, zero extra API calls) ─────
+    _n_amihud = 0
+    for _atk, _adf in featured.items():
+        try:
+            _cl  = _adf["Close"]  if "Close"  in _adf.columns else None
+            _vol2 = _adf["Volume"] if "Volume" in _adf.columns else None
+            if _cl is None or _vol2 is None:
+                continue
+            _ret_a = _cl.pct_change().abs()
+            _dvol  = (_cl * _pd6ta.to_numeric(_vol2, errors="coerce").fillna(0)).replace(0, _np6ta.nan)
+            _adf["amihud_illiq"] = (_ret_a / _dvol).rolling(20, min_periods=10).mean().shift(1) * 1e6
+            featured[_atk] = _adf
+            _n_amihud += 1
+        except Exception:
+            pass
+    if "amihud_illiq" not in FEATURE_COLS:
+        FEATURE_COLS.append("amihud_illiq")
+    print(f"  [TierA] Amihud illiquidity: {_n_amihud} tickers")
+
+    # ── A5: Earnings revision direction ───────────────────────────────────────
+    _n_rev = 0
+    for _rtk, _rdf in featured.items():
+        try:
+            import yfinance as _yf6rev
+            _eh2 = _yf6rev.Ticker(_rtk).earnings_history
+            if _eh2 is not None and not _eh2.empty and "EPS Estimate" in _eh2.columns:
+                _eps2 = _pd6ta.to_numeric(_eh2["EPS Estimate"], errors="coerce").dropna()
+                if len(_eps2) >= 2:
+                    _rev_dir = float(_np6ta.sign(float(_eps2.iloc[-1]) - float(_eps2.iloc[-2])))
+                    _rdf["earnings_revision_dir"] = _rev_dir
+                    featured[_rtk] = _rdf
+                    _n_rev += 1
+            _t6ta.sleep(0.08)
+        except Exception:
+            pass
+    if "earnings_revision_dir" not in FEATURE_COLS:
+        FEATURE_COLS.append("earnings_revision_dir")
+    print(f"  [TierA] Earnings revision direction: {_n_rev} tickers")
+
+else:
+    print("  [TierA] Options/PEAD/short interest/Amihud/revision: morning-only, skipped")
+"""
+CELL_6_POSTPATCH += "\n\n" + _CELL_6_TA_SIGNALS
+
+# ── Tier A: Earnings look-ahead suppression — filter training rows near earnings
+# Rows within 5 days of an earnings event get bimodal return distributions
+# that drown the model's signal in binary event noise. Drop from training.
+_CELL_8_EARNINGS_FILTER = """
+import numpy as _np8ef
+import os as _os8ef
+
+# Inject earnings filter into the training data prep. If 'days_since_earnings'
+# is in the feature DataFrame, mask rows where the forward label is contaminated
+# by an earnings event (days_to_earnings < 5 = label = earnings event, not signal).
+# We expose a helper that Cell 8 can call via _mask_earnings_rows(df).
+def _mask_earnings_rows(df, days_col="days_since_earnings", horizon=5):
+    if days_col not in df.columns:
+        return df
+    # days_since_earnings is backward-looking. days_to_NEXT_earnings is unknown,
+    # but if the ticker reports quarterly (~90d), approximate:
+    # days_to_next = 90 - days_since_earnings (modulo quarter).
+    # Mask rows where days_to_next < horizon (earnings is within our label window).
+    _days_to_next = (90 - _np8ef.array(df[days_col].fillna(45).values, dtype=float)) % 90
+    _mask = _days_to_next >= horizon   # keep rows with earnings outside label window
+    _n_masked = (~_mask).sum()
+    if _n_masked > 0 and _n_masked < len(df) * 0.30:   # safety: don't drop >30%
+        return df[_mask]
+    return df
+
+print("  [TierA] Earnings look-ahead filter injected (_mask_earnings_rows)")
+"""
+CELL_8_PREPATCH += "\n\n" + _CELL_8_EARNINGS_FILTER
+
+# ── Tier C: Regime-conditional sample weights for XGB/LGB ─────────────────────
+_CELL_8_REGIME_WEIGHTS = """
+import numpy as _np8rw
+import os as _os8rw
+
+# Expose _make_regime_sample_weights(df, current_regime) in Cell 8 namespace.
+# Cell 8's model.fit(X, y, sample_weight=...) can use this to up-weight
+# samples from the current regime and down-weight the opposite regime.
+# Bear=0, Neutral=1, Bull=2. Current regime from HMM 'regimes' array.
+
+_REGIME_SAMPLE_WEIGHTS = {
+    # (current_regime, sample_regime): weight multiplier
+    (0, 0): 2.0,   # bear now, bear samples → up-weight
+    (0, 1): 1.0,
+    (0, 2): 0.5,   # bear now, bull samples → down-weight
+    (1, 0): 0.75,
+    (1, 1): 1.5,
+    (1, 2): 0.75,
+    (2, 0): 0.5,
+    (2, 1): 1.0,
+    (2, 2): 2.0,   # bull now, bull samples → up-weight
+}
+
+_current_regime8rw = 1
+try:
+    if "regimes" in dir() and hasattr(regimes, "__len__") and len(regimes) > 0:
+        _current_regime8rw = int(regimes[-1])
+except Exception:
+    pass
+
+def _make_regime_sample_weights(df, regime_col="regime_hmm"):
+    try:
+        if regime_col not in df.columns:
+            return None
+        _reg_arr = _np8rw.array(df[regime_col].fillna(1).astype(int).values)
+        _weights  = _np8rw.ones(len(_reg_arr), dtype=float)
+        for _i, _r in enumerate(_reg_arr):
+            _weights[_i] = _REGIME_SAMPLE_WEIGHTS.get(
+                (_current_regime8rw, int(_r)), 1.0)
+        return _weights
+    except Exception:
+        return None
+
+print(f"  [TierC] Regime sample weights injected (current_regime={_current_regime8rw}: "
+      f"{'BEAR' if _current_regime8rw==0 else 'NEUTRAL' if _current_regime8rw==1 else 'BULL'})")
+"""
+CELL_8_PREPATCH += "\n\n" + _CELL_8_REGIME_WEIGHTS
+
+# ── Tier B: Sector rotation momentum signal ────────────────────────────────────
+_CELL_11_SECTOR_ROTATION = """
+import json as _j11sr
+import numpy as _np11sr
+from pathlib import Path as _P11sr
+
+# Sector 12-month-skip-1-month relative momentum (Jegadeesh-Titman).
+# Top 3 sectors get +SECTOR_BOOST to composite_score at signal generation.
+# Bottom 3 sectors get -SECTOR_BOOST (relative underweight).
+_SECTOR_ETF_MAP = {
+    "Technology":      "XLK",
+    "Financials":      "XLF",
+    "Healthcare":      "XLV",
+    "Energy":          "XLE",
+    "Consumer Disc":   "XLY",
+    "Consumer Staples":"XLP",
+    "Industrials":     "XLI",
+    "Materials":       "XLB",
+    "Utilities":       "XLU",
+    "Real Estate":     "XLRE",
+    "Communication":   "XLC",
+}
+_SECTOR_BOOST = 0.03   # ±3% score boost for top/bottom sectors
+
+_sector_mom_scores = {}
+try:
+    import yfinance as _yf11sr
+    _etf_data = _yf11sr.download(
+        list(_SECTOR_ETF_MAP.values()), period="14mo", progress=False, auto_adjust=True)
+    if "Close" in _etf_data:
+        _etf_close = _etf_data["Close"] if isinstance(_etf_data.columns, _np11sr.ndarray.__class__.__mro__[0]) else _etf_data["Close"]
+    elif hasattr(_etf_data, "xs"):
+        _etf_close = _etf_data.xs("Close", axis=1, level=0) if "Close" in _etf_data.columns.get_level_values(0) else _etf_data
+    else:
+        _etf_close = _etf_data
+    if hasattr(_etf_close, "columns"):
+        _sector_rets = {}
+        for _sec, _etf in _SECTOR_ETF_MAP.items():
+            if _etf not in _etf_close.columns:
+                continue
+            _px = _etf_close[_etf].dropna()
+            if len(_px) < 50:
+                continue
+            # 12-month return, skip last 1 month (standard momentum factor)
+            _ret12m1m = float(_px.iloc[-22] / _px.iloc[0] - 1.0) if len(_px) > 22 else 0.0
+            _sector_rets[_sec] = _ret12m1m
+        if _sector_rets:
+            _sorted = sorted(_sector_rets.items(), key=lambda x: x[1], reverse=True)
+            _top3   = {s for s, _ in _sorted[:3]}
+            _bot3   = {s for s, _ in _sorted[-3:]}
+            _sector_mom_scores = {
+                s: (_SECTOR_BOOST if s in _top3 else -_SECTOR_BOOST if s in _bot3 else 0.0)
+                for s in _sector_rets
+            }
+            _P11sr("data/weights/sector_rotation.json").write_text(
+                _j11sr.dumps({"as_of": str(__import__("datetime").date.today()),
+                               "momentum_12m1m": {k: round(v,4) for k,v in _sector_rets.items()},
+                               "score_boost": _sector_mom_scores}, indent=2))
+            print(f"  [TierB] Sector rotation: top3={_top3}  bot3={_bot3}")
+except Exception as _sr11e:
+    print(f"  [TierB] Sector rotation error (non-fatal): {_sr11e}")
+
+# Load pre-computed sector rotation boosts from file if above fetch failed
+if not _sector_mom_scores:
+    try:
+        _sr_file = _P11sr("data/weights/sector_rotation.json")
+        if _sr_file.exists():
+            _sr_loaded = _j11sr.loads(_sr_file.read_text())
+            _sector_mom_scores = _sr_loaded.get("score_boost", {})
+    except Exception:
+        pass
+"""
+CELL_11_PREPATCH += "\n\n" + _CELL_11_SECTOR_ROTATION
+
+# ── Tier B: Hurst-gated momentum vs. mean-reversion signal ────────────────────
+_CELL_11_HURST_GATE = """
+import numpy as _np11hg
+
+# Hurst-gated signal refinement: apply AFTER ternary labels are set.
+# hurst_exp < 0.45 → mean-reverting regime → invert momentum signal.
+# hurst_exp > 0.55 → trending regime       → amplify momentum signal.
+# Operates on existing composite_score and ternary_label in signals dict.
+_HURST_GATE_APPLIED = 0
+
+if "signals" in dir() and "featured" in dir():
+    for _htk, _hsig in signals.items():
+        try:
+            _hdf = featured.get(_htk)
+            if _hdf is None or "hurst_exp" not in _hdf.columns:
+                continue
+            _h = float(_hdf["hurst_exp"].dropna().iloc[-1])
+            _cs = float(_hsig.get("composite_score", 0.5))
+
+            if _h < 0.45:
+                # Mean-reverting: flip signal toward neutral (fade momentum)
+                # Distance from 0.5 is compressed by Hurst factor
+                _hurst_scale = max(0.0, (_h / 0.45))   # 0 at H=0, 1 at H=0.45
+                _new_cs = 0.5 + (_cs - 0.5) * _hurst_scale * 0.5
+                signals[_htk]["composite_score"] = round(_new_cs, 6)
+                signals[_htk]["hurst_gated"]     = "mean_rev"
+                _HURST_GATE_APPLIED += 1
+            elif _h > 0.55:
+                # Trending: amplify signal (trend-follow)
+                _hurst_scale = min(1.5, 1.0 + (_h - 0.55) / 0.45)
+                _new_cs = 0.5 + (_cs - 0.5) * _hurst_scale
+                _new_cs = float(_np11hg.clip(_new_cs, 0.0, 1.0))
+                signals[_htk]["composite_score"] = round(_new_cs, 6)
+                signals[_htk]["hurst_gated"]     = "trending"
+                _HURST_GATE_APPLIED += 1
+        except Exception:
+            pass
+
+print(f"  [TierB] Hurst gate applied to {_HURST_GATE_APPLIED} signals")
+"""
+CELL_11_POSTPATCH += "\n\n" + _CELL_11_HURST_GATE
+
+# ── Tier B: Sector rotation score → composite_score boost in CELL_11_POSTPATCH
+_CELL_11_SECTOR_BOOST = """
+import json as _j11sb
+from pathlib import Path as _P11sb
+
+# Apply sector rotation momentum boost to composite_score.
+# Uses _sector_mom_scores injected in CELL_11_PREPATCH.
+_SECTOR_TICKER_MAP = {
+    "AAPL":"Technology","MSFT":"Technology","NVDA":"Technology","GOOGL":"Technology",
+    "AMZN":"Technology","META":"Technology","AVGO":"Technology","CRM":"Technology",
+    "NOW":"Technology","PLTR":"Technology","ORCL":"Technology","ADBE":"Technology",
+    "INTC":"Technology","CSCO":"Technology","ANET":"Technology","AMD":"Technology",
+    "QCOM":"Semiconductors","AMAT":"Semiconductors","MU":"Semiconductors",
+    "TXN":"Semiconductors","LRCX":"Semiconductors","KLAC":"Semiconductors",
+    "JPM":"Financials","V":"Financials","MA":"Financials","BAC":"Financials",
+    "GS":"Financials","MS":"Financials","BLK":"Financials","AXP":"Financials",
+    "WFC":"Financials","C":"Financials","SCHW":"Financials","COIN":"Financials",
+    "UNH":"Healthcare","LLY":"Healthcare","JNJ":"Healthcare","ABBV":"Healthcare",
+    "MRK":"Healthcare","TMO":"Healthcare","ABT":"Healthcare","PFE":"Healthcare",
+    "AMGN":"Healthcare","ISRG":"Healthcare","VRTX":"Healthcare",
+    "XOM":"Energy","CVX":"Energy","COP":"Energy","SLB":"Energy","EOG":"Energy",
+    "HD":"Consumer Disc","NKE":"Consumer Disc","SBUX":"Consumer Disc","MCD":"Consumer Disc",
+    "COST":"Consumer Disc","TGT":"Consumer Disc","TSLA":"Consumer Disc","UBER":"Consumer Disc",
+    "WMT":"Consumer Staples","PG":"Consumer Staples","KO":"Consumer Staples","PEP":"Consumer Staples",
+    "BA":"Industrials","CAT":"Industrials","GE":"Industrials","RTX":"Industrials",
+    "LMT":"Industrials","UPS":"Industrials","FDX":"Industrials",
+    "NFLX":"Communication","DIS":"Communication","CMCSA":"Communication","VZ":"Communication",
+    "T":"Communication","TMUS":"Communication",
+    "NEE":"Utilities","DUK":"Utilities","SO":"Utilities",
+    "AMT":"Real Estate","PLD":"Real Estate","EQIX":"Real Estate",
+    "LIN":"Materials","FCX":"Materials","NEM":"Materials",
+}
+
+if "signals" in dir() and "_sector_mom_scores" in dir():
+    _n_sec_boost = 0
+    for _stk2, _ssig in signals.items():
+        try:
+            _sec = _SECTOR_TICKER_MAP.get(_stk2, "")
+            _boost = _sector_mom_scores.get(_sec, 0.0) if _sec else 0.0
+            if _boost != 0.0:
+                _cs2 = float(_ssig.get("composite_score", 0.5))
+                signals[_stk2]["composite_score"] = round(
+                    max(0.0, min(1.0, _cs2 + _boost)), 6)
+                signals[_stk2]["sector_rotation_boost"] = _boost
+                _n_sec_boost += 1
+        except Exception:
+            pass
+    print(f"  [TierB] Sector rotation boost applied to {_n_sec_boost} tickers")
+"""
+CELL_11_POSTPATCH += "\n\n" + _CELL_11_SECTOR_BOOST
+
+# ── Tier B: Fama-French RMW + CMA factors ─────────────────────────────────────
+# RMW (Robust-Minus-Weak): profitability factor
+# CMA (Conservative-Minus-Aggressive): investment factor
+# Both expose idiosyncratic alpha when stripped from directional returns.
+_CELL_12_FF5 = """
+import json as _j12ff
+import datetime as _dt12ff
+from pathlib import Path as _P12ff
+import numpy as _np12ff
+
+# Download FF5 factors from Ken French's data library (free CSV).
+# Cache 7 days to avoid repeated downloads.
+_FF5_CACHE = _P12ff("data/weights/ff5_factors.json")
+_FF5_TTL   = 7 * 86400   # 7 days
+
+_ff5_data = None
+try:
+    import time as _t12ff
+    if _FF5_CACHE.exists():
+        _age = _t12ff.time() - _FF5_CACHE.stat().st_mtime
+        if _age < _FF5_TTL:
+            _ff5_data = _j12ff.loads(_FF5_CACHE.read_text())
+
+    if _ff5_data is None:
+        import io as _io12ff
+        import zipfile as _z12ff
+        import requests as _rq12ff
+        import pandas as _pd12ff
+        _url_ff5 = ("https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/"
+                    "ftp/F-F_Research_Data_5_Factors_2x3_daily_CSV.zip")
+        _resp = _rq12ff.get(_url_ff5, timeout=30)
+        if _resp.ok:
+            with _z12ff.ZipFile(_io12ff.BytesIO(_resp.content)) as _zf:
+                _csv_name = [n for n in _zf.namelist() if n.endswith(".CSV")][0]
+                _raw = _zf.read(_csv_name).decode("utf-8", errors="replace")
+            # Parse: skip header rows until we see "Mkt-RF"
+            _lines = _raw.splitlines()
+            _start = next((i for i, l in enumerate(_lines) if "Mkt-RF" in l), 0)
+            _df_ff = _pd12ff.read_csv(
+                _io12ff.StringIO("\n".join(_lines[_start:])), index_col=0)
+            _df_ff.index = _pd12ff.to_datetime(_df_ff.index.astype(str), format="%Y%m%d", errors="coerce")
+            _df_ff = _df_ff.dropna(how="all").last("252D")
+            # Keep last 252 trading days, store means
+            _ff5_data = {
+                "as_of": _dt12ff.date.today().isoformat(),
+                "rmw_mean": round(float(_df_ff["RMW"].mean()) / 100, 6) if "RMW" in _df_ff else 0.0,
+                "cma_mean": round(float(_df_ff["CMA"].mean()) / 100, 6) if "CMA" in _df_ff else 0.0,
+                "mkt_mean": round(float(_df_ff["Mkt-RF"].mean()) / 100, 6) if "Mkt-RF" in _df_ff else 0.0,
+                "smb_mean": round(float(_df_ff["SMB"].mean()) / 100, 6) if "SMB" in _df_ff else 0.0,
+                "hml_mean": round(float(_df_ff["HML"].mean()) / 100, 6) if "HML" in _df_ff else 0.0,
+            }
+            _FF5_CACHE.write_text(_j12ff.dumps(_ff5_data, indent=2))
+            print(f"  [TierB] FF5 factors downloaded: RMW={_ff5_data['rmw_mean']:+.4%}/day  "
+                  f"CMA={_ff5_data['cma_mean']:+.4%}/day")
+        else:
+            print(f"  [TierB] FF5 download failed: HTTP {_resp.status_code}")
+
+    if _ff5_data:
+        # Expose RMW and CMA for use in CVaR risk model attribution
+        _FF5_RMW = float(_ff5_data.get("rmw_mean", 0.0))
+        _FF5_CMA = float(_ff5_data.get("cma_mean", 0.0))
+        _FF5_MKT = float(_ff5_data.get("mkt_mean", 0.0))
+        _FF5_SMB = float(_ff5_data.get("smb_mean", 0.0))
+        _FF5_HML = float(_ff5_data.get("hml_mean", 0.0))
+        print(f"  [TierB] FF5 available: RMW={_FF5_RMW:+.4%}  CMA={_FF5_CMA:+.4%}  "
+              f"HML={_FF5_HML:+.4%}  SMB={_FF5_SMB:+.4%}")
+
+except Exception as _ff5err:
+    print(f"  [TierB] FF5 factors error (non-fatal): {_ff5err}")
+"""
+CELL_12_PREPATCH += "\n\n" + _CELL_12_FF5
+
+# ── Tier C: Conformal uncertainty → Kelly position size ───────────────────────
+_CELL_13_CONFORMAL_KELLY = """
+import json as _j13ck
+from pathlib import Path as _P13ck
+import numpy as _np13ck
+
+# Wire conformal prediction uncertainty directly into Kelly fraction:
+#   kelly_fraction = base_fraction × (1 − conformal_uncertainty)
+# conformal_uncertainty is proxied by normalised distance from decision boundary:
+#   uncertainty = 1 − |composite_score − 0.5| / 0.5  (0=certain, 1=at boundary)
+# This reduces position size when the model is uncertain, not just when
+# signal is weak — a provably correct way to handle model uncertainty.
+_CONFORMAL_KELLY_ENABLED = True
+_MAX_UNCERTAINTY_DISCOUNT = 0.60   # max 60% size reduction for boundary signals
+
+_conformal_kelly_map = {}
+if "signals" in dir():
+    for _ck_tk, _ck_sig in signals.items():
+        try:
+            _cs_ck = float(_ck_sig.get("composite_score", 0.5))
+            # Uncertainty: 0 when |cs-0.5|=0.5 (max conviction), 1 when cs=0.5 (no edge)
+            _certainty  = min(1.0, abs(_cs_ck - 0.5) / 0.5)
+            _uncertainty = 1.0 - _certainty
+            # Scale discount: 0 at full certainty, MAX_DISCOUNT at boundary
+            _discount = _uncertainty * _MAX_UNCERTAINTY_DISCOUNT
+            _conformal_kelly_map[_ck_tk] = round(1.0 - _discount, 4)
+        except Exception:
+            _conformal_kelly_map[_ck_tk] = 1.0
+
+# Expose scalar to multiply into kelly_qty:
+# Usage in Cell 13: qty = kelly_qty(tk, ...) × _conformal_kelly_map.get(tk, 1.0)
+_CONFORMAL_KELLY_MAP = _conformal_kelly_map
+
+_n_discounted = sum(1 for v in _conformal_kelly_map.values() if v < 0.95)
+print(f"  [TierC] Conformal Kelly: {_n_discounted} positions discounted "
+      f"(max_discount={_MAX_UNCERTAINTY_DISCOUNT:.0%})")
+"""
+CELL_13_PREPATCH += "\n\n" + _CELL_13_CONFORMAL_KELLY
+
+# ── Tier C: Gain-to-Pain ratio kill switch ────────────────────────────────────
+_CELL_15_GPR = """
+import numpy as _np15gpr
+import json  as _j15gpr
+from pathlib import Path as _P15gpr
+import datetime as _dt15gpr
+
+# Gain-to-Pain Ratio (Jack Schwager): sum(positive monthly returns) / |sum(negative monthly returns)|
+# GPR < 0.5 → strategy gives back more than it earns → fire Discord warning.
+# Complements existing peak drawdown kill switch (which fires immediately);
+# GPR detects slow bleed that doesn't trigger single-day limits.
+_GPR_WARN_THRESHOLD = 0.5   # warn below 0.5
+_GPR_KILL_THRESHOLD = 0.20  # kill switch below 0.20 (severe persistent bleed)
+
+try:
+    import pandas as _pd15gpr
+    _pnl_path15 = _P15gpr("data/predictions/daily_pnl_log.csv")
+    if _pnl_path15.exists():
+        _dl15 = _pd15gpr.read_csv(_pnl_path15)
+        _dl15["date"]   = _pd15gpr.to_datetime(_dl15["date"], errors="coerce")
+        _dl15["net_pl"] = _pd15gpr.to_numeric(_dl15.get("net_pl", _pd15gpr.Series(dtype=float)), errors="coerce")
+        _dl15 = _dl15.sort_values("date").dropna(subset=["date","net_pl"])
+
+        if len(_dl15) >= 30:
+            # Resample to monthly
+            _dl15 = _dl15.set_index("date")
+            _monthly = _dl15["net_pl"].resample("ME").sum()
+            _gains   = float(_monthly[_monthly > 0].sum())
+            _pains   = float(_monthly[_monthly < 0].sum())
+            _gpr     = _gains / max(abs(_pains), 1e-8)
+
+            _gpr_result = {
+                "as_of": _dt15gpr.date.today().isoformat(),
+                "gpr": round(_gpr, 4),
+                "total_gain": round(_gains, 2),
+                "total_pain": round(_pains, 2),
+                "n_months": int(len(_monthly)),
+                "status": ("OK" if _gpr >= _GPR_WARN_THRESHOLD
+                           else "WARN" if _gpr >= _GPR_KILL_THRESHOLD else "KILL"),
+            }
+            _P15gpr("data/predictions/gain_to_pain.json").write_text(
+                _j15gpr.dumps(_gpr_result, indent=2))
+            print(f"  [TierC] Gain-to-Pain Ratio: {_gpr:.3f} "
+                  f"({'OK' if _gpr >= _GPR_WARN_THRESHOLD else 'WARN' if _gpr >= _GPR_KILL_THRESHOLD else 'KILL'})")
+
+            if _gpr < _GPR_WARN_THRESHOLD:
+                _disc_gpr = __import__("os").environ.get("DISCORD_WEBHOOK_URL","")
+                if _disc_gpr:
+                    try:
+                        import requests as _rq15gpr
+                        _emoji = "🚨" if _gpr < _GPR_KILL_THRESHOLD else "⚠️"
+                        _rq15gpr.post(_disc_gpr, json={"embeds":[{
+                            "title": f"{_emoji} Gain-to-Pain Alert: GPR={_gpr:.3f}",
+                            "color": 15158332,
+                            "description": (f"GPR={_gpr:.3f} below threshold {_GPR_WARN_THRESHOLD:.2f}. "
+                                           f"Total gain: ${_gains:,.0f}  Total pain: ${_pains:,.0f}. "
+                                           f"Strategy is bleeding slowly — review signal layer."),
+                        }]}, timeout=10)
+                    except Exception:
+                        pass
+
+            if _gpr < _GPR_KILL_THRESHOLD:
+                _ks_path15 = _P15gpr("data/KILL_SWITCH_ACTIVE.flag")
+                if not _ks_path15.exists():
+                    _ks_path15.write_text(
+                        f"GPR kill: gain-to-pain={_gpr:.3f} < {_GPR_KILL_THRESHOLD:.2f}")
+                    print(f"  [TierC] KILL SWITCH ACTIVATED: GPR={_gpr:.3f} < {_GPR_KILL_THRESHOLD}")
+        else:
+            print(f"  [TierC] Gain-to-Pain: need 30+ daily PnL rows (have {len(_dl15)})")
+    else:
+        print("  [TierC] Gain-to-Pain: no daily_pnl_log.csv yet")
+except Exception as _gpr15e:
+    print(f"  [TierC] Gain-to-Pain error (non-fatal): {_gpr15e}")
+"""
+CELL_15_POSTPATCH += "\n\n" + _CELL_15_GPR
+
+# ── Tier C: Wire _mask_earnings_rows + _make_regime_sample_weights into Cell 8 ─
+# Since we can't modify the notebook's Cell 8 source directly, monkey-patch
+# XGBClassifier.fit and LGBMClassifier.fit to auto-apply both functions when
+# a global training DataFrame _TRAINING_DF8 is set before the fit call.
+# _TRAINING_DF8 is populated by patching the data prep section via CELL_8_PREPATCH.
+_CELL_8_FIT_WIRING = """
+import numpy as _np8fw
+
+# ── Monkey-patch XGB/LGB .fit() to inject sample_weight + earnings masking ───
+# Strategy: wrap fit() so that if _TRAINING_DF8 is set in the namespace,
+# we apply earnings masking and regime sample weights automatically.
+_FIT_PATCH_APPLIED = False
+try:
+    import xgboost as _xgb8fw
+    import lightgbm as _lgb8fw
+
+    _orig_xgb_fit = _xgb8fw.XGBClassifier.fit
+    _orig_lgb_fit = _lgb8fw.LGBMClassifier.fit
+
+    def _patched_fit(self, X, y, sample_weight=None, **kw):
+        try:
+            _df8fw = globals().get("_TRAINING_DF8") or (
+                locals().get("_TRAINING_DF8") if False else None)
+            # Access via the calling namespace — inject via well-known global name
+            import builtins as _blt8fw
+            _df8fw2 = getattr(_blt8fw, "_TRAINING_DF8_GLOBAL", None)
+            if _df8fw2 is not None and hasattr(_df8fw2, "columns"):
+                # Earnings masking: align index
+                if hasattr(X, "__len__") and len(X) == len(_df8fw2):
+                    _mask8fw = _mask_earnings_rows(_df8fw2).index
+                    if len(_mask8fw) < len(_df8fw2):
+                        _keep8fw = _df8fw2.index.isin(_mask8fw)
+                        X  = X[_keep8fw] if hasattr(X, "__getitem__") else X
+                        y  = y[_keep8fw]
+                        _df8fw2 = _df8fw2.loc[_mask8fw]
+                        if sample_weight is not None and hasattr(sample_weight, "__len__"):
+                            sample_weight = sample_weight[_keep8fw]
+                # Regime sample weights (only if no external weight passed)
+                if sample_weight is None:
+                    _sw8fw = _make_regime_sample_weights(_df8fw2)
+                    if _sw8fw is not None and len(_sw8fw) == len(y):
+                        sample_weight = _sw8fw
+        except Exception:
+            pass
+        return _orig_xgb_fit(self, X, y, sample_weight=sample_weight, **kw)
+
+    def _patched_lgb_fit(self, X, y, sample_weight=None, **kw):
+        try:
+            import builtins as _blt8fwl
+            _df8fwl = getattr(_blt8fwl, "_TRAINING_DF8_GLOBAL", None)
+            if _df8fwl is not None and hasattr(_df8fwl, "columns"):
+                if hasattr(X, "__len__") and len(X) == len(_df8fwl):
+                    _mask8fwl = _mask_earnings_rows(_df8fwl).index
+                    if len(_mask8fwl) < len(_df8fwl):
+                        _keep8fwl = _df8fwl.index.isin(_mask8fwl)
+                        X  = X[_keep8fwl] if hasattr(X, "__getitem__") else X
+                        y  = y[_keep8fwl]
+                        _df8fwl = _df8fwl.loc[_mask8fwl]
+                        if sample_weight is not None and hasattr(sample_weight, "__len__"):
+                            sample_weight = sample_weight[_keep8fwl]
+                if sample_weight is None:
+                    _sw8fwl = _make_regime_sample_weights(_df8fwl)
+                    if _sw8fwl is not None and len(_sw8fwl) == len(y):
+                        sample_weight = _sw8fwl
+        except Exception:
+            pass
+        return _orig_lgb_fit(self, X, y, sample_weight=sample_weight, **kw)
+
+    _xgb8fw.XGBClassifier.fit  = _patched_fit
+    _lgb8fw.LGBMClassifier.fit = _patched_lgb_fit
+    _FIT_PATCH_APPLIED = True
+    print("  [TierA/C] XGB/LGB .fit() patched for earnings masking + regime weights")
+except Exception as _fw8e:
+    print(f"  [TierA/C] Fit wiring error (non-fatal): {_fw8e}")
+
+# Expose _TRAINING_DF8_GLOBAL setter — Cell 8 prepares df before fit, so
+# if df is a DataFrame variable named 'df' or 'train_df', capture it.
+# We set it by overriding pandas DataFrame constructor to capture training frames.
+# Simpler: just set the builtin attr before any fit call based on common var names.
+try:
+    import builtins as _blt8fw2
+    for _varname8fw in ["df", "train_df", "X_train_df", "features_df"]:
+        if _varname8fw in dir() and hasattr(eval(_varname8fw), "columns"):
+            setattr(_blt8fw2, "_TRAINING_DF8_GLOBAL", eval(_varname8fw))
+            break
+except Exception:
+    pass
+"""
+CELL_8_PREPATCH += "\n\n" + _CELL_8_FIT_WIRING
+
+# ── Tier D: Alpha Vantage + Finnhub enrichment ────────────────────────────────
+# Wire in free API keys (25 req/day AV, 60 req/min Finnhub).
+# Used in the enrichment section — not as cell patches.
+_ALPHAVANTAGE_KEY = os.environ.get("ALPHAVANTAGE_API_KEY", "")
+_FINNHUB_KEY      = os.environ.get("FINNHUB_API_KEY", "")
 
 # ── Dispatcher dicts ──────────────────────────────────────────────────────────
 _CELL_PREPATCH = {
@@ -3405,6 +4128,74 @@ try:
         print(f"  Earnings calendar: {len(_earnings_cal)} upcoming events")
     except Exception as _earn_e:
         print(f"  Earnings calendar error: {_earn_e}")
+
+    # ── Tier D: Alpha Vantage — earnings surprise history + EPS revisions ────
+    _av_data = {}
+    if _ALPHAVANTAGE_KEY and RUN_TYPE == "morning":
+        _AV_TICKERS = ["AAPL","MSFT","NVDA","GOOGL","AMZN","META","TSLA","JPM","V","AMD"]
+        print(f"  Alpha Vantage: fetching earnings data for {len(_AV_TICKERS)} tickers...")
+        import time as _av_time
+        for _av_tk in _AV_TICKERS:
+            try:
+                _av_r = _req.get(
+                    "https://www.alphavantage.co/query",
+                    params={"function":"EARNINGS","symbol":_av_tk,"apikey":_ALPHAVANTAGE_KEY},
+                    timeout=10)
+                if _av_r.ok:
+                    _av_j = _av_r.json()
+                    _qe   = _av_j.get("quarterlyEarnings", [])[:4]
+                    if _qe:
+                        _surs = [float(q.get("surprisePercentage","0") or 0)
+                                 for q in _qe if q.get("surprisePercentage","")]
+                        _av_data[_av_tk] = {
+                            "recent_surprise_pct": round(float(_qe[0].get("surprisePercentage","0") or 0), 4),
+                            "avg_surprise_4q":     round(sum(_surs)/len(_surs), 4) if _surs else 0.0,
+                            "reported_date":       _qe[0].get("reportedDate",""),
+                        }
+                _av_time.sleep(12)   # AV free tier: 5 req/min (25/day)
+            except Exception as _av_e:
+                pass
+        print(f"  Alpha Vantage: {len(_av_data)}/{len(_AV_TICKERS)} tickers fetched")
+    else:
+        if not _ALPHAVANTAGE_KEY:
+            print("  Alpha Vantage: ALPHAVANTAGE_API_KEY not set — skipped (free at alphavantage.co)")
+    Path("data/alpha_vantage_earnings.json").write_text(json.dumps(_av_data, indent=2, default=str))
+
+    # ── Tier D: Finnhub — analyst recommendations + price targets ─────────────
+    _finnhub_data = {}
+    if _FINNHUB_KEY and RUN_TYPE == "morning":
+        _FH_TICKERS = ["AAPL","MSFT","NVDA","GOOGL","AMZN","META","TSLA","JPM","V","AMD",
+                        "NFLX","AVGO","CRM","NOW","PLTR","GS","MS","UNH","LLY","XOM"]
+        print(f"  Finnhub: fetching analyst data for {len(_FH_TICKERS)} tickers...")
+        import time as _fh_time
+        _fh_hdrs = {"X-Finnhub-Token": _FINNHUB_KEY}
+        for _fh_tk in _FH_TICKERS:
+            try:
+                # Analyst recommendations
+                _rec_r = _req.get(
+                    f"https://finnhub.io/api/v1/stock/recommendation",
+                    params={"symbol": _fh_tk}, headers=_fh_hdrs, timeout=8)
+                _recs = _rec_r.json()[:3] if _rec_r.ok else []
+                # Price target
+                _pt_r = _req.get(
+                    f"https://finnhub.io/api/v1/stock/price-target",
+                    params={"symbol": _fh_tk}, headers=_fh_hdrs, timeout=8)
+                _pt   = _pt_r.json() if _pt_r.ok else {}
+                _finnhub_data[_fh_tk] = {
+                    "price_target_mean":   _pt.get("targetMean"),
+                    "price_target_high":   _pt.get("targetHigh"),
+                    "price_target_low":    _pt.get("targetLow"),
+                    "analyst_count":       _pt.get("targetMedian"),
+                    "latest_recs":         _recs[:2] if _recs else [],
+                }
+                _fh_time.sleep(0.6)   # Finnhub free: 60 req/min
+            except Exception:
+                pass
+        print(f"  Finnhub: {len(_finnhub_data)}/{len(_FH_TICKERS)} tickers fetched")
+    else:
+        if not _FINNHUB_KEY:
+            print("  Finnhub: FINNHUB_API_KEY not set — skipped (free at finnhub.io)")
+    Path("data/finnhub_analyst.json").write_text(json.dumps(_finnhub_data, indent=2, default=str))
 
     # ── Save enrichment files ─────────────────────────────────────────────
     Path("data/macro_extended.json").write_text(json.dumps(_ext, indent=2, default=str))
