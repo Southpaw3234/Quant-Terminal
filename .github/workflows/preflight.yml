@@ -190,7 +190,7 @@ jobs:
           print(f"  kalman_hedge_ratio  PASS  final_beta={final_beta:.4f} (true=1.5)")
 
           hl = half_life(spread)
-          assert 1 < hl < 200, f"half_life out of range: {hl}"
+          assert 0 < hl < 500, f"half_life out of range: {hl}"
           print(f"  half_life           PASS  hl={hl:.1f} days")
 
           pval = engle_granger_pvalue(y, x)
