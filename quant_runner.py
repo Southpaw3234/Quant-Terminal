@@ -561,31 +561,48 @@ def _augment_ticker(tk_df_pair):
             # Map: 1=BUY, -1=SELL→0 for binary, keep NaN as NaN
             # We keep original ternary but remap to binary (0/1) for sklearn:
             # +1 → 1 (correct BUY), -1 → 0 (correct SELL), 0 → NaN (flat)
-            _bin = _pd6p.Series(_np6p.where(_tb == 1, 1,
-                                _np6p.where(_tb == -1, 0, _np6p.nan)),
-                                index=_tb.index)
-            fd["target_tb"] = _bin    # keep original quintile in "target"
-            # Use triple barrier as primary label if enough non-NaN
-            _n_tb = _bin.notna().sum()
-            _n_orig = fd["target"].notna().sum()
-            if _n_tb > max(30, _n_orig * 0.30):
-                fd["target"] = _bin
-                fd["target_method"] = "triple_barrier"
+            # Store raw triple barrier direction for reference
+            fd["target_tb_raw"] = _tb
+            # ── Continuous return label (Huber-loss regression target) ──────
+            # Use raw forward return as the regression target.
+            # Triple barrier direction is used only to sign the return:
+            #   +1 (upper hit) → positive fwd_ret kept as-is
+            #   -1 (lower hit) → negative fwd_ret kept as-is
+            #   0  (time bar)  → fwd_ret clipped to ±0.5σ (weak signal)
+            # This preserves magnitude — a +5% move and a +0.1% move are
+            # no longer both labeled "1". The ensemble trains on return size.
+            if "fwd_ret" in fd.columns:
+                _fr = fd["fwd_ret"].copy()
+                _fr_std = float(_fr.std()) if len(_fr.dropna()) > 10 else 0.02
+                # For time-bar outcomes, clip to ±0.5σ (uncertain)
+                _clipped = _fr.clip(-0.5 * _fr_std, 0.5 * _fr_std)
+                _cont_target = _np6p.where(_tb == 1, _fr,
+                               _np6p.where(_tb == -1, _fr,
+                               _clipped))
+                _cont_series = _pd6p.Series(_cont_target, index=_tb.index)
+                _n_valid = _cont_series.notna().sum()
+                if _n_valid > max(30, len(fd) * 0.30):
+                    fd["target"] = _cont_series
+                    fd["target_method"] = "continuous_huber"
+                else:
+                    fd["target_method"] = "quintile"
             else:
                 fd["target_method"] = "quintile"
         else:
             fd["target_method"] = "quintile"
 
-        # ── Fix (from HANDOFF): Rolling quintile labels on non-TB tickers ──
-        _is_quintile = ("target_method" not in fd.columns or
-                        (fd["target_method"] == "quintile").all()
-                        if "target_method" in fd.columns else True)
+        # ── Continuous label for quintile-method tickers ───────────────────
+        # Instead of top/bottom quintile binary, use raw fwd_ret directly.
+        # Rolling z-score normalizes across time to prevent scale drift.
+        _is_quintile = (fd.get("target_method", pd.Series(["quintile"])) == "quintile").all() \
+                        if "target_method" in fd.columns else True
         if _is_quintile and "fwd_ret" in fd.columns:
             _fr = fd["fwd_ret"]
-            _q80 = _fr.rolling(252, min_periods=63).quantile(0.80)
-            _q20 = _fr.rolling(252, min_periods=63).quantile(0.20)
-            fd["target"] = _np6p.where(_fr > _q80, 1,
-                           _np6p.where(_fr < _q20, 0, _np6p.nan))
+            _roll_mean = _fr.rolling(252, min_periods=63).mean()
+            _roll_std  = _fr.rolling(252, min_periods=63).std().clip(1e-6)
+            # z-score: keeps scale consistent across different volatility regimes
+            fd["target"] = (_fr - _roll_mean) / _roll_std
+            fd["target_method"] = "continuous_zscore"
 
         return tk, fd
     except Exception as _e6p:
@@ -912,6 +929,55 @@ _META_VAL_FRAC   = 0.125   # AUC reported on 62.5-75%
 _META_CAL_FRAC   = 0.125   # Platt calibration on 75-87.5%
 _META_META_FRAC  = 0.125   # Stacking meta-learner on 87.5-100%
 
+# ── Continuous target: switch ensemble objectives to Huber regression ──────────
+# The notebook trains XGBoost/LightGBM/CatBoost with binary classification
+# objectives (binary:logistic, binary, Logloss). Swapping to regression with
+# Huber loss allows the model to learn from return magnitude, not just direction.
+# Huber loss is robust to outlier returns (flash crashes, earnings surprises).
+# At inference time, raw predicted return is converted to BUY/HOLD/SELL using
+# regime-adjusted quantile thresholds (injected in CELL_11_POSTPATCH).
+import xgboost as _xgb8
+import lightgbm as _lgb8
+
+# Patch XGBClassifier to use Huber regression
+_XGBClassifier_orig8 = _xgb8.XGBClassifier
+class XGBClassifier(_XGBClassifier_orig8):
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("objective", "reg:pseudohubererror")
+        kwargs.setdefault("eval_metric", "mae")
+        # Remove classification-only params if present
+        kwargs.pop("use_label_encoder", None)
+        super().__init__(*args, **kwargs)
+    def predict_proba(self, X):
+        import numpy as _np8pr
+        raw = self.predict(X)
+        # Convert raw return prediction to probability-like score in [0,1]
+        # via sigmoid: score=0.5 when predicted_return=0
+        _scale = 0.1   # 10% return → score ≈ 0.73
+        prob_up = 1.0 / (1.0 + _np8pr.exp(-raw / _scale))
+        return _np8pr.column_stack([1 - prob_up, prob_up])
+
+_xgb8.XGBClassifier = XGBClassifier
+
+# Patch LGBMClassifier similarly
+_LGBMClassifier_orig8 = _lgb8.LGBMClassifier
+class LGBMClassifier(_LGBMClassifier_orig8):
+    def __init__(self, *args, **kwargs):
+        kwargs["objective"] = "huber"
+        kwargs["metric"]    = "mae"
+        kwargs["alpha"]     = 0.9   # Huber alpha (robustness parameter)
+        super().__init__(*args, **kwargs)
+    def predict_proba(self, X):
+        import numpy as _np8pr
+        raw = self.predict(X)
+        _scale = 0.1
+        prob_up = 1.0 / (1.0 + _np8pr.exp(-raw / _scale))
+        return _np8pr.column_stack([1 - prob_up, prob_up])
+
+_lgb8.LGBMClassifier = LGBMClassifier
+
+print("  [patch] XGBClassifier + LGBMClassifier patched to Huber regression objectives")
+
 print("  [patch] EmbargoTimeSeriesSplit, BlockBootstrap, 4-window fractions injected")
 """
 
@@ -972,6 +1038,191 @@ def _patched_post9(url, *a, **kw):
 _req9_orig.get  = _patched_get9
 _req9_orig.post = _patched_post9
 print("  [patch] EarningsWhispers scraper disabled")
+"""
+
+# ── CELL 9 POSTPATCH: EDGAR earnings transcript NLP ───────────────────────────
+# Fetches recent 8-K filings (earnings calls) from SEC EDGAR for each ticker.
+# Computes 6 features from the transcript text:
+#   transcript_tone      : net positive/negative word ratio (overall)
+#   qa_tone_shift        : tone in Q&A section minus tone in prepared remarks
+#                          (negative shift = management defensive under questioning)
+#   guidance_confidence  : count of high-certainty words ("will","committed","expect")
+#                          vs low-certainty ("believe","hope","might","could")
+#   analyst_aggression   : question word count / total Q&A word count proxy
+#   surprise_language    : words indicating guidance change ("revised","updated","above")
+#   transcript_length    : normalized length (longer = more disclosure transparency)
+# All features are cached per-ticker per-quarter in data/predictions/transcript_cache.json
+CELL_9_POSTPATCH = """
+import json as _j9p
+import re  as _re9p
+from pathlib import Path as _P9p
+
+_TRANSCRIPT_CACHE_FILE = _P9p("data/predictions/transcript_cache.json")
+_TRANSCRIPT_FEATURES   = ["transcript_tone","qa_tone_shift","guidance_confidence",
+                           "analyst_aggression","surprise_language","transcript_length"]
+
+# Sentiment word lists (no external library needed)
+_POS_WORDS9 = {"strong","growth","increase","positive","exceed","beat","record",
+               "momentum","confident","committed","will","expanding","accelerating",
+               "raised","upgrade","outperform","solid","robust","excellent"}
+_NEG_WORDS9 = {"decline","decrease","challenging","difficult","uncertain","miss",
+               "below","concern","headwind","pressure","weak","slow","risk",
+               "lower","reduced","disappointing","cautious","volatile","warn"}
+_CERTAIN9   = {"will","committed","expect","plan","confident","on track","target"}
+_UNCERTAIN9 = {"believe","hope","might","could","may","potentially","possible",
+               "we think","we feel","approximately","roughly"}
+_SURPRISE9  = {"revised","updated","above","exceeded","raised","beat","outpaced",
+               "better than","stronger than","ahead of"}
+
+def _score_text9(text):
+    \"\"\"Return (pos_ratio, neg_ratio, certain_ratio, uncertain_ratio, surprise_count).\"\"\"
+    words = _re9p.findall(r\'\\b\\w+\\b\', text.lower())
+    if not words:
+        return 0.0, 0.0, 0.0, 0.0, 0
+    n = len(words)
+    pos = sum(1 for w in words if w in _POS_WORDS9)
+    neg = sum(1 for w in words if w in _NEG_WORDS9)
+    # Check multi-word phrases
+    text_lower = text.lower()
+    certain   = sum(1 for p in _CERTAIN9   if p in text_lower)
+    uncertain = sum(1 for p in _UNCERTAIN9 if p in text_lower)
+    surprise  = sum(1 for p in _SURPRISE9  if p in text_lower)
+    return pos/n, neg/n, certain/max(n,1), uncertain/max(n,1), surprise
+
+def _fetch_edgar_transcript9(ticker, max_filings=2):
+    \"\"\"
+    Fetch recent 8-K exhibit text from SEC EDGAR for a given ticker.
+    Returns list of text strings (one per recent earnings call filing).
+    Uses EDGAR full-text search — no API key required.
+    \"\"\"
+    import requests as _rq9
+    try:
+        # Step 1: get CIK from company search
+        _search_url = (f"https://efts.sec.gov/LATEST/search-index?q=%22{ticker}%22"
+                       f"&dateRange=custom&startdt=2024-01-01"
+                       f"&forms=8-K&hits.hits._source=period_of_report,entity_name,file_date")
+        _r = _rq9.get(_search_url, timeout=8,
+                      headers={"User-Agent": "QuantTerminal research@quantterminal.com"})
+        if not _r.ok:
+            return []
+        _hits = _r.json().get("hits", {}).get("hits", [])
+        if not _hits:
+            return []
+        _texts = []
+        for _hit in _hits[:max_filings]:
+            try:
+                _src = _hit.get("_source", {})
+                _file_url = _hit.get("_id", "")
+                if not _file_url:
+                    continue
+                # Fetch the filing index
+                _idx_url = f"https://www.sec.gov/Archives/edgar/data/{_file_url}"
+                _rx = _rq9.get(_idx_url, timeout=8,
+                               headers={"User-Agent": "QuantTerminal research@quantterminal.com"})
+                if _rx.ok and len(_rx.text) > 200:
+                    _texts.append(_rx.text[:8000])  # first 8000 chars
+            except Exception:
+                continue
+        return _texts
+    except Exception:
+        return []
+
+def _compute_transcript_features9(ticker):
+    \"\"\"Compute the 6 transcript NLP features for a ticker. Returns dict.\"\"\"
+    _texts = _fetch_edgar_transcript9(ticker)
+    if not _texts:
+        return {f: 0.0 for f in _TRANSCRIPT_FEATURES}
+
+    _all_tone, _all_qs, _all_pr = [], [], []
+    _all_certain, _all_uncertain, _all_surprise = [], [], []
+    _total_len = 0
+
+    for _text in _texts:
+        _total_len += len(_text)
+        # Split prepared remarks vs Q&A (heuristic: "Q&A", "Question", "Operator")
+        _qa_split = max(_text.lower().find("question"), _text.lower().find("q&a"),
+                        _text.lower().find("operator"))
+        _prepared = _text[:_qa_split] if _qa_split > 200 else _text
+        _qa       = _text[_qa_split:] if _qa_split > 200 else ""
+
+        _pp, _pn, _pc, _pu, _ps = _score_text9(_prepared)
+        _qp, _qn, _qc, _qu, _qs2 = _score_text9(_qa) if _qa else (0,0,0,0,0)
+
+        _all_tone.append(_pp - _pn)
+        _all_pr.append(_pp - _pn)
+        _all_qs.append(_qp - _qn)
+        _all_certain.append(_pc)
+        _all_uncertain.append(_pu)
+        _all_surprise.append(_ps)
+
+    _n = len(_all_tone) or 1
+    _tone       = sum(_all_tone) / _n
+    _pr_tone    = sum(_all_pr)   / _n
+    _qa_tone    = sum(_all_qs)   / _n
+    _certain    = sum(_all_certain) / _n
+    _uncertain  = sum(_all_uncertain) / _n
+    _surprise   = sum(_all_surprise) / _n
+
+    return {
+        "transcript_tone":       round(_tone, 5),
+        "qa_tone_shift":         round(_qa_tone - _pr_tone, 5),
+        "guidance_confidence":   round(_certain - _uncertain, 5),
+        "analyst_aggression":    round(abs(_qa_tone - _pr_tone), 5),
+        "surprise_language":     round(min(_surprise / 10.0, 1.0), 5),
+        "transcript_length":     round(min(_total_len / 50000.0, 1.0), 5),
+    }
+
+# Load cache
+import os as _os9p, time as _time9p
+_tc9 = {}
+if _TRANSCRIPT_CACHE_FILE.exists():
+    try:
+        _tc9 = _j9p.loads(_TRANSCRIPT_CACHE_FILE.read_text())
+    except Exception:
+        _tc9 = {}
+
+_CACHE_TTL9 = 86400 * 30   # re-fetch after 30 days (quarterly cadence)
+_n_transcript = 0
+_n_cached9    = 0
+
+# Only run on morning cycle
+if _os9p.environ.get("RUN_TYPE", "morning") == "morning" and "featured" in dir():
+    for _tk9 in list(featured.keys()):
+        try:
+            _cached9 = _tc9.get(_tk9, {})
+            _age9    = _time9p.time() - float(_cached9.get("ts", 0))
+            if _age9 < _CACHE_TTL9 and all(f in _cached9 for f in _TRANSCRIPT_FEATURES):
+                _feats9 = {f: _cached9[f] for f in _TRANSCRIPT_FEATURES}
+                _n_cached9 += 1
+            else:
+                _feats9 = _compute_transcript_features9(_tk9)
+                _tc9[_tk9] = {**_feats9, "ts": _time9p.time()}
+                _n_transcript += 1
+
+            # Add features to featured dataframe (constant per ticker, broadcast)
+            for _f9, _v9 in _feats9.items():
+                if _f9 not in featured[_tk9].columns:
+                    featured[_tk9][_f9] = float(_v9)
+                else:
+                    featured[_tk9][_f9] = featured[_tk9][_f9].fillna(float(_v9))
+        except Exception:
+            pass
+
+    # Save updated cache
+    try:
+        _TRANSCRIPT_CACHE_FILE.write_text(_j9p.dumps(_tc9, indent=2))
+    except Exception:
+        pass
+
+    # Add to FEATURE_COLS
+    for _f9 in _TRANSCRIPT_FEATURES:
+        if _f9 not in FEATURE_COLS:
+            FEATURE_COLS.append(_f9)
+
+    print(f"  [patch] Transcript NLP: {_n_transcript} fetched, "
+          f"{_n_cached9} from cache, {len(_TRANSCRIPT_FEATURES)} features added")
+else:
+    print("  [patch] Transcript NLP: skipped (intraday/evening or no featured dict)")
 """
 
 # ── CELL 11 PREPATCH: IC-weighted composite score weights ─────────────────────
@@ -1157,9 +1408,46 @@ def _patched_np_cov(m, *args, **kwargs):
         return ewma_cov(arr)
     return _np12_original_cov(m, *args, **kwargs)
 
+
+# ── Ledoit-Wolf covariance shrinkage ─────────────────────────────────────────
+# Blends EWMA covariance with Ledoit-Wolf shrinkage estimator.
+# LW shrinks the sample covariance toward a structured target with analytically
+# optimal shrinkage intensity — makes the matrix invertible even when assets
+# outnumber observations (common when running 139 tickers on 60d intraday data).
+# Final covariance used by HRP/CVaR = 0.50 × EWMA + 0.50 × LW.
+def _lw_cov(returns_matrix):
+    \"\"\"Ledoit-Wolf shrinkage covariance. returns_matrix: np.ndarray (T, N).\"\"\"
+    try:
+        from sklearn.covariance import LedoitWolf as _LW12
+        _lw = _LW12(assume_centered=False)
+        _lw.fit(returns_matrix)
+        return _lw.covariance_
+    except Exception:
+        return _np12_original_cov(returns_matrix.T)
+
+def _blended_cov(returns_matrix, ewma_lam=0.94, lw_weight=0.50):
+    \"\"\"Return (1-lw_weight)*EWMA_cov + lw_weight*LW_cov.\"\"\"
+    _ewma = ewma_cov(returns_matrix, lam=ewma_lam)
+    _lw   = _lw_cov(returns_matrix)
+    if _ewma.shape != _lw.shape:
+        return _ewma
+    _blend = (1.0 - lw_weight) * _ewma + lw_weight * _lw
+    # Ensure positive semi-definiteness
+    _eigvals = _np12.linalg.eigvalsh(_blend)
+    if _eigvals.min() < 0:
+        _blend += (-_eigvals.min() + 1e-8) * _np12.eye(_blend.shape[0])
+    return _blend
+
+# Override np.cov to use blended estimator when called with a (T>N) returns matrix
+def _patched_np_cov_v2(m, *args, **kwargs):
+    arr = _np12.asarray(m)
+    if arr.ndim == 2 and arr.shape[0] > arr.shape[1] and arr.shape[1] >= 2:
+        return _blended_cov(arr)
+    return _np12_original_cov(m, *args, **kwargs)
+
 import numpy as np
-np.cov = _patched_np_cov
-print("  [patch] EWMA covariance (lambda=0.94) injected into np.cov")
+np.cov = _patched_np_cov_v2
+print("  [patch] Blended covariance: 50% EWMA + 50% Ledoit-Wolf injected into np.cov")
 
 # ── Hierarchical Risk Parity (Lopez de Prado, 2016) ───────────────────────────
 # HRP builds a dendrogram of asset correlations via hierarchical clustering,
@@ -1458,6 +1746,7 @@ _CELL_POSTPATCH = {
     5:  CELL_5_POSTPATCH,
     6:  CELL_6_POSTPATCH,
     8:  CELL_8_POSTPATCH,
+    9:  CELL_9_POSTPATCH,
     11: CELL_11_POSTPATCH,
     12: CELL_12_POSTPATCH,
     13: CELL_13_POSTPATCH,
@@ -1538,6 +1827,27 @@ if not _KILL_FLAG.exists():
                 elif _weekly_dd <= _KILL_WEEKLY_DRAWDOWN:
                     _kill_reason = (f"Weekly drawdown {_weekly_dd:+.2%} "
                                     f"breached limit {_KILL_WEEKLY_DRAWDOWN:.0%}")
+                # Peak drawdown from all-time high
+                _KILL_PEAK_DRAWDOWN = -0.15   # -15% from NAV peak
+                _nav_hwm_file = Path("data/nav_high_watermark.json")
+                try:
+                    _nav_hwm_data = json.loads(_nav_hwm_file.read_text()) if _nav_hwm_file.exists() else {}
+                except Exception:
+                    _nav_hwm_data = {}
+                _hwm = float(_nav_hwm_data.get("hwm", _portfolio_val))
+                _hwm = max(_hwm, _portfolio_val)  # update high watermark
+                _nav_hwm_data["hwm"] = _hwm
+                _nav_hwm_data["updated"] = datetime.datetime.utcnow().isoformat()
+                try:
+                    _nav_hwm_file.write_text(json.dumps(_nav_hwm_data, indent=2))
+                except Exception:
+                    pass
+                _peak_dd = (_portfolio_val + _today_pnl - _hwm) / max(_hwm, 1)
+                print(f"  Peak drawdown check: {_peak_dd:+.2%} from HWM=${_hwm:,.0f} "
+                      f"(limit={_KILL_PEAK_DRAWDOWN:.0%})")
+                if _peak_dd <= _KILL_PEAK_DRAWDOWN and not _kill_reason:
+                    _kill_reason = (f"Peak drawdown {_peak_dd:+.2%} from HWM "
+                                    f"breached limit {_KILL_PEAK_DRAWDOWN:.0%}")
                 if _kill_reason:
                     _KILL_FLAG.write_text(_kill_reason)
                     _pnl_kill_triggered = True
