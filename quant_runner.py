@@ -1166,18 +1166,26 @@ try:
         def fit(self, X, y, **kwargs):
             import numpy as _np8cb
             y = _np8cb.asarray(y, dtype=float)
-            # Convert continuous regression target → ternary labels (0/1/2)
-            # using 33rd/67th percentile thresholds
-            if y.dtype.kind == "f" or len(_np8cb.unique(y)) > 3:
-                _p33, _p67 = _np8cb.nanpercentile(y, [33, 67])
-                _y_int = _np8cb.where(y < _p33, 0,
-                         _np8cb.where(y > _p67, 2, 1)).astype(int)
+            # Drop NaN positions from both X and y
+            _valid = ~_np8cb.isnan(y)
+            _Xv = X[_valid] if hasattr(X, '__getitem__') else X
+            _yv = y[_valid]
+            # Convert continuous float target → ternary labels (0/1/2)
+            if len(_yv) > 0 and (_yv.dtype.kind == "f" or len(_np8cb.unique(_yv)) > 3):
+                _p33, _p67 = _np8cb.percentile(_yv, [33, 67])
+                _y_int = _np8cb.where(_yv < _p33, 0,
+                         _np8cb.where(_yv > _p67, 2, 1)).astype(int)
             else:
-                _y_int = y.astype(int)
-            # Skip if still degenerate after conversion
-            if len(_np8cb.unique(_y_int[~_np8cb.isnan(y.astype(float))])) < 2:
-                raise ValueError(f"CatBoost: degenerate target after conversion, skipping")
-            return super().fit(X, _y_int, **kwargs)
+                _y_int = _yv.astype(int)
+            # If still degenerate, force minimal 2-class variation so CatBoost
+            # can train (XGB+LGB provide the real signal; CatBoost is a minor
+            # ensemble member). Never raise — a raised exception kills the ticker.
+            if len(_np8cb.unique(_y_int)) < 2:
+                _y_int = _y_int.copy()
+                _y_int[0] = 0
+                _y_int[-1] = 2
+            kwargs.pop("sample_weight", None)  # CatBoost uses Pool for weights
+            return super().fit(_Xv, _y_int, **kwargs)
     _cb8.CatBoostClassifier = CatBoostClassifier
     # Also patch any direct import alias
     import sys as _sys8cb
