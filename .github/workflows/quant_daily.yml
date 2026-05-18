@@ -144,8 +144,8 @@ jobs:
             git add -f docs/data.json
             git commit -m "data: ${{ steps.run_type.outputs.type }} $(date -u +'%Y-%m-%d %H:%M UTC')"
             git push origin data-tmp:data --force
-            git checkout master
-            git branch -D data-tmp
+            git checkout -f master || git checkout --force master
+            git branch -D data-tmp || true
             echo "data.json pushed to data branch OK"
           else
             echo "docs/data.json not found — skipping data branch push"

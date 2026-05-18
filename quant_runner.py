@@ -3222,6 +3222,25 @@ _ALPHAVANTAGE_KEY = os.environ.get("ALPHAVANTAGE_API_KEY", "")
 _FINNHUB_KEY      = os.environ.get("FINNHUB_API_KEY", "")
 
 # ── Dispatcher dicts ──────────────────────────────────────────────────────────
+# Cell 15 prepatch: coerce macro_data regime string → int so the notebook's
+# diagnose_failures_and_rewrite_rules doesn't crash on "Neutral / Mixed"
+CELL_15_PREPATCH = """
+_REGIME_STR_MAP = {
+    "bear": 0, "declining": 0, "risk-off": 0,
+    "neutral": 1, "mixed": 1, "sideways": 1,
+    "bull": 2, "rising": 2, "risk-on": 2,
+}
+if "macro_data" in dir() and isinstance(macro_data, dict):
+    _r = macro_data.get("regime", "")
+    if isinstance(_r, str):
+        _key = _r.lower().replace(" / ", "/").replace(" ", "/").split("/")[0].strip()
+        macro_data["regime"] = _REGIME_STR_MAP.get(_key, 1)
+        print(f"  [patch] Cell 15 regime coerced: {_r!r} -> {macro_data['regime']}")
+if "regime_str" in dir() and isinstance(regime_str, str):
+    _key2 = regime_str.lower().split("/")[0].strip()
+    regime_str = str(_REGIME_STR_MAP.get(_key2, 1))
+"""
+
 _CELL_PREPATCH = {
     3:  CELL_3_PREPATCH,
     4:  CELL_4_PREPATCH,
@@ -3232,6 +3251,7 @@ _CELL_PREPATCH = {
     11: CELL_11_PREPATCH,
     12: CELL_12_PREPATCH,
     13: CELL_13_PREPATCH,
+    15: CELL_15_PREPATCH,
 }
 _CELL_POSTPATCH = {
     4:  CELL_4_POSTPATCH,
