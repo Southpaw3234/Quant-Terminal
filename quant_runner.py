@@ -1149,6 +1149,44 @@ class LGBMClassifier(_LGBMClassifier_orig8):
 
 _lgb8.LGBMClassifier = LGBMClassifier
 
+# Patch CatBoostClassifier — convert continuous float target to ternary labels
+# and handle degenerate (single-value) targets gracefully instead of crashing.
+try:
+    import catboost as _cb8
+    _CatBoostClassifier_orig8 = _cb8.CatBoostClassifier
+    class CatBoostClassifier(_CatBoostClassifier_orig8):
+        def __init__(self, iterations=200, depth=4, learning_rate=0.05,
+                     loss_function="MultiClass", eval_metric="Accuracy",
+                     random_seed=42, verbose=0, **kwargs):
+            super().__init__(
+                iterations=iterations, depth=depth,
+                learning_rate=learning_rate, loss_function=loss_function,
+                eval_metric=eval_metric, random_seed=random_seed,
+                verbose=verbose, **kwargs)
+        def fit(self, X, y, **kwargs):
+            import numpy as _np8cb
+            y = _np8cb.asarray(y, dtype=float)
+            # Convert continuous regression target → ternary labels (0/1/2)
+            # using 33rd/67th percentile thresholds
+            if y.dtype.kind == "f" or len(_np8cb.unique(y)) > 3:
+                _p33, _p67 = _np8cb.nanpercentile(y, [33, 67])
+                _y_int = _np8cb.where(y < _p33, 0,
+                         _np8cb.where(y > _p67, 2, 1)).astype(int)
+            else:
+                _y_int = y.astype(int)
+            # Skip if still degenerate after conversion
+            if len(_np8cb.unique(_y_int[~_np8cb.isnan(y.astype(float))])) < 2:
+                raise ValueError(f"CatBoost: degenerate target after conversion, skipping")
+            return super().fit(X, _y_int, **kwargs)
+    _cb8.CatBoostClassifier = CatBoostClassifier
+    # Also patch any direct import alias
+    import sys as _sys8cb
+    if "catboost" in _sys8cb.modules:
+        _sys8cb.modules["catboost"].CatBoostClassifier = CatBoostClassifier
+    print("  [patch] CatBoostClassifier patched: continuous→ternary target conversion")
+except ImportError:
+    print("  [patch] CatBoost not installed — skipping patch")
+
 print("  [patch] XGBClassifier + LGBMClassifier patched to Huber regression objectives")
 
 print("  [patch] EmbargoTimeSeriesSplit, BlockBootstrap, 4-window fractions injected")
