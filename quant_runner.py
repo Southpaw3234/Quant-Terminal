@@ -1501,15 +1501,18 @@ def _fetch_patent_velocity(assignee_name, lookback_days=90):
         _base = "https://api.patentsview.org/patents/query"
         _q_recent = (f'{{"_and":[{{"_gte":{{"patent_date":"{_start}"}}}},'
                      f'{{"_text_all":{{"assignee_organization":"{assignee_name}"}}}}]}}')
+        _pv_fields = '["patent_id"]'
+        _pv_opts100 = '{"per_page":100}'
+        _pv_opts1   = '{"per_page":1}'
         _r90 = _rq9pat.get(
-            f"{_base}?q={_q_recent}&f=[\"patent_id\"]&o={{\"per_page\":100}}",
+            f"{_base}?q={_q_recent}&f={_pv_fields}&o={_pv_opts100}",
             timeout=8, headers={"User-Agent": "QuantTerminal/v25"})
         _count90 = _r90.json().get("total_patent_count", 0) if _r90.ok else 0
 
         _q_1y = (f'{{"_and":[{{"_gte":{{"patent_date":"{_start_1y}"}}}},'
                  f'{{"_text_all":{{"assignee_organization":"{assignee_name}"}}}}]}}')
         _r1y = _rq9pat.get(
-            f"{_base}?q={_q_1y}&f=[\"patent_id\"]&o={{\"per_page\":1}}",
+            f"{_base}?q={_q_1y}&f={_pv_fields}&o={_pv_opts1}",
             timeout=8, headers={"User-Agent": "QuantTerminal/v25"})
         _count1y = _r1y.json().get("total_patent_count", 1) if _r1y.ok else 1
 
@@ -2872,7 +2875,7 @@ try:
             _lines = _raw.splitlines()
             _start = next((i for i, l in enumerate(_lines) if "Mkt-RF" in l), 0)
             _df_ff = _pd12ff.read_csv(
-                _io12ff.StringIO("\n".join(_lines[_start:])), index_col=0)
+                _io12ff.StringIO(chr(10).join(_lines[_start:])), index_col=0)
             _df_ff.index = _pd12ff.to_datetime(_df_ff.index.astype(str), format="%Y%m%d", errors="coerce")
             _df_ff = _df_ff.dropna(how="all").last("252D")
             # Keep last 252 trading days, store means
