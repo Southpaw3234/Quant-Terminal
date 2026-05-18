@@ -819,6 +819,84 @@ if _os6p.environ.get("RUN_TYPE", "morning") == "morning":
 print(f"  [patch] Final feature set: {len(FEATURE_COLS)} features")
 """
 
+# ── Tier 2 extension: temporal attention-weighted features ────────────────────
+# Appended to CELL_6_POSTPATCH so it runs in the same exec() context as cell 6.
+# Inspired by TFT variable-selection attention: weight past 20 sessions by
+# |return| magnitude (high-vol days attend more), then dot-product against
+# return / RSI / volume-ratio signals. Adds 3 features per ticker.
+_CELL_6_T2_ATTN = """
+import numpy as _np6t
+import os as _os6t
+
+if _os6t.environ.get("RUN_TYPE", "morning") == "morning":
+    _n_attn = 0
+    _ATTN_WINDOW = 20
+    _ATTN_COLS = ["attn_ret20", "attn_rsi20", "attn_vol20"]
+
+    for _tk6t, _fd6t in featured.items():
+        try:
+            _ret_col = next((c for c in ["ret_1d","returns","close_pct","pct_chg"]
+                             if c in _fd6t.columns), None)
+            _rsi_col = next((c for c in ["rsi","RSI","rsi_14","rsi14"]
+                             if c in _fd6t.columns), None)
+            _vol_col = next((c for c in ["vol_ratio","volume_ratio","vol_zscore"]
+                             if c in _fd6t.columns), None)
+            if _ret_col is None:
+                continue
+
+            _ret_arr = _fd6t[_ret_col].values.astype(float)
+            _n_rows  = len(_ret_arr)
+            _attn_r  = _np6t.full(_n_rows, _np6t.nan)
+            _attn_rs = _np6t.full(_n_rows, _np6t.nan)
+            _attn_v  = _np6t.full(_n_rows, _np6t.nan)
+
+            for _i in range(_ATTN_WINDOW, _n_rows):
+                _window_ret = _ret_arr[_i - _ATTN_WINDOW : _i]
+                _valid0 = _np6t.isfinite(_window_ret)
+                if _valid0.sum() < 5:
+                    continue
+                # Attention = softmax of |return| magnitude
+                _abs_w = _np6t.abs(_window_ret)
+                _abs_w = _abs_w - _abs_w[_valid0].max()   # numerical stability
+                _exp_w = _np6t.where(_valid0, _np6t.exp(_abs_w), 0.0)
+                _weights = _exp_w / (_exp_w.sum() + 1e-8)
+
+                _attn_r[_i] = float(_np6t.dot(_weights, _np6t.where(_valid0, _window_ret, 0.0)))
+
+                if _rsi_col is not None:
+                    _rsi_arr = _fd6t[_rsi_col].values.astype(float)
+                    _rsi_win = _rsi_arr[_i - _ATTN_WINDOW : _i]
+                    _vr = _np6t.isfinite(_rsi_win)
+                    if _vr.sum() >= 5:
+                        _w2 = _np6t.where(_vr, _weights, 0.0)
+                        _w2 = _w2 / (_w2.sum() + 1e-8)
+                        _attn_rs[_i] = float(_np6t.dot(_w2, _np6t.where(_vr, (_rsi_win - 50) / 50.0, 0.0)))
+
+                if _vol_col is not None:
+                    _vol_arr = _fd6t[_vol_col].values.astype(float)
+                    _vol_win = _vol_arr[_i - _ATTN_WINDOW : _i]
+                    _vv = _np6t.isfinite(_vol_win)
+                    if _vv.sum() >= 5:
+                        _w3 = _np6t.where(_vv, _weights, 0.0)
+                        _w3 = _w3 / (_w3.sum() + 1e-8)
+                        _attn_v[_i] = float(_np6t.dot(_w3, _np6t.where(_vv, _vol_win, 0.0)))
+
+            featured[_tk6t]["attn_ret20"] = _attn_r
+            featured[_tk6t]["attn_rsi20"] = _attn_rs
+            featured[_tk6t]["attn_vol20"] = _attn_v
+            _n_attn += 1
+        except Exception:
+            pass
+
+    for _c in _ATTN_COLS:
+        if _c not in FEATURE_COLS:
+            FEATURE_COLS.append(_c)
+    print(f"  [Tier2] Temporal attention features added for {_n_attn}/{len(featured)} tickers")
+else:
+    print("  [Tier2] Temporal attention features: morning-only, skipped")
+"""
+CELL_6_POSTPATCH += "\n\n" + _CELL_6_T2_ATTN
+
 # ── CELL 8 PREPATCH: embargo CV + Optuna window + block-bootstrap SMOTE ──────
 CELL_8_PREPATCH = """
 import numpy as _np8
@@ -1719,6 +1797,55 @@ else:
           f"(will apply at runtime, regime={_current_regime13})")
 """
 
+# ── Tier 2 extension: adaptive TWAP execution helpers ────────────────────────
+# Appended to CELL_13_PREPATCH so that Cell 13's paper-trade execution has
+# _twap_schedule() available. Splits each order into 5 volume-proportional
+# slices following the U-shaped intraday volume profile (Madhavan 2002).
+# VIX > 25 switches to stress mode: smaller early slices, larger close slice.
+_CELL_13_T2_TWAP = """
+_TWAP_BUCKETS_NORMAL = [
+    (0,   0.25),    # 9:30 open  — first 30 min, highest volume
+    (30,  0.15),    # 10:00
+    (120, 0.15),    # 11:30
+    (210, 0.20),    # 13:00
+    (330, 0.25),    # 15:00 — final hour, second-highest volume
+]
+_TWAP_BUCKETS_STRESS = [   # VIX > 25: smaller early, larger close
+    (0,   0.15),
+    (30,  0.10),
+    (120, 0.15),
+    (210, 0.25),
+    (330, 0.35),
+]
+
+def _twap_schedule(qty, side, vix=20.0, ticker=None):
+    # Returns 5-slice TWAP schedule for qty shares on side (buy/sell)
+    _buckets = _TWAP_BUCKETS_STRESS if vix > 25 else _TWAP_BUCKETS_NORMAL
+    _total_f = sum(f for _, f in _buckets)
+    _sched = []
+    for _idx, (_mins, _frac) in enumerate(_buckets):
+        _nf = _frac / _total_f
+        _sched.append({
+            "slice": _idx + 1,
+            "minutes_from_open": _mins,
+            "fraction": round(_nf, 3),
+            "shares": max(1, round(qty * _nf)),
+            "side": side,
+            "ticker": ticker or "",
+        })
+    return _sched
+
+_TWAP_ENABLED = True
+try:
+    _vix_13 = float(MACRO.get("vix", 20.0)) if "MACRO" in dir() else 20.0
+except Exception:
+    _vix_13 = 20.0
+
+print(f"  [Tier2] Adaptive TWAP helpers injected (VIX={_vix_13:.1f}, "
+      f"mode={'STRESS' if _vix_13 > 25 else 'NORMAL'})")
+"""
+CELL_13_PREPATCH += "\n\n" + _CELL_13_T2_TWAP
+
 # ── CELL 13 POSTPATCH: restore MAX_POSITION_PCT after trade execution ──────────
 CELL_13_POSTPATCH = """
 # Restore MAX_POSITION_PCT to its original value after Cell 13 completes.
@@ -1729,6 +1856,95 @@ try:
         print(f"  [patch] MAX_POSITION_PCT restored to {MAX_POSITION_PCT:.1%}")
 except Exception:
     pass
+"""
+
+# ── Tier 2: Nowcasting macro — injected AFTER Cell 4 fetches FRED data ───────
+# Cell 4 downloads lagged monthly FRED series (CPI, PCE, etc.).
+# This postpatch layers in daily high-frequency market-based proxies so the
+# model has current-month information the lagged series can't provide:
+#   credit_spread_chg : HYG 5d return - LQD 5d return (credit stress proxy)
+#   financial_stress  : VIX 20-day percentile rank (0 = calm, 1 = max stress)
+#   yield_momentum    : TLT 10-day return (rate direction proxy)
+#   equity_breadth    : fraction of sector ETFs above their 20-day MA
+CELL_4_POSTPATCH = """
+import os as _os4np
+if _os4np.environ.get("RUN_TYPE", "morning") == "morning":
+    try:
+        import yfinance as _yf4np
+        import json as _j4np
+        import time as _t4np
+        from pathlib import Path as _P4np
+
+        _NOW_CACHE = _P4np("data/nowcast_cache.json")
+        _NOW_TTL   = 86400   # 24h — proxies don't change intraday meaningfully
+
+        _now_cache = {}
+        if _NOW_CACHE.exists():
+            try:
+                _now_cache = _j4np.loads(_NOW_CACHE.read_text())
+            except Exception:
+                _now_cache = {}
+
+        if _t4np.time() - _now_cache.get("_ts", 0) < _NOW_TTL and "credit_spread_chg" in _now_cache:
+            _nowcast = _now_cache
+            print("  [nowcast] Loaded from cache")
+        else:
+            _PROXY_TICKERS = ["HYG","LQD","^VIX","TLT",
+                               "XLK","XLF","XLV","XLE","XLY","XLP","XLI","XLB","XLU","XLRE","XLC"]
+            _pdata = _yf4np.download(_PROXY_TICKERS, period="60d", progress=False, auto_adjust=True)
+            _now = {}
+            try:
+                import pandas as _pd4np
+                if isinstance(_pdata.columns, _pd4np.MultiIndex):
+                    _close = _pdata["Close"]
+                else:
+                    _close = _pdata
+
+                if "HYG" in _close.columns and "LQD" in _close.columns:
+                    _hyg5 = float(_close["HYG"].pct_change(5).dropna().iloc[-1])
+                    _lqd5 = float(_close["LQD"].pct_change(5).dropna().iloc[-1])
+                    _now["credit_spread_chg"] = round(_hyg5 - _lqd5, 5)
+
+                if "^VIX" in _close.columns:
+                    _vs = _close["^VIX"].dropna()
+                    _vn = float(_vs.iloc[-1])
+                    _v20 = _vs.tail(21).iloc[:-1]
+                    _now["financial_stress"] = round(float((_v20 < _vn).sum() / max(len(_v20), 1)), 3)
+
+                if "TLT" in _close.columns:
+                    _now["yield_momentum"] = round(float(_close["TLT"].pct_change(10).dropna().iloc[-1]), 5)
+
+                _sect_etfs = ["XLK","XLF","XLV","XLE","XLY","XLP","XLI","XLB","XLU","XLRE","XLC"]
+                _above = sum(
+                    1 for _e in _sect_etfs
+                    if _e in _close.columns and len(_close[_e].dropna()) >= 21
+                    and float(_close[_e].dropna().iloc[-1]) > float(_close[_e].dropna().tail(21).mean())
+                )
+                _denom = sum(1 for _e in _sect_etfs if _e in _close.columns
+                             and len(_close[_e].dropna()) >= 21)
+                if _denom > 0:
+                    _now["equity_breadth"] = round(_above / _denom, 3)
+
+            except Exception as _nc4e:
+                print(f"  [nowcast] Proxy compute error: {_nc4e}")
+
+            _now["_ts"] = _t4np.time()
+            _nowcast = _now
+            try:
+                _NOW_CACHE.write_text(_j4np.dumps(_now, indent=2))
+            except Exception:
+                pass
+
+        _nc_clean = {k: v for k, v in _nowcast.items() if not k.startswith("_")}
+        if "MACRO" in dir() and isinstance(MACRO, dict):
+            MACRO.update(_nc_clean)
+        else:
+            MACRO_NOWCAST = _nc_clean
+        print(f"  [nowcast] Injected nowcast proxies: {_nc_clean}")
+    except Exception as _now4e:
+        print(f"  [nowcast] Error (non-fatal): {_now4e}")
+else:
+    print("  [nowcast] Skipped (morning-only)")
 """
 
 # ── Dispatcher dicts ──────────────────────────────────────────────────────────
@@ -1743,6 +1959,7 @@ _CELL_PREPATCH = {
     13: CELL_13_PREPATCH,
 }
 _CELL_POSTPATCH = {
+    4:  CELL_4_POSTPATCH,
     5:  CELL_5_POSTPATCH,
     6:  CELL_6_POSTPATCH,
     8:  CELL_8_POSTPATCH,
