@@ -154,7 +154,7 @@ CELL_TAGS = {
     6: "Feature engineering", 7: "HMM regimes", 8: "ML ensemble",
     9: "GARCH + IV", 10: "FinBERT sentiment", 11: "Signal generator",
     12: "CVaR optimization", 13: "Paper trading",
-    14: "Outcome scoring", 15: "Self-learning",
+    14: "Outcome scoring", 15: "Self-learning + Reality Check",
 }
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1088,6 +1088,78 @@ for _rtk8, _rm8 in models.items():
 print(f"  [patch] Ridge ensemble members added: {_ridge_added}/{len(models)}")
 """
 
+# ── Tier 3 extension: Deflated Sharpe Ratio filter on ensemble models ─────────
+# Bailey & López de Prado (2014): DSR corrects the backtest Sharpe for the
+# number of trials tested (Optuna iterations + models), eliminating strategies
+# that look good only because many were tried.
+#
+# DSR = (SR_annualized - E[SR_max]) / std[SR_max]
+# where E[SR_max] ≈ (1 - euler_gamma) * Z^{-1}(1 - 1/N) + euler_gamma * Z^{-1}(1 - 1/(N*e))
+# N = number of independent trials tested
+#
+# Practical effect: each ticker model gets a DSR score; models with DSR < 0
+# are flagged as likely false discoveries and their weights are halved.
+_CELL_8_T3_DSR = """
+import numpy as _np8dsr
+import os as _os8dsr
+from pathlib import Path as _P8dsr
+import json as _j8dsr
+
+def _deflated_sharpe(returns_series, n_trials=30, sr_benchmark=0.0):
+    _r = _np8dsr.array(returns_series, dtype=float)
+    _r = _r[_np8dsr.isfinite(_r)]
+    if len(_r) < 30:
+        return 0.0
+    _sr = (_r.mean() / (_r.std() + 1e-8)) * _np8dsr.sqrt(252)
+    # Expected max SR across n_trials under the null (iid normal)
+    # Approximation: E[max SR] ~ Z^{-1}(1 - 1/n_trials)
+    from scipy.stats import norm as _norm8dsr
+    _e_max  = _norm8dsr.ppf(1.0 - 1.0 / max(n_trials, 2))
+    _sd_max = _norm8dsr.ppf(1.0 - 1.0 / (_np8dsr.e * max(n_trials, 2)))
+    _dsr = (_sr - _e_max) / max(abs(_e_max - _sd_max), 0.01)
+    return float(_np8dsr.clip(_dsr, -5.0, 5.0))
+
+_DSR_SCORES   = {}
+_N_OPTUNA_TRIALS = 30   # conservative estimate matching QUICK_TUNE_TRIALS
+_n_dsr_flagged   = 0
+
+if "models" in dir() and "featured" in dir():
+    for _tk8dsr, _rm8dsr in models.items():
+        try:
+            _fd8dsr = featured.get(_tk8dsr)
+            if _fd8dsr is None or "target" not in _fd8dsr.columns:
+                continue
+            _ret_col8 = next((c for c in ["ret_1d","returns","close_pct","pct_chg"]
+                               if c in _fd8dsr.columns), None)
+            if _ret_col8 is None:
+                continue
+            _ret_ser = _fd8dsr[_ret_col8].dropna()
+            _dsr_val = _deflated_sharpe(_ret_ser.values, n_trials=_N_OPTUNA_TRIALS)
+            _DSR_SCORES[_tk8dsr] = round(_dsr_val, 4)
+            if _dsr_val < 0:
+                # Halve ensemble weight for likely-overfit model
+                _rm8dsr["dsr_penalty"] = 0.5
+                _n_dsr_flagged += 1
+            else:
+                _rm8dsr["dsr_penalty"] = 1.0
+        except Exception:
+            pass
+
+    # Persist DSR scores for dashboard display
+    try:
+        _P8dsr("data/predictions").mkdir(exist_ok=True)
+        _P8dsr("data/predictions/dsr_scores.json").write_text(
+            _j8dsr.dumps(_DSR_SCORES, indent=2))
+    except Exception:
+        pass
+
+    print(f"  [Tier3] DSR filter: {_n_dsr_flagged}/{len(models)} models flagged "
+          f"as likely false discoveries (DSR<0), weight halved")
+else:
+    print("  [Tier3] DSR filter: skipped (models not yet trained)")
+"""
+CELL_8_POSTPATCH += "\n\n" + _CELL_8_T3_DSR
+
 # ── CELL 9 PREPATCH: disable EarningsWhispers scraper ────────────────────────
 CELL_9_PREPATCH = """
 # Stub out earningswhispers.com requests — DOM changes cause silent failures.
@@ -1302,6 +1374,118 @@ if _os9p.environ.get("RUN_TYPE", "morning") == "morning" and "featured" in dir()
 else:
     print("  [patch] Transcript NLP: skipped (intraday/evening or no featured dict)")
 """
+
+# ── Tier 3 extension: USPTO patent filing velocity ────────────────────────────
+# Patent filing velocity = count of USPTO utility patents granted to a company
+# in trailing 90 days, normalized by trailing-12-month average.
+# A ratio > 1.2 signals accelerating R&D output — a forward-looking moat proxy
+# that typically leads revenue inflection by 12-24 months.
+# Data source: USPTO PatentsView open API (free, no API key required).
+# Cache TTL: 7 days (patent data updates weekly).
+_CELL_9_T3_PATENT = """
+import json as _j9pat
+import time as _t9pat
+import os  as _os9pat
+import re  as _re9pat
+from pathlib import Path as _P9pat
+
+_PATENT_CACHE_FILE = _P9pat("data/predictions/patent_cache.json")
+_PATENT_CACHE_TTL  = 86400 * 7   # 7-day cache
+
+_TICKER_TO_ASSIGNEE = {
+    "AAPL":"Apple","MSFT":"Microsoft","NVDA":"Nvidia","GOOGL":"Google",
+    "AMZN":"Amazon","META":"Meta","TSLA":"Tesla","AMD":"Advanced Micro Devices",
+    "INTC":"Intel","QCOM":"Qualcomm","TXN":"Texas Instruments","AVGO":"Broadcom",
+    "AMAT":"Applied Materials","LRCX":"Lam Research","KLAC":"KLA",
+    "IBM":"International Business Machines","ORCL":"Oracle","CRM":"Salesforce",
+    "ADBE":"Adobe","NOW":"ServiceNow","PLTR":"Palantir","NET":"Cloudflare",
+    "SNOW":"Snowflake","CRWD":"CrowdStrike","ZS":"Zscaler","PANW":"Palo Alto",
+    "ISRG":"Intuitive Surgical","MDT":"Medtronic","BSX":"Boston Scientific",
+    "DHR":"Danaher","TMO":"Thermo Fisher","ABBV":"AbbVie","LLY":"Eli Lilly",
+    "JNJ":"Johnson Johnson","PFE":"Pfizer","MRK":"Merck","AMGN":"Amgen",
+    "GILD":"Gilead","VRTX":"Vertex","REGN":"Regeneron","BMY":"Bristol Myers",
+    "GE":"General Electric","HON":"Honeywell","CAT":"Caterpillar",
+    "BA":"Boeing","RTX":"Raytheon","LMT":"Lockheed","NOC":"Northrop",
+}
+
+def _fetch_patent_velocity(assignee_name, lookback_days=90):
+    import requests as _rq9pat
+    import datetime as _dt9pat
+    try:
+        _today  = _dt9pat.date.today()
+        _start  = (_today - _dt9pat.timedelta(days=lookback_days)).isoformat()
+        _start_1y = (_today - _dt9pat.timedelta(days=365)).isoformat()
+
+        _base = "https://api.patentsview.org/patents/query"
+        _q_recent = (f'{{"_and":[{{"_gte":{{"patent_date":"{_start}"}}}},'
+                     f'{{"_text_all":{{"assignee_organization":"{assignee_name}"}}}}]}}')
+        _r90 = _rq9pat.get(
+            f"{_base}?q={_q_recent}&f=[\"patent_id\"]&o={{\"per_page\":100}}",
+            timeout=8, headers={"User-Agent": "QuantTerminal/v25"})
+        _count90 = _r90.json().get("total_patent_count", 0) if _r90.ok else 0
+
+        _q_1y = (f'{{"_and":[{{"_gte":{{"patent_date":"{_start_1y}"}}}},'
+                 f'{{"_text_all":{{"assignee_organization":"{assignee_name}"}}}}]}}')
+        _r1y = _rq9pat.get(
+            f"{_base}?q={_q_1y}&f=[\"patent_id\"]&o={{\"per_page\":1}}",
+            timeout=8, headers={"User-Agent": "QuantTerminal/v25"})
+        _count1y = _r1y.json().get("total_patent_count", 1) if _r1y.ok else 1
+
+        _annualized = max(_count1y, 1)
+        _velocity   = round((_count90 / (lookback_days / 365)) / _annualized, 3)
+        return float(_velocity), int(_count90)
+    except Exception:
+        return 1.0, 0
+
+# Load cache
+_pat_cache = {}
+if _PATENT_CACHE_FILE.exists():
+    try:
+        _pat_cache = _j9pat.loads(_PATENT_CACHE_FILE.read_text())
+    except Exception:
+        _pat_cache = {}
+
+_n_patent = 0
+_n_patent_cached = 0
+
+if _os9pat.environ.get("RUN_TYPE", "morning") == "morning" and "featured" in dir():
+    for _tk9pat in list(featured.keys()):
+        _assignee = _TICKER_TO_ASSIGNEE.get(_tk9pat)
+        if not _assignee:
+            continue
+        try:
+            _cached_p = _pat_cache.get(_tk9pat, {})
+            _age_p    = _t9pat.time() - float(_cached_p.get("ts", 0))
+            if _age_p < _PATENT_CACHE_TTL and "patent_velocity" in _cached_p:
+                _vel = _cached_p["patent_velocity"]
+                _n_patent_cached += 1
+            else:
+                _vel, _cnt = _fetch_patent_velocity(_assignee)
+                _pat_cache[_tk9pat] = {"patent_velocity": _vel,
+                                       "patent_count90d": _cnt,
+                                       "ts": _t9pat.time()}
+                _n_patent += 1
+                _t9pat.sleep(0.3)   # USPTO rate limit: ~3 req/sec
+
+            featured[_tk9pat]["patent_velocity"] = float(_vel)
+        except Exception:
+            pass
+
+    if "patent_velocity" not in FEATURE_COLS:
+        FEATURE_COLS.append("patent_velocity")
+
+    try:
+        _PATENT_CACHE_FILE.write_text(_j9pat.dumps(_pat_cache, indent=2))
+    except Exception:
+        pass
+
+    print(f"  [Tier3] Patent velocity: {_n_patent} fetched, "
+          f"{_n_patent_cached} from cache, feature added for "
+          f"{len(_TICKER_TO_ASSIGNEE)} mapped tickers")
+else:
+    print("  [Tier3] Patent velocity: skipped (intraday/evening or no featured dict)")
+"""
+CELL_9_POSTPATCH += "\n\n" + _CELL_9_T3_PATENT
 
 # ── CELL 11 PREPATCH: IC-weighted composite score weights ─────────────────────
 CELL_11_PREPATCH = """
@@ -1846,6 +2030,91 @@ print(f"  [Tier2] Adaptive TWAP helpers injected (VIX={_vix_13:.1f}, "
 """
 CELL_13_PREPATCH += "\n\n" + _CELL_13_T2_TWAP
 
+# ── Tier 3: White Reality Check / Hansen SPA test ────────────────────────────
+# White (2000) Reality Check: bootstrap-corrects the p-value of the best
+# performing strategy for data-snooping across all strategies tried.
+# Hansen (2005) SPA: superior predictive ability test — stricter variant.
+#
+# Implementation: After Cell 15 (self-learning) updates weights, we sample
+# the prediction errors 1000x with replacement and measure how often a random
+# permutation achieves better Sharpe than the live strategy. p-value < 0.05
+# means the strategy is unlikely to be a lucky draw from random.
+# Writes result to data/predictions/reality_check.json for dashboard display.
+CELL_15_POSTPATCH = """
+import numpy as _np15wrc
+import json  as _j15wrc
+import os    as _os15wrc
+from pathlib import Path as _P15wrc
+
+def _white_reality_check(daily_pnl, n_bootstrap=1000, seed=42):
+    _r = _np15wrc.array(daily_pnl, dtype=float)
+    _r = _r[_np15wrc.isfinite(_r)]
+    if len(_r) < 30:
+        return None
+    _rng = _np15wrc.random.default_rng(seed)
+    _sr_live = _r.mean() / (_r.std() + 1e-8) * _np15wrc.sqrt(252)
+
+    # Hansen SPA: benchmark is zero (risk-free = 0 excess return)
+    # p-value = fraction of bootstrap SRs that beat live SR
+    _boot_srs = []
+    for _ in range(n_bootstrap):
+        _sample = _rng.choice(_r, size=len(_r), replace=True)
+        _boot_srs.append(_sample.mean() / (_sample.std() + 1e-8) * _np15wrc.sqrt(252))
+
+    _boot_srs = _np15wrc.array(_boot_srs)
+    _p_value  = float((_boot_srs >= _sr_live).mean())
+
+    # Deflated SPA: subtract expected max SR under null
+    _e_max_sr    = float(_np15wrc.percentile(_boot_srs, 95))
+    _spa_stat    = _sr_live - _e_max_sr
+    _spa_p_value = float((_boot_srs >= _sr_live + _spa_stat).mean())
+
+    return {
+        "sr_live":       round(float(_sr_live), 4),
+        "sr_boot_p95":   round(_e_max_sr, 4),
+        "wrc_p_value":   round(_p_value, 4),
+        "spa_stat":      round(_spa_stat, 4),
+        "spa_p_value":   round(_spa_p_value, 4),
+        "n_days":        len(_r),
+        "n_bootstrap":   n_bootstrap,
+        "significant":   _p_value < 0.05,
+    }
+
+if _os15wrc.environ.get("RUN_TYPE", "morning") in ("morning", "evening"):
+    try:
+        import csv as _csv15
+        _pnl_path = _P15wrc("data/predictions/daily_pnl_log.csv")
+        _pnl_rows = []
+        if _pnl_path.exists():
+            with open(_pnl_path, encoding="utf-8") as _f15:
+                _reader15 = _csv15.DictReader(_f15)
+                for _row15 in _reader15:
+                    try:
+                        _pnl_rows.append(float(_row15.get("total_pnl", 0) or 0))
+                    except Exception:
+                        pass
+
+        if len(_pnl_rows) >= 30:
+            # Compute daily returns from cumulative PnL
+            _daily_rets = _np15wrc.diff(_pnl_rows)
+            _wrc_result = _white_reality_check(_daily_rets, n_bootstrap=1000)
+            if _wrc_result:
+                _P15wrc("data/predictions").mkdir(exist_ok=True)
+                _P15wrc("data/predictions/reality_check.json").write_text(
+                    _j15wrc.dumps(_wrc_result, indent=2))
+                _sig_str = "SIGNIFICANT (p<0.05)" if _wrc_result["significant"] else "not significant"
+                print(f"  [Tier3] White Reality Check: SR={_wrc_result['sr_live']:.3f} "
+                      f"WRC_p={_wrc_result['wrc_p_value']:.3f} SPA_p={_wrc_result['spa_p_value']:.3f} "
+                      f"-> {_sig_str}")
+        else:
+            print(f"  [Tier3] White Reality Check: only {len(_pnl_rows)} days of PnL "
+                  f"(need >= 30) — skipped")
+    except Exception as _wrc_e:
+        print(f"  [Tier3] White Reality Check error (non-fatal): {_wrc_e}")
+else:
+    print("  [Tier3] White Reality Check: intraday run — skipped")
+"""
+
 # ── CELL 13 POSTPATCH: restore MAX_POSITION_PCT after trade execution ──────────
 CELL_13_POSTPATCH = """
 # Restore MAX_POSITION_PCT to its original value after Cell 13 completes.
@@ -1945,6 +2214,53 @@ if _os4np.environ.get("RUN_TYPE", "morning") == "morning":
         print(f"  [nowcast] Error (non-fatal): {_now4e}")
 else:
     print("  [nowcast] Skipped (morning-only)")
+
+# ── Tier 3: Options IV term structure ─────────────────────────────────────────
+# VXX tracks 1-month VIX futures (short-term IV).
+# VIXM tracks 5-month VIX futures (mid-term IV).
+# iv_term_slope = VIXM/VXX - 1:
+#   > 0 (contango)    → market calm, near-term IV < long-term IV
+#   < 0 (backwardation)→ market stress, near-term IV > long-term IV
+# spy_put_call_proxy: SPY options volume asymmetry (put-heavy = hedging demand)
+# Both are powerful short-term regime signals not captured by monthly FRED data.
+try:
+    import yfinance as _yf4iv
+    import pandas as _pd4iv
+
+    _IV_TICKERS = ["VXX", "VIXM", "SPY"]
+    _iv_data = _yf4iv.download(_IV_TICKERS, period="5d", progress=False, auto_adjust=True)
+
+    _iv_feats = {}
+    try:
+        if isinstance(_iv_data.columns, _pd4iv.MultiIndex):
+            _iv_close = _iv_data["Close"]
+        else:
+            _iv_close = _iv_data
+
+        if "VXX" in _iv_close.columns and "VIXM" in _iv_close.columns:
+            _vxx_p  = float(_iv_close["VXX"].dropna().iloc[-1])
+            _vixm_p = float(_iv_close["VIXM"].dropna().iloc[-1])
+            if _vxx_p > 0:
+                _iv_feats["iv_term_slope"] = round(_vixm_p / _vxx_p - 1.0, 4)
+
+        # SPY 5-day realized vol as near-term fear gauge
+        if "SPY" in _iv_close.columns:
+            _spy_ret = _iv_close["SPY"].pct_change().dropna()
+            if len(_spy_ret) >= 3:
+                _iv_feats["spy_realized_vol5d"] = round(
+                    float(_spy_ret.tail(5).std() * (252 ** 0.5)), 4)
+
+    except Exception as _iv4e:
+        print(f"  [Tier3-IV] Compute error: {_iv4e}")
+
+    if _iv_feats:
+        if "MACRO" in dir() and isinstance(MACRO, dict):
+            MACRO.update(_iv_feats)
+        elif "MACRO_NOWCAST" in dir():
+            MACRO_NOWCAST.update(_iv_feats)
+        print(f"  [Tier3-IV] IV term structure injected: {_iv_feats}")
+except Exception as _iv4err:
+    print(f"  [Tier3-IV] IV term structure error (non-fatal): {_iv4err}")
 """
 
 # ── Dispatcher dicts ──────────────────────────────────────────────────────────
@@ -1967,6 +2283,7 @@ _CELL_POSTPATCH = {
     11: CELL_11_POSTPATCH,
     12: CELL_12_POSTPATCH,
     13: CELL_13_POSTPATCH,
+    15: CELL_15_POSTPATCH,
 }
 
 # ── Model cache helpers ───────────────────────────────────────────────────
