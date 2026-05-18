@@ -3273,9 +3273,12 @@ def _save_model_cache(ns):
 NB_PATH = "trading_model_v25.1.ipynb"
 print(f"Loading: {NB_PATH}  run_type={RUN_TYPE}")
 
-# Decode with utf-8-sig so the codec strips any UTF-8 BOM before json.loads sees it
+# Strip ALL leading UTF-8 BOMs (notebook has double-BOM from Windows editor)
+# then pass raw bytes to json.loads which handles the rest
 _nb_bytes = Path(NB_PATH).read_bytes()
-nb = json.loads(_nb_bytes.decode('utf-8-sig'))
+while _nb_bytes.startswith(b'\xef\xbb\xbf'):
+    _nb_bytes = _nb_bytes[3:]
+nb = json.loads(_nb_bytes)
 
 cells = nb["cells"]
 print(f"  {len(cells)} cells  |  skipping: {sorted(SKIP_CELLS)}\n")
