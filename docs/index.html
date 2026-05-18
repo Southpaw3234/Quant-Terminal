@@ -332,10 +332,15 @@ tr:hover td{background:rgba(88,166,255,.04)}
     <div class="hero-title">Quant Terminal · Signal Engine</div>
     <div class="hero-label">What should I trade today?</div>
     <div class="hero-sub">Search any ticker to see the model's latest signal, confidence, and prediction history</div>
-    <div class="search-wrap">
-      <input class="search-input" id="search-input" type="text" placeholder="AAPL, NVDA, SPY…"
-        oninput="onSearch(this.value)" autocomplete="off" spellcheck="false">
+    <div class="search-wrap" style="position:relative">
+      <input class="search-input" id="search-input" type="text" placeholder="AAPL, NVDA, Apple, Nvidia…"
+        oninput="onSearch(this.value)" onkeydown="onSearchKey(event)"
+        autocomplete="off" spellcheck="false">
       <div class="search-icon">⌕</div>
+      <!-- Autocomplete dropdown -->
+      <div id="search-ac" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:200;
+           background:var(--sf);border:1px solid var(--br);border-radius:0 0 10px 10px;
+           box-shadow:0 8px 24px rgba(0,0,0,.4);max-height:280px;overflow-y:auto"></div>
     </div>
     <div class="search-hint" id="search-hint">—</div>
     <!-- Pinned watchlist -->
@@ -444,19 +449,36 @@ tr:hover td{background:rgba(88,166,255,.04)}
       <div id="live-card" class="result-card" style="display:none;margin-bottom:16px;flex-direction:column;gap:16px">
         <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
           <div>
-            <div style="display:flex;align-items:center;gap:8px">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
               <div class="result-ticker" id="live-ticker">—</div>
               <span class="live-badge">LIVE · NOT IN MODEL</span>
             </div>
-            <div style="color:var(--mu);font-size:10px;margin-top:3px" id="live-exchange">—</div>
+            <div style="color:var(--tx);font-size:13px;font-weight:500;margin-top:3px" id="live-name">—</div>
+            <div style="color:var(--mu);font-size:10px;margin-top:2px" id="live-exchange">—</div>
           </div>
           <div style="margin-left:auto;text-align:right">
             <div class="live-price-big" id="live-price">—</div>
             <div style="font-size:13px;font-weight:700;margin-top:3px" id="live-change">—</div>
           </div>
         </div>
+        <!-- Rich quote metrics grid -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px">
+          <div class="btc-m"><div class="lbl">Market Cap</div><div class="val" id="live-mktcap">—</div></div>
+          <div class="btc-m"><div class="lbl">P/E Ratio</div><div class="val" id="live-pe">—</div></div>
+          <div class="btc-m"><div class="lbl">52W High</div><div class="val" id="live-52h">—</div></div>
+          <div class="btc-m"><div class="lbl">52W Low</div><div class="val" id="live-52l">—</div></div>
+          <div class="btc-m"><div class="lbl">Avg Volume</div><div class="val" id="live-avgvol">—</div></div>
+          <div class="btc-m"><div class="lbl">Analyst Target</div><div class="val" id="live-target">—</div></div>
+          <div class="btc-m"><div class="lbl">Sector</div><div class="val" style="font-size:10px" id="live-sector">—</div></div>
+          <div class="btc-m"><div class="lbl">Dividend Yield</div><div class="val" id="live-div">—</div></div>
+        </div>
+        <!-- 30-day mini chart -->
+        <div id="live-chart-wrap" style="display:none">
+          <div style="font-size:9px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">30-Day Price Chart</div>
+          <div class="chart-wrap" style="height:110px"><canvas id="live-chart"></canvas></div>
+        </div>
         <div class="not-in-model-note">
-          ⚠️ <strong style="color:var(--yw)">${'<span id=\"live-ticker-note\">This ticker</span>'}</strong> is not in the model's current watchlist — showing live market data only, no AI signal available.
+          ⚠️ <strong style="color:var(--yw)"><span id="live-ticker-note">This ticker</span></strong> is not in the model's current watchlist — showing live market data only, no AI signal available.
           The model runs on ~139 curated tickers. To add this stock to the model's watchlist, edit the ticker list in the notebook config.
         </div>
       </div>
@@ -1536,41 +1558,247 @@ function generateExplanation(ticker, latest, allPreds) {
   return items;
 }
 
-// ── Live Ticker Lookup (for non-model tickers) ─────────────────────────────
-async function liveTickerLookup(ticker) {
-  // Direct Yahoo Finance (works in many browsers even from Netlify)
+// ── Symbol search (autocomplete + name→ticker resolution) ─────────────────
+let _acCache = {};
+async function symbolSearch(query) {
+  if (_acCache[query]) return _acCache[query];
+  try {
+    const url = `https://query2.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(query)}&quotesCount=8&newsCount=0&listsCount=0`;
+    const r = await fetch(url, {signal: AbortSignal.timeout(4000)});
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    const d = await r.json();
+    const results = (d.quotes || [])
+      .filter(q => q.quoteType === 'EQUITY' || q.quoteType === 'ETF' || q.quoteType === 'MUTUALFUND')
+      .map(q => ({ symbol: q.symbol, name: q.longname || q.shortname || q.symbol, exchange: q.exchange || '', type: q.quoteType || '' }));
+    _acCache[query] = results;
+    return results;
+  } catch(_) { return []; }
+}
+
+// ── Rich quote fetch (price + fundamentals + 30d chart) ───────────────────
+async function richQuoteFetch(ticker) {
+  const yf1 = `https://query1.finance.yahoo.com`;
+  const yf2 = `https://query2.finance.yahoo.com`;
   const tryFetch = async (url) => {
-    const r = await fetch(url, {signal: AbortSignal.timeout(5000)});
+    const r = await fetch(url, {signal: AbortSignal.timeout(6000)});
     if (!r.ok) throw new Error('HTTP '+r.status);
     return r.json();
   };
-  const parse = (json) => {
-    const res = json?.chart?.result?.[0];
-    if (!res) throw new Error('no result');
-    const m = res.meta;
-    return { price: m.regularMarketPrice, prevClose: m.previousClose||m.chartPreviousClose,
-             currency: m.currency||'USD', exchange: m.exchangeName||'', type: m.instrumentType||'' };
+
+  // Fetch chart (price + meta) and quote summary in parallel
+  let chartData = null, summaryData = null;
+  try {
+    [chartData, summaryData] = await Promise.all([
+      tryFetch(`${yf1}/v8/finance/chart/${ticker}?interval=1d&range=1mo`),
+      tryFetch(`${yf2}/v10/finance/quoteSummary/${ticker}?modules=price,summaryDetail,defaultKeyStatistics`)
+    ]);
+  } catch(_) {
+    // fallback: chart only
+    try { chartData = await tryFetch(`${yf2}/v8/finance/chart/${ticker}?interval=1d&range=1mo`); } catch(__) {}
+  }
+
+  const res  = chartData?.chart?.result?.[0];
+  if (!res) return null;
+  const m    = res.meta;
+  const price       = m.regularMarketPrice;
+  const prevClose   = m.previousClose || m.chartPreviousClose || price;
+  const timestamps  = res.timestamp || [];
+  const closes      = (res.indicators?.quote?.[0]?.close || []);
+
+  // Fundamentals from quoteSummary
+  const pr  = summaryData?.quoteSummary?.result?.[0]?.price         || {};
+  const sd  = summaryData?.quoteSummary?.result?.[0]?.summaryDetail || {};
+  const ks  = summaryData?.quoteSummary?.result?.[0]?.defaultKeyStatistics || {};
+
+  return {
+    symbol:      ticker,
+    name:        pr.longName || pr.shortName || m.instrumentType || ticker,
+    price,
+    prevClose,
+    currency:    m.currency || 'USD',
+    exchange:    m.exchangeName || pr.exchangeName || '',
+    mktCap:      pr.marketCap?.raw || null,
+    pe:          pr.trailingPE?.raw || sd.trailingPE?.raw || null,
+    w52High:     sd.fiftyTwoWeekHigh?.raw || m.fiftyTwoWeekHigh || null,
+    w52Low:      sd.fiftyTwoWeekLow?.raw  || m.fiftyTwoWeekLow  || null,
+    avgVolume:   pr.averageDailyVolume10Day?.raw || sd.averageVolume?.raw || null,
+    analystTarget: pr.targetMeanPrice?.raw || null,
+    sector:      pr.sector || '',
+    divYield:    sd.dividendYield?.raw || null,
+    timestamps,
+    closes,
   };
-  try {
-    return parse(await tryFetch(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=2d`));
-  } catch(_) {}
-  try {
-    // CORS proxy fallback
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/'+ticker+'?interval=1d&range=2d')}`;
-    const wrapper = await tryFetch(proxyUrl);
-    return parse(JSON.parse(wrapper.contents));
-  } catch(_) {}
-  return null;
 }
+
+// ── Draw mini price chart for live card ───────────────────────────────────
+let _liveChart = null;
+function drawLiveChart(timestamps, closes) {
+  const wrap = document.getElementById('live-chart-wrap');
+  const canvas = document.getElementById('live-chart');
+  if (!timestamps.length || !closes.length) { wrap.style.display='none'; return; }
+  wrap.style.display = 'block';
+  if (_liveChart) { _liveChart.destroy(); _liveChart = null; }
+  const labels = timestamps.map(ts => {
+    const d = new Date(ts * 1000);
+    return d.toLocaleDateString('en-US', {month:'short', day:'numeric'});
+  });
+  const validCloses = closes.map(c => c ?? null);
+  const first = validCloses.find(c => c !== null);
+  const color = (validCloses[validCloses.length-1] || first) >= first ? '#3fb950' : '#f85149';
+  _liveChart = new Chart(canvas, {
+    type: 'line',
+    data: { labels, datasets: [{ data: validCloses, borderColor: color, borderWidth: 1.5,
+      fill: true, backgroundColor: color+'22', pointRadius: 0, tension: 0.3, spanGaps: true }] },
+    options: { responsive:true, maintainAspectRatio:false, animation:false,
+      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,
+        callbacks:{label:c=>'$'+c.raw?.toFixed(2)}}},
+      scales:{x:{display:false},y:{display:false}} }
+  });
+}
+
+// ── Format helpers for live card ──────────────────────────────────────────
+function fMktCap(v) {
+  if (!v) return '—';
+  if (v >= 1e12) return '$'+(v/1e12).toFixed(2)+'T';
+  if (v >= 1e9)  return '$'+(v/1e9).toFixed(2)+'B';
+  if (v >= 1e6)  return '$'+(v/1e6).toFixed(1)+'M';
+  return '$'+v.toLocaleString();
+}
+function fVol(v) {
+  if (!v) return '—';
+  if (v >= 1e6) return (v/1e6).toFixed(1)+'M';
+  if (v >= 1e3) return (v/1e3).toFixed(0)+'K';
+  return v.toLocaleString();
+}
+
+// ── Populate the live card DOM ─────────────────────────────────────────────
+function populateLiveCard(ticker, q) {
+  const chg    = q.price - q.prevClose;
+  const chgPct = q.prevClose ? (chg / q.prevClose * 100) : 0;
+  const col    = chg >= 0 ? 'var(--gr)' : 'var(--rd)';
+
+  document.getElementById('live-ticker').textContent      = ticker;
+  document.getElementById('live-ticker-note').textContent = ticker;
+  document.getElementById('live-name').textContent        = q.name || '—';
+  document.getElementById('live-exchange').textContent    = [q.exchange, q.currency].filter(Boolean).join(' · ');
+  document.getElementById('live-price').textContent       = '$'+q.price.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('live-change').innerHTML =
+    `<span style="color:${col}">${chg>=0?'▲':'▼'} $${Math.abs(chg).toFixed(2)} (${chg>=0?'+':''}${chgPct.toFixed(2)}%)</span>`;
+
+  document.getElementById('live-mktcap').textContent  = fMktCap(q.mktCap);
+  document.getElementById('live-pe').textContent      = q.pe ? q.pe.toFixed(1)+'x' : '—';
+  document.getElementById('live-52h').textContent     = q.w52High ? '$'+q.w52High.toFixed(2) : '—';
+  document.getElementById('live-52l').textContent     = q.w52Low  ? '$'+q.w52Low.toFixed(2)  : '—';
+  document.getElementById('live-avgvol').textContent  = fVol(q.avgVolume);
+  document.getElementById('live-target').textContent  = q.analystTarget ? '$'+q.analystTarget.toFixed(2) : '—';
+  document.getElementById('live-sector').textContent  = q.sector || '—';
+  document.getElementById('live-div').textContent     = q.divYield ? (q.divYield*100).toFixed(2)+'%' : '—';
+
+  document.getElementById('live-card').style.display      = 'block';
+  document.getElementById('not-found-inner').style.display = 'none';
+
+  drawLiveChart(q.timestamps, q.closes);
+}
+
+// ── Autocomplete UI ───────────────────────────────────────────────────────
+let _acSelected = -1;
+function closeAC() {
+  document.getElementById('search-ac').style.display = 'none';
+  _acSelected = -1;
+}
+function renderAC(results, rawQuery) {
+  const box = document.getElementById('search-ac');
+  if (!results.length) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  box.innerHTML = results.map((r, i) =>
+    `<div class="ac-item" data-symbol="${r.symbol}" data-idx="${i}"
+       style="display:flex;align-items:center;gap:10px;padding:9px 14px;cursor:pointer;
+              border-bottom:1px solid rgba(48,54,61,.35);font-size:12px"
+       onmousedown="pickAC('${r.symbol}')"
+       onmouseover="this.style.background='rgba(88,166,255,.08)'"
+       onmouseout="this.style.background=''">
+      <strong style="color:var(--tx);min-width:52px">${r.symbol}</strong>
+      <span style="color:var(--mu);flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${r.name}</span>
+      <span style="font-size:9px;color:var(--mu2);flex-shrink:0">${r.exchange}</span>
+    </div>`
+  ).join('');
+  _acSelected = -1;
+}
+function pickAC(symbol) {
+  document.getElementById('search-input').value = symbol;
+  closeAC();
+  doSearch(symbol);
+}
+function onSearchKey(e) {
+  const box   = document.getElementById('search-ac');
+  const items = box.querySelectorAll('.ac-item');
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    _acSelected = Math.min(_acSelected + 1, items.length - 1);
+    items.forEach((el, i) => el.style.background = i === _acSelected ? 'rgba(88,166,255,.12)' : '');
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    _acSelected = Math.max(_acSelected - 1, -1);
+    items.forEach((el, i) => el.style.background = i === _acSelected ? 'rgba(88,166,255,.12)' : '');
+  } else if (e.key === 'Enter') {
+    if (_acSelected >= 0 && items[_acSelected]) {
+      pickAC(items[_acSelected].dataset.symbol);
+    } else {
+      closeAC();
+      doSearch(document.getElementById('search-input').value.trim().toUpperCase());
+    }
+  } else if (e.key === 'Escape') {
+    closeAC();
+  }
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('.search-wrap')) closeAC();
+});
 
 // ── Stock Search ──────────────────────────────────────────────────────────
 let _searchTimer = null;
 function onSearch(val) {
   clearTimeout(_searchTimer);
-  _searchTimer = setTimeout(() => doSearch(val.trim().toUpperCase()), 250);
+  const trimmed = val.trim();
+  if (!trimmed) {
+    closeAC();
+    const allTickers = [...new Set(_preds.map(p=>p.ticker))].sort();
+    document.getElementById('search-hint').textContent = `${allTickers.length} tickers in model — ${allTickers.slice(0,6).join(', ')}…`;
+    document.getElementById('result-wrap').style.display  = 'none';
+    document.getElementById('not-found').style.display    = 'none';
+    return;
+  }
+  // Show autocomplete after 150ms (faster than full search)
+  _searchTimer = setTimeout(async () => {
+    const results = await symbolSearch(trimmed);
+    // Filter: boost model tickers to top
+    const modelTks = new Set(_preds.map(p => p.ticker));
+    const boosted  = [
+      ...results.filter(r => modelTks.has(r.symbol)),
+      ...results.filter(r => !modelTks.has(r.symbol)),
+    ];
+    renderAC(boosted, trimmed);
+  }, 150);
+  // Full search on pause (300ms)
+  _searchTimer2 = setTimeout(async () => {
+    // Determine whether input looks like a ticker (≤5 chars, uppercase letters/dots)
+    const isTicker = /^[A-Z0-9.\-]{1,6}$/.test(trimmed.toUpperCase());
+    if (isTicker) {
+      doSearch(trimmed.toUpperCase());
+    } else {
+      // Company name — resolve to ticker via symbol search first
+      const results = await symbolSearch(trimmed);
+      if (results.length) {
+        doSearch(results[0].symbol);
+        document.getElementById('search-input').value = results[0].symbol;
+      }
+    }
+  }, 500);
 }
+let _searchTimer2 = null;
 
 async function doSearch(ticker) {
+  closeAC();
   const wrap     = document.getElementById('result-wrap');
   const notFound = document.getElementById('not-found');
 
@@ -1584,29 +1812,21 @@ async function doSearch(ticker) {
   const tickerPreds = _preds.filter(p => p.ticker === ticker).sort((a,b)=>new Date(b.pred_ts)-new Date(a.pred_ts));
 
   if (!tickerPreds.length) {
-    // Not in model — attempt live lookup
+    // Not in model — attempt rich live lookup
     wrap.style.display = 'none';
     notFound.style.display = 'block';
-    document.getElementById('live-card').style.display  = 'none';
+    document.getElementById('live-card').style.display   = 'none';
     document.getElementById('not-found-inner').style.display = 'block';
     document.getElementById('not-found-msg').textContent = `"${ticker}" not in current model watchlist`;
-    document.getElementById('search-hint').textContent   = 'Searching live market data…';
+    document.getElementById('search-hint').textContent   = 'Fetching live market data…';
 
-    const live = await liveTickerLookup(ticker);
-    if (live && live.price) {
-      const chg    = live.price - (live.prevClose||live.price);
-      const chgPct = live.prevClose ? (chg/live.prevClose*100) : 0;
-      document.getElementById('live-ticker').textContent      = ticker;
-      document.getElementById('live-ticker-note').textContent = ticker;
-      document.getElementById('live-exchange').textContent    = live.exchange ? `${live.exchange} · ${live.currency}` : live.currency;
-      document.getElementById('live-price').textContent = '$'+live.price.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
-      const ce = document.getElementById('live-change');
-      ce.innerHTML = `<span style="color:${chg>=0?'var(--gr)':'var(--rd)'}">${chg>=0?'▲':'▼'} $${Math.abs(chg).toFixed(2)} (${chg>=0?'+':''}${chgPct.toFixed(2)}%)</span>`;
-      document.getElementById('live-card').style.display      = 'block';
-      document.getElementById('not-found-inner').style.display = 'none';
-      document.getElementById('search-hint').textContent = `Live price for ${ticker} · Not in model watchlist`;
+    const q = await richQuoteFetch(ticker);
+    if (q && q.price) {
+      populateLiveCard(ticker, q);
+      document.getElementById('search-hint').textContent = `Live data for ${ticker}${q.name ? ' · '+q.name : ''} · Not in model`;
     } else {
-      document.getElementById('search-hint').textContent = '';
+      document.getElementById('not-found-msg').textContent = `"${ticker}" — no data found`;
+      document.getElementById('search-hint').textContent   = 'Check the ticker symbol and try again';
     }
     return;
   }
