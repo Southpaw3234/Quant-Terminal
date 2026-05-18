@@ -232,6 +232,23 @@ def _fred_cached(series_id, fallback=None, fred_key=None):
 print("  [patch] FRED lag map and 24h cache injected")
 """
 
+# ── CELL 3 PREPATCH: remove broken / delisted tickers from WATCHLIST ──────────
+# HOLX and ANSS have had persistent yfinance fetch failures / stale data.
+# ^CPC (CBOE total put/call ratio) is a macro index, not a tradeable equity —
+# its presence in WATCHLIST causes downstream feature-engineering crashes.
+CELL_3_PREPATCH = """
+_REMOVE_TICKERS = {"HOLX", "ANSS"}
+if "WATCHLIST" in dir():
+    WATCHLIST = [t for t in WATCHLIST if t not in _REMOVE_TICKERS]
+    print(f"  [patch] Removed broken tickers from WATCHLIST: {_REMOVE_TICKERS}")
+
+# Guard against ^CPC appearing anywhere in the ticker universe
+_CPC_GUARD = "^CPC"
+if "WATCHLIST" in dir() and _CPC_GUARD in WATCHLIST:
+    WATCHLIST = [t for t in WATCHLIST if t != _CPC_GUARD]
+    print("  [patch] Removed ^CPC from WATCHLIST")
+"""
+
 # ── CELL 5 PREPATCH: extend download history to 10 years ─────────────────────
 # The notebook fetches 1-2 years by default. 10 years captures multiple market
 # cycles (2015-16 correction, 2018 Q4 crash, 2020 COVID, 2022 rate-hike bear)
@@ -1411,12 +1428,15 @@ if _os9p.environ.get("RUN_TYPE", "morning") == "morning" and "featured" in dir()
                 _tc9[_tk9] = {**_feats9, "ts": _time9p.time()}
                 _n_transcript += 1
 
-            # Add features to featured dataframe (constant per ticker, broadcast)
+            # Add features to featured dataframe — only for trailing 35 days
+            # to avoid look-ahead bias (current NLP value must not fill historical rows).
+            import datetime as _dt9la
+            _cutoff9 = _pd.Timestamp.today() - _pd.Timedelta(days=35)
+            _mask9 = featured[_tk9].index >= _cutoff9
             for _f9, _v9 in _feats9.items():
                 if _f9 not in featured[_tk9].columns:
-                    featured[_tk9][_f9] = float(_v9)
-                else:
-                    featured[_tk9][_f9] = featured[_tk9][_f9].fillna(float(_v9))
+                    featured[_tk9][_f9] = float("nan")
+                featured[_tk9].loc[_mask9, _f9] = float(_v9)
         except Exception:
             pass
 
@@ -1529,7 +1549,14 @@ if _os9pat.environ.get("RUN_TYPE", "morning") == "morning" and "featured" in dir
                 _n_patent += 1
                 _t9pat.sleep(0.3)   # USPTO rate limit: ~3 req/sec
 
-            featured[_tk9pat]["patent_velocity"] = float(_vel)
+            # Only set patent_velocity for trailing 35 days to avoid look-ahead bias.
+            import datetime as _dt9pat_la
+            import pandas as _pd9pat_la
+            _cutoff9pat = _pd9pat_la.Timestamp.today() - _pd9pat_la.Timedelta(days=35)
+            _mask9pat = featured[_tk9pat].index >= _cutoff9pat
+            if "patent_velocity" not in featured[_tk9pat].columns:
+                featured[_tk9pat]["patent_velocity"] = float("nan")
+            featured[_tk9pat].loc[_mask9pat, "patent_velocity"] = float(_vel)
         except Exception:
             pass
 
@@ -1687,6 +1714,47 @@ if "signals" in dir():
     print(f"  [patch] Ternary labels — BUY:{_n_buy}  HOLD:{_n_hold}  SELL:{_n_sell}")
 else:
     print("  [patch] signals not in scope — ternary/cost patches skipped")
+
+# ── Intraday signal blend (15% weight) ───────────────────────────────────────
+# Reads data/predictions/intraday_signals.json if present.
+# Blends intraday_score at 15% only when the signal is < 6 hours old.
+import json as _j11id
+import datetime as _dt11id
+from pathlib import Path as _P11id
+
+_INTRADAY_SIG_FILE = _P11id("data/predictions/intraday_signals.json")
+_INTRADAY_MAX_AGE  = _dt11id.timedelta(hours=6)
+
+if _INTRADAY_SIG_FILE.exists() and "signals" in dir():
+    try:
+        _id_sigs = _j11id.loads(_INTRADAY_SIG_FILE.read_text())
+        _now11id = _dt11id.datetime.utcnow()
+        _n_blended = 0
+        for _tk11id, _isig in _id_sigs.items():
+            if _tk11id not in signals:
+                continue
+            try:
+                _gen_str = _isig.get("generated", "")
+                _gen_ts  = _dt11id.datetime.fromisoformat(_gen_str.replace("Z", "+00:00"))
+                # Normalise to naive UTC for comparison
+                if _gen_ts.tzinfo is not None:
+                    _gen_ts = _gen_ts.replace(tzinfo=None)
+                if (_now11id - _gen_ts) > _INTRADAY_MAX_AGE:
+                    continue   # stale — skip
+                _id_score = float(_isig.get("intraday_score", 0.5))
+                _old_cs   = float(signals[_tk11id].get("composite_score", 0.5))
+                # blend: new_score = 0.85 * existing_score + 0.15 * intraday_score
+                signals[_tk11id]["composite_score"] = round(
+                    0.85 * _old_cs + 0.15 * _id_score, 6)
+                signals[_tk11id]["intraday_blended"] = True
+                _n_blended += 1
+            except Exception:
+                continue
+        print(f"  [patch] Intraday blend: {_n_blended} tickers blended (15% weight)")
+    except Exception as _id11e:
+        print(f"  [patch] Intraday blend error (non-fatal): {_id11e}")
+else:
+    print("  [patch] Intraday blend: no signal file or signals not in scope — skipped")
 """
 
 # ── CELL 12 PREPATCH: EWMA covariance + Hierarchical Risk Parity ──────────────
@@ -2327,6 +2395,7 @@ except Exception as _iv4err:
 
 # ── Dispatcher dicts ──────────────────────────────────────────────────────────
 _CELL_PREPATCH = {
+    3:  CELL_3_PREPATCH,
     4:  CELL_4_PREPATCH,
     5:  CELL_5_PREPATCH,
     6:  CELL_6_PREPATCH,
@@ -2365,7 +2434,7 @@ def _save_model_cache(ns):
     if RUN_TYPE == "morning":
         try:
             keys = ["models", "regimes", "garch_res", "ADAPTIVE_WEIGHTS",
-                    "LEARNED_RULES", "FEATURE_COLS", "featured"]
+                    "LEARNED_RULES", "FEATURE_COLS"]
             cache = {k: ns[k] for k in keys if k in ns}
             MODEL_CACHE.write_bytes(pickle.dumps(cache, protocol=4))
             print(f"  Model cache saved: {list(cache.keys())}")
