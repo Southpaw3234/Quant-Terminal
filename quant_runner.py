@@ -1101,33 +1101,45 @@ import xgboost as _xgb8
 import lightgbm as _lgb8
 
 # Patch XGBClassifier to use Huber regression
+# sklearn requires explicit named params in __init__ (no *args/**kwargs)
 _XGBClassifier_orig8 = _xgb8.XGBClassifier
 class XGBClassifier(_XGBClassifier_orig8):
-    def __init__(self, *args, **kwargs):
-        kwargs.setdefault("objective", "reg:pseudohubererror")
-        kwargs.setdefault("eval_metric", "mae")
-        # Remove classification-only params if present
+    def __init__(self, objective="reg:pseudohubererror", eval_metric="mae",
+                 n_estimators=100, max_depth=4, learning_rate=0.05,
+                 subsample=0.8, colsample_bytree=0.8, reg_alpha=0.1,
+                 reg_lambda=1.0, random_state=42, n_jobs=-1, **kwargs):
         kwargs.pop("use_label_encoder", None)
-        super().__init__(*args, **kwargs)
+        super().__init__(
+            objective=objective, eval_metric=eval_metric,
+            n_estimators=n_estimators, max_depth=max_depth,
+            learning_rate=learning_rate, subsample=subsample,
+            colsample_bytree=colsample_bytree, reg_alpha=reg_alpha,
+            reg_lambda=reg_lambda, random_state=random_state,
+            n_jobs=n_jobs, **kwargs)
     def predict_proba(self, X):
         import numpy as _np8pr
         raw = self.predict(X)
-        # Convert raw return prediction to probability-like score in [0,1]
-        # via sigmoid: score=0.5 when predicted_return=0
-        _scale = 0.1   # 10% return → score ≈ 0.73
+        _scale = 0.1
         prob_up = 1.0 / (1.0 + _np8pr.exp(-raw / _scale))
         return _np8pr.column_stack([1 - prob_up, prob_up])
 
 _xgb8.XGBClassifier = XGBClassifier
 
-# Patch LGBMClassifier similarly
+# Patch LGBMClassifier similarly — explicit params required by sklearn
 _LGBMClassifier_orig8 = _lgb8.LGBMClassifier
 class LGBMClassifier(_LGBMClassifier_orig8):
-    def __init__(self, *args, **kwargs):
-        kwargs["objective"] = "huber"
-        kwargs["metric"]    = "mae"
-        kwargs["alpha"]     = 0.9   # Huber alpha (robustness parameter)
-        super().__init__(*args, **kwargs)
+    def __init__(self, objective="huber", metric="mae", alpha=0.9,
+                 n_estimators=100, max_depth=4, learning_rate=0.05,
+                 subsample=0.8, colsample_bytree=0.8, reg_alpha=0.1,
+                 reg_lambda=1.0, random_state=42, n_jobs=-1,
+                 verbose=-1, **kwargs):
+        super().__init__(
+            objective=objective, metric=metric, alpha=alpha,
+            n_estimators=n_estimators, max_depth=max_depth,
+            learning_rate=learning_rate, subsample=subsample,
+            colsample_bytree=colsample_bytree, reg_alpha=reg_alpha,
+            reg_lambda=reg_lambda, random_state=random_state,
+            n_jobs=n_jobs, verbose=verbose, **kwargs)
     def predict_proba(self, X):
         import numpy as _np8pr
         raw = self.predict(X)
