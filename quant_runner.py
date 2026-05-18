@@ -897,6 +897,68 @@ else:
 """
 CELL_6_POSTPATCH += "\n\n" + _CELL_6_T2_ATTN
 
+# ── Level 3 prerequisite: persist daily intraday feature snapshot ─────────────
+# The intraday model (Phase 1 of Level 3) needs months of historical intraday
+# feature data to train on. The runner currently discards this data every run.
+# This extension saves a daily snapshot of all intraday-derived features
+# (intraday_mom, overnight_gap, vwap_dev, intraday_range, close_to_high, +
+#  attn_ret20, attn_rsi20, attn_vol20) to data/intraday_history/YYYYMMDD.csv.
+# One row per ticker per day. Accumulates silently — no impact on live model.
+_CELL_6_L3_HISTORY = """
+import os as _os6l3
+import datetime as _dt6l3
+from pathlib import Path as _P6l3
+
+if _os6l3.environ.get("RUN_TYPE", "morning") == "morning" and "featured" in dir():
+    try:
+        import pandas as _pd6l3
+
+        _HIST_DIR   = _P6l3("data/intraday_history")
+        _HIST_DIR.mkdir(parents=True, exist_ok=True)
+        _today_str  = _dt6l3.date.today().isoformat()
+        _hist_file  = _HIST_DIR / f"{_today_str}.csv"
+
+        # Columns to snapshot — intraday features + attention features + return
+        _SNAP_COLS  = [
+            "intraday_mom", "overnight_gap", "vwap_dev",
+            "intraday_range", "close_to_high",
+            "attn_ret20", "attn_rsi20", "attn_vol20",
+            "xs_mom_5d", "insider_net_buy", "patent_velocity",
+        ]
+
+        _rows = []
+        for _tk6l3, _fd6l3 in featured.items():
+            try:
+                _last = _fd6l3.iloc[-1]
+                _row  = {"date": _today_str, "ticker": _tk6l3}
+                for _c in _SNAP_COLS:
+                    if _c in _fd6l3.columns:
+                        _v = _last[_c]
+                        _row[_c] = float(_v) if _pd6l3.notna(_v) else None
+                    else:
+                        _row[_c] = None
+                # Also snapshot the label for supervised learning
+                if "target" in _fd6l3.columns:
+                    _tv = _last["target"]
+                    _row["target"] = float(_tv) if _pd6l3.notna(_tv) else None
+                _rows.append(_row)
+            except Exception:
+                pass
+
+        if _rows:
+            _snap_df = _pd6l3.DataFrame(_rows)
+            _snap_df.to_csv(_hist_file, index=False)
+            print(f"  [L3] Intraday history snapshot saved: {_hist_file.name} "
+                  f"({len(_rows)} tickers, {len(_SNAP_COLS)} feature cols)")
+        else:
+            print("  [L3] Intraday history: no rows to save")
+    except Exception as _l3e:
+        print(f"  [L3] Intraday history save error (non-fatal): {_l3e}")
+else:
+    print("  [L3] Intraday history: morning-only, skipped")
+"""
+CELL_6_POSTPATCH += "\n\n" + _CELL_6_L3_HISTORY
+
 # ── CELL 8 PREPATCH: embargo CV + Optuna window + block-bootstrap SMOTE ──────
 CELL_8_PREPATCH = """
 import numpy as _np8
