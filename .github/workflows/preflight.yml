@@ -82,18 +82,9 @@ jobs:
       - name: 4 — Dispatcher dict completeness
         run: |
           python - <<'PYEOF'
-          import ast, sys
+          import ast, re, sys
 
           src = open("quant_runner.py", encoding="utf-8-sig").read()
-
-          # Extract _CELL_PREPATCH and _CELL_POSTPATCH dict keys
-          pre_keys, post_keys = [], []
-          for line in src.splitlines():
-              line = line.strip()
-              if re.match(r"\d+\s*:", line) if __import__("re").match(r"\d+\s*:", line) else False:
-                  pass
-
-          import re
           pre_match  = re.search(r"_CELL_PREPATCH\s*=\s*\{([^}]+)\}", src, re.S)
           post_match = re.search(r"_CELL_POSTPATCH\s*=\s*\{([^}]+)\}", src, re.S)
 
