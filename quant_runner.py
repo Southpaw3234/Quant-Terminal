@@ -3273,8 +3273,12 @@ def _save_model_cache(ns):
 NB_PATH = "trading_model_v25.1.ipynb"
 print(f"Loading: {NB_PATH}  run_type={RUN_TYPE}")
 
-with open(NB_PATH, encoding="utf-8-sig") as f:
-    nb = json.load(f)
+# Read as bytes, strip any UTF-8 BOM, then parse — handles Drive-synced notebooks
+# that embed a BOM even after utf-8-sig open (seen on Windows-authored notebooks)
+_nb_bytes = Path(NB_PATH).read_bytes()
+if _nb_bytes.startswith(b'\xef\xbb\xbf'):
+    _nb_bytes = _nb_bytes[3:]
+nb = json.loads(_nb_bytes.decode('utf-8'))
 
 cells = nb["cells"]
 print(f"  {len(cells)} cells  |  skipping: {sorted(SKIP_CELLS)}\n")
