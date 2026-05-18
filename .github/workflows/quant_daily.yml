@@ -6,6 +6,8 @@ on:
     - cron: '35 13 * * 1-5'
     # ── Midday signal refresh: load cached models + re-signal (12:00 PM ET) ──
     - cron: '00 16 * * 1-5'
+    # ── Intraday model refresh: 2-hour resolution (11:00 AM ET) ─────────────
+    - cron: '00 15 * * 1-5'
     # ── Pre-close refresh: final signals before close (3:00 PM ET) ─────────
     - cron: '00 19 * * 1-5'
     # ── Close + scoring: score outcomes + self-learning (5:30 PM ET) ────────
@@ -106,6 +108,13 @@ jobs:
           GIT_USER_NAME:         'Quant Terminal Bot'
         run: python quant_runner.py
 
+      - name: Run intraday model
+        if: steps.run_type.outputs.type != 'evening'
+        env:
+          GH_ACTIONS: 'true'
+          RUN_TYPE: ${{ steps.run_type.outputs.type }}
+        run: python model_intraday.py || echo "Intraday model non-fatal error — continuing"
+
       - name: Save model cache (morning only)
         if: steps.run_type.outputs.type == 'morning'
         uses: actions/cache@v4
@@ -144,7 +153,7 @@ jobs:
           git config user.email "$GIT_USER_EMAIL"
           git config user.name  "$GIT_USER_NAME"
           # Stage state files — explicitly exclude docs/data.json (lives on data branch)
-          git add data/paper_trades/ data/predictions/ data/weights/ data/intraday_history/ docs/index.html || true
+          git add data/paper_trades/ data/predictions/ data/weights/ data/intraday_history/ data/models/intraday_model.pkl docs/index.html || true
           # Stash any remaining unstaged changes to avoid rebase conflict
           git stash --include-untracked || true
           git pull --rebase origin master || true
