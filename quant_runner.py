@@ -232,6 +232,31 @@ def _fred_cached(series_id, fallback=None, fred_key=None):
 print("  [patch] FRED lag map and 24h cache injected")
 """
 
+# ── CELL 5 PREPATCH: extend download history to 10 years ─────────────────────
+# The notebook fetches 1-2 years by default. 10 years captures multiple market
+# cycles (2015-16 correction, 2018 Q4 crash, 2020 COVID, 2022 rate-hike bear)
+# which dramatically improves regime generalization and reduces overfitting to
+# the most recent bull market. Monkey-patches yfinance.download so the notebook
+# code needs no changes.
+CELL_5_PREPATCH = """
+import yfinance as _yf5
+
+_yf5_orig_download = _yf5.download
+
+def _yf5_patched_download(*args, **kwargs):
+    # Override period to at least 10y; respect explicit start/end if provided
+    if "start" not in kwargs and "end" not in kwargs:
+        _orig_period = kwargs.get("period", "2y")
+        # Map short periods to 10y; leave anything already >= 5y alone
+        _short = {"1d","5d","1mo","3mo","6mo","1y","2y","ytd"}
+        if str(_orig_period) in _short:
+            kwargs["period"] = "10y"
+    return _yf5_orig_download(*args, **kwargs)
+
+_yf5.download = _yf5_patched_download
+print("  [patch] yfinance.download patched: history extended to 10y")
+"""
+
 # ── CELL 5 POSTPATCH: OHLCV sanity check (drops corrupt/delisted tickers) ────
 CELL_5_POSTPATCH = """
 import pandas as _pd5
@@ -416,6 +441,91 @@ def _fetch_sector_etf_returns(etf_tickers, period="1y"):
     return _results
 
 print("  [patch] Cross-sectional momentum helpers injected")
+
+# ── Intraday feature helpers ───────────────────────────────────────────────────
+# Fetches 15-min bars (60-day max on yfinance free tier) for a single ticker
+# and returns a daily DataFrame with intraday-derived features:
+#   intraday_mom     : (close - open) / open — how the day closed vs. opened
+#   overnight_gap    : (open - prev_close) / prev_close — gap signal
+#   vwap_dev         : (close - VWAP) / VWAP — mean reversion vs. daily average
+#   intraday_range   : (high - low) / close — realized intraday volatility
+#   close_to_high    : (high - close) / (high - low + 1e-8) — selling pressure
+def _fetch_intraday_features(ticker, period="60d", interval="15m"):
+    \"\"\"Returns a pd.DataFrame indexed by date with 5 intraday-derived features.\"\"\"
+    try:
+        import yfinance as _yfi
+        _bars = _yfi.download(ticker, period=period, interval=interval,
+                              progress=False, auto_adjust=True)
+        if _bars is None or _bars.empty or len(_bars) < 10:
+            return _pd6.DataFrame()
+        # Flatten MultiIndex columns if present
+        if isinstance(_bars.columns, _pd6.MultiIndex):
+            _bars.columns = _bars.columns.get_level_values(0)
+        _bars.index = _pd6.to_datetime(_bars.index)
+        _bars["_date"] = _bars.index.normalize()
+        _grp = _bars.groupby("_date")
+
+        _daily = _pd6.DataFrame(index=_grp.groups.keys())
+        _daily.index = _pd6.to_datetime(_daily.index)
+
+        # VWAP per day
+        _daily["_vwap"]  = _grp.apply(
+            lambda g: (g["Close"] * g["Volume"]).sum() / g["Volume"].sum().clip(1))
+        _daily["_open"]  = _grp["Open"].first()
+        _daily["_close"] = _grp["Close"].last()
+        _daily["_high"]  = _grp["High"].max()
+        _daily["_low"]   = _grp["Low"].min()
+
+        _pc = _daily["_close"].shift(1)
+        _hl = (_daily["_high"] - _daily["_low"]).clip(1e-8)
+
+        _daily["intraday_mom"]   = (_daily["_close"] - _daily["_open"]) / _daily["_open"].clip(1e-8)
+        _daily["overnight_gap"]  = (_daily["_open"]  - _pc) / _pc.clip(1e-8)
+        _daily["vwap_dev"]       = (_daily["_close"] - _daily["_vwap"]) / _daily["_vwap"].clip(1e-8)
+        _daily["intraday_range"] = _hl / _daily["_close"].clip(1e-8)
+        _daily["close_to_high"]  = (_daily["_high"] - _daily["_close"]) / _hl
+
+        return _daily[["intraday_mom","overnight_gap","vwap_dev",
+                        "intraday_range","close_to_high"]].shift(1)  # shift=1: no lookahead
+    except Exception:
+        return _pd6.DataFrame()
+
+# ── SEC Form 4 insider net-buy score ─────────────────────────────────────────
+# Uses yfinance Ticker.insider_transactions (no API key required).
+# Returns a float in [-1, +1]: +1 = all buys, -1 = all sells, 0 = balanced.
+def _insider_net_buy_score(ticker, lookback_days=30):
+    \"\"\"Compute insider net-buy ratio over trailing lookback_days.\"\"\"
+    try:
+        import yfinance as _yfi2
+        import datetime as _dt_ins
+        _it = _yfi2.Ticker(ticker).insider_transactions
+        if _it is None or _it.empty:
+            return 0.0
+        # Normalize column names
+        _it.columns = [c.lower().replace(" ","_") for c in _it.columns]
+        # Date column
+        _date_col = next((c for c in _it.columns if "date" in c), None)
+        if _date_col is None:
+            return 0.0
+        _it[_date_col] = _pd6.to_datetime(_it[_date_col], errors="coerce")
+        _cutoff = _pd6.Timestamp.utcnow().tz_localize(None) - _pd6.Timedelta(days=lookback_days)
+        _recent = _it[_it[_date_col] >= _cutoff]
+        if _recent.empty:
+            return 0.0
+        # Transaction type
+        _tx_col = next((c for c in _it.columns if "transaction" in c or "text" in c), None)
+        if _tx_col is None:
+            return 0.0
+        _buys  = _recent[_recent[_tx_col].str.lower().str.contains("buy|purchase|acquire", na=False)]
+        _sells = _recent[_recent[_tx_col].str.lower().str.contains("sell|sale|dispose", na=False)]
+        _n_b, _n_s = len(_buys), len(_sells)
+        if _n_b + _n_s == 0:
+            return 0.0
+        return float((_n_b - _n_s) / (_n_b + _n_s))
+    except Exception:
+        return 0.0
+
+print("  [patch] Intraday feature helpers + insider net-buy score injected")
 """
 
 # ── CELL 6 POSTPATCH: apply new features + triple barrier labels + VIF + parallel
@@ -598,6 +708,96 @@ try:
         print("  [patch] Cross-sectional momentum: no xs_raw data computed — skipped")
 except Exception as _xs6e:
     print(f"  [patch] Cross-sectional momentum error (non-fatal): {_xs6e}")
+
+# ── Intraday features (15-min bars → daily aggregates) ───────────────────────
+# Only runs on morning cycle to avoid hitting Yahoo Finance rate limits.
+# Fetches 60 calendar days of 15-min bars per ticker in parallel, computes
+# 5 daily intraday features and merges them into featured[ticker].
+import os as _os6p
+if _os6p.environ.get("RUN_TYPE", "morning") == "morning":
+    try:
+        _INTRADAY_COLS = ["intraday_mom","overnight_gap","vwap_dev",
+                          "intraday_range","close_to_high"]
+        _n_intraday = 0
+        _intraday_errors = 0
+
+        def _fetch_intraday_safe(tk):
+            try:
+                return tk, _fetch_intraday_features(tk, period="60d", interval="15m")
+            except Exception as _e6id:
+                return tk, _pd6p.DataFrame()
+
+        with _TPE(max_workers=12) as _ex6p2:
+            for _tk6id, _id_df in _ex6p2.map(_fetch_intraday_safe, list(featured.keys())):
+                if _id_df is None or _id_df.empty:
+                    _intraday_errors += 1
+                    continue
+                _fd6id = featured[_tk6id]
+                for _col in _INTRADAY_COLS:
+                    if _col in _id_df.columns:
+                        _aligned = _id_df[_col].reindex(_fd6id.index)
+                        featured[_tk6id][_col] = _aligned
+                _n_intraday += 1
+
+        # Add intraday cols to FEATURE_COLS
+        for _col in _INTRADAY_COLS:
+            if _col not in FEATURE_COLS:
+                FEATURE_COLS.append(_col)
+
+        print(f"  [patch] Intraday features added for {_n_intraday}/{len(featured)} tickers "
+              f"({_intraday_errors} failed/rate-limited)")
+    except Exception as _id6e:
+        print(f"  [patch] Intraday feature error (non-fatal): {_id6e}")
+else:
+    print("  [patch] Intraday features: skipped on intraday/evening run (morning-only)")
+
+# ── Insider net-buy score (SEC Form 4) ────────────────────────────────────────
+# Runs on morning cycle only. Computes trailing 30-day insider buy/sell ratio
+# per ticker using yfinance's insider_transactions (no API key required).
+# Score ∈ [-1, +1]: +1 = pure buying, -1 = pure selling, 0 = balanced.
+if _os6p.environ.get("RUN_TYPE", "morning") == "morning":
+    try:
+        _INSIDER_CACHE_FILE = _P6p("data/predictions/insider_scores.json")
+        _insider_scores_cache = {}
+        if _INSIDER_CACHE_FILE.exists():
+            try:
+                import json as _j6p2
+                _insider_scores_cache = _j6p2.loads(_INSIDER_CACHE_FILE.read_text())
+            except Exception:
+                _insider_scores_cache = {}
+
+        _n_insider = 0
+
+        def _score_insider_safe(tk):
+            # Use cache if computed within last 24 hours
+            import time as _t6ins
+            _cached = _insider_scores_cache.get(tk)
+            if _cached and (_t6ins.time() - _cached.get("ts", 0)) < 86400:
+                return tk, _cached["score"]
+            _score = _insider_net_buy_score(tk, lookback_days=30)
+            return tk, _score
+
+        _new_scores = {}
+        with _TPE(max_workers=8) as _ex6p3:
+            for _tk6ins, _score6ins in _ex6p3.map(_score_insider_safe, list(featured.keys())):
+                if _tk6ins in featured:
+                    featured[_tk6ins]["insider_net_buy"] = float(_score6ins)
+                    _new_scores[_tk6ins] = {"score": _score6ins, "ts": __import__("time").time()}
+                    _n_insider += 1
+
+        if "insider_net_buy" not in FEATURE_COLS:
+            FEATURE_COLS.append("insider_net_buy")
+
+        # Persist scores cache
+        try:
+            import json as _j6p3
+            _INSIDER_CACHE_FILE.write_text(_j6p3.dumps(_new_scores, indent=2))
+        except Exception:
+            pass
+
+        print(f"  [patch] Insider net-buy scores added for {_n_insider} tickers")
+    except Exception as _ins6e:
+        print(f"  [patch] Insider score error (non-fatal): {_ins6e}")
 
 print(f"  [patch] Final feature set: {len(FEATURE_COLS)} features")
 """
@@ -914,7 +1114,7 @@ else:
     print("  [patch] signals not in scope — ternary/cost patches skipped")
 """
 
-# ── CELL 12 PREPATCH: EWMA covariance ─────────────────────────────────────────
+# ── CELL 12 PREPATCH: EWMA covariance + Hierarchical Risk Parity ──────────────
 CELL_12_PREPATCH = """
 import numpy as _np12
 
@@ -960,6 +1160,82 @@ def _patched_np_cov(m, *args, **kwargs):
 import numpy as np
 np.cov = _patched_np_cov
 print("  [patch] EWMA covariance (lambda=0.94) injected into np.cov")
+
+# ── Hierarchical Risk Parity (Lopez de Prado, 2016) ───────────────────────────
+# HRP builds a dendrogram of asset correlations via hierarchical clustering,
+# then allocates capital through recursive bisection — never inverting the
+# covariance matrix. This makes it robust when assets are highly correlated
+# (e.g. 20+ tech stocks) where Markowitz/CVaR inversion becomes unstable.
+#
+# Blended weight = 0.60 × CVaR_weight + 0.40 × HRP_weight.
+# If CVaR solver fails entirely, pure HRP is used as the fallback.
+
+def _hrp_weights(cov, tickers):
+    \"\"\"
+    Compute HRP portfolio weights.
+    cov     : np.ndarray (N, N) covariance matrix
+    tickers : list of N ticker strings
+    Returns : dict {ticker: weight}, weights sum to 1.
+    \"\"\"
+    from scipy.cluster.hierarchy import linkage, leaves_list
+    from scipy.spatial.distance import squareform as _squareform
+
+    n = len(tickers)
+    if n == 1:
+        return {tickers[0]: 1.0}
+
+    # ── 1. Correlation → distance matrix ──────────────────────────────────
+    _std = _np12.sqrt(_np12.maximum(_np12.diag(cov), 1e-12))
+    _corr = cov / _np12.outer(_std, _std)
+    _corr = _np12.clip(_corr, -1.0, 1.0)
+    _np12.fill_diagonal(_corr, 1.0)
+    _dist = _np12.sqrt(_np12.maximum((1.0 - _corr) / 2.0, 0.0))
+    _np12.fill_diagonal(_dist, 0.0)
+
+    # ── 2. Hierarchical clustering (Ward linkage) ──────────────────────────
+    # squareform converts the (N,N) distance matrix to condensed form
+    _condensed = _squareform(_dist, checks=False)
+    _link = linkage(_condensed, method="ward")
+    _order = leaves_list(_link)   # reordered ticker indices (quasi-diagonal)
+
+    # ── 3. Recursive bisection ─────────────────────────────────────────────
+    _w = _np12.ones(n)
+
+    def _cluster_var(idx_arr):
+        \"\"\"Inverse-variance portfolio variance for a cluster of assets.\"\"\"
+        _sub = cov[_np12.ix_(idx_arr, idx_arr)]
+        _inv_var = 1.0 / _np12.maximum(_np12.diag(_sub), 1e-12)
+        _wt = _inv_var / _inv_var.sum()
+        return float(_wt @ _sub @ _wt)
+
+    def _bisect(items):
+        if len(items) <= 1:
+            return
+        _mid   = len(items) // 2
+        _left  = items[:_mid]
+        _right = items[_mid:]
+        _lv    = _cluster_var(_left)
+        _rv    = _cluster_var(_right)
+        _total = _lv + _rv
+        if _total < 1e-12:
+            return
+        _alpha = _rv / _total          # left cluster allocation fraction
+        _w[_left]  *= _alpha
+        _w[_right] *= (1.0 - _alpha)
+        _bisect(_left)
+        _bisect(_right)
+
+    _bisect(list(_order))
+    _w = _np12.maximum(_w, 0.0)
+    _total_w = _w.sum()
+    if _total_w < 1e-12:
+        _w = _np12.ones(n) / n
+    else:
+        _w /= _total_w
+
+    return {tickers[int(i)]: float(_w[i]) for i in range(n)}
+
+print("  [patch] HRP (Hierarchical Risk Parity) injected — will blend with CVaR")
 """
 
 # ── CELL 12 POSTPATCH: CVaR safe fallback + kill switch + sector hedging ──────
@@ -968,11 +1244,66 @@ import numpy as _np12p
 from pathlib import Path as _P12p
 import json as _j12p
 
-# ── CVaR safe fallback (from HANDOFF) ────────────────────────────────────────
+# ── CVaR result check ────────────────────────────────────────────────────────
 _cvar_ns = globals()
 _cvar_ok  = any(isinstance(_cvar_ns.get(k), dict) and len(_cvar_ns[k]) > 0
                 for k in ["portfolio_weights", "cvar_weights", "weights"])
-if not _cvar_ok:
+
+# ── HRP blend / fallback ─────────────────────────────────────────────────────
+# Build returns matrix from featured data to compute covariance for HRP.
+# Uses the same tickers that CVaR optimized over.
+_HRP_BLEND = 0.40    # 40% HRP, 60% CVaR when both succeed
+_hrp_weights_result = {}
+try:
+    _tks_hrp = list(portfolio_weights.keys()) if _cvar_ok and "portfolio_weights" in _cvar_ns \
+               else list(featured.keys()) if "featured" in dir() else []
+    if len(_tks_hrp) >= 2:
+        _ret_list = []
+        _valid_tks_hrp = []
+        for _tk_hrp in _tks_hrp:
+            if _tk_hrp not in featured:
+                continue
+            _cl_hrp = featured[_tk_hrp].get("Close", None) if hasattr(featured[_tk_hrp], "get") \
+                      else featured[_tk_hrp]["Close"] if "Close" in featured[_tk_hrp].columns else None
+            if _cl_hrp is None:
+                continue
+            _r_hrp = _cl_hrp.pct_change().dropna()
+            if len(_r_hrp) < 30:
+                continue
+            _ret_list.append(_r_hrp)
+            _valid_tks_hrp.append(_tk_hrp)
+
+        if len(_valid_tks_hrp) >= 2:
+            import pandas as _pd12p
+            _ret_df_hrp = _pd12p.concat(_ret_list, axis=1, keys=_valid_tks_hrp).dropna()
+            if len(_ret_df_hrp) >= 30:
+                _cov_hrp = _np12p.cov(_ret_df_hrp.values.T)
+                if _cov_hrp.ndim == 2 and _cov_hrp.shape[0] == len(_valid_tks_hrp):
+                    _hrp_weights_result = _hrp_weights(_cov_hrp, _valid_tks_hrp)
+                    print(f"  [patch] HRP computed for {len(_hrp_weights_result)} tickers")
+except Exception as _hrp12e:
+    print(f"  [patch] HRP computation error (non-fatal): {_hrp12e}")
+
+# Blend CVaR + HRP or fall back to disk/HRP
+if _cvar_ok and "portfolio_weights" in _cvar_ns and _hrp_weights_result:
+    # Blend: 60% CVaR + 40% HRP
+    _all_tks_blend = set(portfolio_weights) | set(_hrp_weights_result)
+    _blended = {}
+    for _tk_bl in _all_tks_blend:
+        _cw = float(portfolio_weights.get(_tk_bl, 0.0))
+        _hw = float(_hrp_weights_result.get(_tk_bl, 0.0))
+        _blended[_tk_bl] = (1 - _HRP_BLEND) * _cw + _HRP_BLEND * _hw
+    # Renormalize
+    _blend_sum = sum(_blended.values())
+    if _blend_sum > 1e-8:
+        portfolio_weights = {k: v / _blend_sum for k, v in _blended.items()}
+    print(f"  [patch] Portfolio weights blended: {1-_HRP_BLEND:.0%} CVaR + {_HRP_BLEND:.0%} HRP")
+elif not _cvar_ok and _hrp_weights_result:
+    # Pure HRP fallback when CVaR solver failed
+    portfolio_weights = _hrp_weights_result
+    print(f"  [patch] CVaR failed — using pure HRP weights ({len(portfolio_weights)} tickers)")
+elif not _cvar_ok:
+    # Last resort: load from disk
     _pw_path12 = _P12p("data/weights/portfolio_weights.json")
     if _pw_path12.exists():
         try:
@@ -1115,6 +1446,7 @@ except Exception:
 # ── Dispatcher dicts ──────────────────────────────────────────────────────────
 _CELL_PREPATCH = {
     4:  CELL_4_PREPATCH,
+    5:  CELL_5_PREPATCH,
     6:  CELL_6_PREPATCH,
     8:  CELL_8_PREPATCH,
     9:  CELL_9_PREPATCH,
