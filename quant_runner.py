@@ -1430,8 +1430,8 @@ if _os9p.environ.get("RUN_TYPE", "morning") == "morning" and "featured" in dir()
 
             # Add features to featured dataframe — only for trailing 35 days
             # to avoid look-ahead bias (current NLP value must not fill historical rows).
-            import datetime as _dt9la
-            _cutoff9 = _pd.Timestamp.today() - _pd.Timedelta(days=35)
+            import pandas as _pd9la
+            _cutoff9 = _pd9la.Timestamp.today() - _pd9la.Timedelta(days=35)
             _mask9 = featured[_tk9].index >= _cutoff9
             for _f9, _v9 in _feats9.items():
                 if _f9 not in featured[_tk9].columns:

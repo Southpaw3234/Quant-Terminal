@@ -249,7 +249,6 @@ if RUN_TYPE == "morning":
                     "objective":        "binary:logistic",
                     "eval_metric":      "auc",
                     "verbosity":        0,
-                    "use_label_encoder": False,
                 }
                 _scores = []
                 for _tr_i, _va_i in tss.split(X_tr):
@@ -268,10 +267,16 @@ if RUN_TYPE == "morning":
             _study_xgb.optimize(_xgb_objective, n_trials=OPTUNA_TRIALS,
                                 timeout=60, show_progress_bar=False)
             _best_xgb = _study_xgb.best_params
+            # Rename Optuna trial short-names to full XGBoost parameter names
+            _best_xgb["n_estimators"]     = _best_xgb.pop("n_est",  100)
+            _best_xgb["max_depth"]        = _best_xgb.pop("depth",  3)
+            _best_xgb["learning_rate"]    = _best_xgb.pop("lr",     0.1)
+            _best_xgb["subsample"]        = _best_xgb.pop("sub",    0.8)
+            _best_xgb["colsample_bytree"] = _best_xgb.pop("col",    0.8)
+            _best_xgb["reg_alpha"]        = _best_xgb.pop("a",      0.1)
+            _best_xgb["reg_lambda"]       = _best_xgb.pop("l",      1.0)
             _best_xgb.update({"objective": "binary:logistic", "eval_metric": "auc",
-                               "verbosity": 0, "use_label_encoder": False,
-                               "n_estimators": _best_xgb.pop("n_est", 100),
-                               "max_depth":    _best_xgb.pop("depth", 3)})
+                               "verbosity": 0})
             model_xgb = xgb.XGBClassifier(**_best_xgb, random_state=42)
             model_xgb.fit(X_tr, y_tr)
 
@@ -306,10 +311,16 @@ if RUN_TYPE == "morning":
             _study_lgb.optimize(_lgb_objective, n_trials=OPTUNA_TRIALS,
                                 timeout=60, show_progress_bar=False)
             _best_lgb = _study_lgb.best_params
-            _best_lgb.update({"objective": "binary", "metric": "auc", "verbosity": -1,
-                               "n_estimators":   _best_lgb.pop("n_est", 100),
-                               "num_leaves":     _best_lgb.pop("leaves", 16),
-                               "bagging_freq":   1})
+            # Rename Optuna trial short-names to full LightGBM parameter names
+            _best_lgb["n_estimators"]     = _best_lgb.pop("n_est",  100)
+            _best_lgb["num_leaves"]       = _best_lgb.pop("leaves", 16)
+            _best_lgb["learning_rate"]    = _best_lgb.pop("lr",     0.1)
+            _best_lgb["feature_fraction"] = _best_lgb.pop("ff",     0.8)
+            _best_lgb["bagging_fraction"] = _best_lgb.pop("bf",     0.8)
+            _best_lgb["reg_alpha"]        = _best_lgb.pop("a",      0.1)
+            _best_lgb["reg_lambda"]       = _best_lgb.pop("l",      1.0)
+            _best_lgb.update({"objective": "binary", "metric": "auc",
+                               "verbosity": -1, "bagging_freq": 1})
             model_lgb = lgb.LGBMClassifier(**_best_lgb, random_state=42)
             model_lgb.fit(X_tr, y_tr)
 
