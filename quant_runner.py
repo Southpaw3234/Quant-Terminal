@@ -1140,6 +1140,21 @@ _lgb8.LGBMClassifier = LGBMClassifier
 print("  [patch] XGBClassifier + LGBMClassifier patched to Huber regression objectives")
 
 print("  [patch] EmbargoTimeSeriesSplit, BlockBootstrap, 4-window fractions injected")
+
+# ── Prune FEATURE_COLS to only columns present in the data ───────────────────
+# Tier-A features (earnings_revision_dir, put_call_vol, iv_skew_otm,
+# short_ratio) are only built when optional API keys are set. Without them,
+# every ticker fails with KeyError, training 0/307 models → 0 signals.
+if "FEATURE_COLS" in dir() and "featured" in dir() and len(featured) > 0:
+    _rep_tk8 = next(iter(featured))
+    _avail_cols8 = set(featured[_rep_tk8].columns)
+    _missing8 = [c for c in FEATURE_COLS if c not in _avail_cols8]
+    if _missing8:
+        FEATURE_COLS = [c for c in FEATURE_COLS if c in _avail_cols8]
+        print(f"  [patch] Pruned {len(_missing8)} missing FEATURE_COLS before training: {_missing8[:8]}{'...' if len(_missing8)>8 else ''}")
+        print(f"  [patch] FEATURE_COLS now has {len(FEATURE_COLS)} columns")
+    else:
+        print(f"  [patch] FEATURE_COLS OK: all {len(FEATURE_COLS)} columns present")
 """
 
 # ── CELL 8 POSTPATCH: Ridge ensemble member ───────────────────────────────────
