@@ -237,16 +237,20 @@ print("  [patch] FRED lag map and 24h cache injected")
 # ^CPC (CBOE total put/call ratio) is a macro index, not a tradeable equity —
 # its presence in WATCHLIST causes downstream feature-engineering crashes.
 CELL_3_PREPATCH = """
-_REMOVE_TICKERS = {"HOLX", "ANSS"}
+# Tickers confirmed delisted / broken on yfinance as of 2026-05:
+# HOLX, ANSS - persistent no-data; SQ (now XYZ), MMC (merged), K (delisted),
+# PARA (merged with Skydance), IPG (acquired by Omnicom)
+_REMOVE_TICKERS = {"HOLX", "ANSS", "SQ", "MMC", "K", "PARA", "IPG"}
 if "WATCHLIST" in dir():
+    _before = len(WATCHLIST)
     WATCHLIST = [t for t in WATCHLIST if t not in _REMOVE_TICKERS]
-    print(f"  [patch] Removed broken tickers from WATCHLIST: {_REMOVE_TICKERS}")
+    _removed = _before - len(WATCHLIST)
+    if _removed:
+        print(f"  [patch] Removed {_removed} delisted tickers from WATCHLIST: {_REMOVE_TICKERS}")
 
-# Guard against ^CPC appearing anywhere in the ticker universe
-_CPC_GUARD = "^CPC"
-if "WATCHLIST" in dir() and _CPC_GUARD in WATCHLIST:
-    WATCHLIST = [t for t in WATCHLIST if t != _CPC_GUARD]
-    print("  [patch] Removed ^CPC from WATCHLIST")
+# Guard against ^CPC (CBOE put/call macro index — not a stock, 404s on yfinance)
+if "WATCHLIST" in dir():
+    WATCHLIST = [t for t in WATCHLIST if t != "^CPC"]
 """
 
 # ── CELL 5 PREPATCH: extend download history to 10 years ─────────────────────
@@ -1584,6 +1588,12 @@ CELL_11_PREPATCH = """
 import json as _j11
 from pathlib import Path as _P11
 
+# iv_flags is set by Cell 9 (GARCH+IV). On intraday runs Cell 9 is skipped,
+# so inject a safe empty fallback so signal generation doesn't crash.
+if "iv_flags" not in dir():
+    iv_flags = {}
+    print("  [patch] iv_flags fallback injected (Cell 9 was skipped)")
+
 # Load IC-derived composite weights if they exist from a previous scoring cycle.
 # On first run these fall back to the empirically reasonable defaults.
 # After each scoring cycle (post-run), _IC_COMPOSITE_WEIGHTS is updated.
@@ -2081,6 +2091,98 @@ except Exception as _h12e:
 
 # ── CELL 13 PREPATCH: regime-conditional Kelly multiplier ────────────────────
 CELL_13_PREPATCH = """
+# ── Fix: Full SECTOR_MAP override — notebook only has ~16 tickers, causing
+# every S&P500 name to fall into "Other" and breach the 40% sector limit.
+# This replaces SECTOR_MAP in Cell 13's namespace before sector_allows_trade runs.
+SECTOR_MAP = {
+    # Technology
+    "AAPL":"Tech","MSFT":"Tech","NVDA":"Tech","GOOGL":"Tech","AMZN":"Tech",
+    "META":"Tech","AVGO":"Tech","ORCL":"Tech","ADBE":"Tech","CRM":"Tech",
+    "NOW":"Tech","PLTR":"Tech","DDOG":"Tech","ZS":"Tech","CRWD":"Tech",
+    "PANW":"Tech","INTU":"Tech","CDNS":"Tech","SNPS":"Tech","FTNT":"Tech",
+    "ANET":"Tech","ACN":"Tech","IBM":"Tech","CSCO":"Tech","TYL":"Tech",
+    "ROP":"Tech","WDAY":"Tech","NET":"Tech","SNOW":"Tech","TEAM":"Tech",
+    "SHOP":"Tech","PYPL":"Tech","COIN":"Tech","AFRM":"Tech","HOOD":"Tech",
+    "TWLO":"Tech","HUBS":"Tech","OKTA":"Tech","MDB":"Tech","GTLB":"Tech",
+    # Semiconductors (sub-Tech, counted separately for concentration)
+    "AMD":"Semis","INTC":"Semis","QCOM":"Semis","AMAT":"Semis","MU":"Semis",
+    "TXN":"Semis","LRCX":"Semis","KLAC":"Semis","ADI":"Semis","MRVL":"Semis",
+    "ASML":"Semis","ON":"Semis","MCHP":"Semis","MPWR":"Semis","TER":"Semis",
+    "SWKS":"Semis","ENPH":"Semis","FSLR":"Semis","TSM":"Semis","SMCI":"Semis",
+    "SMH":"Semis","SOXX":"Semis",
+    # Financials
+    "JPM":"Finance","V":"Finance","MA":"Finance","BAC":"Finance","GS":"Finance",
+    "MS":"Finance","BLK":"Finance","AXP":"Finance","WFC":"Finance","C":"Finance",
+    "SCHW":"Finance","PGR":"Finance","CB":"Finance","COF":"Finance","USB":"Finance",
+    "TFC":"Finance","PNC":"Finance","ICE":"Finance","CME":"Finance","SPGI":"Finance",
+    "MCO":"Finance","AON":"Finance","TRV":"Finance","ALL":"Finance","MET":"Finance",
+    "PRU":"Finance","AIG":"Finance","HIG":"Finance","AFL":"Finance","XLF":"Finance",
+    # Healthcare
+    "UNH":"Healthcare","LLY":"Healthcare","JNJ":"Healthcare","ABBV":"Healthcare",
+    "MRK":"Healthcare","TMO":"Healthcare","ABT":"Healthcare","DHR":"Healthcare",
+    "PFE":"Healthcare","AMGN":"Healthcare","CVS":"Healthcare","CI":"Healthcare",
+    "HUM":"Healthcare","BSX":"Healthcare","MDT":"Healthcare","SYK":"Healthcare",
+    "ISRG":"Healthcare","VRTX":"Healthcare","REGN":"Healthcare","BMY":"Healthcare",
+    "GILD":"Healthcare","ELV":"Healthcare","MCK":"Healthcare","COR":"Healthcare",
+    "A":"Healthcare","IQV":"Healthcare","MTD":"Healthcare","WAT":"Healthcare",
+    "ZBH":"Healthcare","RMD":"Healthcare","EW":"Healthcare","XLV":"Healthcare",
+    # Consumer Discretionary
+    "TSLA":"Consumer","AMZN":"Consumer","HD":"Consumer","NKE":"Consumer",
+    "LOW":"Consumer","TJX":"Consumer","ROST":"Consumer","SBUX":"Consumer",
+    "CMG":"Consumer","MCD":"Consumer","COST":"Consumer","TGT":"Consumer",
+    "GM":"Consumer","F":"Consumer","UBER":"Consumer","BKNG":"Consumer",
+    "ABNB":"Consumer","MAR":"Consumer","HLT":"Consumer","DG":"Consumer",
+    "DLTR":"Consumer","YUM":"Consumer","DPZ":"Consumer","APTV":"Consumer",
+    "BWA":"Consumer","XLY":"Consumer",
+    # Consumer Staples
+    "WMT":"Staples","PG":"Staples","KO":"Staples","PEP":"Staples",
+    "MDLZ":"Staples","CL":"Staples","MO":"Staples","PM":"Staples",
+    "EL":"Staples","GIS":"Staples","TSN":"Staples","CAG":"Staples",
+    "KHC":"Staples","STZ":"Staples","CLX":"Staples","XLP":"Staples",
+    # Energy
+    "XOM":"Energy","CVX":"Energy","COP":"Energy","SLB":"Energy","EOG":"Energy",
+    "HAL":"Energy","OXY":"Energy","PSX":"Energy","MPC":"Energy","VLO":"Energy",
+    "DVN":"Energy","APA":"Energy","KMI":"Energy","WMB":"Energy","BKR":"Energy",
+    "LNG":"Energy","XLE":"Energy",
+    # Industrials
+    "BA":"Industrials","CAT":"Industrials","DE":"Industrials","HON":"Industrials",
+    "GE":"Industrials","RTX":"Industrials","LMT":"Industrials","NOC":"Industrials",
+    "UPS":"Industrials","FDX":"Industrials","MMM":"Industrials","EMR":"Industrials",
+    "ETN":"Industrials","ITW":"Industrials","PH":"Industrials","CMI":"Industrials",
+    "GD":"Industrials","TDG":"Industrials","CTAS":"Industrials","NSC":"Industrials",
+    "CSX":"Industrials","UNP":"Industrials","HWM":"Industrials","GWW":"Industrials",
+    "PCAR":"Industrials","ROK":"Industrials","XLI":"Industrials",
+    # Materials
+    "LIN":"Materials","APD":"Materials","SHW":"Materials","PPG":"Materials",
+    "NEM":"Materials","FCX":"Materials","NUE":"Materials","ALB":"Materials",
+    "LYB":"Materials","ECL":"Materials","CF":"Materials","MOS":"Materials",
+    "IFF":"Materials","XLB":"Materials",
+    # Real Estate
+    "AMT":"RealEstate","PLD":"RealEstate","EQIX":"RealEstate","CCI":"RealEstate",
+    "WELL":"RealEstate","SPG":"RealEstate","O":"RealEstate","DLR":"RealEstate",
+    "PSA":"RealEstate","EXR":"RealEstate","VICI":"RealEstate","AVB":"RealEstate",
+    "EQR":"RealEstate","XLRE":"RealEstate",
+    # Utilities
+    "NEE":"Utilities","DUK":"Utilities","SO":"Utilities","AEP":"Utilities",
+    "D":"Utilities","EXC":"Utilities","SRE":"Utilities","XEL":"Utilities",
+    "AWK":"Utilities","WEC":"Utilities","ED":"Utilities","FE":"Utilities",
+    "ETR":"Utilities","PPL":"Utilities","ES":"Utilities","XLU":"Utilities",
+    # Communication
+    "NFLX":"Communication","DIS":"Communication","CMCSA":"Communication",
+    "VZ":"Communication","T":"Communication","TMUS":"Communication",
+    "CHTR":"Communication","EA":"Communication","TTWO":"Communication",
+    "LYV":"Communication","XLC":"Communication",
+    # Broad / ETFs
+    "SPY":"Broad","QQQ":"Broad","IWM":"Broad","DIA":"Broad",
+    "GLD":"Broad","SLV":"Broad","TLT":"Broad","HYG":"Broad",
+    "LQD":"Broad","VNQ":"Broad","ARKK":"Broad","XLK":"Broad",
+    # Crypto
+    "BTC-USD":"Crypto","ETH-USD":"Crypto","SOL-USD":"Crypto",
+    "BNB-USD":"Crypto","XRP-USD":"Crypto","DOGE-USD":"Crypto","IBIT":"Crypto",
+}
+print(f"  [patch] SECTOR_MAP overridden: {len(SECTOR_MAP)} tickers mapped "
+      f"({len(set(SECTOR_MAP.values()))} sectors) — prevents false Other breaches")
+
 # ── Fix 3: Regime-conditional Kelly sizing ────────────────────────────────────
 # In bear regime (HMM=0), apply 40% of half-Kelly — prevents full-Kelly sizing
 # into a deteriorating regime while the ensemble adapts.
