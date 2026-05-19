@@ -1109,7 +1109,7 @@ import lightgbm as _lgb8
 import numpy as _np8
 
 def _to_binary_labels(y):
-    """Convert any target (float returns OR existing 0/1/2) to binary 0/1 via median."""
+    # Convert any target (float returns OR existing 0/1/2) to binary 0/1 via median.
     y = _np8.asarray(y, dtype=float)
     _valid = ~_np8.isnan(y)
     _yv = y[_valid]
