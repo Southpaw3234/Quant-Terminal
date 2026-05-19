@@ -138,7 +138,7 @@ if RUN_TYPE == "morning" and _KILL_FLAG.exists():
 # Drive sync restores individual model .pkl files trained under a previous label
 # strategy (ternary, median-split). If the version tag doesn't match, delete them
 # so Cell 8 retrains from scratch with the current strategy.
-_MODEL_VERSION   = "binary_pp3col_v2"
+_MODEL_VERSION   = "sign_based_v1"
 _MODEL_VER_FILE  = LOCAL_DATA / "models" / "model_version.txt"
 _MODEL_DIR       = LOCAL_DATA / "models"
 if RUN_TYPE == "morning":
@@ -1234,10 +1234,16 @@ if "featured" in dir():
         # Skip if already binary 0/1
         if len(_uniq8) <= 2 and _np8bin.all(_np8bin.isin(_uniq8, [0.0, 1.0])):
             continue
-        # Convert continuous → binary via median split
-        _med8 = float(_np8bin.median(_yv8))
-        _bin8 = _np8bin.where(_tgt8 >= _med8, 1.0, 0.0)
+        # Convert continuous → binary via sign-based (directional) split
+        # positive return = UP(1), negative/zero = DOWN(0)
+        _bin8 = _np8bin.where(_tgt8 > 0, 1.0, 0.0)
         _bin8[~_valid8] = _np8bin.nan
+        # Fallback to median split if only one class survives (degenerate data)
+        _uniq_bin8 = _np8bin.unique(_bin8[_valid8])
+        if len(_uniq_bin8) < 2:
+            _med8 = float(_np8bin.median(_yv8))
+            _bin8 = _np8bin.where(_tgt8 >= _med8, 1.0, 0.0)
+            _bin8[~_valid8] = _np8bin.nan
         _df8bin_copy = _df8bin.copy()
         _df8bin_copy["target"] = _bin8
         featured[_tk8bin] = _df8bin_copy
@@ -1291,7 +1297,11 @@ for _tk8pp, _rm8pp in models.items():
         _orig_pp8 = _m8pp.predict_proba
         def _make_pp3(orig_pp):
             def _pp3(X, **kw):
-                _p = orig_pp(X, **kw)
+                _p = _np8pp.asarray(orig_pp(X, **kw))
+                if _p.ndim == 1:
+                    # CalWrapper returns 1D P(bull) — reconstruct [P(bear), 0, P(bull)]
+                    _neut = _np8pp.zeros_like(_p)
+                    return _np8pp.column_stack([1.0 - _p, _neut, _p])
                 if _p.ndim == 2 and _p.shape[1] == 2:
                     _neut = _np8pp.zeros((_p.shape[0], 1))
                     return _np8pp.hstack([_p[:, :1], _neut, _p[:, 1:]])
@@ -2248,6 +2258,15 @@ if "regimes" in dir() and regimes is not None and len(regimes) > 0:
         print(f"  [patch] Regime coerced to int array len={len(regimes)} last={regimes[-1]}")
     except Exception as _re13e:
         print(f"  [patch] Regime coerce warning: {_re13e}")
+
+# ── Fix: Coerce macro_data["regime"] string → int before Cell 13 line 1000 ───
+# The notebook calls int(macro_data["regime"]) which crashes on "Neutral / Mixed"
+if "macro_data" in dir() and isinstance(macro_data, dict):
+    _r13m = macro_data.get("regime", "")
+    if isinstance(_r13m, str):
+        _key13m = _r13m.lower().split("/")[0].strip()
+        macro_data["regime"] = _REGIME_STR_MAP13.get(_key13m, _REGIME_STR_MAP13.get(_r13m.strip(), 1))
+        print(f"  [patch] Cell13 macro_data['regime'] coerced: {_r13m!r} -> {macro_data['regime']}")
 
 # ── Fix: Full SECTOR_MAP override — notebook only has ~16 tickers, causing
 # every S&P500 name to fall into "Other" and breach the 40% sector limit.
