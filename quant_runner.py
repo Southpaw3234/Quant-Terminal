@@ -73,7 +73,7 @@ try:
     # [0.0, 1.0] → [0.05, 0.95]. XGBoost/LGB reject non-integer class labels.
     # Fix: round labels to nearest int at fit() time. Semantically safe:
     # 0.05 → 0 (still SELL), 0.95 → 1 (still BUY). Binary CV harness unchanged.
-    # predict_proba is wrapped in CELL_8_POSTPATCH to emit 3 cols for Cell 11.
+    # predict_proba is NOT wrapped — CalWrapper returns 2-col [P(bear), P(bull)].
     _xgb_orig_fit = _xgb_bl.XGBClassifier.fit
     _lgb_orig_fit = _lgb_bl.LGBMClassifier.fit
 
@@ -138,7 +138,7 @@ if RUN_TYPE == "morning" and _KILL_FLAG.exists():
 # Drive sync restores individual model .pkl files trained under a previous label
 # strategy (ternary, median-split). If the version tag doesn't match, delete them
 # so Cell 8 retrains from scratch with the current strategy.
-_MODEL_VERSION   = "sign_based_v2"
+_MODEL_VERSION   = "sign_based_v3"
 _MODEL_VER_FILE  = LOCAL_DATA / "models" / "model_version.txt"
 _MODEL_DIR       = LOCAL_DATA / "models"
 if RUN_TYPE == "morning":
@@ -1161,7 +1161,6 @@ import lightgbm as _lgb8
 import numpy as _np8
 
 # CatBoost — binary Logloss (keeps consistent with binary XGB/LGB training)
-# predict_proba wrapper in CELL_8_POSTPATCH makes it emit 3 columns for Cell 11
 try:
     import catboost as _cb8
     import numpy as _np8cb
@@ -1569,13 +1568,13 @@ if _os9p.environ.get("RUN_TYPE", "morning") == "morning" and "featured" in dir()
     except Exception:
         pass
 
-    # Add to FEATURE_COLS
-    for _f9 in _TRANSCRIPT_FEATURES:
-        if _f9 not in FEATURE_COLS:
-            FEATURE_COLS.append(_f9)
-
+    # NOTE: transcript features are NOT added to FEATURE_COLS here.
+    # Models in Cell 8 were trained before this patch runs (Cell 9 is post-Cell 8).
+    # Adding them would cause feature-count mismatch (ValueError) in Cell 11
+    # predict_proba — same issue as patent_velocity (fixed in commit 05f2d03).
+    # Features remain in featured[tk] for any downstream non-model use.
     print(f"  [patch] Transcript NLP: {_n_transcript} fetched, "
-          f"{_n_cached9} from cache, {len(_TRANSCRIPT_FEATURES)} features added")
+          f"{_n_cached9} from cache, {len(_TRANSCRIPT_FEATURES)} features in featured (not in FEATURE_COLS — models trained without them)")
 else:
     print("  [patch] Transcript NLP: skipped (intraday/evening or no featured dict)")
 """
@@ -2235,6 +2234,16 @@ if "regimes" in dir() and regimes is not None and len(regimes) > 0:
         print(f"  [patch] Regime coerced to int array len={len(regimes)} last={regimes[-1]}")
     except Exception as _re13e:
         print(f"  [patch] Regime coerce warning: {_re13e}")
+
+# ── Fix: Lower MIN_CONFIDENCE to match HOLD_HI threshold ─────────────────────
+# The notebook defines MIN_CONFIDENCE = 0.65. With Platt-calibrated Huber
+# regression outputs, predict_proba values cluster in 0.50-0.62 for typical
+# stock predictions — 0.65 is structurally unreachable for most signals.
+# CELL_11_POSTPATCH already uses HOLD_HI = 0.55 as the BUY gate; aligning
+# MIN_CONFIDENCE to 0.55 ensures Cell 13 actually executes the trades that
+# Cell 11 already labelled as BUY.
+MIN_CONFIDENCE = 0.55
+print(f"  [patch] MIN_CONFIDENCE overridden: 0.65 → 0.55 (aligns with HOLD_HI=0.55)")
 
 # ── Fix: Coerce macro_data["regime"] string → int before Cell 13 line 1000 ───
 # The notebook calls int(macro_data["regime"]) which crashes on "Neutral / Mixed"
