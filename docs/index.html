@@ -1304,6 +1304,28 @@ function renderPnLChart(hist) {
   });
 }
 
+// ── Stub functions for panels not yet fully implemented ──────────────────
+function renderIC(icData, weights) {
+  // IC decomposition panel — renders when ic_decomposition is present in data.json
+  const el = document.getElementById('ic-panel');
+  if (!el) return;
+  if (!icData) { el.innerHTML = '<div class="empty"><div class="empty-msg">IC data available after 30+ scored predictions</div></div>'; return; }
+  el.innerHTML = `<pre style="font-size:11px;color:var(--mu)">${JSON.stringify(icData, null, 2)}</pre>`;
+}
+
+function renderHedges(hedgeData) {
+  const el = document.getElementById('hedge-panel');
+  if (!el) return;
+  if (!hedgeData) { el.innerHTML = '<div class="empty"><div class="empty-msg">No hedge positions active</div></div>'; return; }
+  el.innerHTML = `<pre style="font-size:11px;color:var(--mu)">${JSON.stringify(hedgeData, null, 2)}</pre>`;
+}
+
+function renderSnapshot(snapshotData) {
+  const el = document.getElementById('snapshot-panel');
+  if (!el) return;
+  if (!snapshotData) return;
+}
+
 // ── Top 25 Growth Picks ───────────────────────────────────────────────────
 function renderTop25Growth(preds) {
   const tbody = document.getElementById('top25-tbody');
