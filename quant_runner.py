@@ -60,15 +60,6 @@ for sub in ["paper_trades", "predictions", "weights", "models"]:
 
 _KILL_FLAG = LOCAL_DATA / "KILL_SWITCH_ACTIVE.flag"
 
-# Morning runs always start fresh — auto-clear a stale kill switch so that
-# a CVaR solver failure from a previous broken run doesn't permanently block
-# signal generation.  The switch will re-arm within the same run if CVaR
-# fails again, so we don't lose the protection.
-if RUN_TYPE == "morning" and _KILL_FLAG.exists():
-    _KILL_FLAG.unlink(missing_ok=True)
-    (LOCAL_DATA / "cvar_failure_log.json").unlink(missing_ok=True)
-    print("  [kill switch] Auto-cleared on morning run — will re-arm if CVaR fails")
-
 # ── rclone helpers ────────────────────────────────────────────────────────
 def _write_rclone_conf():
     if not GDRIVE_CONF:
@@ -99,6 +90,14 @@ _drive_ok = _write_rclone_conf()
 if _drive_ok:
     print("Stage 0a: Drive -> local sync...")
     _rclone(f"gdrive:{GDRIVE_FOLDER}", str(LOCAL_DATA), "Drive->local")
+
+# Auto-clear kill switch AFTER Drive sync — morning runs always start fresh.
+# The flag may have been written to Drive by a previous broken run and just
+# restored above; clear it here so Cell 11/12/13 are not blocked.
+if RUN_TYPE == "morning" and _KILL_FLAG.exists():
+    _KILL_FLAG.unlink(missing_ok=True)
+    (LOCAL_DATA / "cvar_failure_log.json").unlink(missing_ok=True)
+    print("  [kill switch] Auto-cleared after Drive sync — will re-arm if CVaR fails")
 
 # ── GitHub Actions config patch injected into Cell 3 ─────────────────────
 GH_PATCH = """
