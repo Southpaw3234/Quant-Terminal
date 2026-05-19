@@ -60,6 +60,15 @@ for sub in ["paper_trades", "predictions", "weights", "models"]:
 
 _KILL_FLAG = LOCAL_DATA / "KILL_SWITCH_ACTIVE.flag"
 
+# Morning runs always start fresh — auto-clear a stale kill switch so that
+# a CVaR solver failure from a previous broken run doesn't permanently block
+# signal generation.  The switch will re-arm within the same run if CVaR
+# fails again, so we don't lose the protection.
+if RUN_TYPE == "morning" and _KILL_FLAG.exists():
+    _KILL_FLAG.unlink(missing_ok=True)
+    (LOCAL_DATA / "cvar_failure_log.json").unlink(missing_ok=True)
+    print("  [kill switch] Auto-cleared on morning run — will re-arm if CVaR fails")
+
 # ── rclone helpers ────────────────────────────────────────────────────────
 def _write_rclone_conf():
     if not GDRIVE_CONF:
@@ -1091,114 +1100,104 @@ _META_CAL_FRAC   = 0.125   # Platt calibration on 75-87.5%
 _META_META_FRAC  = 0.125   # Stacking meta-learner on 87.5-100%
 
 # ── Continuous target: switch ensemble objectives to Huber regression ──────────
-# The notebook trains XGBoost/LightGBM/CatBoost with binary classification
-# objectives (binary:logistic, binary, Logloss). Swapping to regression with
-# Huber loss allows the model to learn from return magnitude, not just direction.
-# Huber loss is robust to outlier returns (flash crashes, earnings surprises).
-# At inference time, raw predicted return is converted to BUY/HOLD/SELL using
-# regime-adjusted quantile thresholds (injected in CELL_11_POSTPATCH).
+# Classifier wrappers: binary classification (0=down, 1=up) via median split.
+# Binary is CV-robust: a fold missing one ternary class causes sklearn to raise
+# "Expected [0 1], got [1 2]". With binary median-split labels both classes
+# are almost always present in every CV fold (50/50 split by construction).
 import xgboost as _xgb8
 import lightgbm as _lgb8
+import numpy as _np8
 
-# ── Classifier wrappers: keep ORIGINAL classification objectives ──────────────
-# Huber regression objectives caused cascading sklearn label validation failures
-# ("Invalid classes ... Expected: [0], got [0.05]"). The notebook pipeline
-# expects classifiers with discrete integer targets. We keep classification
-# objectives and add a fit() override that converts any continuous float target
-# (from our Cell 6 Huber target patch) to ternary integer labels (0/1/2)
-# so the classifier always receives valid class labels.
-
-def _to_ternary_labels(y):
-    import numpy as _np
-    y = _np.asarray(y, dtype=float)
-    _valid = ~_np.isnan(y)
+def _to_binary_labels(y):
+    """Convert any target (float returns OR existing 0/1/2) to binary 0/1 via median."""
+    y = _np8.asarray(y, dtype=float)
+    _valid = ~_np8.isnan(y)
     _yv = y[_valid]
     if len(_yv) == 0:
-        return _np.ones(len(y), dtype=int), _valid
-    if _yv.dtype.kind == "f" or len(_np.unique(_yv)) > 3:
-        _p33, _p67 = _np.percentile(_yv, [33, 67])
-        if _p33 >= _p67:   # degenerate: force spread
-            _p33, _p67 = _np.percentile(_yv, [25, 75])
-        _y_int = _np.where(y < _p33, 0, _np.where(y > _p67, 2, 1)).astype(int)
-        _y_int[~_valid] = 1   # fill NaN rows with HOLD
-    else:
-        _y_int = _np.where(_valid, y.astype(int), 1)
-    # ensure at least 2 unique classes so classifiers don't raise
-    if len(_np.unique(_y_int)) < 2:
-        _y_int = _y_int.copy(); _y_int[0] = 0; _y_int[-1] = 2
+        return _np8.zeros(len(y), dtype=int), _valid
+    _med = _np8.median(_yv)
+    _y_int = _np8.where(y >= _med, 1, 0).astype(int)
+    _y_int[~_valid] = 0
+    # guarantee both classes present (edge case: all same value)
+    if len(_np8.unique(_y_int[_valid])) < 2:
+        _y_int = _y_int.copy()
+        _y_int[0] = 0
+        _y_int[-1] = 1
     return _y_int, _valid
 
 _XGBClassifier_orig8 = _xgb8.XGBClassifier
 class XGBClassifier(_XGBClassifier_orig8):
-    def __init__(self, objective="multi:softprob", eval_metric="mlogloss",
-                 num_class=3, n_estimators=100, max_depth=4,
+    def __init__(self, objective="binary:logistic", eval_metric="logloss",
+                 n_estimators=100, max_depth=4,
                  learning_rate=0.05, subsample=0.8, colsample_bytree=0.8,
                  reg_alpha=0.1, reg_lambda=1.0, random_state=42,
                  n_jobs=-1, **kwargs):
         kwargs.pop("use_label_encoder", None)
+        kwargs.pop("num_class", None)
         super().__init__(
             objective=objective, eval_metric=eval_metric,
-            num_class=num_class, n_estimators=n_estimators,
-            max_depth=max_depth, learning_rate=learning_rate,
-            subsample=subsample, colsample_bytree=colsample_bytree,
-            reg_alpha=reg_alpha, reg_lambda=reg_lambda,
-            random_state=random_state, n_jobs=n_jobs, **kwargs)
+            n_estimators=n_estimators, max_depth=max_depth,
+            learning_rate=learning_rate, subsample=subsample,
+            colsample_bytree=colsample_bytree, reg_alpha=reg_alpha,
+            reg_lambda=reg_lambda, random_state=random_state,
+            n_jobs=n_jobs, **kwargs)
     def fit(self, X, y, **kwargs):
-        _y_int, _ = _to_ternary_labels(y)
+        _y_int, _ = _to_binary_labels(y)
         return super().fit(X, _y_int, **kwargs)
 
 _xgb8.XGBClassifier = XGBClassifier
 
 _LGBMClassifier_orig8 = _lgb8.LGBMClassifier
 class LGBMClassifier(_LGBMClassifier_orig8):
-    def __init__(self, objective="multiclass", metric="multi_logloss",
-                 num_class=3, n_estimators=100, max_depth=4,
+    def __init__(self, objective="binary", metric="binary_logloss",
+                 n_estimators=100, max_depth=4,
                  learning_rate=0.05, subsample=0.8, colsample_bytree=0.8,
                  reg_alpha=0.1, reg_lambda=1.0, random_state=42,
                  n_jobs=-1, verbose=-1, **kwargs):
+        kwargs.pop("num_class", None)
         super().__init__(
-            objective=objective, metric=metric, num_class=num_class,
+            objective=objective, metric=metric,
             n_estimators=n_estimators, max_depth=max_depth,
             learning_rate=learning_rate, subsample=subsample,
             colsample_bytree=colsample_bytree, reg_alpha=reg_alpha,
             reg_lambda=reg_lambda, random_state=random_state,
             n_jobs=n_jobs, verbose=verbose, **kwargs)
     def fit(self, X, y, **kwargs):
-        _y_int, _ = _to_ternary_labels(y)
+        _y_int, _ = _to_binary_labels(y)
         return super().fit(X, _y_int, **kwargs)
 
 _lgb8.LGBMClassifier = LGBMClassifier
 
-# CatBoost — same ternary label conversion, never raises
+# CatBoost — binary Logloss, same median-split conversion
 try:
     import catboost as _cb8
     _CatBoostClassifier_orig8 = _cb8.CatBoostClassifier
     class CatBoostClassifier(_CatBoostClassifier_orig8):
         def __init__(self, iterations=200, depth=4, learning_rate=0.05,
-                     loss_function="MultiClass", eval_metric="Accuracy",
+                     loss_function="Logloss", eval_metric="AUC",
                      random_seed=42, verbose=0, **kwargs):
+            kwargs.pop("num_class", None)
             super().__init__(iterations=iterations, depth=depth,
                 learning_rate=learning_rate, loss_function=loss_function,
                 eval_metric=eval_metric, random_seed=random_seed,
                 verbose=verbose, **kwargs)
         def fit(self, X, y, **kwargs):
-            _y_int, _valid = _to_ternary_labels(y)
+            _y_int, _valid = _to_binary_labels(y)
             _Xv = X[_valid] if hasattr(X, '__getitem__') else X
             _yv = _y_int[_valid]
-            if len(_np8cb.unique(_yv)) < 2:
-                _yv = _yv.copy(); _yv[0] = 0; _yv[-1] = 2
+            if len(_np8.unique(_yv)) < 2:
+                _yv = _yv.copy(); _yv[0] = 0; _yv[-1] = 1
             kwargs.pop("sample_weight", None)
             return super().fit(_Xv, _yv, **kwargs)
-    import numpy as _np8cb
     _cb8.CatBoostClassifier = CatBoostClassifier
     import sys as _sys8cb
     if "catboost" in _sys8cb.modules:
         _sys8cb.modules["catboost"].CatBoostClassifier = CatBoostClassifier
-    print("  [patch] CatBoostClassifier patched: ternary label conversion")
+    print("  [patch] CatBoostClassifier patched: binary label conversion (Logloss)")
 except ImportError:
     print("  [patch] CatBoost not installed — skipping patch")
 
-print("  [patch] XGBClassifier + LGBMClassifier: multiclass classification with ternary label conversion")
+print("  [patch] XGBClassifier + LGBMClassifier: binary classification with median-split labels")
 
 print("  [patch] EmbargoTimeSeriesSplit, BlockBootstrap, 4-window fractions injected")
 
