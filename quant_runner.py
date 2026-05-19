@@ -69,13 +69,31 @@ try:
     import xgboost as _xgb_bl
     import lightgbm as _lgb_bl
 
-    # NOTE: Binary training is left untouched — the notebook's Cell 8 is built
-    # around binary classification (binary eval metrics, binary CV harness).
-    # predict_proba is wrapped in CELL_8_POSTPATCH to emit 3 columns so that
-    # Cell 11's [:,2] indexing gets the bull-probability correctly.
-    print("  [label patch] Binary training preserved — predict_proba 3-col wrapper in Cell 8 postpatch")
+    # The notebook applies label smoothing after our binary conversion:
+    # [0.0, 1.0] → [0.05, 0.95]. XGBoost/LGB reject non-integer class labels.
+    # Fix: round labels to nearest int at fit() time. Semantically safe:
+    # 0.05 → 0 (still SELL), 0.95 → 1 (still BUY). Binary CV harness unchanged.
+    # predict_proba is wrapped in CELL_8_POSTPATCH to emit 3 cols for Cell 11.
+    _xgb_orig_fit = _xgb_bl.XGBClassifier.fit
+    _lgb_orig_fit = _lgb_bl.LGBMClassifier.fit
+
+    def _xgb_round_fit(self, X, y, **kwargs):
+        _y = _np_bl.asarray(y)
+        if not _np_bl.issubdtype(_y.dtype, _np_bl.integer):
+            _y = _np_bl.rint(_y).astype(int)
+        return _xgb_orig_fit(self, X, _y, **kwargs)
+
+    def _lgb_round_fit(self, X, y, **kwargs):
+        _y = _np_bl.asarray(y)
+        if not _np_bl.issubdtype(_y.dtype, _np_bl.integer):
+            _y = _np_bl.rint(_y).astype(int)
+        return _lgb_orig_fit(self, X, _y, **kwargs)
+
+    _xgb_bl.XGBClassifier.fit = _xgb_round_fit
+    _lgb_bl.LGBMClassifier.fit = _lgb_round_fit
+    print("  [label patch] XGB+LGB .fit() patched: float labels rounded to int (handles label smoothing)")
 except Exception as _bl_e:
-    print(f"  [binary patch] Warning: {_bl_e}")
+    print(f"  [label patch] Warning: {_bl_e}")
 
 # ── rclone helpers ────────────────────────────────────────────────────────
 def _write_rclone_conf():
@@ -120,7 +138,7 @@ if RUN_TYPE == "morning" and _KILL_FLAG.exists():
 # Drive sync restores individual model .pkl files trained under a previous label
 # strategy (ternary, median-split). If the version tag doesn't match, delete them
 # so Cell 8 retrains from scratch with the current strategy.
-_MODEL_VERSION   = "binary_pp3col_v1"
+_MODEL_VERSION   = "binary_pp3col_v2"
 _MODEL_VER_FILE  = LOCAL_DATA / "models" / "model_version.txt"
 _MODEL_DIR       = LOCAL_DATA / "models"
 if RUN_TYPE == "morning":
@@ -2215,22 +2233,19 @@ _REGIME_STR_MAP13 = {
     "Neutral": 1, "neutral": 1, "Neutral / Mixed": 1, "Mixed": 1, "mixed": 1, "1": 1,
     "Bull": 2, "bull": 2, "Bullish": 2, "bullish": 2, "2": 2,
 }
-if "regimes" in dir() and hasattr(regimes, "__len__") and len(regimes) > 0:
+if "regimes" in dir() and regimes is not None and len(regimes) > 0:
     try:
         import numpy as _np13r
-        _ra13 = list(regimes)
+        # regimes may be: dict {ticker: int}, list, or numpy array
+        _ra13_raw = list(regimes.values()) if isinstance(regimes, dict) else list(regimes)
         _ra13_int = []
-        for _rv in _ra13:
+        for _rv in _ra13_raw:
             try:
                 _ra13_int.append(int(_rv))
             except (ValueError, TypeError):
                 _ra13_int.append(_REGIME_STR_MAP13.get(str(_rv).strip(), 1))
-        regimes = type(regimes)(_ra13_int) if hasattr(type(regimes), '__call__') else _ra13_int
-        try:
-            regimes = _np13r.array(_ra13_int)
-        except Exception:
-            pass
-        print(f"  [patch] Regime coerced to int (last={regimes[-1]})")
+        regimes = _np13r.array(_ra13_int)
+        print(f"  [patch] Regime coerced to int array len={len(regimes)} last={regimes[-1]}")
     except Exception as _re13e:
         print(f"  [patch] Regime coerce warning: {_re13e}")
 
@@ -3382,18 +3397,18 @@ if "macro_data" in dir() and isinstance(macro_data, dict):
 if "regime_str" in dir() and isinstance(regime_str, str):
     _key2 = regime_str.lower().split("/")[0].strip()
     regime_str = str(_REGIME_STR_MAP.get(_key2, 1))
-# Also normalize the 'regimes' HMM array if it contains strings
-if "regimes" in dir() and hasattr(regimes, "__len__") and len(regimes) > 0:
+# Also normalize the 'regimes' HMM array if it contains strings or is a dict
+if "regimes" in dir() and regimes is not None and len(regimes) > 0:
     try:
-        _ra15 = list(regimes)
+        import numpy as _np15r
+        _ra15_raw = list(regimes.values()) if isinstance(regimes, dict) else list(regimes)
         _ra15_int = []
-        for _rv in _ra15:
+        for _rv in _ra15_raw:
             try:
                 _ra15_int.append(int(_rv))
             except (ValueError, TypeError):
                 _key15 = str(_rv).lower().strip()
                 _ra15_int.append(_REGIME_STR_MAP.get(_key15, 1))
-        import numpy as _np15r
         regimes = _np15r.array(_ra15_int)
     except Exception:
         pass
