@@ -1196,6 +1196,35 @@ if "FEATURE_COLS" in dir() and "featured" in dir() and len(featured) > 0:
         print(f"  [patch] FEATURE_COLS now has {len(FEATURE_COLS)} columns")
     else:
         print(f"  [patch] FEATURE_COLS OK: all {len(FEATURE_COLS)} columns present")
+
+# ── Convert continuous targets to binary [0,1] before Optuna/Cell 8 runs ────
+# CELL_6_PREPATCH sets featured[tk]["target"] to z-scored continuous returns.
+# The notebook's Cell 8 expects binary 0/1 classifier labels.
+# Convert here so XGBClassifier/LGBMClassifier receives valid integer labels.
+import numpy as _np8bin
+_n_bin_conv = 0
+if "featured" in dir():
+    for _tk8bin, _df8bin in list(featured.items()):
+        if "target" not in _df8bin.columns:
+            continue
+        _tgt8 = _df8bin["target"].values.astype(float)
+        _valid8 = ~_np8bin.isnan(_tgt8)
+        _yv8 = _tgt8[_valid8]
+        if len(_yv8) == 0:
+            continue
+        _uniq8 = _np8bin.unique(_yv8.round(6))
+        # Skip if already binary 0/1
+        if len(_uniq8) <= 2 and _np8bin.all(_np8bin.isin(_uniq8, [0.0, 1.0])):
+            continue
+        # Convert continuous → binary via median split
+        _med8 = float(_np8bin.median(_yv8))
+        _bin8 = _np8bin.where(_tgt8 >= _med8, 1.0, 0.0)
+        _bin8[~_valid8] = _np8bin.nan
+        _df8bin_copy = _df8bin.copy()
+        _df8bin_copy["target"] = _bin8
+        featured[_tk8bin] = _df8bin_copy
+        _n_bin_conv += 1
+    print(f"  [patch] Continuous→binary target conversion: {_n_bin_conv}/{len(featured)} tickers")
 """
 
 # ── CELL 8 POSTPATCH: Ridge ensemble member ───────────────────────────────────
@@ -2177,6 +2206,34 @@ except Exception as _h12e:
 
 # ── CELL 13 PREPATCH: regime-conditional Kelly multiplier ────────────────────
 CELL_13_PREPATCH = """
+# ── Fix: Normalize 'regimes' to integers before Cell 13 runs ─────────────────
+# The notebook's Cell 13 calls int(regimes[-1]) at its own line 975.
+# If macro-regime built a string like "Neutral / Mixed", that crashes.
+# Coerce in-place so the notebook's own code works without modification.
+_REGIME_STR_MAP13 = {
+    "Bear": 0, "bear": 0, "Bearish": 0, "bearish": 0, "0": 0,
+    "Neutral": 1, "neutral": 1, "Neutral / Mixed": 1, "Mixed": 1, "mixed": 1, "1": 1,
+    "Bull": 2, "bull": 2, "Bullish": 2, "bullish": 2, "2": 2,
+}
+if "regimes" in dir() and hasattr(regimes, "__len__") and len(regimes) > 0:
+    try:
+        import numpy as _np13r
+        _ra13 = list(regimes)
+        _ra13_int = []
+        for _rv in _ra13:
+            try:
+                _ra13_int.append(int(_rv))
+            except (ValueError, TypeError):
+                _ra13_int.append(_REGIME_STR_MAP13.get(str(_rv).strip(), 1))
+        regimes = type(regimes)(_ra13_int) if hasattr(type(regimes), '__call__') else _ra13_int
+        try:
+            regimes = _np13r.array(_ra13_int)
+        except Exception:
+            pass
+        print(f"  [patch] Regime coerced to int (last={regimes[-1]})")
+    except Exception as _re13e:
+        print(f"  [patch] Regime coerce warning: {_re13e}")
+
 # ── Fix: Full SECTOR_MAP override — notebook only has ~16 tickers, causing
 # every S&P500 name to fall into "Other" and breach the 40% sector limit.
 # This replaces SECTOR_MAP in Cell 13's namespace before sector_allows_trade runs.
@@ -3312,9 +3369,9 @@ _FINNHUB_KEY      = os.environ.get("FINNHUB_API_KEY", "")
 # diagnose_failures_and_rewrite_rules doesn't crash on "Neutral / Mixed"
 CELL_15_PREPATCH = """
 _REGIME_STR_MAP = {
-    "bear": 0, "declining": 0, "risk-off": 0,
-    "neutral": 1, "mixed": 1, "sideways": 1,
-    "bull": 2, "rising": 2, "risk-on": 2,
+    "bear": 0, "declining": 0, "risk-off": 0, "bearish": 0,
+    "neutral": 1, "mixed": 1, "sideways": 1, "neutral / mixed": 1,
+    "bull": 2, "rising": 2, "risk-on": 2, "bullish": 2,
 }
 if "macro_data" in dir() and isinstance(macro_data, dict):
     _r = macro_data.get("regime", "")
@@ -3325,6 +3382,21 @@ if "macro_data" in dir() and isinstance(macro_data, dict):
 if "regime_str" in dir() and isinstance(regime_str, str):
     _key2 = regime_str.lower().split("/")[0].strip()
     regime_str = str(_REGIME_STR_MAP.get(_key2, 1))
+# Also normalize the 'regimes' HMM array if it contains strings
+if "regimes" in dir() and hasattr(regimes, "__len__") and len(regimes) > 0:
+    try:
+        _ra15 = list(regimes)
+        _ra15_int = []
+        for _rv in _ra15:
+            try:
+                _ra15_int.append(int(_rv))
+            except (ValueError, TypeError):
+                _key15 = str(_rv).lower().strip()
+                _ra15_int.append(_REGIME_STR_MAP.get(_key15, 1))
+        import numpy as _np15r
+        regimes = _np15r.array(_ra15_int)
+    except Exception:
+        pass
 """
 
 _CELL_PREPATCH = {
