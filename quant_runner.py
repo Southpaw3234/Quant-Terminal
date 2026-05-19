@@ -69,51 +69,11 @@ try:
     import xgboost as _xgb_bl
     import lightgbm as _lgb_bl
 
-    def _to_ternary_labels_safe(y):
-        # Convert float returns to ternary 0/1/2 via 33rd/67th percentiles.
-        # Always guarantees all 3 classes present (forces edge cases if needed).
-        # Ternary matches Cell 11's expected multi:softprob 3-class output.
-        y = _np_bl.asarray(y, dtype=float)
-        _valid = ~_np_bl.isnan(y)
-        _yv = y[_valid]
-        if len(_yv) == 0:
-            return _np_bl.ones(len(y), dtype=int), _valid
-        _p33, _p67 = _np_bl.percentile(_yv, [33, 67])
-        if _p33 >= _p67:
-            _p33, _p67 = _np_bl.percentile(_yv, [25, 75])
-        _y_int = _np_bl.where(y < _p33, 0, _np_bl.where(y > _p67, 2, 1)).astype(int)
-        _y_int[~_valid] = 1
-        # Force all 3 classes present so cross-val folds stay valid
-        for _cls, _pct in [(0, 5), (1, 50), (2, 95)]:
-            if _cls not in _y_int[_valid]:
-                _idx = int(_np_bl.argmin(_np_bl.abs(y - _np_bl.percentile(_yv, _pct))))
-                _y_int[_idx] = _cls
-        return _y_int, _valid
-
-    _xgb_orig_fit = _xgb_bl.XGBClassifier.fit
-    _lgb_orig_fit = _lgb_bl.LGBMClassifier.fit
-
-    def _xgb_ternary_fit(self, X, y, **kwargs):
-        _y_int, _ = _to_ternary_labels_safe(y)
-        # Force multi-class objective so XGBoost accepts 3-class labels
-        try:
-            self.set_params(objective="multi:softprob", num_class=3)
-        except Exception:
-            pass
-        return _xgb_orig_fit(self, X, _y_int, **kwargs)
-
-    def _lgb_ternary_fit(self, X, y, **kwargs):
-        _y_int, _ = _to_ternary_labels_safe(y)
-        # Force multi-class objective so LGB accepts 3-class labels
-        try:
-            self.set_params(objective="multiclass", num_class=3)
-        except Exception:
-            pass
-        return _lgb_orig_fit(self, X, _y_int, **kwargs)
-
-    _xgb_bl.XGBClassifier.fit = _xgb_ternary_fit
-    _lgb_bl.LGBMClassifier.fit = _lgb_ternary_fit
-    print("  [ternary patch] XGB + LGB .fit() patched at module level (picklable)")
+    # NOTE: Binary training is left untouched — the notebook's Cell 8 is built
+    # around binary classification (binary eval metrics, binary CV harness).
+    # predict_proba is wrapped in CELL_8_POSTPATCH to emit 3 columns so that
+    # Cell 11's [:,2] indexing gets the bull-probability correctly.
+    print("  [label patch] Binary training preserved — predict_proba 3-col wrapper in Cell 8 postpatch")
 except Exception as _bl_e:
     print(f"  [binary patch] Warning: {_bl_e}")
 
@@ -160,7 +120,7 @@ if RUN_TYPE == "morning" and _KILL_FLAG.exists():
 # Drive sync restores individual model .pkl files trained under a previous label
 # strategy (ternary, median-split). If the version tag doesn't match, delete them
 # so Cell 8 retrains from scratch with the current strategy.
-_MODEL_VERSION   = "ternary_safe_v1"
+_MODEL_VERSION   = "binary_pp3col_v1"
 _MODEL_VER_FILE  = LOCAL_DATA / "models" / "model_version.txt"
 _MODEL_DIR       = LOCAL_DATA / "models"
 if RUN_TYPE == "morning":
@@ -1182,14 +1142,15 @@ import xgboost as _xgb8
 import lightgbm as _lgb8
 import numpy as _np8
 
-# CatBoost — ternary MultiClass conversion (defined here since catboost not at module level)
+# CatBoost — binary Logloss (keeps consistent with binary XGB/LGB training)
+# predict_proba wrapper in CELL_8_POSTPATCH makes it emit 3 columns for Cell 11
 try:
     import catboost as _cb8
     import numpy as _np8cb
     _CatBoostClassifier_orig8 = _cb8.CatBoostClassifier
     class CatBoostClassifier(_CatBoostClassifier_orig8):
         def __init__(self, iterations=200, depth=4, learning_rate=0.05,
-                     loss_function="MultiClass", eval_metric="Accuracy",
+                     loss_function="Logloss", eval_metric="AUC",
                      random_seed=42, verbose=0, **kwargs):
             kwargs.pop("num_class", None)
             super().__init__(iterations=iterations, depth=depth,
@@ -1200,21 +1161,13 @@ try:
             y_a = _np8cb.asarray(y, dtype=float)
             _valid = ~_np8cb.isnan(y_a)
             _yv = y_a[_valid]
-            if len(_yv) == 0:
-                _y_int = _np8cb.ones(len(y_a), dtype=int)
-            else:
-                _p33, _p67 = _np8cb.percentile(_yv, [33, 67])
-                if _p33 >= _p67:
-                    _p33, _p67 = _np8cb.percentile(_yv, [25, 75])
-                _y_int = _np8cb.where(y_a < _p33, 0, _np8cb.where(y_a > _p67, 2, 1)).astype(int)
-                _y_int[~_valid] = 1
-                # Force all 3 classes present
-                for _cls8, _pct8 in [(0, 5), (1, 50), (2, 95)]:
-                    if _cls8 not in _y_int[_valid]:
-                        _idx8 = int(_np8cb.argmin(_np8cb.abs(y_a - _np8cb.percentile(_yv, _pct8))))
-                        _y_int[_idx8] = _cls8
+            _med = _np8cb.median(_yv) if len(_yv) else 0.0
+            _y_int = _np8cb.where(y_a >= _med, 1, 0).astype(int)
+            _y_int[~_valid] = 0
             _Xv = X[_valid] if hasattr(X, '__getitem__') else X
             _yv2 = _y_int[_valid]
+            if len(_np8cb.unique(_yv2)) < 2:
+                _yv2 = _yv2.copy(); _yv2[0] = 0; _yv2[-1] = 1
             kwargs.pop("sample_weight", None)
             return super().fit(_Xv, _yv2, **kwargs)
     _cb8.CatBoostClassifier = CatBoostClassifier
@@ -1272,6 +1225,36 @@ for _rtk8, _rm8 in models.items():
         pass
 
 print(f"  [patch] Ridge ensemble members added: {_ridge_added}/{len(models)}")
+
+# ── predict_proba 3-column wrapper ────────────────────────────────────────────
+# Cell 11 indexes predict_proba()[:,2] expecting a 3-class bull-probability.
+# Binary models return 2 columns: [p_bear, p_bull].
+# We wrap each model's predict_proba to return [p_bear, p_neutral=0, p_bull]
+# so [:,2] correctly returns the bull probability from a binary model.
+# This is applied AFTER training so the binary CV/eval harness runs untouched.
+import numpy as _np8pp
+_pp_wrapped = 0
+for _tk8pp, _rm8pp in models.items():
+    for _mkey in ("xgb", "lgb", "cat", "ridge"):
+        _m8pp = _rm8pp.get(_mkey)
+        if _m8pp is None or not hasattr(_m8pp, "predict_proba"):
+            continue
+        if getattr(_m8pp, "_pp3col_wrapped", False):
+            continue  # already wrapped
+        _orig_pp8 = _m8pp.predict_proba
+        def _make_pp3(orig_pp):
+            def _pp3(X, **kw):
+                _p = orig_pp(X, **kw)
+                if _p.ndim == 2 and _p.shape[1] == 2:
+                    _neut = _np8pp.zeros((_p.shape[0], 1))
+                    return _np8pp.hstack([_p[:, :1], _neut, _p[:, 1:]])
+                return _p
+            return _pp3
+        _m8pp.predict_proba = _make_pp3(_orig_pp8)
+        _m8pp._pp3col_wrapped = True
+        _pp_wrapped += 1
+
+print(f"  [patch] predict_proba 3-col wrapper applied to {_pp_wrapped} models (Cell 11 [:,2] fix)")
 """
 
 # ── Tier 3 extension: Deflated Sharpe Ratio filter on ensemble models ─────────
