@@ -1686,8 +1686,10 @@ if _os9pat.environ.get("RUN_TYPE", "morning") == "morning" and "featured" in dir
         except Exception:
             pass
 
-    if "patent_velocity" not in FEATURE_COLS:
-        FEATURE_COLS.append("patent_velocity")
+    # NOTE: patent_velocity is NOT added to FEATURE_COLS here.
+    # Models were already trained (Cell 8) without it; appending it post-training
+    # causes generate_signal to crash for every ticker that doesn't have the column.
+    # Patent velocity is available in featured[tk] for position-sizing use only.
 
     try:
         _PATENT_CACHE_FILE.write_text(_j9pat.dumps(_pat_cache, indent=2))
@@ -1695,8 +1697,7 @@ if _os9pat.environ.get("RUN_TYPE", "morning") == "morning" and "featured" in dir
         pass
 
     print(f"  [Tier3] Patent velocity: {_n_patent} fetched, "
-          f"{_n_patent_cached} from cache, feature added for "
-          f"{len(_TICKER_TO_ASSIGNEE)} mapped tickers")
+          f"{_n_patent_cached} from cache, stored in featured (not in FEATURE_COLS — models trained without it)")
 else:
     print("  [Tier3] Patent velocity: skipped (intraday/evening or no featured dict)")
 """
