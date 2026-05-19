@@ -70,17 +70,26 @@ try:
     import lightgbm as _lgb_bl
 
     def _to_binary_labels(y):
-        # Convert any float return target to binary 0/1 via median split.
+        # Convert float forward returns to binary: 1=UP (return>0), 0=DOWN (return<=0).
+        # Sign-based split is economically meaningful and gives ~50/50 natural balance.
+        # Avoids median-split's zero-sum problem where no real edge exists.
         y = _np_bl.asarray(y, dtype=float)
         _valid = ~_np_bl.isnan(y)
         _yv = y[_valid]
         if len(_yv) == 0:
             return _np_bl.zeros(len(y), dtype=int), _valid
-        _med = _np_bl.median(_yv)
-        _y_int = _np_bl.where(y >= _med, 1, 0).astype(int)
+        # If targets already look like class labels (0/1/2), map to binary
+        _uniq = _np_bl.unique(_yv)
+        if len(_uniq) <= 3 and _uniq.max() <= 2 and _uniq.min() >= 0:
+            _y_int = _np_bl.where(y >= 1, 1, 0).astype(int)  # 0→DOWN, 1/2→UP
+        else:
+            _y_int = _np_bl.where(y > 0, 1, 0).astype(int)   # positive return → UP
         _y_int[~_valid] = 0
         if len(_np_bl.unique(_y_int[_valid])) < 2:
-            _y_int = _y_int.copy(); _y_int[0] = 0; _y_int[-1] = 1
+            # All same sign — fall back to median split
+            _med = _np_bl.median(_yv)
+            _y_int = _np_bl.where(y >= _med, 1, 0).astype(int)
+            _y_int[~_valid] = 0
         return _y_int, _valid
 
     _xgb_orig_fit = _xgb_bl.XGBClassifier.fit
