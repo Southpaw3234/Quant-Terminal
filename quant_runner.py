@@ -1100,57 +1100,76 @@ _META_META_FRAC  = 0.125   # Stacking meta-learner on 87.5-100%
 import xgboost as _xgb8
 import lightgbm as _lgb8
 
-# Patch XGBClassifier to use Huber regression
-# sklearn requires explicit named params in __init__ (no *args/**kwargs)
+# ── Classifier wrappers: keep ORIGINAL classification objectives ──────────────
+# Huber regression objectives caused cascading sklearn label validation failures
+# ("Invalid classes ... Expected: [0], got [0.05]"). The notebook pipeline
+# expects classifiers with discrete integer targets. We keep classification
+# objectives and add a fit() override that converts any continuous float target
+# (from our Cell 6 Huber target patch) to ternary integer labels (0/1/2)
+# so the classifier always receives valid class labels.
+
+def _to_ternary_labels(y):
+    import numpy as _np
+    y = _np.asarray(y, dtype=float)
+    _valid = ~_np.isnan(y)
+    _yv = y[_valid]
+    if len(_yv) == 0:
+        return _np.ones(len(y), dtype=int), _valid
+    if _yv.dtype.kind == "f" or len(_np.unique(_yv)) > 3:
+        _p33, _p67 = _np.percentile(_yv, [33, 67])
+        if _p33 >= _p67:   # degenerate: force spread
+            _p33, _p67 = _np.percentile(_yv, [25, 75])
+        _y_int = _np.where(y < _p33, 0, _np.where(y > _p67, 2, 1)).astype(int)
+        _y_int[~_valid] = 1   # fill NaN rows with HOLD
+    else:
+        _y_int = _np.where(_valid, y.astype(int), 1)
+    # ensure at least 2 unique classes so classifiers don't raise
+    if len(_np.unique(_y_int)) < 2:
+        _y_int = _y_int.copy(); _y_int[0] = 0; _y_int[-1] = 2
+    return _y_int, _valid
+
 _XGBClassifier_orig8 = _xgb8.XGBClassifier
 class XGBClassifier(_XGBClassifier_orig8):
-    def __init__(self, objective="reg:pseudohubererror", eval_metric="mae",
-                 n_estimators=100, max_depth=4, learning_rate=0.05,
-                 subsample=0.8, colsample_bytree=0.8, reg_alpha=0.1,
-                 reg_lambda=1.0, random_state=42, n_jobs=-1, **kwargs):
+    def __init__(self, objective="multi:softprob", eval_metric="mlogloss",
+                 num_class=3, n_estimators=100, max_depth=4,
+                 learning_rate=0.05, subsample=0.8, colsample_bytree=0.8,
+                 reg_alpha=0.1, reg_lambda=1.0, random_state=42,
+                 n_jobs=-1, **kwargs):
         kwargs.pop("use_label_encoder", None)
         super().__init__(
             objective=objective, eval_metric=eval_metric,
-            n_estimators=n_estimators, max_depth=max_depth,
-            learning_rate=learning_rate, subsample=subsample,
-            colsample_bytree=colsample_bytree, reg_alpha=reg_alpha,
-            reg_lambda=reg_lambda, random_state=random_state,
-            n_jobs=n_jobs, **kwargs)
-    def predict_proba(self, X):
-        import numpy as _np8pr
-        raw = self.predict(X)
-        _scale = 0.1
-        prob_up = 1.0 / (1.0 + _np8pr.exp(-raw / _scale))
-        return _np8pr.column_stack([1 - prob_up, prob_up])
+            num_class=num_class, n_estimators=n_estimators,
+            max_depth=max_depth, learning_rate=learning_rate,
+            subsample=subsample, colsample_bytree=colsample_bytree,
+            reg_alpha=reg_alpha, reg_lambda=reg_lambda,
+            random_state=random_state, n_jobs=n_jobs, **kwargs)
+    def fit(self, X, y, **kwargs):
+        _y_int, _ = _to_ternary_labels(y)
+        return super().fit(X, _y_int, **kwargs)
 
 _xgb8.XGBClassifier = XGBClassifier
 
-# Patch LGBMClassifier similarly — explicit params required by sklearn
 _LGBMClassifier_orig8 = _lgb8.LGBMClassifier
 class LGBMClassifier(_LGBMClassifier_orig8):
-    def __init__(self, objective="huber", metric="mae", alpha=0.9,
-                 n_estimators=100, max_depth=4, learning_rate=0.05,
-                 subsample=0.8, colsample_bytree=0.8, reg_alpha=0.1,
-                 reg_lambda=1.0, random_state=42, n_jobs=-1,
-                 verbose=-1, **kwargs):
+    def __init__(self, objective="multiclass", metric="multi_logloss",
+                 num_class=3, n_estimators=100, max_depth=4,
+                 learning_rate=0.05, subsample=0.8, colsample_bytree=0.8,
+                 reg_alpha=0.1, reg_lambda=1.0, random_state=42,
+                 n_jobs=-1, verbose=-1, **kwargs):
         super().__init__(
-            objective=objective, metric=metric, alpha=alpha,
+            objective=objective, metric=metric, num_class=num_class,
             n_estimators=n_estimators, max_depth=max_depth,
             learning_rate=learning_rate, subsample=subsample,
             colsample_bytree=colsample_bytree, reg_alpha=reg_alpha,
             reg_lambda=reg_lambda, random_state=random_state,
             n_jobs=n_jobs, verbose=verbose, **kwargs)
-    def predict_proba(self, X):
-        import numpy as _np8pr
-        raw = self.predict(X)
-        _scale = 0.1
-        prob_up = 1.0 / (1.0 + _np8pr.exp(-raw / _scale))
-        return _np8pr.column_stack([1 - prob_up, prob_up])
+    def fit(self, X, y, **kwargs):
+        _y_int, _ = _to_ternary_labels(y)
+        return super().fit(X, _y_int, **kwargs)
 
 _lgb8.LGBMClassifier = LGBMClassifier
 
-# Patch CatBoostClassifier — convert continuous float target to ternary labels
-# and handle degenerate (single-value) targets gracefully instead of crashing.
+# CatBoost — same ternary label conversion, never raises
 try:
     import catboost as _cb8
     _CatBoostClassifier_orig8 = _cb8.CatBoostClassifier
@@ -1158,44 +1177,28 @@ try:
         def __init__(self, iterations=200, depth=4, learning_rate=0.05,
                      loss_function="MultiClass", eval_metric="Accuracy",
                      random_seed=42, verbose=0, **kwargs):
-            super().__init__(
-                iterations=iterations, depth=depth,
+            super().__init__(iterations=iterations, depth=depth,
                 learning_rate=learning_rate, loss_function=loss_function,
                 eval_metric=eval_metric, random_seed=random_seed,
                 verbose=verbose, **kwargs)
         def fit(self, X, y, **kwargs):
-            import numpy as _np8cb
-            y = _np8cb.asarray(y, dtype=float)
-            # Drop NaN positions from both X and y
-            _valid = ~_np8cb.isnan(y)
+            _y_int, _valid = _to_ternary_labels(y)
             _Xv = X[_valid] if hasattr(X, '__getitem__') else X
-            _yv = y[_valid]
-            # Convert continuous float target → ternary labels (0/1/2)
-            if len(_yv) > 0 and (_yv.dtype.kind == "f" or len(_np8cb.unique(_yv)) > 3):
-                _p33, _p67 = _np8cb.percentile(_yv, [33, 67])
-                _y_int = _np8cb.where(_yv < _p33, 0,
-                         _np8cb.where(_yv > _p67, 2, 1)).astype(int)
-            else:
-                _y_int = _yv.astype(int)
-            # If still degenerate, force minimal 2-class variation so CatBoost
-            # can train (XGB+LGB provide the real signal; CatBoost is a minor
-            # ensemble member). Never raise — a raised exception kills the ticker.
-            if len(_np8cb.unique(_y_int)) < 2:
-                _y_int = _y_int.copy()
-                _y_int[0] = 0
-                _y_int[-1] = 2
-            kwargs.pop("sample_weight", None)  # CatBoost uses Pool for weights
-            return super().fit(_Xv, _y_int, **kwargs)
+            _yv = _y_int[_valid]
+            if len(_np8cb.unique(_yv)) < 2:
+                _yv = _yv.copy(); _yv[0] = 0; _yv[-1] = 2
+            kwargs.pop("sample_weight", None)
+            return super().fit(_Xv, _yv, **kwargs)
+    import numpy as _np8cb
     _cb8.CatBoostClassifier = CatBoostClassifier
-    # Also patch any direct import alias
     import sys as _sys8cb
     if "catboost" in _sys8cb.modules:
         _sys8cb.modules["catboost"].CatBoostClassifier = CatBoostClassifier
-    print("  [patch] CatBoostClassifier patched: continuous→ternary target conversion")
+    print("  [patch] CatBoostClassifier patched: ternary label conversion")
 except ImportError:
     print("  [patch] CatBoost not installed — skipping patch")
 
-print("  [patch] XGBClassifier + LGBMClassifier patched to Huber regression objectives")
+print("  [patch] XGBClassifier + LGBMClassifier: multiclass classification with ternary label conversion")
 
 print("  [patch] EmbargoTimeSeriesSplit, BlockBootstrap, 4-window fractions injected")
 
