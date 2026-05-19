@@ -160,11 +160,11 @@ if RUN_TYPE == "morning":
     if _stored_ver != _MODEL_VERSION:
         _wiped = 0
         for _f in _MODEL_DIR.glob("*.pkl"):
-            if _f.name not in ("model_cache.pkl", "intraday_model.pkl"):
+            if _f.name != "intraday_model.pkl":  # keep intraday, wipe everything else
                 _f.unlink(missing_ok=True)
                 _wiped += 1
         _MODEL_VER_FILE.write_text(_MODEL_VERSION)
-        print(f"  [model ver] Strategy changed ({_stored_ver!r} → {_MODEL_VERSION!r}): wiped {_wiped} stale models — full retrain")
+        print(f"  [model ver] Strategy changed ({_stored_ver!r} → {_MODEL_VERSION!r}): wiped {_wiped} stale models (incl cache) — full retrain")
     else:
         print(f"  [model ver] {_MODEL_VERSION} OK — using cached models")
 
