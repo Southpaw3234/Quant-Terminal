@@ -1279,39 +1279,12 @@ for _rtk8, _rm8 in models.items():
 
 print(f"  [patch] Ridge ensemble members added: {_ridge_added}/{len(models)}")
 
-# ── predict_proba 3-column wrapper ────────────────────────────────────────────
-# Cell 11 indexes predict_proba()[:,2] expecting a 3-class bull-probability.
-# Binary models return 2 columns: [p_bear, p_bull].
-# We wrap each model's predict_proba to return [p_bear, p_neutral=0, p_bull]
-# so [:,2] correctly returns the bull probability from a binary model.
-# This is applied AFTER training so the binary CV/eval harness runs untouched.
-import numpy as _np8pp
-_pp_wrapped = 0
-for _tk8pp, _rm8pp in models.items():
-    for _mkey in ("xgb", "lgb", "cat", "ridge"):
-        _m8pp = _rm8pp.get(_mkey)
-        if _m8pp is None or not hasattr(_m8pp, "predict_proba"):
-            continue
-        if getattr(_m8pp, "_pp3col_wrapped", False):
-            continue  # already wrapped
-        _orig_pp8 = _m8pp.predict_proba
-        def _make_pp3(orig_pp):
-            def _pp3(X, **kw):
-                _p = _np8pp.asarray(orig_pp(X, **kw))
-                if _p.ndim == 1:
-                    # CalWrapper returns 1D P(bull) — reconstruct [P(bear), 0, P(bull)]
-                    _neut = _np8pp.zeros_like(_p)
-                    return _np8pp.column_stack([1.0 - _p, _neut, _p])
-                if _p.ndim == 2 and _p.shape[1] == 2:
-                    _neut = _np8pp.zeros((_p.shape[0], 1))
-                    return _np8pp.hstack([_p[:, :1], _neut, _p[:, 1:]])
-                return _p
-            return _pp3
-        _m8pp.predict_proba = _make_pp3(_orig_pp8)
-        _m8pp._pp3col_wrapped = True
-        _pp_wrapped += 1
-
-print(f"  [patch] predict_proba 3-col wrapper applied to {_pp_wrapped} models (Cell 11 [:,2] fix)")
+# NOTE: No predict_proba wrapper needed.
+# Cell 11 calls model.predict_proba(X)[0,1] — index [row=0, col=1].
+# The notebook's _CalWrapper.predict_proba already returns 2-col [P(bear), P(bull)],
+# so [0,1] correctly retrieves P(bull). Any 3-col wrapper would insert 0 at col 1,
+# breaking all confidence scores. Leave predict_proba untouched.
+print(f"  [patch] predict_proba untouched — CalWrapper returns 2-col [bear,bull], Cell 11 reads [0,1]")
 """
 
 # ── Tier 3 extension: Deflated Sharpe Ratio filter on ensemble models ─────────
