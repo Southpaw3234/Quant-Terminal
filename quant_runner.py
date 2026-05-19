@@ -138,7 +138,7 @@ if RUN_TYPE == "morning" and _KILL_FLAG.exists():
 # Drive sync restores individual model .pkl files trained under a previous label
 # strategy (ternary, median-split). If the version tag doesn't match, delete them
 # so Cell 8 retrains from scratch with the current strategy.
-_MODEL_VERSION   = "sign_based_v1"
+_MODEL_VERSION   = "sign_based_v2"
 _MODEL_VER_FILE  = LOCAL_DATA / "models" / "model_version.txt"
 _MODEL_DIR       = LOCAL_DATA / "models"
 if RUN_TYPE == "morning":
@@ -1205,15 +1205,18 @@ print("  [patch] EmbargoTimeSeriesSplit, BlockBootstrap, 4-window fractions inje
 # short_ratio) are only built when optional API keys are set. Without them,
 # every ticker fails with KeyError, training 0/307 models → 0 signals.
 if "FEATURE_COLS" in dir() and "featured" in dir() and len(featured) > 0:
-    _rep_tk8 = next(iter(featured))
-    _avail_cols8 = set(featured[_rep_tk8].columns)
+    # Use INTERSECTION across ALL tickers — a feature present in only some tickers
+    # (e.g. patent_velocity, which needs optional APIs) would pass a single-ticker
+    # check but crash generate_signal for the other 294 tickers at inference time.
+    _all_col_sets8 = [set(featured[_tk8].columns) for _tk8 in featured]
+    _avail_cols8   = set.intersection(*_all_col_sets8) if _all_col_sets8 else set()
     _missing8 = [c for c in FEATURE_COLS if c not in _avail_cols8]
     if _missing8:
         FEATURE_COLS = [c for c in FEATURE_COLS if c in _avail_cols8]
-        print(f"  [patch] Pruned {len(_missing8)} missing FEATURE_COLS before training: {_missing8[:8]}{'...' if len(_missing8)>8 else ''}")
-        print(f"  [patch] FEATURE_COLS now has {len(FEATURE_COLS)} columns")
+        print(f"  [patch] Pruned {len(_missing8)} FEATURE_COLS not in ALL tickers: {_missing8[:8]}{'...' if len(_missing8)>8 else ''}")
+        print(f"  [patch] FEATURE_COLS now has {len(FEATURE_COLS)} columns (intersection of all {len(featured)} tickers)")
     else:
-        print(f"  [patch] FEATURE_COLS OK: all {len(FEATURE_COLS)} columns present")
+        print(f"  [patch] FEATURE_COLS OK: all {len(FEATURE_COLS)} columns present in all tickers")
 
 # ── Convert continuous targets to binary [0,1] before Optuna/Cell 8 runs ────
 # CELL_6_PREPATCH sets featured[tk]["target"] to z-scored continuous returns.
