@@ -148,6 +148,26 @@ if RUN_TYPE == "morning" and _KILL_FLAG.exists():
     (LOCAL_DATA / "cvar_failure_log.json").unlink(missing_ok=True)
     print("  [kill switch] Auto-cleared after Drive sync — will re-arm if CVaR fails")
 
+# ── Model version check — wipe stale per-ticker models after label strategy change ──
+# Drive sync restores individual model .pkl files trained under a previous label
+# strategy (ternary, median-split). If the version tag doesn't match, delete them
+# so Cell 8 retrains from scratch with the current strategy.
+_MODEL_VERSION   = "binary_sign_v1"
+_MODEL_VER_FILE  = LOCAL_DATA / "models" / "model_version.txt"
+_MODEL_DIR       = LOCAL_DATA / "models"
+if RUN_TYPE == "morning":
+    _stored_ver = _MODEL_VER_FILE.read_text().strip() if _MODEL_VER_FILE.exists() else ""
+    if _stored_ver != _MODEL_VERSION:
+        _wiped = 0
+        for _f in _MODEL_DIR.glob("*.pkl"):
+            if _f.name not in ("model_cache.pkl", "intraday_model.pkl"):
+                _f.unlink(missing_ok=True)
+                _wiped += 1
+        _MODEL_VER_FILE.write_text(_MODEL_VERSION)
+        print(f"  [model ver] Strategy changed ({_stored_ver!r} → {_MODEL_VERSION!r}): wiped {_wiped} stale models — full retrain")
+    else:
+        print(f"  [model ver] {_MODEL_VERSION} OK — using cached models")
+
 # ── GitHub Actions config patch injected into Cell 3 ─────────────────────
 GH_PATCH = """
 import os as _os
