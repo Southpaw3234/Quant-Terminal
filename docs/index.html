@@ -2217,9 +2217,9 @@ function renderLearned(rules, weights, features, calib, accuracy) {
   // Features
   const fb = document.getElementById('feat-box');
   if (features && Object.keys(features).length) {
-    const s = Object.entries(features).sort(([,a],[,b])=>b-a).slice(0,18), mx=s[0][1]||1;
-    fb.innerHTML = s.map(([n,v]) => { const w=(v/mx*100).toFixed(0);
-      return `<div class="bar-row"><div class="bar-lbl">${n}</div><div class="bar-bg"><div class="bar-fill" style="width:${w}%;background:linear-gradient(90deg,var(--bl),var(--pu))">${w>20?v.toFixed(3):''}</div></div><div class="bar-val" style="color:var(--mu)">${v.toFixed(3)}</div></div>`; }).join('');
+    const s = Object.entries(features).map(([n,v])=>[n,parseFloat(v)||0]).sort(([,a],[,b])=>b-a).slice(0,18), mx=s[0][1]||1;
+    fb.innerHTML = s.map(([n,v]) => { const nv=parseFloat(v)||0; const w=(nv/mx*100).toFixed(0);
+      return `<div class="bar-row"><div class="bar-lbl">${n}</div><div class="bar-bg"><div class="bar-fill" style="width:${w}%;background:linear-gradient(90deg,var(--bl),var(--pu))">${w>20?nv.toFixed(3):''}</div></div><div class="bar-val" style="color:var(--mu)">${nv.toFixed(3)}</div></div>`; }).join('');
   }
 
   // Calibration
