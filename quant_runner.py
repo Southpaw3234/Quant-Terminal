@@ -138,7 +138,7 @@ if RUN_TYPE == "morning" and _KILL_FLAG.exists():
 # Drive sync restores individual model .pkl files trained under a previous label
 # strategy (ternary, median-split). If the version tag doesn't match, delete them
 # so Cell 8 retrains from scratch with the current strategy.
-_MODEL_VERSION   = "sign_based_v5"
+_MODEL_VERSION   = "sign_based_v6"
 _MODEL_VER_FILE  = LOCAL_DATA / "models" / "model_version.txt"
 _MODEL_DIR       = LOCAL_DATA / "models"
 if RUN_TYPE == "morning":
@@ -703,7 +703,7 @@ featured = _augmented
 # Rebuild FEATURE_COLS to include new columns
 FEATURE_COLS = [c for c in next(iter(featured.values())).columns
                 if c not in ["Open","High","Low","Close","Volume",
-                             "target","target_tb","target_method","fwd_ret"]]
+                             "target","target_tb","target_tb_raw","target_method","fwd_ret"]]
 
 # ── Fix 7: VIF-based feature redundancy pruning ───────────────────────────────
 # Drop features with Variance Inflation Factor > 10 (multicollinear).
