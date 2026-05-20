@@ -138,7 +138,7 @@ if RUN_TYPE == "morning" and _KILL_FLAG.exists():
 # Drive sync restores individual model .pkl files trained under a previous label
 # strategy (ternary, median-split). If the version tag doesn't match, delete them
 # so Cell 8 retrains from scratch with the current strategy.
-_MODEL_VERSION   = "sign_based_v3"
+_MODEL_VERSION   = "sign_based_v4"
 _MODEL_VER_FILE  = LOCAL_DATA / "models" / "model_version.txt"
 _MODEL_DIR       = LOCAL_DATA / "models"
 if RUN_TYPE == "morning":
@@ -1763,8 +1763,8 @@ import numpy as _np11p
 #   composite_score > HOLD_HI → "BUY"
 #   composite_score < HOLD_LO → "SELL"
 #   otherwise                 → "HOLD" (suppress trade, do not enter)
-_HOLD_HI = 0.55   # must exceed this to be a BUY
-_HOLD_LO = 0.45   # must be below this to be a SELL
+_HOLD_HI = 0.51   # must exceed this to be a BUY (lowered: Huber composite scores cluster at 0.51-0.53)
+_HOLD_LO = 0.49   # must be below this to be a SELL
 _n_buy, _n_hold, _n_sell = 0, 0, 0
 
 # ── Fix B: Conformal prediction uncertainty bands ─────────────────────────────
@@ -1794,10 +1794,9 @@ except Exception as _conf11e:
 # Round-trip cost ≈ 2 × half-spread. For liquid equities assume ~0.05% each way.
 # A trade is only taken if expected alpha (|composite_score - 0.5|) > cost.
 # This filters low-edge signals that are unlikely to cover spread + slippage.
-_ROUND_TRIP_COST_PCT = 0.0010   # 0.10% round-trip (conservative for paper acct)
-# Convert cost to composite_score units: cost of 0.10% ≈ 0.05 shift in prob
-# Using empirical calibration: Δp ≈ Δreturn / 0.02 (2% per unit prob shift)
-_MIN_ALPHA_SCORE = 0.5 + (_ROUND_TRIP_COST_PCT / 0.02)   # ≈ 0.55 (aligns with HOLD_HI)
+_ROUND_TRIP_COST_PCT = 0.0002   # 0.02% round-trip (lowered to match Huber composite score range)
+# Convert cost to composite_score units: Δp ≈ Δreturn / 0.02 (2% per unit prob shift)
+_MIN_ALPHA_SCORE = 0.5 + (_ROUND_TRIP_COST_PCT / 0.02)   # ≈ 0.51 (aligns with HOLD_HI)
 
 # Apply all three fixes in one pass
 if "signals" in dir():
@@ -2242,8 +2241,8 @@ if "regimes" in dir() and regimes is not None and len(regimes) > 0:
 # CELL_11_POSTPATCH already uses HOLD_HI = 0.55 as the BUY gate; aligning
 # MIN_CONFIDENCE to 0.55 ensures Cell 13 actually executes the trades that
 # Cell 11 already labelled as BUY.
-MIN_CONFIDENCE = 0.55
-print(f"  [patch] MIN_CONFIDENCE overridden: 0.65 → 0.55 (aligns with HOLD_HI=0.55)")
+MIN_CONFIDENCE = 0.51
+print(f"  [patch] MIN_CONFIDENCE overridden: 0.65 → 0.51 (aligns with HOLD_HI=0.51)")
 
 # ── Fix: Coerce macro_data["regime"] string → int before Cell 13 line 1000 ───
 # The notebook calls int(macro_data["regime"]) which crashes on "Neutral / Mixed"
