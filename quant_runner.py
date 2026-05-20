@@ -4572,6 +4572,17 @@ try:
                     "regime", "sentiment", "crypto_fg"]:
             _macro_snap[_mk] = _lp.get(_mk, "")
 
+    # Merge in FRED extended series (fed_funds_rate, cpi_yoy, consumer_sentiment,
+    # wheat, oil_wti, gold, silver, nat_gas, copper, y10, y2, hy_spread, gdp_growth, etc.)
+    # _ext is populated by Cell 14; guard against it being undefined on evening/skipped runs.
+    _ext_snap = globals().get("_ext") or {}
+    for _ek, _ev in _ext_snap.items():
+        if _ev is not None:
+            _macro_snap[_ek] = _ev
+    # Alias: dashboard expects consumer_sentiment; predictions CSV stores it as sentiment
+    if "consumer_sentiment" not in _macro_snap and _macro_snap.get("sentiment"):
+        _macro_snap["consumer_sentiment"] = _macro_snap["sentiment"]
+
     # ── Sector rotation scoring ───────────────────────────────────────────────
     _SECTOR_MAP = {
         "Technology":       ["AAPL","MSFT","NVDA","GOOGL","AMZN","META","AVGO","ORCL","ADBE",
