@@ -1855,6 +1855,7 @@ async function doSearch(ticker) {
 
   notFound.style.display = 'none';
   wrap.style.display = 'block';
+  document.getElementById('search-hint').textContent = `${allTickers.length} tickers in watchlist — ${allTickers.slice(0,6).join(', ')}…`;
 
   const latest   = tickerPreds[0];
   const a        = (latest.action||'HOLD').toUpperCase();
