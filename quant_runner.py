@@ -138,7 +138,7 @@ if RUN_TYPE == "morning" and _KILL_FLAG.exists():
 # Drive sync restores individual model .pkl files trained under a previous label
 # strategy (ternary, median-split). If the version tag doesn't match, delete them
 # so Cell 8 retrains from scratch with the current strategy.
-_MODEL_VERSION   = "sign_based_v4"
+_MODEL_VERSION   = "sign_based_v5"
 _MODEL_VER_FILE  = LOCAL_DATA / "models" / "model_version.txt"
 _MODEL_DIR       = LOCAL_DATA / "models"
 if RUN_TYPE == "morning":
@@ -2244,14 +2244,29 @@ if "regimes" in dir() and regimes is not None and len(regimes) > 0:
 MIN_CONFIDENCE = 0.51
 print(f"  [patch] MIN_CONFIDENCE overridden: 0.65 → 0.51 (aligns with HOLD_HI=0.51)")
 
-# ── Fix: Coerce macro_data["regime"] string → int before Cell 13 line 1000 ───
-# The notebook calls int(macro_data["regime"]) which crashes on "Neutral / Mixed"
-if "macro_data" in dir() and isinstance(macro_data, dict):
-    _r13m = macro_data.get("regime", "")
+# ── Fix: Coerce MACRO["macro_regime"] string → int before Cell 13 line 1019 ──
+# The notebook calls int(MACRO.get("macro_regime", 1)) which crashes when the
+# value is a string like "Neutral / Mixed". Coerce to int here.
+def _coerce_regime_val(v):
+    if isinstance(v, (int, float)):
+        return int(v)
+    return _REGIME_STR_MAP13.get(str(v).strip(),
+           _REGIME_STR_MAP13.get(str(v).lower().split("/")[0].strip(), 1))
+
+if "MACRO" in dir() and isinstance(MACRO, dict):
+    _r13m = MACRO.get("macro_regime", 1)
     if isinstance(_r13m, str):
-        _key13m = _r13m.lower().split("/")[0].strip()
-        macro_data["regime"] = _REGIME_STR_MAP13.get(_key13m, _REGIME_STR_MAP13.get(_r13m.strip(), 1))
-        print(f"  [patch] Cell13 macro_data['regime'] coerced: {_r13m!r} -> {macro_data['regime']}")
+        MACRO["macro_regime"] = _coerce_regime_val(_r13m)
+        print(f"  [patch] Cell13 MACRO['macro_regime'] coerced: {_r13m!r} -> {MACRO['macro_regime']}")
+    else:
+        print(f"  [patch] Cell13 MACRO['macro_regime'] already int: {_r13m}")
+
+# Also coerce macro_data["regime"] in case some notebook version uses that name
+if "macro_data" in dir() and isinstance(macro_data, dict):
+    _r13md = macro_data.get("regime", "")
+    if isinstance(_r13md, str):
+        macro_data["regime"] = _coerce_regime_val(_r13md)
+        print(f"  [patch] Cell13 macro_data['regime'] coerced: {_r13md!r} -> {macro_data['regime']}")
 
 # ── Fix: Full SECTOR_MAP override — notebook only has ~16 tickers, causing
 # every S&P500 name to fall into "Other" and breach the 40% sector limit.
