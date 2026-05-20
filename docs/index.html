@@ -1942,7 +1942,7 @@ async function loadBTC() {
     // Draw chart
     const pts    = chart.prices; // [[ts_ms, price], ...]
     const labels = pts.map(([ts])=>new Date(ts).toLocaleDateString('en-US',{month:'short',day:'numeric'}));
-    const data   = pts.map(([,v])=>+v.toFixed(2));
+    const data   = pts.map(([,v])=>v != null ? +parseFloat(v).toFixed(2) : null);
     const ctx    = document.getElementById('btc-chart').getContext('2d');
     if (_btcChart) { _btcChart.destroy(); _btcChart=null; }
     const borderColor = chg30d>=0?'#f0883e':'#f85149';
