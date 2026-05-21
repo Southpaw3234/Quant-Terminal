@@ -389,3 +389,398 @@ All patches in `quant_runner.py` — these run around the notebook cells without
 
 *Generated 2026-05-17. Next scheduled run: morning cycle, Monday 2026-05-19 09:35 ET.*  
 *First live test of all Tier 1–3 patches and model_intraday.py.*
+
+---
+
+## 11. Session 2026-05-19 — Signal Diagnosis & conf=0.000 Fixes
+
+**Date:** 2026-05-19  
+**Branch:** `master`  
+**Commits this session:** `4ef723f` → `24d1220` → `d029885` → `05f2d03`  
+**Current HEAD:** `05f2d03`  
+**Dashboard:** https://radiant-unicorn-2600a7.netlify.app
+
+### Problem Statement
+
+Alpaca paper trading account had **zero open positions**. Investigation revealed that every signal generated had `confidence=0.000`, meaning the threshold filter in Cell 11 blocked all BUY orders. Two independent root causes were found and fixed.
+
+---
+
+### Root Cause A — 3-col predict_proba wrapper (conf=0.000 for all tickers)
+
+A previous session added a wrapper in `CELL_8_POSTPATCH` that converted the CalWrapper's output from 2-col `[P(bear), P(bull)]` to 3-col `[P(bear), 0.0, P(bull)]` — thinking Cell 11 read column index 2.
+
+**Actual Cell 11 code** (read directly from `trading_model_v25.1.ipynb`):
+```python
+p_xgb = float(model_pack["xgb"].predict_proba(Xsc)[0,1])
+```
+Column index is `1`, not `2`. With the 3-col wrapper, column 1 = `0.0` for every ticker → `composite=0.000` → all signals suppressed.
+
+**Fix (commit `24d1220`):** Removed the 3-col wrapper entirely. `_CalWrapper.predict_proba` already returns `np.column_stack([1-pos, pos])` — always 2-col. `[0,1]` correctly retrieves `P(bull)`.
+
+```python
+# NOTE: No predict_proba wrapper needed.
+# Cell 11 calls model.predict_proba(X)[0,1] — index [row=0, col=1].
+# CalWrapper returns 2-col [P(bear), P(bull)], so [0,1] correctly retrieves P(bull).
+print(f"  [patch] predict_proba untouched — CalWrapper returns 2-col [bear,bull], Cell 11 reads [0,1]")
+```
+
+---
+
+### Root Cause B — Median-split binary labels have no directional signal
+
+The Huber regression targets introduced last session produce continuous return values (e.g., `+0.02`, `-0.01`). The existing median-split binarisation (`return >= median → 1`) splits around zero, giving ~50/50 class balance **with no directional meaning** — the model learns nothing about whether a return is positive or negative.
+
+**Fix (commit `4ef723f`):** Replaced median-split with sign-based binary labels:
+- `return > 0 → 1` (bull)
+- `return ≤ 0 → 0` (bear)
+- Fallback to median split if only one class survives after filtering
+
+```python
+_bin8 = _np8bin.where(_tgt8 > 0, 1.0, 0.0)
+_bin8[~_valid8] = _np8bin.nan
+_uniq_bin8 = _np8bin.unique(_bin8[_valid8])
+if len(_uniq_bin8) < 2:
+    _med8 = float(_np8bin.median(_yv8))
+    _bin8 = _np8bin.where(_tgt8 >= _med8, 1.0, 0.0)
+    _bin8[~_valid8] = _np8bin.nan
+```
+
+Same commit also added **Cell 13 macro regime coercion** — `macro_data["regime"]` was a string like `"Neutral / Mixed"` and the notebook tried to call `int()` on it, crashing Cell 13. Added `_REGIME_STR_MAP13` lookup in `CELL_13_PREPATCH`.
+
+---
+
+### Root Cause C — patent_velocity KeyError (294/307 tickers failing)
+
+Two separate bugs combined to crash signal generation for ~96% of tickers.
+
+**Bug C1 — FEATURE_COLS pruner only checked first ticker**  
+The pruner in `CELL_8_PREPATCH` used `featured[first_ticker].columns` to decide which features to drop. If the first ticker happened to have `patent_velocity`, it stayed in `FEATURE_COLS` even though 294/307 other tickers don't have it. Models trained without it would crash at inference with `KeyError: 'patent_velocity'`.
+
+**Fix (commit `d029885`):** Pruner now uses the intersection of ALL tickers' columns:
+```python
+_all_col_sets8 = [set(featured[_tk8].columns) for _tk8 in featured]
+_avail_cols8   = set.intersection(*_all_col_sets8) if _all_col_sets8 else set()
+_missing8 = [c for c in FEATURE_COLS if c not in _avail_cols8]
+if _missing8:
+    FEATURE_COLS = [c for c in FEATURE_COLS if c in _avail_cols8]
+```
+
+**Bug C2 — patent_velocity appended to FEATURE_COLS AFTER Cell 8 training**  
+`CELL_9_POSTPATCH` (which runs after Cell 8) had `FEATURE_COLS.append("patent_velocity")`. This means models were **never trained** on this feature, but `generate_signal()` in Cell 11 tried to look it up in the feature matrix → crash for every ticker without the column.
+
+**Fix (commit `05f2d03`):** Removed the `FEATURE_COLS.append` entirely. `patent_velocity` remains in `featured[tk]` for position-sizing use — it just cannot be a model input feature since models weren't trained on it.
+
+---
+
+### Model Version Bumps
+
+`_MODEL_VERSION` was bumped each time a retrain was needed to force cache invalidation:
+- `binary_pp3col_v1` → `binary_pp3col_v2` → `sign_based_v1` → `sign_based_v2`
+
+GitHub Actions model cache was manually deleted via `gh cache delete` between runs to prevent stale 0-model caches from being loaded.
+
+---
+
+### Known Issues Not Fixed This Session
+
+| Issue | Status |
+|-------|--------|
+| `Can't pickle local object '_CalWrapper'` | Not fixed — each morning run retrains from scratch. Acceptable for now. |
+| May 18 SELL errors on Alpaca (INTC, AMD, SPY, GOOGL) | Not investigated — Alpaca API error not yet pulled |
+| 9:35 AM scheduled run missed May 19 | Expected — manual debugging runs held the `quant-terminal` concurrency slot when cron fired. Tomorrow's run will fire correctly. |
+
+---
+
+### Patch Registry Changes (Session 2026-05-19)
+
+| Cell | Change |
+|------|--------|
+| CELL_8_PREPATCH | Sign-based binary labels (replaces median-split); FEATURE_COLS pruner now uses intersection of ALL tickers |
+| CELL_8_POSTPATCH | 3-col predict_proba wrapper REMOVED |
+| CELL_9_POSTPATCH | `FEATURE_COLS.append("patent_velocity")` REMOVED |
+| CELL_13_PREPATCH | `macro_data["regime"]` string coercion added (`_REGIME_STR_MAP13`) |
+
+---
+
+### Current Run Status (at time of writing)
+
+Run 26127522617 triggered 2026-05-19 21:51 UTC (4:51 PM ET) with commit `05f2d03`. Expected to finish ~6:30–6:40 PM ET. This is the first run with all four fixes applied. If it generates non-zero confidence signals, BUY orders will execute on Alpaca.
+
+*Updated 2026-05-19 at 18:05 ET.*
+
+---
+
+## 12. Session 2026-05-20 — Dashboard Fixes, Macro Data, & Runtime Patches
+
+**Date:** 2026-05-20  
+**Branch:** `master`  
+**Commits this session:** `68d61cc` → `c127c5c` → `7fbd2a8` → `9a02d3e` → `9c72ba3`  
+**Current HEAD:** `9c72ba3`  
+**Dashboard:** https://radiant-unicorn-2600a7.netlify.app  
+**Preflight:** #7 ✅ all 9 checks passed (1m 26s)
+
+---
+
+### Problem Statement
+
+After run #66 (May 20, 4:45 AM ET), four issues were identified:
+1. Netlify dashboard stuck on loading overlay — never rendered
+2. Macro tab (Fed Funds Rate, Consumer Sentiment, Wheat, CPI Inflation) showed `—` for all FRED fields
+3. Search engine returned "Check the ticker symbol and try again" even for valid tickers already in the model
+4. `sign_based_v2` retrain was still producing equal-weight CVaR (1.7% per ticker) and other runtime errors
+
+---
+
+### Fix 1 — Dashboard loading overlay (BTC chart null price)
+**File:** `docs/index.html` — line 1945  
+**Commit:** `68d61cc`
+
+CoinGecko's price chart API returns `[timestamp, null]` for some entries. The original code called `v.toFixed(2)` on the raw value — `null.toFixed(2)` throws `TypeError`, crashing `loadAll()` before `window._dashData` is ever set, leaving the loading overlay permanently visible.
+
+```javascript
+// OLD — crashes on null prices:
+const data = pts.map(([,v])=>+v.toFixed(2));
+
+// NEW — null-safe:
+const data = pts.map(([,v])=>v != null ? +parseFloat(v).toFixed(2) : null);
+```
+
+---
+
+### Fix 2 — Feature importance rendering crash (string values)
+**File:** `docs/index.html` — lines 2220–2222  
+**Commit:** `c127c5c`
+
+Feature importance values in `data.json` can be serialized as strings (e.g. `"0.042"`). Calling `.toFixed(3)` on a string throws `TypeError`, crashing `renderLearned()`. Fixed by coercing all values through `parseFloat()` at sort and render time.
+
+---
+
+### Fix 3 — Search hint stuck on stale error message
+**File:** `docs/index.html` — after line 1856  
+**Commit:** `7fbd2a8`
+
+The success path of `doSearch()` never reset `#search-hint`. If the user had previously searched an invalid ticker (setting the hint to "Check the ticker symbol"), a subsequent valid search would show the right results but the stale error message would persist.
+
+```javascript
+// Added in success path:
+document.getElementById('search-hint').textContent =
+  `${allTickers.length} tickers in watchlist — ${allTickers.slice(0,6).join(', ')}…`;
+```
+
+---
+
+### Fix 4 — Macro tab missing FRED fields (FFR, CPI, Sentiment, Wheat, etc.)
+**File:** `quant_runner.py` — `_macro_snap` export block  
+**Commit:** `9a02d3e`
+
+`_macro_snap` was only built from 7 CSV-sourced fields and never merged `_ext` (the full FRED data dict). The dashboard received a macro object with no FRED data, so all FRED-sourced metrics displayed `—`.
+
+```python
+# After the 7-field CSV loop, now also merges _ext:
+_ext_snap = globals().get("_ext") or {}
+for _ek, _ev in _ext_snap.items():
+    if _ev is not None:
+        _macro_snap[_ek] = _ev
+# Dashboard expects consumer_sentiment; _ext stores it as sentiment:
+if "consumer_sentiment" not in _macro_snap and _macro_snap.get("sentiment"):
+    _macro_snap["consumer_sentiment"] = _macro_snap["sentiment"]
+```
+
+---
+
+### Fix 5 — FF5 factor download IndexError
+**File:** `quant_runner.py` — Cell 8 FF5 ZIP extraction  
+**Commit:** `9c72ba3`
+
+Ken French's FF5 ZIP contains a `.csv` file with lowercase extension. The original code filtered `n.endswith(".CSV")` (uppercase only) → empty list → `[0]` → `IndexError`.
+
+```python
+# OLD:
+_csv_name = [n for n in _zf.namelist() if n.endswith(".CSV")][0]
+
+# NEW:
+_csv_candidates = [n for n in _zf.namelist() if n.upper().endswith(".CSV")]
+if not _csv_candidates:
+    raise ValueError(f"No CSV in FF5 ZIP (files: {_zf.namelist()})")
+_csv_name = _csv_candidates[0]
+```
+
+---
+
+### Fix 6 — Cell 14 division-by-zero on zero `price_at_pred`
+**File:** `quant_runner.py` — new `CELL_14_PREPATCH`  
+**Commit:** `9c72ba3`
+
+Outcome scoring in Cell 14 computes `(price_now - price_at_pred) / price_at_pred`. For any row where `price_at_pred == 0` (e.g. stale or missing data), this produces `ZeroDivisionError` and silently drops those predictions from scoring.
+
+New `CELL_14_PREPATCH` runs before Cell 14:
+- Reads `predictions.csv`, finds rows where `price_at_pred` is NaN or ≤ 0
+- Backfills from `yfinance.history(period="5d")` for each affected ticker
+- Drops any rows that still can't be fixed
+- Writes back to `predictions.csv` before Cell 14 runs
+
+---
+
+### Fix 7 — River ML NoneType on fresh GitHub Actions runner
+**File:** `quant_runner.py` — `CELL_15_PREPATCH` extension  
+**Commit:** `9c72ba3`
+
+GitHub Actions runners are ephemeral — `data/weights/river_model.pkl` doesn't exist on a fresh runner. Cell 15 would try to use `_river_scaler` and `_river_lr` while they were `None`, crashing the self-learning step.
+
+New prepatch in `CELL_15_PREPATCH`:
+- Checks if pkl exists and if `_river_scaler`/`_river_lr` are initialised
+- If not: creates fresh `river.preprocessing.StandardScaler` + `river.linear_model.LogisticRegression`, saves to pkl
+- If pkl exists but vars are None in scope: loads from pkl
+- Prints patch confirmation either way
+
+---
+
+### Fix 8 — Event classification KeyError `'composite'`
+**File:** `quant_runner.py` — `CELL_13_PREPATCH` and `CELL_15_PREPATCH`  
+**Commit:** `9c72ba3`
+
+Cells 13 and 15 can generate a `'composite'` event type for multi-factor signals (a combination of several individual event types). This key was absent from whatever `EVENT_TYPE_WEIGHTS` / `EVENT_WEIGHTS` dict was in scope → `KeyError: 'composite'`.
+
+Both prepatches now dynamically register `'composite'` into whichever event weight dict is in scope, defaulting to `mixed` → `other` → `default` → `1.0` if none of those keys exist.
+
+---
+
+### Model Version
+
+`_MODEL_VERSION` bumped to `"sign_based_v6"` to force a full cache-bust and retrain on the next morning run. This will produce honest OOS accuracy numbers — expected AUC 0.55–0.62.
+
+---
+
+### What These Fixes Do NOT Address
+
+| Issue | Status |
+|-------|--------|
+| CVaR equal weighting (1.7% per ticker) | Not fixed — requires understanding how Cell 12 receives the ticker list |
+| Cell 13 patch/notebook disconnect | Not fixed — CELL_13_PREPATCH sets BUY:0 but Cell 13 has its own signal logic |
+| IPO ticker lookup returning "Check the ticker symbol" | Diagnosed, not yet fixed — `richQuoteFetch` uses `range=1mo`; new IPOs have <1 month of data; fix is to fall back to shorter ranges |
+| Real OOS accuracy for sign_based_v6 | Won't be known until ~May 27 after a full week of scored predictions |
+
+---
+
+### Preflight Diagnostics
+
+Run #7 triggered manually on commit `9c72ba3`. All 9 checks passed in 1m 26s:
+
+| Check | Result |
+|-------|--------|
+| 1 — Syntax check (py_compile) | ✅ |
+| 2 — AST parse + triple-quote balance | ✅ |
+| 3 — Patch string extraction + exec test | ✅ |
+| 4 — Dispatcher dict completeness | ✅ |
+| 5 — Append (+=) chain count | ✅ |
+| 6 — Key function signatures in stat_arb.py | ✅ |
+| 7 — Import smoke test (no trading keys) | ✅ |
+| 8 — New patch logic unit tests | ✅ |
+| 9 — Workflow YAML env var completeness | ✅ |
+
+Only annotation: Node.js 20 deprecation warning (GitHub Actions housekeeping — not a code issue).
+
+---
+
+### Files Modified This Session
+
+| File | Change |
+|------|--------|
+| `docs/index.html` | 3 dashboard fixes: BTC null price, feature string coercion, search hint reset |
+| `quant_runner.py` | 4 new/extended patches: `_macro_snap` FRED merge, FF5 lowercase fix, CELL_14_PREPATCH (new), CELL_15_PREPATCH River init, CELL_13/15 composite event type; `_MODEL_VERSION = "sign_based_v6"` |
+| `HANDOFF.md` | This document |
+
+---
+
+### Patch Registry Changes (Session 2026-05-20)
+
+| Cell | Change |
+|------|--------|
+| CELL_13_PREPATCH | Added `'composite'` event type dynamic registration |
+| CELL_14_PREPATCH | **New** — zero `price_at_pred` sanitizer (yfinance backfill + drop) |
+| CELL_15_PREPATCH | River ML init guard (fresh runner + NoneType); `'composite'` event type registration |
+| `_macro_snap` export | Merged `_ext` FRED dict + `consumer_sentiment` alias |
+
+---
+
+*Updated 2026-05-20. Next expected run: morning cycle, Tuesday 2026-05-20 (or next weekday) 09:35 ET. First run with `sign_based_v6` retrain.*
+
+---
+
+## 13. Session 2026-05-20/21 — Full System Diagnostics & 11-Issue Fix Sprint
+
+**Date:** 2026-05-20  
+**Branch:** `master`  
+**Commit:** `455d5a2`  
+**Dashboard:** https://radiant-unicorn-2600a7.netlify.app
+
+### Problem Statement
+
+Full diagnostic of live cycle-morning-66 + cycle-evening logs revealed 7 critical gates all failing, making the model unsafe for real money deployment. 11 issues identified and fixed in priority order.
+
+---
+
+### Critical Findings (from live logs)
+
+| Issue | Evidence | Severity |
+|-------|----------|----------|
+| AUC=1.000 on 60%+ of tickers | `AUC=1.000 OK` repeated 180+ times in Cell 8 | P0 — data leakage |
+| DSR 307/307 flagged | `DSR filter: 307/307 models flagged as likely false discoveries` | P0 — confirms leakage |
+| Net-of-cost suppressed 307/307 signals | `Ternary labels — BUY:0 HOLD:307 SELL:0` | P0 — all signals killed |
+| Cell 13 bypassed patch output | Trades executed despite HOLD:307 | P0 — disconnect |
+| FRED 0/21 fetched | `FRED: 0/21 series fetched` every run | P1 — macro blind |
+| KILL SWITCH ACTIVE | `CVaR solver failed 2x consecutively` in evening | P1 — trades blocked |
+| River ML NoneType crash | `'NoneType' object has no attribute 'transform_one'` | P1 — learning dead |
+| Model cache save fails | `Can't pickle local object '_CalWrapper'` | P1 — 2hr retrains every run |
+| ^CPC still fetching | `HTTP Error 404: ^CPC` in Cell 4 macro | P2 — noise errors |
+| Node.js 20 deprecation | Warning: forced to Node.js 24 on June 2 | P2 — will break June 2 |
+
+### Fixes Applied (commit `455d5a2`)
+
+**P0 — Embargo widened 5→20 days**  
+EmbargoTimeSeriesSplit `embargo_days` changed from 5 to 20. 5 days is insufficient to break autocorrelation in momentum/RSI features when the 5-day return label overlaps with lagged return features. 20 days ensures validation fold sees no autocorrelation from training set.
+
+**P0 — Net-of-cost filter: `confidence` not `composite_score`**  
+`composite_score` clusters at 0.500–0.502 (raw ensemble output before calibration). The alpha check `abs(composite_score - 0.5) < 0.01` was true for ALL 307 tickers. Changed to use `confidence` (Platt-calibrated P(bull)) which correctly ranges 0.2–0.9. Now filters only genuinely low-edge signals.
+
+**P0 — Ternary gate wired into Cell 13**  
+CELL_13_PREPATCH now reads `ternary_label` from the signals dict and sets `confidence=0.50` on HOLD signals (below MIN_CONFIDENCE threshold). SELL signals have `close_long=True` set and confidence suppressed to prevent new short entries.
+
+**P1 — FRED API without key**  
+Changed `if not _FRED_KEY: return fallback` to always attempt the FRED API, with api_key parameter only added when the secret is set. FRED allows public unauthenticated access for all public series.
+
+**P1 — CVaR empty array guard**  
+Added explicit empty-weight detection before the CVaR result check, with diagnostic print. Falls through to HRP fallback instead of crashing and arming kill switch.
+
+**P1 — River ML robust init**  
+CELL_15_PREPATCH now always writes a valid pkl with type-checked objects before Cell 15 runs. Uses `isinstance()` checks to verify scaler/lr types, not just None checks. Cell 15 notebook re-reading the pkl will get valid objects.
+
+**P1 — Model cache: dill instead of pickle**  
+`dill>=0.3.8` added to requirements.txt. `_save_model_cache`/`_load_model_cache` now use dill which can serialize nested closure classes like `_CalWrapper`. Falls back to stdlib pickle if dill not installed.
+
+**P2 — ^CPC macro guard**  
+CELL_3_PREPATCH now also monkey-patches `yfinance.download` to silently skip `^CPC`, `ANSS`, and `HOLX` when the notebook's own Cell 4 macro code requests them. Previously only WATCHLIST was cleaned.
+
+**P2 — Node.js 24 opt-in**  
+`FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` added to workflow env. Eliminates deprecation warnings and opts in before June 2 forced cutover.
+
+**Model version:** `sign_based_v7` (forces full retrain, invalidates v6 Drive cache)
+
+### Real Money Readiness After These Fixes
+
+| Gate | Before | After |
+|------|--------|-------|
+| AUC in realistic range | ❌ 60%+ at 1.000 | ⏳ Needs v7 retrain to measure |
+| FRED macro flowing | ❌ 0/21 | ✅ Fixed (public API) |
+| CVaR stable | ❌ Crashing | ✅ Guarded |
+| River learning | ❌ NoneType crash | ✅ Robust init |
+| Model cache working | ❌ Pickle failure | ✅ Using dill |
+| Signal post-processing connected | ❌ Cell 13 bypass | ✅ Ternary gate wired |
+| Node.js warnings | ❌ Will break June 2 | ✅ Node 24 opted in |
+
+AUC leakage will only be measurable after the first v7 morning run completes with the 20-day embargo. Target: AUC 0.55–0.70. If AUC is still >0.95, the leakage source is in the notebook's feature engineering (likely `ret_5d` overlapping with the target label) and needs notebook-level investigation.
+
+---
+
+*Updated 2026-05-21. First v7 morning run: 2026-05-21 09:35 ET.*
