@@ -1198,6 +1198,7 @@ tr:hover td{background:rgba(88,166,255,.04)}
 <script>
 let _D = null;
 let _preds = [];
+let _allTickers = [];   // module-level so doSearch() can reference it
 let _pnlChart = null;
 let _btcChart = null;
 
@@ -1459,6 +1460,7 @@ function filterPreds() {
 
 function renderPredictions(preds) {
   _preds = preds;
+  _allTickers = [...new Set(preds.map(p => p.ticker))].sort();
   const sc = preds.filter(p=>p.scored==='True'||p.scored==='true');
   const ok = sc.filter(p=>p.was_correct==='True'||p.was_correct==='true');
   document.getElementById('c-pred').textContent = preds.length;
@@ -1582,15 +1584,72 @@ function generateExplanation(ticker, latest, allPreds) {
 
 // ── Symbol search (autocomplete + name→ticker resolution) ─────────────────
 let _acCache = {};
+// Built-in name→ticker map for the model watchlist (CORS-safe, instant)
+const _NAME_MAP = {
+  'apple':'AAPL','microsoft':'MSFT','nvidia':'NVDA','google':'GOOGL','alphabet':'GOOGL',
+  'amazon':'AMZN','meta':'META','facebook':'META','tesla':'TSLA','broadcom':'AVGO',
+  'oracle':'ORCL','adobe':'ADBE','salesforce':'CRM','servicenow':'NOW','palantir':'PLTR',
+  'snowflake':'SNOW','datadog':'DDOG','zscaler':'ZS','crowdstrike':'CRWD','palo alto':'PANW',
+  'shopify':'SHOP','workday':'WDAY','atlassian':'TEAM','intuit':'INTU','cadence':'CDNS',
+  'synopsys':'SNPS','fortinet':'FTNT','arista':'ANET','accenture':'ACN','ibm':'IBM',
+  'cisco':'CSCO','paypal':'PYPL','coinbase':'COIN','affirm':'AFRM','robinhood':'HOOD',
+  'amd':'AMD','advanced micro':'AMD','intel':'INTC','qualcomm':'QCOM','applied materials':'AMAT',
+  'micron':'MU','texas instruments':'TXN','lam research':'LRCX','kla':'KLAC',
+  'analog devices':'ADI','marvell':'MRVL','asml':'ASML','microchip':'MCHP',
+  'jpmorgan':'JPM','jp morgan':'JPM','visa':'V','mastercard':'MA','bank of america':'BAC',
+  'goldman':'GS','morgan stanley':'MS','blackrock':'BLK','american express':'AXP',
+  'wells fargo':'WFC','citigroup':'C','schwab':'SCHW','progressive':'PGR',
+  'unitedhealth':'UNH','eli lilly':'LLY','lilly':'LLY','johnson':'JNJ','abbvie':'ABBV',
+  'merck':'MRK','thermo fisher':'TMO','abbott':'ABT','danaher':'DHR','pfizer':'PFE',
+  'amgen':'AMGN','cvs':'CVS','cigna':'CI','humana':'HUM','boston scientific':'BSX',
+  'walmart':'WMT','home depot':'HD','nike':'NKE','lowes':'LOW','starbucks':'SBUX',
+  'chipotle':'CMG','mcdonalds':'MCD','costco':'COST','target':'TGT','netflix':'NFLX',
+  'disney':'DIS','comcast':'CMCSA','verizon':'VZ','att':'T','t-mobile':'TMUS',
+  'exxon':'XOM','chevron':'CVX','conocophillips':'COP','schlumberger':'SLB',
+  'boeing':'BA','caterpillar':'CAT','deere':'DE','honeywell':'HON',
+  'ups':'UPS','fedex':'FDX','uber':'UBER','airbnb':'ABNB','booking':'BKNG',
+  'linde':'LIN','air products':'APD','sherwin':'SHW','newmont':'NEM','freeport':'FCX',
+  'american tower':'AMT','prologis':'PLD','equinix':'EQIX','crown castle':'CCI',
+  'nextera':'NEE','duke':'DUK','southern':'SO',
+  'spy':'SPY','qqq':'QQQ','iwm':'IWM','gld':'GLD','tlt':'TLT',
+  'bitcoin':'BTC-USD','ethereum':'ETH-USD','solana':'SOL-USD',
+};
+
 async function symbolSearch(query) {
   if (_acCache[query]) return _acCache[query];
+  const q = query.toLowerCase().trim();
+
+  // 1. Exact ticker match in model tickers (instant, no network)
+  const exactTk = _allTickers.find(t => t.toLowerCase() === q);
+  if (exactTk) {
+    const r = [{ symbol: exactTk, name: exactTk, exchange: '', type: 'EQUITY' }];
+    _acCache[query] = r; return r;
+  }
+
+  // 2. Model ticker prefix/contains match (instant, no network)
+  const tkMatches = _allTickers
+    .filter(t => t.toLowerCase().startsWith(q) || t.toLowerCase().includes(q))
+    .slice(0, 5)
+    .map(t => ({ symbol: t, name: t, exchange: '', type: 'EQUITY' }));
+
+  // 3. Built-in name map (instant, CORS-safe)
+  const nameHits = Object.entries(_NAME_MAP)
+    .filter(([name]) => name.includes(q))
+    .map(([, sym]) => ({ symbol: sym, name: sym, exchange: '', type: 'EQUITY' }))
+    .filter(r => !tkMatches.find(m => m.symbol === r.symbol))
+    .slice(0, 4);
+
+  const localResults = [...tkMatches, ...nameHits];
+  if (localResults.length) { _acCache[query] = localResults; return localResults; }
+
+  // 4. Yahoo Finance fallback (may be blocked by CORS on some hosts)
   try {
-    const url = `https://query2.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(query)}&quotesCount=8&newsCount=0&listsCount=0`;
+    const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(query)}&quotesCount=8&newsCount=0&listsCount=0`;
     const r = await fetch(url, {signal: AbortSignal.timeout(4000)});
     if (!r.ok) throw new Error('HTTP '+r.status);
     const d = await r.json();
     const results = (d.quotes || [])
-      .filter(q => q.quoteType === 'EQUITY' || q.quoteType === 'ETF' || q.quoteType === 'MUTUALFUND')
+      .filter(q => q.quoteType === 'EQUITY' || q.quoteType === 'ETF')
       .map(q => ({ symbol: q.symbol, name: q.longname || q.shortname || q.symbol, exchange: q.exchange || '', type: q.quoteType || '' }));
     _acCache[query] = results;
     return results;
@@ -1784,8 +1843,7 @@ function onSearch(val) {
   const trimmed = val.trim();
   if (!trimmed) {
     closeAC();
-    const allTickers = [...new Set(_preds.map(p=>p.ticker))].sort();
-    document.getElementById('search-hint').textContent = `${allTickers.length} tickers in model — ${allTickers.slice(0,6).join(', ')}…`;
+    document.getElementById('search-hint').textContent = `${_allTickers.length} tickers in model — ${_allTickers.slice(0,6).join(', ')}…`;
     document.getElementById('result-wrap').style.display  = 'none';
     document.getElementById('not-found').style.display    = 'none';
     return;
@@ -1826,8 +1884,7 @@ async function doSearch(ticker) {
 
   if (!ticker || ticker.length < 1) {
     wrap.style.display = 'none'; notFound.style.display = 'none';
-    const allTickers = [...new Set(_preds.map(p=>p.ticker))].sort();
-    document.getElementById('search-hint').textContent = `${allTickers.length} tickers in model — ${allTickers.slice(0,6).join(', ')}…`;
+    document.getElementById('search-hint').textContent = `${_allTickers.length} tickers in model — ${_allTickers.slice(0,6).join(', ')}…`;
     return;
   }
 
@@ -1855,7 +1912,7 @@ async function doSearch(ticker) {
 
   notFound.style.display = 'none';
   wrap.style.display = 'block';
-  document.getElementById('search-hint').textContent = `${allTickers.length} tickers in watchlist — ${allTickers.slice(0,6).join(', ')}…`;
+  document.getElementById('search-hint').textContent = `${_allTickers.length} tickers in watchlist — ${_allTickers.slice(0,6).join(', ')}…`;
 
   const latest   = tickerPreds[0];
   const a        = (latest.action||'HOLD').toUpperCase();
