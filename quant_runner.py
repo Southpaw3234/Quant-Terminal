@@ -2478,6 +2478,60 @@ if _orig_signals_13:
             _n_sell_close += 1
     print(f"  [patch] Ternary gate: {_n_ternary_blocked} HOLD signals suppressed, "
           f"{_n_sell_close} SELL signals converted to close-long")
+
+# ── Fix: Force UTF-8 on requests.Session so alpaca-py never hits latin-1 ─────
+# alpaca-py uses requests internally. When Alpaca returns an error response
+# without an explicit charset, requests defaults to latin-1, which crashes on
+# any unicode char in the response body.  Patching Session.send() to force
+# utf-8 before returning eliminates the 'latin-1 codec can't encode' error.
+try:
+    import requests as _req13fix
+    _orig_send_13 = _req13fix.Session.send
+    def _utf8_send_13(self, *args, **kwargs):
+        resp = _orig_send_13(self, *args, **kwargs)
+        resp.encoding = "utf-8"
+        return resp
+    _req13fix.Session.send = _utf8_send_13
+    print("  [patch] requests.Session.send patched: responses forced to UTF-8 (Alpaca fix)")
+except Exception as _rf13e:
+    print(f"  [patch] requests UTF-8 patch skipped: {_rf13e}")
+
+# ── Fix: Cash guard — cap BUY signals to what PORTFOLIO_CAPITAL can fund ─────
+# Kelly sizing can assign qty to 100+ tickers, but the portfolio only has
+# PORTFOLIO_CAPITAL to spend. Rank BUY signals by confidence desc, allow
+# only as many as MAX_POSITION_PCT * PORTFOLIO_CAPITAL budgets for.
+try:
+    import pandas as _pd13cg
+    from pathlib import Path as _P13cg
+    _pt_cg = _P13cg("data/paper_trades/paper_trades.csv")
+    _spent_cg = 0.0
+    if _pt_cg.exists():
+        _df_cg = _pd13cg.read_csv(_pt_cg)
+        _df_cg["qty"]   = _pd13cg.to_numeric(_df_cg["qty"],   errors="coerce").fillna(0)
+        _df_cg["price"] = _pd13cg.to_numeric(_df_cg["price"], errors="coerce").fillna(0)
+        _df_cg["notional"] = _df_cg["qty"] * _df_cg["price"]
+        _spent_cg = (_df_cg[_df_cg["action"]=="BUY"]["notional"].sum()
+                     - _df_cg[_df_cg["action"]=="SELL"]["notional"].sum())
+    _avail_cg = max(0.0, PORTFOLIO_CAPITAL - _spent_cg)
+    # Max new positions = floor(available_cash / min_position_size)
+    _min_pos_size = PORTFOLIO_CAPITAL * MAX_POSITION_PCT   # e.g. $500 at 5%
+    _max_new_buys = max(1, int(_avail_cg / _min_pos_size)) if _min_pos_size > 0 else 20
+    # Sort BUY signals by confidence desc, suppress beyond budget
+    _buy_sigs_cg = sorted(
+        [(tk, sig) for tk, sig in signals.items()
+         if sig.get("ternary_label", "BUY") == "BUY" and sig.get("confidence", 0) >= 0.51],
+        key=lambda x: x[1].get("confidence", 0),
+        reverse=True
+    )
+    _blocked_cg = 0
+    for _i_cg, (_tk_cg, _) in enumerate(_buy_sigs_cg):
+        if _i_cg >= _max_new_buys:
+            signals[_tk_cg]["confidence"] = 0.50   # push below MIN_CONFIDENCE
+            _blocked_cg += 1
+    print(f"  [patch] Cash guard: ${_avail_cg:,.0f} available → max {_max_new_buys} new BUYs, "
+          f"blocked {_blocked_cg} low-confidence excess signals")
+except Exception as _cg13e:
+    print(f"  [patch] Cash guard error (non-fatal): {_cg13e}")
 """
 
 # ── Tier 2 extension: adaptive TWAP execution helpers ────────────────────────
