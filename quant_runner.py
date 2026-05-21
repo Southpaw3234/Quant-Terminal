@@ -138,7 +138,7 @@ if RUN_TYPE == "morning" and _KILL_FLAG.exists():
 # Drive sync restores individual model .pkl files trained under a previous label
 # strategy (ternary, median-split). If the version tag doesn't match, delete them
 # so Cell 8 retrains from scratch with the current strategy.
-_MODEL_VERSION   = "sign_based_v7"
+_MODEL_VERSION   = "sign_based_v8"
 _MODEL_VER_FILE  = LOCAL_DATA / "models" / "model_version.txt"
 _MODEL_DIR       = LOCAL_DATA / "models"
 if RUN_TYPE == "morning":
@@ -711,9 +711,11 @@ def _augment_ticker(tk_df_pair):
                         if "target_method" in fd.columns else True
         if _is_quintile and "fwd_ret" in fd.columns:
             _fr = fd["fwd_ret"]
-            _roll_mean = _fr.rolling(252, min_periods=63).mean()
-            _roll_std  = _fr.rolling(252, min_periods=63).std().clip(1e-6)
-            # z-score: keeps scale consistent across different volatility regimes
+            # Shift by FORECAST_DAYS so rolling stats at date T use only returns
+            # realized before T — prevents label leakage (root cause of AUC=1.000)
+            _fr_hist = _fr.shift(FORECAST_DAYS)
+            _roll_mean = _fr_hist.rolling(252, min_periods=63).mean()
+            _roll_std  = _fr_hist.rolling(252, min_periods=63).std().clip(1e-6)
             fd["target"] = (_fr - _roll_mean) / _roll_std
             fd["target_method"] = "continuous_zscore"
 
@@ -1208,7 +1210,7 @@ try:
             _valid = ~_np8cb.isnan(y_a)
             _yv = y_a[_valid]
             _med = _np8cb.median(_yv) if len(_yv) else 0.0
-            _y_int = _np8cb.where(y_a >= _med, 1, 0).astype(int)
+            _y_int = _np8cb.where(y_a >= _med, 1, 0).astype(_np8cb.int32)
             _y_int[~_valid] = 0
             _Xv = X[_valid] if hasattr(X, '__getitem__') else X
             _yv2 = _y_int[_valid]
@@ -1298,7 +1300,7 @@ for _rtk8, _rm8 in models.items():
         if len(_fd8) < 50:
             continue
         _Xr8  = _scl8.transform(_fd8[FEATURE_COLS].values)
-        _yr8  = _fd8["target"].values.astype(int)
+        _yr8  = _np8p.rint(_fd8["target"].values).astype(_np8p.int32)
         if len(_np8p.unique(_yr8)) < 2:
             continue
         _ridge8 = _RidgeCls8(alpha=1.0)
@@ -2623,6 +2625,39 @@ try:
 except Exception:
     pass
 
+# ── Execute close_long for SELL-labelled tickers ──────────────────────────────
+# CELL_13_PREPATCH marks signals[tk]["close_long"] = True for ternary SELL tickers.
+# Here we actually close the Alpaca paper position for those tickers.
+try:
+    import requests as _req13cl
+    _close_long_tickers = [
+        _tk13cl for _tk13cl, _sig13cl in (signals.items() if "signals" in dir() else {}.items())
+        if _sig13cl.get("close_long")
+    ]
+    if _close_long_tickers and ALPACA_API_KEY and ALPACA_SECRET_KEY:
+        from alpaca.trading.client import TradingClient as _TC13
+        from alpaca.trading.requests import MarketOrderRequest as _MOR13
+        from alpaca.trading.enums import OrderSide as _OS13, TimeInForce as _TIF13
+        _tc13 = _TC13(ALPACA_API_KEY, ALPACA_SECRET_KEY, paper=True)
+        _n_closed = 0
+        for _cl_tk in _close_long_tickers:
+            try:
+                _pos = _tc13.get_open_position(_cl_tk)
+                _qty = abs(int(float(_pos.qty)))
+                if _qty > 0:
+                    _req13 = _MOR13(symbol=_cl_tk, qty=_qty,
+                                    side=_OS13.SELL, time_in_force=_TIF13.DAY)
+                    _tc13.submit_order(_req13)
+                    _n_closed += 1
+            except Exception:
+                pass  # no open position or API error — skip
+        print(f"  [patch] close_long: closed {_n_closed}/{len(_close_long_tickers)} SELL positions")
+    elif _close_long_tickers:
+        print(f"  [patch] close_long: {len(_close_long_tickers)} SELL tickers — Alpaca keys not set, skipped")
+except Exception as _cl13e:
+    print(f"  [patch] close_long error (non-fatal): {_cl13e}")
+
+
 # Apply conformal Kelly discounts to paper_trades.csv.
 # _CONFORMAL_KELLY_MAP was built in CELL_13_PREPATCH; scale today's new orders.
 try:
@@ -3019,7 +3054,7 @@ def _make_regime_sample_weights(df, regime_col="regime_hmm"):
     try:
         if regime_col not in df.columns:
             return None
-        _reg_arr = _np8rw.array(df[regime_col].fillna(1).astype(int).values)
+        _reg_arr = _np8rw.array(df[regime_col].fillna(1).values, dtype=_np8rw.int32)
         _weights  = _np8rw.ones(len(_reg_arr), dtype=float)
         for _i, _r in enumerate(_reg_arr):
             _weights[_i] = _REGIME_SAMPLE_WEIGHTS.get(
@@ -4615,8 +4650,8 @@ try:
                     _ed.index = _ed.index.tz_localize(None) if hasattr(_ed.index, 'tz') and _ed.index.tz else _ed.index
                     _future = _ed[_ed.index.date >= _today_dt - datetime.timedelta(days=2)]
                     if not _future.empty:
-                        _row   = _future.iloc[-1]   # earliest upcoming row
-                        _edate = _future.index[-1].date().isoformat()
+                        _row   = _future.iloc[0]    # nearest upcoming row
+                        _edate = _future.index[0].date().isoformat()
                         _raw_eps = _row.get("EPS Estimate") if hasattr(_row, "get") else None
                         if _raw_eps is not None:
                             try:
