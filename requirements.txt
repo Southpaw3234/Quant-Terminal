@@ -25,3 +25,4 @@ numba>=0.61
 threadpoolctl>=3.1
 vaderSentiment>=3.3.2
 statsmodels>=0.14
+dill>=0.3.8

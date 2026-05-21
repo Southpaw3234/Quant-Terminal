@@ -138,7 +138,7 @@ if RUN_TYPE == "morning" and _KILL_FLAG.exists():
 # Drive sync restores individual model .pkl files trained under a previous label
 # strategy (ternary, median-split). If the version tag doesn't match, delete them
 # so Cell 8 retrains from scratch with the current strategy.
-_MODEL_VERSION   = "sign_based_v6"
+_MODEL_VERSION   = "sign_based_v7"
 _MODEL_VER_FILE  = LOCAL_DATA / "models" / "model_version.txt"
 _MODEL_DIR       = LOCAL_DATA / "models"
 if RUN_TYPE == "morning":
@@ -312,8 +312,37 @@ if "WATCHLIST" in dir():
         print(f"  [patch] Removed {_removed} delisted tickers from WATCHLIST: {_REMOVE_TICKERS}")
 
 # Guard against ^CPC (CBOE put/call macro index — not a stock, 404s on yfinance)
+# Remove from WATCHLIST AND patch yfinance.download so the notebook's Cell 4
+# macro fetch (which hard-codes ^CPC in its own ticker list) returns empty data
+# silently instead of spamming 404 errors.
 if "WATCHLIST" in dir():
     WATCHLIST = [t for t in WATCHLIST if t != "^CPC"]
+
+import yfinance as _yf_cpc_patch
+_yf_cpc_orig_download = _yf_cpc_patch.download
+
+def _yf_cpc_download_guard(*args, **kwargs):
+    import pandas as _pd_cpc
+    _tickers = args[0] if args else kwargs.get("tickers", "")
+    if isinstance(_tickers, str):
+        _tickers_list = _tickers.split()
+    else:
+        _tickers_list = list(_tickers)
+    _BAD_MACRO = {"^CPC", "ANSS", "HOLX"}
+    _clean = [t for t in _tickers_list if t not in _BAD_MACRO]
+    if len(_clean) < len(_tickers_list):
+        _skipped = set(_tickers_list) - set(_clean)
+        print(f"  [patch] yfinance: skipping broken macro tickers: {_skipped}")
+        if not _clean:
+            return _pd_cpc.DataFrame()
+        if args:
+            args = (_clean,) + args[1:]
+        else:
+            kwargs["tickers"] = _clean
+    return _yf_cpc_orig_download(*args, **kwargs)
+
+_yf_cpc_patch.download = _yf_cpc_download_guard
+print("  [patch] yfinance.download: ^CPC/ANSS/HOLX guarded from macro fetch")
 """
 
 # ── CELL 5 PREPATCH: extend download history to 10 years ─────────────────────
@@ -1062,7 +1091,7 @@ class TimeSeriesSplit:
     of the data so hyperparameter selection cannot see the validation window
     (75-87.5%) or calibration window (87.5-100%).
     \"\"\"
-    def __init__(self, n_splits=5, embargo_days=5, optuna_fraction=0.625, **kwargs):
+    def __init__(self, n_splits=5, embargo_days=20, optuna_fraction=0.625, **kwargs):
         self._n_splits       = n_splits
         self._embargo        = embargo_days
         self._optuna_fraction = optuna_fraction
@@ -1799,40 +1828,44 @@ _ROUND_TRIP_COST_PCT = 0.0002   # 0.02% round-trip (lowered to match Huber compo
 _MIN_ALPHA_SCORE = 0.5 + (_ROUND_TRIP_COST_PCT / 0.02)   # ≈ 0.51 (aligns with HOLD_HI)
 
 # Apply all three fixes in one pass
+# ROOT CAUSE FIX: composite_score clusters near 0.5 (raw ensemble output) while
+# confidence is the Platt-calibrated P(bull) used by Cell 13. Using composite_score
+# for the alpha check was causing 307/307 signals to be filtered as HOLD even when
+# confidence was 0.84+. We now use confidence for both the cost filter and ternary
+# labels, which is consistent with what Cell 13 actually executes on.
 if "signals" in dir():
     _n_adjusted_conf = 0
     _n_filtered_cost = 0
     for _tk11, _sig11 in signals.items():
-        _cs_val = _sig11.get("composite_score", 0.5)
+        # Use confidence (calibrated P(bull)) — consistent with Cell 13's MIN_CONFIDENCE
+        _conf_val = _sig11.get("confidence", _sig11.get("composite_score", 0.5))
         try:
-            _cs_val = float(_cs_val)
+            _conf_val = float(_conf_val)
         except Exception:
             continue
 
-        # Conformal band adjustment
+        # Conformal band adjustment (operates on confidence directly)
         if _q90_11 is not None:
-            _dist = abs(_cs_val - 0.5)
+            _dist = abs(_conf_val - 0.5)
             if _dist < _q90_11:
                 _scale = _dist / max(_q90_11, 0.01)
-                signals[_tk11]["confidence"] = (
-                    0.5 + (_sig11.get("confidence", 0.5) - 0.5) * _scale)
+                _conf_val = 0.5 + (_conf_val - 0.5) * _scale
+                signals[_tk11]["confidence"] = _conf_val
                 _n_adjusted_conf += 1
 
-        # Net-of-cost filter: suppress trades where edge < round-trip cost
-        _alpha = abs(_cs_val - 0.5)
+        # Net-of-cost filter: edge = |P(bull) - 0.5|; must exceed cost in prob units
+        _alpha = abs(_conf_val - 0.5)
         if _alpha < (_MIN_ALPHA_SCORE - 0.5):
-            # Mark as HOLD regardless of BUY/SELL probability
             signals[_tk11]["net_of_cost_hold"] = True
             _n_filtered_cost += 1
         else:
             signals[_tk11]["net_of_cost_hold"] = False
 
-        # Ternary label (uses post-conformal composite_score if adjusted)
-        _cs_final = float(signals[_tk11].get("composite_score", _cs_val))
-        if _cs_final > _HOLD_HI and not signals[_tk11].get("net_of_cost_hold"):
+        # Ternary label using calibrated confidence (same field Cell 13 reads)
+        if _conf_val > _HOLD_HI and not signals[_tk11].get("net_of_cost_hold"):
             signals[_tk11]["ternary_label"] = "BUY"
             _n_buy += 1
-        elif _cs_final < _HOLD_LO and not signals[_tk11].get("net_of_cost_hold"):
+        elif _conf_val < _HOLD_LO and not signals[_tk11].get("net_of_cost_hold"):
             signals[_tk11]["ternary_label"] = "SELL"
             _n_sell += 1
         else:
@@ -2056,9 +2089,20 @@ from pathlib import Path as _P12p
 import json as _j12p
 
 # ── CVaR result check ────────────────────────────────────────────────────────
+# Guard: CVaR crashes with "index -1 is out of bounds for axis 0 with size 0"
+# when the weights/returns matrix is empty (all signals were HOLD). Detect this
+# before indexing and fall straight through to HRP fallback.
 _cvar_ns = globals()
 _cvar_ok  = any(isinstance(_cvar_ns.get(k), dict) and len(_cvar_ns[k]) > 0
                 for k in ["portfolio_weights", "cvar_weights", "weights"])
+# Also check for numpy/list weights that may be empty
+if not _cvar_ok:
+    for _wk in ["weights", "cvar_weights"]:
+        _wv = _cvar_ns.get(_wk)
+        if _wv is not None and hasattr(_wv, "__len__") and len(_wv) > 0:
+            _cvar_ok = True
+            break
+print(f"  [patch] CVaR result check: {'OK' if _cvar_ok else 'EMPTY — falling back to HRP'}")
 
 # ── HRP blend / fallback ─────────────────────────────────────────────────────
 # Build returns matrix from featured data to compute covariance for HRP.
@@ -2408,6 +2452,30 @@ if "MAX_POSITION_PCT" in dir():
 else:
     print(f"  [patch] Kelly regime fix: MAX_POSITION_PCT not yet defined "
           f"(will apply at runtime, regime={_current_regime13})")
+
+# ── Fix: Wire ternary_label from Cell 11 into Cell 13 execution gate ─────────
+# CELL_11_POSTPATCH writes ternary_label ("BUY"/"HOLD"/"SELL") onto each signal.
+# Cell 13's notebook code uses confidence >= MIN_CONFIDENCE as its gate but never
+# checks ternary_label, so the net-of-cost and conformal filters were bypassed.
+# This override function wraps the signal iteration to respect ternary_label.
+# SELL signals → close existing long if held, never open short (paper acct).
+_orig_signals_13 = dict(signals) if "signals" in dir() else {}
+if _orig_signals_13:
+    _n_ternary_blocked = 0
+    _n_sell_close = 0
+    for _tk13_w, _sig13_w in _orig_signals_13.items():
+        _lbl13 = _sig13_w.get("ternary_label", "BUY")  # default BUY if Cell 11 didn't run
+        if _lbl13 == "HOLD":
+            # Suppress by setting confidence below MIN_CONFIDENCE
+            signals[_tk13_w]["confidence"] = 0.50
+            _n_ternary_blocked += 1
+        elif _lbl13 == "SELL":
+            # Mark for position close instead of short entry
+            signals[_tk13_w]["close_long"] = True
+            signals[_tk13_w]["confidence"] = 0.50  # block fresh short entry
+            _n_sell_close += 1
+    print(f"  [patch] Ternary gate: {_n_ternary_blocked} HOLD signals suppressed, "
+          f"{_n_sell_close} SELL signals converted to close-long")
 """
 
 # ── Tier 2 extension: adaptive TWAP execution helpers ────────────────────────
@@ -3422,40 +3490,51 @@ _FINNHUB_KEY      = os.environ.get("FINNHUB_API_KEY", "")
 # Cell 15 prepatch: coerce macro_data regime string → int so the notebook's
 # diagnose_failures_and_rewrite_rules doesn't crash on "Neutral / Mixed"
 CELL_15_PREPATCH = """
-# ── Fix: Initialize River online-learning objects if None ─────────────────────
-# Cell 15 calls _river_scaler.transform_one(x) → crashes when _river_scaler is
-# None (pkl file missing or corrupted). Initialize fresh objects so the online
-# learning layer activates on first run instead of silently failing every run.
+# ── Fix: Initialize River online-learning objects robustly ────────────────────
+# ROOT CAUSE: Cell 15 notebook code loads the pkl itself, and if the pkl has a
+# bad/old format, it overwrites _river_scaler = None. The prepatch must run
+# AFTER any Cell 15 load attempt — but it runs BEFORE. So we take a different
+# approach: always (re)write a valid pkl, then set _river_scaler/_river_lr from
+# it so that even if Cell 15 re-reads the pkl, it gets valid objects.
 try:
     import pickle as _pkl15rv
     from pathlib import Path as _P15rv
+    from river import preprocessing as _rv_pre15, linear_model as _rv_lm15
+    from river import metrics as _rv_met15, drift as _rv_drift15
+
     _rv_path15 = _P15rv("data/weights/river_model.pkl")
-    _need_init = (not _rv_path15.exists()
-                  or ("_river_scaler" in dir() and _river_scaler is None)
-                  or ("_river_lr" in dir() and _river_lr is None))
-    if _need_init:
-        from river import preprocessing as _rv_pre15, linear_model as _rv_lm15
-        from river import metrics as _rv_met15, drift as _rv_drift15
-        _rv_new = {
-            "scaler": _rv_pre15.StandardScaler(),
-            "lr":     _rv_lm15.LogisticRegression(),
-            "metric": _rv_met15.Accuracy(),
-            "adwin":  _rv_drift15.ADWIN(),
-        }
-        _rv_path15.parent.mkdir(parents=True, exist_ok=True)
-        _rv_path15.write_bytes(_pkl15rv.dumps(_rv_new))
-        _river_scaler = _rv_new["scaler"]
-        _river_lr     = _rv_new["lr"]
-        print("  [patch] Cell15: River model initialized (fresh StandardScaler + LogisticRegression)")
-    elif _rv_path15.exists() and ("_river_scaler" not in dir() or _river_scaler is None):
-        _rv_loaded15 = _pkl15rv.loads(_rv_path15.read_bytes())
-        _river_scaler = _rv_loaded15.get("scaler")
-        _river_lr     = _rv_loaded15.get("lr")
-        if _river_scaler is None or _river_lr is None:
-            from river import preprocessing as _rv_pre15b, linear_model as _rv_lm15b
-            _river_scaler = _rv_pre15b.StandardScaler()
-            _river_lr     = _rv_lm15b.LogisticRegression()
-        print("  [patch] Cell15: River model loaded from pkl")
+    _rv_loaded15 = {}
+    if _rv_path15.exists():
+        try:
+            _rv_loaded15 = _pkl15rv.loads(_rv_path15.read_bytes())
+        except Exception:
+            _rv_loaded15 = {}
+
+    # Build valid dict — preserve existing trained objects, replace any None
+    _river_scaler = _rv_loaded15.get("scaler")
+    _river_lr     = _rv_loaded15.get("lr")
+    _river_metric = _rv_loaded15.get("metric")
+    _river_adwin  = _rv_loaded15.get("adwin")
+
+    if not isinstance(_river_scaler, _rv_pre15.StandardScaler):
+        _river_scaler = _rv_pre15.StandardScaler()
+    if not isinstance(_river_lr, _rv_lm15.LogisticRegression):
+        _river_lr = _rv_lm15.LogisticRegression()
+    if _river_metric is None:
+        _river_metric = _rv_met15.Accuracy()
+    if _river_adwin is None:
+        _river_adwin = _rv_drift15.ADWIN()
+
+    _rv_valid = {
+        "scaler": _river_scaler,
+        "lr":     _river_lr,
+        "metric": _river_metric,
+        "adwin":  _river_adwin,
+    }
+    _rv_path15.parent.mkdir(parents=True, exist_ok=True)
+    _rv_path15.write_bytes(_pkl15rv.dumps(_rv_valid))
+    print(f"  [patch] Cell15: River objects ready — scaler={type(_river_scaler).__name__}, "
+          f"lr={type(_river_lr).__name__} (pkl re-written)")
 except Exception as _rv15e:
     print(f"  [patch] Cell15 River init (non-fatal): {_rv15e}")
 
@@ -3573,13 +3652,23 @@ _CELL_POSTPATCH = {
 }
 
 # ── Model cache helpers ───────────────────────────────────────────────────
+# Use dill instead of pickle: dill can serialize locally-defined classes such
+# as _CalWrapper (defined inside train_ensemble → _sigmoid_cal). stdlib pickle
+# fails with "Can't pickle local object" on these nested closures.
+try:
+    import dill as _serializer
+    _serializer_name = "dill"
+except ImportError:
+    import pickle as _serializer
+    _serializer_name = "pickle"
+
 def _load_model_cache(ns):
     if MODEL_CACHE.exists() and RUN_TYPE != "morning":
         try:
-            cache = pickle.loads(MODEL_CACHE.read_bytes())
+            cache = _serializer.loads(MODEL_CACHE.read_bytes())
             for k, v in cache.items():
                 ns[k] = v
-            print(f"  Model cache loaded: {list(cache.keys())}")
+            print(f"  Model cache loaded ({_serializer_name}): {list(cache.keys())}")
             return True
         except Exception as e:
             print(f"  Model cache load failed: {e} -- will retrain")
@@ -3591,8 +3680,8 @@ def _save_model_cache(ns):
             keys = ["models", "regimes", "garch_res", "ADAPTIVE_WEIGHTS",
                     "LEARNED_RULES", "FEATURE_COLS"]
             cache = {k: ns[k] for k in keys if k in ns}
-            MODEL_CACHE.write_bytes(pickle.dumps(cache, protocol=4))
-            print(f"  Model cache saved: {list(cache.keys())}")
+            MODEL_CACHE.write_bytes(_serializer.dumps(cache, protocol=4))
+            print(f"  Model cache saved ({_serializer_name}): {list(cache.keys())}")
         except Exception as e:
             print(f"  Model cache save failed: {e}")
 
@@ -4044,14 +4133,19 @@ try:
     import requests as _req
 
     # ── FRED series fetch helper ──────────────────────────────────────────
+    # FRED allows unauthenticated public access (rate-limited to ~120 req/min).
+    # If FRED_API_KEY secret is set, use it to raise the limit to 1000 req/min.
     def _fred(series_id, fallback=None):
-        if not _FRED_KEY:
-            return fallback
         try:
-            url = (f"https://api.stlouisfed.org/fred/series/observations"
-                   f"?series_id={series_id}&api_key={_FRED_KEY}"
-                   f"&file_type=json&limit=1&sort_order=desc")
-            r = _req.get(url, timeout=10)
+            if _FRED_KEY:
+                url = (f"https://api.stlouisfed.org/fred/series/observations"
+                       f"?series_id={series_id}&api_key={_FRED_KEY}"
+                       f"&file_type=json&limit=1&sort_order=desc")
+            else:
+                # Public unauthenticated access — works for all public series
+                url = (f"https://api.stlouisfed.org/fred/series/observations"
+                       f"?series_id={series_id}&file_type=json&limit=1&sort_order=desc")
+            r = _req.get(url, timeout=15)
             val = r.json()["observations"][0]["value"]
             return round(float(val), 4) if val != "." else fallback
         except Exception:
