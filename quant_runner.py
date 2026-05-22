@@ -1300,11 +1300,9 @@ try:
     from imblearn.over_sampling import SMOTE as _SMOTE8_orig, RandomOverSampler as _ROS8_orig
 
     class SMOTE(_SMOTE8_orig):
-        """
-        Time-aware SMOTE: only resamples the first TRAIN_FRACTION of the data.
-        The remaining rows (validation + calibration + meta windows) are NOT
-        included in the training set, making AUC evaluation genuinely OOS.
-        """
+        # Time-aware SMOTE: only resamples the first TRAIN_FRACTION of the data.
+        # The remaining rows (validation + calibration + meta windows) are NOT
+        # included in the training set, making AUC evaluation genuinely OOS.
         def __init__(self, *args, _train_frac=_SMOTE_TRAIN_FRACTION, **kwargs):
             self.__train_frac = _train_frac
             super().__init__(*args, **kwargs)
