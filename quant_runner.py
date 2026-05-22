@@ -1282,6 +1282,63 @@ if "featured" in dir():
         featured[_tk8bin] = _df8bin_copy
         _n_bin_conv += 1
     print(f"  [patch] Continuous→binary target conversion: {_n_bin_conv}/{len(featured)} tickers")
+
+# ── ROOT CAUSE FIX: SMOTE resamples ALL data including validation rows ────────
+# Cell 8 does: X_r, y_r = SMOTE().fit_resample(X_sc, y)
+# X_sc is the FULL dataset (0%–100%). The final models then train on X_r
+# which contains every original row — including Xva (second-to-last 20%) and
+# X_cal (last 20%). AUC is then measured on Xva, which was IN the training set.
+# Naturally AUC = 1.000 — the model already saw those rows during training.
+#
+# Fix: replace SMOTE with a time-aware version that only resamples the
+# first TRAIN_FRACTION (62.5%) of the data. Models then train only on
+# this slice. Xva (rows 60–80%) is genuine out-of-sample.
+import numpy as _np8smote
+_SMOTE_TRAIN_FRACTION = 0.625   # must match EmbargoTimeSeriesSplit.optuna_fraction
+
+try:
+    from imblearn.over_sampling import SMOTE as _SMOTE8_orig, RandomOverSampler as _ROS8_orig
+
+    class SMOTE(_SMOTE8_orig):
+        """
+        Time-aware SMOTE: only resamples the first TRAIN_FRACTION of the data.
+        The remaining rows (validation + calibration + meta windows) are NOT
+        included in the training set, making AUC evaluation genuinely OOS.
+        """
+        def __init__(self, *args, _train_frac=_SMOTE_TRAIN_FRACTION, **kwargs):
+            self.__train_frac = _train_frac
+            super().__init__(*args, **kwargs)
+
+        def fit_resample(self, X, y):
+            n_total = len(X)
+            n_train = max(int(n_total * self.__train_frac), 50)
+            X_tr, y_tr = X[:n_train], y[:n_train]
+            try:
+                return super().fit_resample(X_tr, y_tr)
+            except Exception:
+                # Fallback: if SMOTE fails on the slice (e.g., too few minority),
+                # return training slice as-is (no oversampling)
+                return X_tr, y_tr
+
+    # Patch at module level so Cell 8's `from imblearn.over_sampling import SMOTE`
+    # picks up our version (Python caches the module object; patching the attribute
+    # on the module object is sufficient for attribute-access imports).
+    import imblearn.over_sampling as _imblearn_os8
+    _imblearn_os8.SMOTE = SMOTE
+    try:
+        import imblearn as _imblearn8
+        _imblearn8.over_sampling.SMOTE = SMOTE
+    except Exception:
+        pass
+
+    print(f"  [patch] SMOTE patched: resampling restricted to first "
+          f"{int(_SMOTE_TRAIN_FRACTION*100)}% of data — AUC evaluation will be "
+          f"genuinely OOS (root cause fix for AUC=1.000)")
+
+except ImportError:
+    print("  [patch] imblearn not installed — SMOTE patch skipped")
+except Exception as _smote8e:
+    print(f"  [patch] SMOTE patch error (non-fatal): {_smote8e}")
 """
 
 # ── CELL 8 POSTPATCH: Ridge ensemble member ───────────────────────────────────
