@@ -2146,19 +2146,33 @@ from pathlib import Path as _P12p
 import json as _j12p
 
 # ── CVaR result check ────────────────────────────────────────────────────────
-# Guard: CVaR crashes with "index -1 is out of bounds for axis 0 with size 0"
-# when the weights/returns matrix is empty (all signals were HOLD). Detect this
-# before indexing and fall straight through to HRP fallback.
+# The notebook stores CVaR output in `opt_weights` but earlier patch code
+# checked only `portfolio_weights`, `cvar_weights`, `weights` — never finding
+# it and always falling to HRP even when CLARABEL solved successfully.
+# Fix: check all known variable names the notebook might use, then alias
+# whichever one is populated to `portfolio_weights` so the blend logic works.
 _cvar_ns = globals()
-_cvar_ok  = any(isinstance(_cvar_ns.get(k), dict) and len(_cvar_ns[k]) > 0
-                for k in ["portfolio_weights", "cvar_weights", "weights"])
-# Also check for numpy/list weights that may be empty
+_CVAR_VAR_NAMES = ["portfolio_weights", "opt_weights", "cvar_weights", "weights"]
+_cvar_ok = any(isinstance(_cvar_ns.get(k), dict) and len(_cvar_ns[k]) > 0
+               for k in _CVAR_VAR_NAMES)
+
+# Alias opt_weights → portfolio_weights so blend logic always uses the same name
 if not _cvar_ok:
     for _wk in ["weights", "cvar_weights"]:
         _wv = _cvar_ns.get(_wk)
         if _wv is not None and hasattr(_wv, "__len__") and len(_wv) > 0:
             _cvar_ok = True
             break
+
+if _cvar_ok and "portfolio_weights" not in _cvar_ns:
+    for _alias_src in ["opt_weights", "cvar_weights", "weights"]:
+        _alias_val = _cvar_ns.get(_alias_src)
+        if isinstance(_alias_val, dict) and len(_alias_val) > 0:
+            portfolio_weights = _alias_val
+            print(f"  [patch] CVaR: aliased {_alias_src} → portfolio_weights "
+                  f"({len(portfolio_weights)} tickers)")
+            break
+
 print(f"  [patch] CVaR result check: {'OK' if _cvar_ok else 'EMPTY — falling back to HRP'}")
 
 # ── HRP blend / fallback ─────────────────────────────────────────────────────
@@ -2236,7 +2250,7 @@ if _ks_log12.exists():
     except Exception:
         _ks_history = []
 
-_solver_ok12 = "portfolio_weights" in _cvar_ns or "cvar_weights" in _cvar_ns
+_solver_ok12 = any(k in _cvar_ns for k in ["portfolio_weights", "opt_weights", "cvar_weights"])
 if not _solver_ok12:
     import datetime as _dt12
     _ks_history.append({"ts": _dt12.datetime.utcnow().isoformat(), "failed": True})
