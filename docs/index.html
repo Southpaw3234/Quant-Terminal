@@ -2890,17 +2890,32 @@ function renderEarnings(cal, preds) {
   }
   const latest = {};
   (preds||[]).forEach(p => { if(!latest[p.ticker]||p.pred_ts>latest[p.ticker].pred_ts) latest[p.ticker]=p; });
-  document.getElementById('earn-count').textContent = cal.length + ' upcoming';
-  box.innerHTML = cal.slice(0,30).map(e => {
+  const upcoming = cal.filter(e => e.days_away >= 0).length;
+  document.getElementById('earn-count').textContent = upcoming + ' upcoming';
+  // Sort: upcoming first (ascending), then recently reported (most recent first)
+  const sorted = [...cal].sort((a,b) => {
+    if (a.days_away >= 0 && b.days_away >= 0) return a.days_away - b.days_away;
+    if (a.days_away >= 0) return -1;
+    if (b.days_away >= 0) return 1;
+    return b.days_away - a.days_away; // most recent past first
+  });
+  box.innerHTML = sorted.slice(0,40).map(e => {
     const p = latest[e.ticker];
     const act = p ? (p.action||'HOLD').toUpperCase() : '—';
-    const daysColor = e.days_away <= 3 ? 'var(--rd)' : e.days_away <= 7 ? 'var(--yw)' : 'var(--mu)';
-    const urgency = e.days_away <= 3 ? '⚠️ ' : '';
-    return `<div class="earn-row">
+    const reported = e.reported || e.days_away < 0;
+    const daysColor = reported ? 'var(--mu)' : e.days_away <= 3 ? 'var(--rd)' : e.days_away <= 7 ? 'var(--yw)' : 'var(--mu)';
+    const urgency = !reported && e.days_away <= 3 ? '⚠️ ' : '';
+    const daysLabel = reported
+      ? `<span style="color:var(--mu);font-size:10px">Reported ${Math.abs(e.days_away)}d ago</span>`
+      : `<span style="color:${daysColor}">${urgency}${e.days_away}d away</span>`;
+    const epsLabel = reported && e.eps_est
+      ? `<span style="color:var(--gr);font-size:10px">${e.eps_est}</span>`
+      : `<span style="color:var(--mu);font-size:10px">EPS est: ${e.eps_est||'—'}</span>`;
+    return `<div class="earn-row" style="${reported ? 'opacity:0.65' : ''}">
       <div class="earn-ticker" onclick="doSearch('${e.ticker}')" style="cursor:pointer">${e.ticker}</div>
       <div class="earn-date">${e.date}</div>
-      <div class="earn-days" style="color:${daysColor}">${urgency}${e.days_away}d away</div>
-      <div class="earn-eps" style="color:var(--mu)">EPS est: ${e.eps_est||'—'}</div>
+      <div class="earn-days">${daysLabel}</div>
+      <div class="earn-eps">${epsLabel}</div>
       <div class="earn-signal">${p ? `<span class="badge b-${act.toLowerCase()}">${act}</span>` : '<span style="color:var(--mu);font-size:10px">—</span>'}</div>
     </div>`;
   }).join('');

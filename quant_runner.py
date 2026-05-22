@@ -4702,12 +4702,20 @@ try:
                 if _ed is not None and not _ed.empty:
                     # strip timezone so we can compare to date()
                     _ed.index = _ed.index.tz_localize(None) if hasattr(_ed.index, 'tz') and _ed.index.tz else _ed.index
-                    _future = _ed[_ed.index.date >= _today_dt - datetime.timedelta(days=2)]
+                    # Look back 30 days so "recently reported" events still appear on dashboard
+                    _future = _ed[_ed.index.date >= _today_dt - datetime.timedelta(days=30)]
                     if not _future.empty:
-                        _row   = _future.iloc[0]    # nearest upcoming row
+                        _row   = _future.iloc[0]    # nearest row (most recent past or next upcoming)
                         _edate = _future.index[0].date().isoformat()
                         _raw_eps = _row.get("EPS Estimate") if hasattr(_row, "get") else None
-                        if _raw_eps is not None:
+                        _raw_actual = _row.get("Reported EPS") if hasattr(_row, "get") else None
+                        if _raw_actual is not None and str(_raw_actual) not in ("nan", "None", ""):
+                            # Already reported — use actual EPS
+                            try:
+                                _eps = f"Act: {float(_raw_actual):.2f}"
+                            except Exception:
+                                _eps = ""
+                        elif _raw_eps is not None:
                             try:
                                 _eps = "" if str(_raw_eps) in ("nan","None","") else f"{float(_raw_eps):.2f}"
                             except Exception:
@@ -4733,12 +4741,13 @@ try:
                 try:
                     _edate_obj = datetime.date.fromisoformat(_edate[:10])
                     _days = (_edate_obj - _today_dt).days
-                    if -2 <= _days <= 90:
+                    if -30 <= _days <= 90:   # show up to 30 days past (recently reported)
                         _earnings_cal.append({
                             "ticker":    _etk,
                             "date":      _edate[:10],
                             "eps_est":   _eps,
                             "days_away": _days,
+                            "reported":  _days < 0,   # flag for dashboard to show "Reported" badge
                         })
                 except Exception:
                     pass
