@@ -254,9 +254,6 @@ tr:hover td{background:rgba(88,166,255,.04)}
 .opt-alloc-bar{height:4px;border-radius:2px;background:var(--gr);margin-top:4px;transition:width .4s}
 
 /* ── COMPARISON ── */
-.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.compare-col{background:var(--sf);border:1px solid var(--br);border-radius:8px;padding:16px}
-.compare-metric{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(48,54,61,.3);font-size:11px}
 
 /* ── PIN BUTTON ── */
 .pin-btn{background:none;border:1px solid var(--br);border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:var(--fn);color:var(--mu);transition:all .15s;margin-left:8px}
@@ -276,7 +273,6 @@ tr:hover td{background:rgba(88,166,255,.04)}
   .hero{padding:28px 14px}
   .heat-grid{grid-template-columns:repeat(auto-fill,minmax(58px,1fr))}
   .nav-links{flex-wrap:wrap;gap:2px}
-  .compare-grid{grid-template-columns:1fr}
   .sector-name{width:80px;font-size:10px}
   .nav{height:auto;padding:8px 12px;flex-wrap:wrap;gap:6px}
 }
@@ -311,7 +307,7 @@ tr:hover td{background:rgba(88,166,255,.04)}
     <a class="nav-link" href="#earnings">📅 Earnings</a>
     <a class="nav-link" href="#smartmoney">💰 Smart$</a>
     <a class="nav-link" href="#options">🌊 Flow</a>
-    <a class="nav-link" href="#optimizer">💡 Optimize</a>
+    <a class="nav-link" href="#tracker">💡 Optimize</a>
     <a class="nav-link" href="#bitcoin">₿ BTC</a>
     <a class="nav-link" href="#learned">🧠 Learned</a>
     <a class="nav-link" href="#macro" onclick="setTimeout(()=>document.getElementById('fomc-tbody').scrollIntoView({behavior:'smooth'}),300)">🏦 Fed</a>
@@ -626,6 +622,24 @@ tr:hover td{background:rgba(88,166,255,.04)}
           <thead><tr><th>Timestamp</th><th>Ticker</th><th>Action</th><th>Price</th><th>Qty</th><th>Notional</th><th>Confidence</th><th>Status</th></tr></thead>
           <tbody id="trades-tbody"></tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- Portfolio Summary -->
+    <div class="two-col" style="gap:24px;margin-top:20px">
+      <div>
+        <div style="font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Kelly-Weighted Allocation · Current BUY Signals</div>
+        <div style="display:flex;gap:10px;margin-bottom:14px;align-items:center;flex-wrap:wrap">
+          <label style="font-size:11px;color:var(--mu)">Portfolio size: $<input id="port-size" type="number" value="10000" min="1000" step="1000" style="width:90px;background:var(--sf);border:1px solid var(--br);border-radius:4px;padding:3px 6px;color:var(--tx);font-family:var(--fn);font-size:11px" onchange="renderOptimizer()"></label>
+          <label style="font-size:11px;color:var(--mu)">Max per position: <input id="max-pos-pct" type="number" value="20" min="5" max="50" step="5" style="width:56px;background:var(--sf);border:1px solid var(--br);border-radius:4px;padding:3px 6px;color:var(--tx);font-family:var(--fn);font-size:11px" onchange="renderOptimizer()">%</label>
+          <button class="btn" onclick="renderOptimizer()" style="padding:4px 12px">Recalculate</button>
+        </div>
+        <div id="optimizer-list"></div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Portfolio Summary</div>
+        <div id="optimizer-summary" style="background:var(--sf);border:1px solid var(--br);border-radius:8px;padding:16px"></div>
+        <div style="font-size:9px;color:var(--mu2);margin-top:12px;line-height:1.6">Kelly sizing uses model confidence × (win rate - loss rate) / win rate. VIX cap applies: VIX&gt;35 = 40% max, &gt;28 = 60%, &gt;22 = 80%. Max per-position cap enforced. For educational purposes only — not financial advice.</div>
       </div>
     </div>
   </div>
@@ -1138,53 +1152,7 @@ tr:hover td{background:rgba(88,166,255,.04)}
 <!-- ⑬ PORTFOLIO OPTIMIZER                                   -->
 <!-- ════════════════════════════════════════════════════════ -->
 <div class="section-divider"></div>
-<div id="optimizer">
-  <div class="section">
-    <div class="section-hdr">
-      <span class="section-icon">💡</span>
-      <h2>PORTFOLIO OPTIMIZER</h2>
-      <span class="section-num" id="opt-signal-count">—</span>
-      <div class="section-line"></div>
-    </div>
-    <div class="two-col" style="gap:24px">
-      <div>
-        <div style="font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Kelly-Weighted Allocation · Current BUY Signals</div>
-        <div style="display:flex;gap:10px;margin-bottom:14px;align-items:center;flex-wrap:wrap">
-          <label style="font-size:11px;color:var(--mu)">Portfolio size: $<input id="port-size" type="number" value="10000" min="1000" step="1000" style="width:90px;background:var(--sf);border:1px solid var(--br);border-radius:4px;padding:3px 6px;color:var(--tx);font-family:var(--fn);font-size:11px" onchange="renderOptimizer()"></label>
-          <label style="font-size:11px;color:var(--mu)">Max per position: <input id="max-pos-pct" type="number" value="20" min="5" max="50" step="5" style="width:56px;background:var(--sf);border:1px solid var(--br);border-radius:4px;padding:3px 6px;color:var(--tx);font-family:var(--fn);font-size:11px" onchange="renderOptimizer()">%</label>
-          <button class="btn" onclick="renderOptimizer()" style="padding:4px 12px">Recalculate</button>
-        </div>
-        <div id="optimizer-list"></div>
-      </div>
-      <div>
-        <div style="font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Portfolio Summary</div>
-        <div id="optimizer-summary" style="background:var(--sf);border:1px solid var(--br);border-radius:8px;padding:16px"></div>
-        <div style="font-size:9px;color:var(--mu2);margin-top:12px;line-height:1.6">Kelly sizing uses model confidence × (win rate - loss rate) / win rate. VIX cap applies: VIX&gt;35 = 40% max, &gt;28 = 60%, &gt;22 = 80%. Max per-position cap enforced. For educational purposes only — not financial advice.</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ════════════════════════════════════════════════════════ -->
-<!-- ⑭ TICKER COMPARISON                                     -->
-<!-- ════════════════════════════════════════════════════════ -->
-<div class="section-divider"></div>
-<div id="compare-section">
-  <div class="section">
-    <div class="section-hdr">
-      <span class="section-icon">⚖️</span>
-      <h2>TICKER COMPARISON</h2>
-      <div class="section-line"></div>
-    </div>
-    <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:center">
-      <input id="cmp-a" class="search-input" type="text" placeholder="Ticker A (e.g. AAPL)" style="max-width:180px;font-size:13px;padding:8px 14px" oninput="this.value=this.value.toUpperCase()">
-      <span style="font-size:18px;color:var(--mu)">vs</span>
-      <input id="cmp-b" class="search-input" type="text" placeholder="Ticker B (e.g. NVDA)" style="max-width:180px;font-size:13px;padding:8px 14px" oninput="this.value=this.value.toUpperCase()">
-      <button class="btn" onclick="runCompare()" style="padding:8px 20px">Compare →</button>
-    </div>
-    <div id="compare-result"></div>
-  </div>
-</div>
+<div id="optimizer"></div>
 
 <!-- ── FOOTER ── -->
 <div style="border-top:1px solid var(--br);padding:16px 24px;text-align:center;color:var(--mu);font-size:10px">
@@ -3073,40 +3041,6 @@ function renderOptimizer() {
 }
 
 // ── Ticker comparison ─────────────────────────────────────────────────────
-function runCompare() {
-  const a = (document.getElementById('cmp-a').value||'').toUpperCase().trim();
-  const b = (document.getElementById('cmp-b').value||'').toUpperCase().trim();
-  const res = document.getElementById('compare-result');
-  if (!a || !b) { res.innerHTML = '<div style="color:var(--mu);font-size:12px;padding:12px">Enter two tickers above.</div>'; return; }
-  if (!_preds || !_preds.length) { res.innerHTML = '<div style="color:var(--mu)">No data loaded.</div>'; return; }
-  const latest = {};
-  _preds.forEach(p => { if(!latest[p.ticker]||p.pred_ts>latest[p.ticker].pred_ts) latest[p.ticker]=p; });
-  const pa = latest[a], pb = latest[b];
-  if (!pa && !pb) { res.innerHTML = `<div style="color:var(--mu);font-size:12px;padding:12px">Neither ${a} nor ${b} found in model.</div>`; return; }
-  function col(p) {
-    if (!p) return `<div class="compare-col" style="display:flex;align-items:center;justify-content:center;color:var(--mu)">Not in model</div>`;
-    const act = (p.action||'HOLD').toUpperCase();
-    const actCol = act==='BUY'?'var(--gr)':act==='SELL'?'var(--rd)':'var(--mu)';
-    const metrics = [
-      ['Signal', `<span style="color:${actCol};font-weight:700;font-size:14px">${act}</span>`],
-      ['Confidence', `${(parseFloat(p.confidence||0)*100).toFixed(0)}%`],
-      ['ML Score', `${(parseFloat(p.p_ensemble||0.5)*100).toFixed(0)}%`],
-      ['RSI', p.rsi||'—'],
-      ['Regime', {'0':'BEAR','1':'FLAT','2':'BULL'}[p.regime]||p.regime||'—'],
-      ['Entry Price', p.price_at_pred?'$'+parseFloat(p.price_at_pred).toFixed(2):'—'],
-      ['Target', p.target?'$'+parseFloat(p.target).toFixed(2):'—'],
-      ['Stop Loss', p.stop?'$'+parseFloat(p.stop).toFixed(2):'—'],
-      ['VIX', p.vix||'—'],
-      ['Yield Curve', p.yield_curve ? p.yield_curve+'%' : '—'],
-    ];
-    return `<div class="compare-col">
-      <div style="font-size:22px;font-weight:700;color:var(--tx);margin-bottom:12px">${p.ticker}</div>
-      ${metrics.map(([k,v]) => `<div class="compare-metric"><span style="color:var(--mu)">${k}</span><span>${v}</span></div>`).join('')}
-    </div>`;
-  }
-  res.innerHTML = `<div class="compare-grid">${col(pa)}${col(pb)}</div>`;
-}
-
 // ── Win rate leaderboard ──────────────────────────────────────────────────
 function renderWinRate(tickerAcc) {
   // Win rate is shown in the Learned section ticker-acc-tbody; also expose via heatmap tooltip
