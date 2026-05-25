@@ -3012,7 +3012,8 @@ function renderOptimizer() {
   const rawSum = positions.reduce((s,p)=>s+p.kelly,0);
   if (rawSum > 1) positions = positions.map(p => ({...p, kelly: p.kelly/rawSum}));
   positions.sort((a,b) => b.kelly-a.kelly);
-  document.getElementById('opt-signal-count').textContent = positions.length + ' BUY signals';
+  const _optCount = document.getElementById('opt-signal-count');
+  if (_optCount) _optCount.textContent = positions.length + ' BUY signals';
   const list = document.getElementById('optimizer-list');
   list.innerHTML = positions.slice(0,15).map(p => {
     const dollars = (p.kelly * portSize).toFixed(0);
