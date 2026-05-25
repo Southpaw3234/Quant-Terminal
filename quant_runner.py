@@ -245,17 +245,30 @@ _FRED_PUB_LAG = {
 }
 
 def _apply_fred_lag(macro_dict, ref_date=None):
+    # CONTAMINATION FIX: previously a no-op (pass). Now actually enforces lags.
+    # For each macro series, estimate when the most recent release would have
+    # been published relative to ref_date. If ref_date falls inside the lag
+    # window (i.e., the data wouldn't yet be available), null out the value.
+    # This prevents the model from using CPI/GDP data that hadn't been released
+    # yet on any given historical training date.
     import datetime as _dt
     if ref_date is None:
         ref_date = _dt.date.today()
     elif hasattr(ref_date, 'date'):
         ref_date = ref_date.date()
     lagged = dict(macro_dict)
+    _today = _dt.date.today()
     for key, lag_days in _FRED_PUB_LAG.items():
         if key in lagged and lagged[key] is not None:
-            # If the data would not yet be published on ref_date, null it out
-            # (caller fills with prior value or default)
-            pass  # lag applied at join time; here we just expose the map
+            # Estimate the release date of the most recent reading:
+            # assume it covers the previous calendar month/quarter, released
+            # lag_days after the period end. If today is within lag_days of
+            # the period end, the data is not yet published — null it out.
+            # Simple heuristic: if ref_date is within lag_days of today's
+            # month-start, the current-month reading isn't out yet.
+            _days_since_month_start = ref_date.day - 1
+            if _days_since_month_start < lag_days:
+                lagged[key] = None   # not yet published — use prior or default
     return lagged
 
 # 24-hour FRED cache — FRED data does not change intraday
@@ -1371,6 +1384,46 @@ except ImportError:
     print("  [patch] imblearn not installed — SMOTE patch skipped")
 except Exception as _smote8e:
     print(f"  [patch] SMOTE patch error (non-fatal): {_smote8e}")
+
+# ── CONTAMINATION FIX: StandardScaler fit on training window only ─────────────
+# The notebook does: scaler = StandardScaler(); X_sc = scaler.fit_transform(X)
+# where X is the FULL dataset (100%). The scaler learns mean/std from the
+# validation and calibration windows — subtle look-ahead that inflates AUC.
+# Fix: subclass StandardScaler so fit() and fit_transform() only use the first
+# TRAIN_FRACTION rows for statistics, then transform() is applied to all rows.
+# This is transparent to Cell 8 — it calls fit_transform() as normal.
+_SS_TRAIN_FRACTION = 0.625   # must match EmbargoTimeSeriesSplit.optuna_fraction
+
+try:
+    from sklearn.preprocessing import StandardScaler as _SS_orig8
+
+    class StandardScaler(_SS_orig8):
+        # Train-window-only scaler: fit statistics on first TRAIN_FRACTION rows,
+        # apply transform to the full dataset. Validation rows are scaled using
+        # statistics from the training window only — no future information leaks.
+        def fit(self, X, y=None):
+            import numpy as _np_ss
+            _n = len(X)
+            _n_tr = max(int(_n * _SS_TRAIN_FRACTION), 50)
+            return super().fit(X[:_n_tr], y)
+
+        def fit_transform(self, X, y=None, **kwargs):
+            self.fit(X, y)
+            return self.transform(X)
+
+    # Patch sklearn.preprocessing so the notebook's import picks up our version
+    import sklearn.preprocessing as _skpp8
+    _skpp8.StandardScaler = StandardScaler
+    import sys as _sys_ss
+    if "sklearn.preprocessing" in _sys_ss.modules:
+        _sys_ss.modules["sklearn.preprocessing"].StandardScaler = StandardScaler
+
+    print(f"  [patch] StandardScaler patched: fit on first "
+          f"{int(_SS_TRAIN_FRACTION*100)}% of data — validation rows "
+          f"scaled with train-only statistics (look-ahead fix)")
+
+except Exception as _ss8e:
+    print(f"  [patch] StandardScaler patch error (non-fatal): {_ss8e}")
 """
 
 # ── CELL 8 POSTPATCH: Ridge ensemble member ───────────────────────────────────
