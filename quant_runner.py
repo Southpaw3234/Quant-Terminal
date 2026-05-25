@@ -496,31 +496,58 @@ def _triple_barrier_labels(close_series, atr_series, horizon=5, atr_mult=1.5):
     except Exception:
         return _pd6.Series(_np6.full(len(close_series), _np6.nan))
 
-# ── Fix 11: Proper SUE (Standardized Unexpected Earnings) ────────────────────
-def _compute_sue(ticker):
+# ── Fix 11: Time-aware SUE (Standardized Unexpected Earnings) ────────────────
+# CONTAMINATION FIX: previous version returned a single scalar (today's SUE)
+# broadcast to every historical row — severe look-ahead bias.
+# Fix: fetch dated earnings history, compute SUE at each earnings release using
+# only surprises known at that date, then forward-fill until next release.
+# Result: row at 2019-03-15 uses only earnings data known through 2019-03-15.
+def _compute_sue(ticker, df_index=None):
     \"\"\"
-    SUE = recent_surprise / std_dev_of_historical_surprises.
-    Uses yfinance earnings_history Surprise(%) column.
-    Returns float in [-5, 5]; 0.0 on failure.
+    Time-aware SUE as a pd.Series aligned to df_index.
+    At each date T, SUE = surprise[T] / std(all surprises known before T).
+    Forward-filled between earnings dates (value valid until next release).
+    Falls back to 0.0 series on any failure.
     \"\"\"
     try:
         import yfinance as _yf11
+        import pandas as _pd11
         _eh = _yf11.Ticker(ticker).earnings_history
-        if _eh is None or _eh.empty:
-            return 0.0
-        if "Surprise(%)" not in _eh.columns:
-            return 0.0
+        _zero = _pd11.Series(0.0, index=df_index) if df_index is not None else None
+        if _eh is None or _eh.empty or "Surprise(%)" not in _eh.columns:
+            return _zero if _zero is not None else 0.0
+        _eh = _eh.copy()
+        _eh.index = _pd11.to_datetime(_eh.index)
+        _eh = _eh.sort_index()
         _s = _eh["Surprise(%)"].replace(
             [float("inf"), float("-inf")], float("nan")).dropna()
         if len(_s) < 2:
-            return float(_s.iloc[-1] / 100.0) if len(_s) == 1 else 0.0
-        _recent = float(_s.iloc[-1])
-        _std    = max(float(_s.std()), 0.1)  # floor to avoid div-by-zero
-        return float(_np6.clip(_recent / _std, -5.0, 5.0))
+            return _zero if _zero is not None else 0.0
+        # Compute SUE at each earnings date using only past surprises
+        _sue_pts = {}
+        for _i in range(1, len(_s)):
+            _past   = _s.iloc[:_i]
+            _recent = float(_s.iloc[_i - 1])
+            _std    = max(float(_past.std()), 0.1)
+            _sue_pts[_s.index[_i]] = float(_np6.clip(_recent / _std, -5.0, 5.0))
+        if not _sue_pts:
+            return _zero if _zero is not None else 0.0
+        _sue_sparse = _pd11.Series(_sue_pts).sort_index()
+        if df_index is None:
+            return float(_sue_sparse.iloc[-1])
+        # Reindex: union with df_index, ffill (SUE valid until next quarter), reindex back
+        _combined = _sue_sparse.reindex(
+            _sue_sparse.index.union(_pd11.DatetimeIndex(df_index))
+        ).sort_index().ffill().reindex(_pd11.DatetimeIndex(df_index)).fillna(0.0)
+        _combined.index = df_index
+        return _combined
     except Exception:
+        if df_index is not None:
+            import pandas as _pd11b
+            return _pd11b.Series(0.0, index=df_index)
         return 0.0
 
-print("  [patch] Feature helpers injected: hurst, frac_diff, triple_barrier, SUE")
+print("  [patch] Feature helpers injected: hurst, frac_diff, triple_barrier, SUE (time-aware)")
 
 # ── Fix E: Cross-sectional momentum helper ────────────────────────────────────
 # xs_mom = ticker_1d_return - sector_etf_1d_return, z-scored cross-sectionally.
@@ -664,8 +691,8 @@ def _augment_ticker(tk_df_pair):
             _fd_vals = _frac_diff(_close, d=0.4)
             fd["frac_diff_close"] = _fd_vals.shift(1)
 
-        # SUE score (scalar per ticker, from earnings history)
-        fd["sue_score"] = _compute_sue(tk)
+        # SUE score — time-aware series (only past earnings known at each date)
+        fd["sue_score"] = _compute_sue(tk, df_index=fd.index)
 
         # ── Fix 10: Override target with Triple Barrier labels ──────────────
         if "atr_14" in fd.columns and "Close" in fd.columns:
@@ -909,11 +936,18 @@ if _os6p.environ.get("RUN_TYPE", "morning") == "morning":
             _score = _insider_net_buy_score(tk, lookback_days=30)
             return tk, _score
 
+        # CONTAMINATION FIX: was broadcasting today's insider score to ALL historical
+        # rows — every 2016 row "knew" 2026 insider activity. Fix: apply only to
+        # trailing 35 days (consistent with patent_velocity). Older rows stay NaN.
+        _ins_cutoff = _pd6p.Timestamp.today() - _pd6p.Timedelta(days=35)
         _new_scores = {}
         with _TPE(max_workers=8) as _ex6p3:
             for _tk6ins, _score6ins in _ex6p3.map(_score_insider_safe, list(featured.keys())):
                 if _tk6ins in featured:
-                    featured[_tk6ins]["insider_net_buy"] = float(_score6ins)
+                    _ins_mask = featured[_tk6ins].index >= _ins_cutoff
+                    if "insider_net_buy" not in featured[_tk6ins].columns:
+                        featured[_tk6ins]["insider_net_buy"] = float("nan")
+                    featured[_tk6ins].loc[_ins_mask, "insider_net_buy"] = float(_score6ins)
                     _new_scores[_tk6ins] = {"score": _score6ins, "ts": __import__("time").time()}
                     _n_insider += 1
 
