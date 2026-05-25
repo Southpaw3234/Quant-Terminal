@@ -5,3 +5,7 @@
   command = "curl -fsSL https://raw.githubusercontent.com/Southpaw3234/Quant-Terminal/data/docs/data.json -o docs/data.json 2>/dev/null && echo 'data.json fetched OK' || echo 'WARNING: data.json fetch failed - dashboard data may be stale'"
   publish = "docs"
   functions = "netlify/functions"
+  # Only rebuild when docs/ actually changes (e.g. index.html edits).
+  # Data commits (paper_trades/, predictions/ CSVs) do NOT touch docs/ and
+  # are skipped — stops burning build minutes on every trading cycle commit.
+  ignore = "git diff --quiet HEAD^ HEAD -- docs/"

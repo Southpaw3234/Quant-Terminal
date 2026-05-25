@@ -170,16 +170,6 @@ jobs:
             git commit -m "Auto: ${{ steps.run_type.outputs.type }} cycle $(date -u +'%Y-%m-%d %H:%M UTC')"
           git push origin master || true
 
-      - name: Trigger Netlify redeploy
-        if: success()
-        run: |
-          if [ -n "${{ secrets.NETLIFY_BUILD_HOOK }}" ]; then
-            curl -s -X POST "${{ secrets.NETLIFY_BUILD_HOOK }}" | grep -o '"id":"[^"]*"' || true
-            echo "Netlify build triggered"
-          else
-            echo "NETLIFY_BUILD_HOOK not set — skipping"
-          fi
-
       - name: Upload cycle log
         if: always()
         uses: actions/upload-artifact@v4
