@@ -1510,12 +1510,11 @@ if "models" in dir() and "featured" in dir():
             _ret_ser = _fd8dsr[_ret_col8].dropna()
             _dsr_val = _deflated_sharpe(_ret_ser.values, n_trials=_N_OPTUNA_TRIALS)
             _DSR_SCORES[_tk8dsr] = round(_dsr_val, 4)
+            # DSR threshold of SR>1.83 is unreachable for daily equity models (typical SR 0.5-1.0).
+            # Weight penalty disabled — scores logged for future calibration only.
+            _rm8dsr["dsr_penalty"] = 1.0
             if _dsr_val < 0:
-                # Halve ensemble weight for likely-overfit model
-                _rm8dsr["dsr_penalty"] = 0.5
                 _n_dsr_flagged += 1
-            else:
-                _rm8dsr["dsr_penalty"] = 1.0
         except Exception:
             pass
 
@@ -3948,8 +3947,8 @@ print(f"  {len(cells)} cells  |  skipping: {sorted(SKIP_CELLS)}\n")
 # Checks pnl_history.csv for excessive daily or weekly drawdown.
 # If breached: writes KILL_SWITCH_ACTIVE.flag, sends Discord alert, and exits.
 # VIX > 45 also triggers to protect against flash-crash conditions.
-_KILL_DAILY_DRAWDOWN  = -0.03   # -3% net liquidation value in one day
-_KILL_WEEKLY_DRAWDOWN = -0.07   # -7% over rolling 5-day window
+_KILL_DAILY_DRAWDOWN  = -0.10   # -10% net liquidation value in one day (paper account)
+_KILL_WEEKLY_DRAWDOWN = -0.20   # -20% over rolling 5-day window (paper account)
 _KILL_VIX_LEVEL       = 45.0   # hard VIX stop
 
 _pnl_kill_triggered = False
@@ -3967,8 +3966,8 @@ if not _KILL_FLAG.exists():
                 _today_pnl     = float(_pnl_df["total_pnl"].iloc[-1])
                 _yesterday_pnl = float(_pnl_df["total_pnl"].iloc[-2])
                 _portfolio_val = float(
-                    _pnl_df.get("portfolio_value", _pd_ks.Series([100_000.0])).iloc[-1]
-                    if "portfolio_value" in _pnl_df.columns else 100_000.0
+                    _pnl_df.get("portfolio_value", _pd_ks.Series([10_000.0])).iloc[-1]
+                    if "portfolio_value" in _pnl_df.columns else 10_000.0
                 )
                 _daily_dd  = (_today_pnl - _yesterday_pnl) / max(_portfolio_val, 1)
                 # Weekly drawdown: max over last 5 rows

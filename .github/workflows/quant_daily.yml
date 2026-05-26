@@ -59,7 +59,7 @@ jobs:
         run: pip install --no-deps "pandas-ta==0.3.14b0" || true
 
       - name: Install rclone
-        run: sudo apt-get install -y rclone
+        run: curl https://rclone.org/install.sh | sudo bash
 
       - name: Determine run type from schedule
         id: run_type
