@@ -4334,10 +4334,11 @@ if RUN_TYPE in ("morning", "intraday"):
                     _pos[_tk] = {"qty": 0, "cost": 0.0}
                 _q = int(float(str(_row.get("qty", 0) or 0)))
                 _p = float(str(_row.get("price", 0) or 0))
-                if str(_row.get("action", "")) == "BUY":
+                _st = str(_row.get("status", "")).lower()
+                if str(_row.get("action", "")) == "BUY" and _st == "filled":
                     _pos[_tk]["qty"]  += _q
                     _pos[_tk]["cost"] += _q * _p
-                elif str(_row.get("action", "")) == "SELL":
+                elif str(_row.get("action", "")) == "SELL" and _st == "filled":
                     _pos[_tk]["qty"]  -= _q
 
             _open_pos = {tk: v for tk, v in _pos.items() if v["qty"] > 0}
