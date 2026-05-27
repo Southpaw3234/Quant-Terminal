@@ -126,6 +126,22 @@ if _drive_ok:
     print("Stage 0a: Drive -> local sync...")
     _rclone(f"gdrive:{GDRIVE_FOLDER}", str(LOCAL_DATA), "Drive->local")
 
+# Trim pnl_history to last 7 days after Drive sync.
+# Drive may restore stale rows from phantom/errored positions weeks ago;
+# keeping only recent rows prevents those from triggering the kill switch.
+try:
+    import pandas as _pd_trim
+    _pnl_trim_path = LOCAL_DATA / "predictions" / "pnl_history.csv"
+    if _pnl_trim_path.exists():
+        _pnl_trim_df = _pd_trim.read_csv(_pnl_trim_path)
+        _pnl_trim_df["date"] = _pd_trim.to_datetime(_pnl_trim_df["date"], errors="coerce")
+        _pnl_cutoff = _pd_trim.Timestamp.today() - _pd_trim.Timedelta(days=7)
+        _pnl_trim_df = _pnl_trim_df[_pnl_trim_df["date"] >= _pnl_cutoff]
+        _pnl_trim_df.to_csv(_pnl_trim_path, index=False)
+        print(f"  [pnl_trim] pnl_history trimmed to last 7 days ({len(_pnl_trim_df)} rows kept)")
+except Exception as _pnl_trim_e:
+    print(f"  [pnl_trim] non-fatal: {_pnl_trim_e}")
+
 # Auto-clear kill switch AFTER Drive sync — morning runs always start fresh.
 # The flag may have been written to Drive by a previous broken run and just
 # restored above; clear it here so Cell 11/12/13 are not blocked.
