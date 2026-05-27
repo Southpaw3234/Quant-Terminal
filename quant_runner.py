@@ -126,19 +126,35 @@ if _drive_ok:
     print("Stage 0a: Drive -> local sync...")
     _rclone(f"gdrive:{GDRIVE_FOLDER}", str(LOCAL_DATA), "Drive->local")
 
-# Wipe pnl_history after Drive sync — Drive has corrupted rows from phantom
-# May-12 positions (rejected by Alpaca but recorded locally) that generate
-# a false weekly drawdown and re-arm the kill switch every morning run.
-# Reset to header-only so drawdown check sees len(df)<2 and skips cleanly.
-# Fresh real PnL will accumulate from this run forward.
+# One-time reset: wipe phantom position data that Drive keeps restoring.
+# Drive has corrupted paper_trades (May-12 Alpaca-rejected BUYs recorded
+# as filled) and pnl_history built from them. Both files are wiped once
+# here so fresh real data accumulates from this run forward.
+# Guard: skip once a real trade exists (run_date >= today) to avoid
+# wiping legitimate trades on subsequent runs.
 try:
-    _pnl_trim_path = LOCAL_DATA / "predictions" / "pnl_history.csv"
-    _pnl_trim_path.write_text(
-        "date,unrealized_pnl,realized_pnl,total_pnl,open_positions\n"
-    )
-    print("  [pnl_reset] pnl_history wiped — fresh accumulation starts this run")
-except Exception as _pnl_trim_e:
-    print(f"  [pnl_reset] non-fatal: {_pnl_trim_e}")
+    import pandas as _pd_rst
+    _pt_path  = LOCAL_DATA / "paper_trades" / "paper_trades.csv"
+    _pnl_path = LOCAL_DATA / "predictions" / "pnl_history.csv"
+    _today_str = _pd_rst.Timestamp.today().strftime("%Y-%m-%d")
+    _should_wipe = True
+    if _pt_path.exists():
+        _pt_df = _pd_rst.read_csv(_pt_path)
+        if "run_date" in _pt_df.columns and len(_pt_df) > 0:
+            _should_wipe = not (_pt_df["run_date"].astype(str) >= _today_str).any()
+    if _should_wipe:
+        _pt_path.write_text(
+            "ts,ticker,action,price,qty,dollars,confidence,regime,vix,"
+            "portfolio_value,notes,order_id,status,run_date,iv_flag,iv_scale,notional\n"
+        )
+        _pnl_path.write_text(
+            "date,unrealized_pnl,realized_pnl,total_pnl,open_positions\n"
+        )
+        print("  [data_reset] Wiped stale paper_trades + pnl_history — fresh start")
+    else:
+        print("  [data_reset] Skipped — today's trades already present")
+except Exception as _rst_e:
+    print(f"  [data_reset] non-fatal: {_rst_e}")
 
 # Auto-clear kill switch AFTER Drive sync — morning runs always start fresh.
 # The flag may have been written to Drive by a previous broken run and just
