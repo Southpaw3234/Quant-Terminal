@@ -126,33 +126,37 @@ if _drive_ok:
     print("Stage 0a: Drive -> local sync...")
     _rclone(f"gdrive:{GDRIVE_FOLDER}", str(LOCAL_DATA), "Drive->local")
 
-# One-time reset: wipe phantom position data that Drive keeps restoring.
-# Drive has corrupted paper_trades (May-12 Alpaca-rejected BUYs recorded
-# as filled) and pnl_history built from them. Both files are wiped once
-# here so fresh real data accumulates from this run forward.
-# Guard: skip once a real trade exists (run_date >= today) to avoid
-# wiping legitimate trades on subsequent runs.
+# Data reset: after every Drive sync, purge any stale phantom trades and
+# keep ONLY today-dated rows. This runs unconditionally so multi-run days
+# don't accumulate old Drive data in the cash guard's notional calc.
+# Drive keeps restoring May-12 Alpaca-rejected BUYs (~375 rows, ~$100k+
+# notional) which drove cash guard to $0 available → max 1 BUY per run.
 try:
     import pandas as _pd_rst
     _pt_path  = LOCAL_DATA / "paper_trades" / "paper_trades.csv"
     _pnl_path = LOCAL_DATA / "predictions" / "pnl_history.csv"
     _today_str = _pd_rst.Timestamp.today().strftime("%Y-%m-%d")
-    _should_wipe = True
+    # Always retain only today's trades — purge everything older
     if _pt_path.exists():
         _pt_df = _pd_rst.read_csv(_pt_path)
         if "run_date" in _pt_df.columns and len(_pt_df) > 0:
-            _should_wipe = not (_pt_df["run_date"].astype(str) >= _today_str).any()
-    if _should_wipe:
+            _pt_today = _pt_df[_pt_df["run_date"].astype(str) >= _today_str]
+        else:
+            _pt_today = _pt_df.iloc[0:0]
+        _pt_today.to_csv(_pt_path, index=False)
+        _n_kept = len(_pt_today)
+        _n_purged = len(_pt_df) - _n_kept if _pt_path.exists() else 0
+        print(f"  [data_reset] Kept {_n_kept} today-trades, purged {_n_purged} stale rows")
+    else:
         _pt_path.write_text(
             "ts,ticker,action,price,qty,dollars,confidence,regime,vix,"
             "portfolio_value,notes,order_id,status,run_date,iv_flag,iv_scale,notional\n"
         )
-        _pnl_path.write_text(
-            "date,unrealized_pnl,realized_pnl,total_pnl,open_positions\n"
-        )
-        print("  [data_reset] Wiped stale paper_trades + pnl_history — fresh start")
-    else:
-        print("  [data_reset] Skipped — today's trades already present")
+        print("  [data_reset] Created fresh paper_trades.csv")
+    # Always reset pnl_history — it's rebuilt each run from current positions
+    _pnl_path.write_text(
+        "date,unrealized_pnl,realized_pnl,total_pnl,open_positions\n"
+    )
 except Exception as _rst_e:
     print(f"  [data_reset] non-fatal: {_rst_e}")
 
