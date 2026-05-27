@@ -1,7 +1,7 @@
 # Quant Terminal v25 — Session Handoff
-**Date:** 2026-05-17 (updated, same day as prior handoff — extended session)  
+**Date:** 2026-05-27 (updated)  
 **Branch:** `master`  
-**Last commit:** `e451b5a`  
+**Last commit:** `3816b7b`  
 **Repo:** https://github.com/Southpaw3234/Quant-Terminal
 
 ---
@@ -1616,4 +1616,97 @@ if (t.action==='SELL' && t.status==='filled') { pos[t.ticker].qty-=q; }
 
 ---
 
-*Updated 2026-05-27. Current HEAD: `89228ba`. 9:35 AM run in progress — first full trading day with all fixes live.*
+*Updated 2026-05-27 (session 18 end). Current HEAD: `89228ba`. 9:35 AM run in progress — first full trading day with all fixes live.*
+
+---
+
+## 19. Session 2026-05-27 (continued) — Cash Guard $0 Fix
+
+**Date:** 2026-05-27  
+**Branch:** `master`  
+**Commit:** `3816b7b`
+
+---
+
+### Problem
+
+Cycles 94, 95, and 96 all logged `Cash guard: $0 available → max 1 new BUYs, blocked 180+`. Root cause confirmed:
+
+The `data_reset` block used a **one-way guard**: wipe if NO today-dated trade exists, skip if ANY today-dated trade exists. This meant:
+
+- **Run 1 of day (cycle-95, 9:35 AM):** Drive had no today trades → wipe both CSVs → cash guard saw $0 notional → correct
+- **Run 2+ of day (cycle-96+):** Run 1 placed 1 trade with today's run_date → guard saw "today trade exists" → **skipped wipe** → Drive's full 375 phantom rows survived → cash guard computed `max(0, 10k - 100k+) = $0 → max 1 BUY`
+
+So every run after the first one per day was capped to 1 BUY regardless of how many signals the model generated.
+
+---
+
+### Fix (`3816b7b`)
+
+Replaced the conditional wipe with **unconditional today-only filter**:
+
+```python
+# OLD (broken for multi-run days):
+_should_wipe = not (_pt_df["run_date"] >= today).any()
+if _should_wipe:
+    paper_trades.csv → header-only
+
+# NEW (works every run):
+_pt_today = _pt_df[_pt_df["run_date"].astype(str) >= _today_str]
+_pt_today.to_csv(_pt_path, index=False)
+print(f"  [data_reset] Kept {_n_kept} today-trades, purged {_n_purged} stale rows")
+# pnl_history always reset unconditionally
+```
+
+**Effect:** Every run now starts with a clean slate of only today's trades. The cash guard will compute:
+- Run 1: `$0 spent → $10,000 available → max 5 new BUYs` (5 × $2k positions)
+- Run 2 (if run 1 placed 3 BUYs): `$6k spent → $4k available → max 2 new BUYs`
+
+This is the **correct intraday position-tracking behavior**.
+
+---
+
+### Expected output in next run logs
+
+```
+  [data_reset] Kept 0 today-trades, purged 375 stale rows
+  ...
+  Cash guard: $X,XXX available → max N new BUYs
+```
+
+Where N ≥ 1 and reflects actual today-spent capital (not $100k phantom).
+
+---
+
+### File Changes
+
+| File | Commit | Change |
+|------|--------|--------|
+| `quant_runner.py` | `3816b7b` | data_reset: conditional wipe → unconditional today-only filter |
+
+---
+
+### Remaining Infrastructure Debt
+
+| Item | Priority | Notes |
+|------|----------|-------|
+| Validate trades appear on dashboard after next run | High | Verify `data.json` push and Netlify deploy |
+| Cash guard: long-term query Alpaca API for real cash balance | Medium | Currently reads paper_trades.csv; API call is more accurate |
+| DSR print message still says "weight halved" | Low | Cosmetic — penalty is 1.0 but old log string may still print |
+| IC validation after 30 days | Medium | Start from cycle-94 (first real trade) |
+
+---
+
+### Next Steps (ordered by priority)
+
+1. **Confirm next run logs `Kept N today-trades, purged M stale rows`** — validates the fix
+2. **Confirm cash guard shows `$X,XXX available → max N new BUYs`** with N > 1 on fresh runs
+3. **Look at Tier A free upgrades** (user-requested):
+   - HMM regime label rolling fix (eliminate Viterbi look-ahead)
+   - Walk-forward validation (63-day rolling window)
+   - Survivorship bias workaround (dead-ticker CSV)
+   - Transaction cost model in signal filter
+
+---
+
+*Updated 2026-05-27. Current HEAD: `3816b7b`. Cash guard $0 bug patched — all intraday runs now purge phantom Drive data before computing available capital.*
