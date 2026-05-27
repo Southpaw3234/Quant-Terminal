@@ -1210,8 +1210,8 @@ function getOpenPositions(trades) {
   for (const t of (trades||[])) {
     if (!pos[t.ticker]) pos[t.ticker] = {ticker:t.ticker,qty:0,cost:0,conf:'',regime:'',ts:''};
     const q = parseInt(t.qty)||0, p = parseFloat(t.price)||0;
-    if (t.action==='BUY')  { pos[t.ticker].qty+=q; pos[t.ticker].cost+=q*p; pos[t.ticker].conf=t.confidence; pos[t.ticker].regime=t.regime; pos[t.ticker].ts=t.ts; }
-    if (t.action==='SELL') { pos[t.ticker].qty-=q; }
+    if (t.action==='BUY'  && t.status==='filled') { pos[t.ticker].qty+=q; pos[t.ticker].cost+=q*p; pos[t.ticker].conf=t.confidence; pos[t.ticker].regime=t.regime; pos[t.ticker].ts=t.ts; }
+    if (t.action==='SELL' && t.status==='filled') { pos[t.ticker].qty-=q; }
   }
   return Object.values(pos).filter(p=>p.qty>0).map(p=>({...p, avg: p.qty>0?p.cost/p.qty:0}));
 }
