@@ -216,6 +216,8 @@ if _os.environ.get("GH_ACTIONS"):
     ALPACA_API_KEY      = _os.environ.get("ALPACA_API_KEY", "")
     ALPACA_SECRET_KEY   = _os.environ.get("ALPACA_SECRET_KEY", "")
     ALPACA_BASE_URL     = _os.environ.get("ALPACA_BASE_URL", "https://paper-api.alpaca.markets")
+    NEWS_API_KEY        = _os.environ.get("NEWS_API_KEY", "")
+    FRED_API_KEY        = _os.environ.get("FRED_API_KEY", "")
     RUN_TYPE_GH         = _os.environ.get("RUN_TYPE", "morning")
     FAST_MODE           = (RUN_TYPE_GH != "morning")
     GARCH_PATHS         = 100 if RUN_TYPE_GH == "morning" else 30
