@@ -213,11 +213,25 @@ if _os.environ.get("GH_ACTIONS"):
     MODEL_RETRAIN_FLAG  = _P("data/RETRAIN_NEEDED.flag")
     DISCORD_WEBHOOK_URL = _os.environ.get("DISCORD_WEBHOOK_URL", "")
     QUIVER_QUANT_KEY    = _os.environ.get("QUIVER_QUANT_KEY", "")
-    ALPACA_API_KEY      = _os.environ.get("ALPACA_API_KEY", "")
-    ALPACA_SECRET_KEY   = _os.environ.get("ALPACA_SECRET_KEY", "")
-    ALPACA_BASE_URL     = _os.environ.get("ALPACA_BASE_URL", "https://paper-api.alpaca.markets")
-    NEWS_API_KEY        = _os.environ.get("NEWS_API_KEY", "")
-    FRED_API_KEY        = _os.environ.get("FRED_API_KEY", "")
+    # Sanitize credentials: strip whitespace and any non-ASCII chars (smart
+    # quotes, etc.) before they hit urllib3's latin-1 header encoder. Prevents
+    # "'latin-1' codec can't encode character" crashes on Alpaca submit_order.
+    def _clean_cred_gh(_v):
+        return _v.strip().encode("ascii", "ignore").decode("ascii")
+    ALPACA_API_KEY      = _clean_cred_gh(_os.environ.get("ALPACA_API_KEY", ""))
+    ALPACA_SECRET_KEY   = _clean_cred_gh(_os.environ.get("ALPACA_SECRET_KEY", ""))
+    ALPACA_BASE_URL     = _clean_cred_gh(_os.environ.get("ALPACA_BASE_URL", "https://paper-api.alpaca.markets"))
+    NEWS_API_KEY        = _clean_cred_gh(_os.environ.get("NEWS_API_KEY", ""))
+    FRED_API_KEY        = _clean_cred_gh(_os.environ.get("FRED_API_KEY", ""))
+    # Diagnostic: log if sanitization changed credentials (length drop = had non-ASCII).
+    _raw_key_gh = _os.environ.get("ALPACA_API_KEY", "")
+    _raw_sec_gh = _os.environ.get("ALPACA_SECRET_KEY", "")
+    if _raw_key_gh and len(_raw_key_gh.strip()) != len(ALPACA_API_KEY):
+        print(f"  [cred sanitize] ALPACA_API_KEY: stripped {len(_raw_key_gh.strip()) - len(ALPACA_API_KEY)} non-ASCII char(s) — re-set GitHub secret from plain text")
+    if _raw_sec_gh and len(_raw_sec_gh.strip()) != len(ALPACA_SECRET_KEY):
+        print(f"  [cred sanitize] ALPACA_SECRET_KEY: stripped {len(_raw_sec_gh.strip()) - len(ALPACA_SECRET_KEY)} non-ASCII char(s) — re-set GitHub secret from plain text")
+    if ALPACA_API_KEY:
+        print(f"  [cred check] ALPACA_API_KEY ok: len={len(ALPACA_API_KEY)} preview={ALPACA_API_KEY[:4]}...{ALPACA_API_KEY[-4:]}")
     RUN_TYPE_GH         = _os.environ.get("RUN_TYPE", "morning")
     FAST_MODE           = (RUN_TYPE_GH != "morning")
     GARCH_PATHS         = 100 if RUN_TYPE_GH == "morning" else 30
@@ -2670,20 +2684,34 @@ if _orig_signals_13:
     print(f"  [patch] Ternary gate: {_n_ternary_blocked} HOLD signals suppressed, "
           f"{_n_sell_close} SELL signals converted to close-long")
 
-# ── Fix: Force UTF-8 on requests.Session so alpaca-py never hits latin-1 ─────
-# alpaca-py uses requests internally. When Alpaca returns an error response
-# without an explicit charset, requests defaults to latin-1, which crashes on
-# any unicode char in the response body.  Patching Session.send() to force
-# utf-8 before returning eliminates the 'latin-1 codec can't encode' error.
+# ── Fix: Force UTF-8 on requests.Session + strip non-ASCII from outgoing
+# request headers so urllib3's latin-1 encoder never crashes on submit_order.
+# Earlier patch only fixed response decoding — the actual error is on the
+# REQUEST side: urllib3 calls .encode("latin-1") on every header value, and
+# any non-ASCII char (smart quote in API key, em-dash, etc.) raises
+# UnicodeEncodeError before the request ever leaves the client.
 try:
     import requests as _req13fix
     _orig_send_13 = _req13fix.Session.send
-    def _utf8_send_13(self, *args, **kwargs):
-        resp = _orig_send_13(self, *args, **kwargs)
+    def _utf8_send_13(self, request, *args, **kwargs):
+        # Strip non-latin-1 chars from outgoing header values (the cause of
+        # 'latin-1' codec can't encode character errors in alpaca-py).
+        try:
+            if hasattr(request, "headers") and request.headers:
+                _clean_headers = {}
+                for _k, _v in request.headers.items():
+                    if isinstance(_v, str):
+                        _clean_headers[_k] = _v.encode("ascii", "ignore").decode("ascii")
+                    else:
+                        _clean_headers[_k] = _v
+                request.headers = _clean_headers
+        except Exception:
+            pass  # don't block the request if sanitization fails
+        resp = _orig_send_13(self, request, *args, **kwargs)
         resp.encoding = "utf-8"
         return resp
     _req13fix.Session.send = _utf8_send_13
-    print("  [patch] requests.Session.send patched: responses forced to UTF-8 (Alpaca fix)")
+    print("  [patch] requests.Session.send patched: outgoing headers sanitized + responses forced to UTF-8 (Alpaca latin-1 fix)")
 except Exception as _rf13e:
     print(f"  [patch] requests UTF-8 patch skipped: {_rf13e}")
 
