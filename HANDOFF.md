@@ -1,7 +1,7 @@
 # Quant Terminal v25 — Session Handoff
 **Date:** 2026-05-28 (updated, continued session)  
 **Branch:** `master`  
-**Last commit:** `7aa00b3`  
+**Last commit:** `fdc7866`  
 **Repo:** https://github.com/Southpaw3234/Quant-Terminal
 
 ---
@@ -2090,3 +2090,78 @@ Ranked by impact-to-effort:
 ---
 
 *Updated 2026-05-28. Current HEAD: `7aa00b3`. First real Alpaca fills executed (+$81.52 on 17 positions). Four more fixes shipped (live dashboard, pnl retention, bulletproof latin-1, event_scale) — preflight passed, full validation in progress via run 26599359763. Next: confirm putheader clears order errors, then begin Tier A upgrades (walk-forward validation first).*
+
+---
+
+## 22. Session 2026-05-28 (late) — 4-Fix Validation, NewsAPI Diagnostic, Walk-Forward Design
+
+**Date:** 2026-05-28  
+**Branch:** `master`  
+**Commits:** `7aa00b3` (4 fixes) → `f6b11c6` (handoff) → `fdc7866` (NewsAPI diagnostic)  
+**Current HEAD:** `fdc7866`  
+**Validation run:** `26599359763` (completed, 1h48m)
+
+---
+
+### The 4 fixes from `7aa00b3` — ALL VALIDATED
+
+Run `26599359763` completed and confirmed each:
+
+| Fix | Evidence | Status |
+|-----|----------|--------|
+| 1. Live dashboard fetch | index.html now hits data-branch raw URL | ✅ (Netlify rebuild deploys it) |
+| 2. pnl_history retention | `[data_reset] pnl_history: kept 0 real daily rows (>= 2026-05-28, < today), dropped 1` | ✅ |
+| 3. Bulletproof latin-1 (putheader) | This run: **9 filled / 1 error (90%)** vs morning's 17/24 (41%); zero `latin-1 codec` strings in logs | ✅ |
+| 4. event_scale repair | `[patch] Event-scale repair: 1 high-var events capped (0.5x), 306 normal` — no more `composite` KeyError | ✅ |
+
+**Order fill rate more than doubled (41% → 90%).** Remaining errors are now either stale pre-fix rows (5/27 overnight, age out at UTC rollover) or genuine Alpaca rejections (no-position SELL, buying power), NOT encoding crashes.
+
+**End-of-day account:** unrealized **+$249.95** on 16 open positions (up from +$81.52 at 9 AM — mostly mark-to-market gain over the trading day + a few new fills). pnl_history has 1 row (5/28); it accumulates a real multi-day trend going forward.
+
+Sentiment: `99/307 tickers scored` (was 0 before Session 19). Signals `BUY:204 HOLD:29 SELL:74`.
+
+---
+
+### NewsAPI coverage diagnostic (`fdc7866`)
+
+**Why:** sentiment scores ~99/307 every run (97 morning, 99 evening). A hard 100/day quota would leave the 2nd run near 0 — but both got ~99, so it's NOT a simple daily cap. Cause unconfirmed → instrument before fixing.
+
+**What shipped:** `CELL_10_PREPATCH` patches `requests.get` to tally NewsAPI HTTP statuses; `CELL_10_POSTPATCH` prints the tally + verdict. Pure diagnostic, zero behavior change. Both registered in the prepatch/postpatch dispatch dicts (new key `10`).
+
+**Awaiting:** next run that executes Cell 10 on `fdc7866`+ (tomorrow's 9:35 AM ET morning cron, or any intraday run). Logs will show:
+```
+[newsapi diag] N calls | statuses={200: X, 429: Y} | 200-with-news=A | 200-empty=B
+[newsapi diag] VERDICT: ...
+```
+- If 429s present → quota/rate limit → fix = prioritize query order + cache, or add Finnhub as 2nd source
+- If mostly 200-empty → genuine no-news → no fix needed (99 is just real availability)
+
+---
+
+### Walk-forward validation — DESIGN (ready to implement, waiting until tomorrow)
+
+The Tier A #1 upgrade, designed and ready. Implement as its own standalone validated commit AFTER reading tomorrow's NewsAPI verdict.
+
+**Problem:** Cell 8 trains on one fixed split (62.5%/37.5%) decided once; the OOS test window ages and the model never re-proves on recent regimes.
+
+**Design:**
+1. Rolling windows — train 504d (~2yr) → test next 63d (~quarter) → roll forward 63d. ~8-12 OOS folds across 10yr.
+2. Aggregate OOS metric — mean AUC across all folds (honest repeated-OOS number).
+3. Drift flag — if latest fold AUC drops >0.05 below trailing mean → `[walkforward] drift detected`.
+4. Location — `CELL_8_POSTPATCH` addition keyed off `_TRAINING_DF8` (already populated); morning runs only.
+
+**Why standalone/high-risk:** touches core training evaluation. Gets its own commit + preflight. Validate: ~8-12 `[walkforward] fold k/N: AUC=0.XX` lines, mean OOS AUC in 0.55-0.68 band, no regression in signal generation.
+
+---
+
+### Decisions & Sequencing (carry-forward)
+
+- **Tonight:** nothing more — deployed fixes ride.
+- **Tomorrow:** read NewsAPI diagnostic verdict from 9:35 AM run → then implement walk-forward validation.
+- **Following days:** remaining Tier A (HMM rolling Viterbi, transaction cost model, survivorship bias) — one validated commit each.
+- **~30 days out (clock started 5/28):** evaluate Tier B (Polygon $29/mo) and sentiment-coverage/feature-weight decisions FROM real IC data, not guesses.
+- **Principle:** system became healthy today; let it run stable, do correctness fixes carefully so the 30-day IC measurement runs on a clean model. No paid data or blind tuning until evidence justifies it.
+
+---
+
+*Updated 2026-05-28 (late). Current HEAD: `fdc7866`. All 4 fixes from 7aa00b3 validated (order fill rate 41%→90%, account +$249.95). NewsAPI diagnostic deployed, awaiting tomorrow's run. Walk-forward validation designed, implementation held until after the diagnostic verdict. In "let it run and watch" mode until tomorrow's 9:35 AM ET cron.*
