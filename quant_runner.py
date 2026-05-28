@@ -1943,6 +1943,60 @@ else:
 """
 CELL_9_POSTPATCH += "\n\n" + _CELL_9_T3_PATENT
 
+# ── CELL 10 PREPATCH: NewsAPI status diagnostic (zero behavior change) ────────
+# Sentiment scores only ~99/307 tickers every run. Determine the cause before
+# fixing: patch requests.get to tally NewsAPI HTTP statuses so we can tell a
+# daily quota / rate limit (429) apart from genuine no-news (200 + empty
+# articles). Summary printed in CELL_10_POSTPATCH (same exec namespace).
+CELL_10_PREPATCH = '''
+try:
+    import requests as _req10d
+    from collections import Counter as _Ctr10d
+    _NEWSAPI_STATUS_10   = _Ctr10d()
+    _NEWSAPI_EMPTY200_10 = [0]
+    _NEWSAPI_NONEMPTY_10 = [0]
+    if not getattr(_req10d.get, "_newsapi_diag", False):
+        _orig_get_10 = _req10d.get
+        def _diag_get_10(url, *a, **k):
+            _resp = _orig_get_10(url, *a, **k)
+            try:
+                if "newsapi.org" in str(url):
+                    _NEWSAPI_STATUS_10[_resp.status_code] += 1
+                    if _resp.status_code == 200:
+                        try:
+                            if _resp.json().get("articles"):
+                                _NEWSAPI_NONEMPTY_10[0] += 1
+                            else:
+                                _NEWSAPI_EMPTY200_10[0] += 1
+                        except Exception:
+                            pass
+            except Exception:
+                pass
+            return _resp
+        _diag_get_10._newsapi_diag = True
+        _req10d.get = _diag_get_10
+        print("  [newsapi diag] requests.get patched to tally NewsAPI statuses")
+except Exception as _d10e:
+    print(f"  [newsapi diag] patch skipped: {_d10e}")
+'''
+
+# ── CELL 10 POSTPATCH: print NewsAPI status tally + verdict ───────────────────
+CELL_10_POSTPATCH = '''
+try:
+    if "_NEWSAPI_STATUS_10" in dir():
+        _tot10 = sum(_NEWSAPI_STATUS_10.values())
+        print(f"  [newsapi diag] {_tot10} NewsAPI calls | statuses={dict(_NEWSAPI_STATUS_10)} "
+              f"| 200-with-news={_NEWSAPI_NONEMPTY_10[0]} | 200-empty={_NEWSAPI_EMPTY200_10[0]}")
+        if _NEWSAPI_STATUS_10.get(429, 0) > 0:
+            print(f"  [newsapi diag] VERDICT: {_NEWSAPI_STATUS_10[429]} rate-limited (429) — coverage capped by quota/rate limit; fix = prioritize+cache or second source")
+        elif _NEWSAPI_EMPTY200_10[0] > _NEWSAPI_NONEMPTY_10[0]:
+            print("  [newsapi diag] VERDICT: most empties are HTTP 200 with no articles — genuine no-news, NOT a cap; no fix needed")
+        else:
+            print("  [newsapi diag] VERDICT: no 429s — coverage reflects actual news availability")
+except Exception as _d10pe:
+    print(f"  [newsapi diag] summary skipped: {_d10pe}")
+'''
+
 # ── CELL 11 PREPATCH: IC-weighted composite score weights ─────────────────────
 CELL_11_PREPATCH = """
 import json as _j11
@@ -4016,6 +4070,7 @@ _CELL_PREPATCH = {
     6:  CELL_6_PREPATCH,
     8:  CELL_8_PREPATCH,
     9:  CELL_9_PREPATCH,
+    10: CELL_10_PREPATCH,
     11: CELL_11_PREPATCH,
     12: CELL_12_PREPATCH,
     13: CELL_13_PREPATCH,
@@ -4028,6 +4083,7 @@ _CELL_POSTPATCH = {
     6:  CELL_6_POSTPATCH,
     8:  CELL_8_POSTPATCH,
     9:  CELL_9_POSTPATCH,
+    10: CELL_10_POSTPATCH,
     11: CELL_11_POSTPATCH,
     12: CELL_12_POSTPATCH,
     13: CELL_13_POSTPATCH,
