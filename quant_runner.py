@@ -153,10 +153,29 @@ try:
             "portfolio_value,notes,order_id,status,run_date,iv_flag,iv_scale,notional\n"
         )
         print("  [data_reset] Created fresh paper_trades.csv")
-    # Always reset pnl_history — it's rebuilt each run from current positions
-    _pnl_path.write_text(
-        "date,unrealized_pnl,realized_pnl,total_pnl,open_positions\n"
-    )
+    # pnl_history: keep legitimate daily rows (real trading began 2026-05-28,
+    # the first day Alpaca orders actually filled). Drop the phantom pre-fix
+    # rows (the -$8k to -$13k garbage from errored May trades) AND drop today's
+    # row so the P&L snapshot re-writes a fresh one. This lets the dashboard
+    # line graph accumulate a real multi-day trend instead of being wiped to
+    # a single point every run.
+    _PNL_EPOCH = "2026-05-28"
+    _pnl_header = "date,unrealized_pnl,realized_pnl,total_pnl,open_positions\n"
+    if _pnl_path.exists():
+        try:
+            _pnl_df = _pd_rst.read_csv(_pnl_path)
+            if "date" in _pnl_df.columns and len(_pnl_df) > 0:
+                _ds = _pnl_df["date"].astype(str)
+                _pnl_keep = _pnl_df[(_ds >= _PNL_EPOCH) & (_ds < _today_str)]
+                _pnl_keep.to_csv(_pnl_path, index=False)
+                print(f"  [data_reset] pnl_history: kept {len(_pnl_keep)} real daily rows (>= {_PNL_EPOCH}, < today), dropped {len(_pnl_df) - len(_pnl_keep)}")
+            else:
+                _pnl_path.write_text(_pnl_header)
+        except Exception as _pnl_rst_e:
+            _pnl_path.write_text(_pnl_header)
+            print(f"  [data_reset] pnl_history reset (parse error): {_pnl_rst_e}")
+    else:
+        _pnl_path.write_text(_pnl_header)
 except Exception as _rst_e:
     print(f"  [data_reset] non-fatal: {_rst_e}")
 
@@ -2069,6 +2088,38 @@ if "signals" in dir():
     print(f"  [patch] Net-of-cost filter suppressed {_n_filtered_cost} low-edge signals "
           f"(cost threshold={_ROUND_TRIP_COST_PCT:.2%})")
     print(f"  [patch] Ternary labels — BUY:{_n_buy}  HOLD:{_n_hold}  SELL:{_n_sell}")
+
+    # ── Fix D: event_scale repair (root cause of "Event classification error:
+    # 'composite'"). The notebook's event-classification block does
+    # _sig["composite"] = min(_sig["composite"], 0.72) for earnings/FDA names
+    # with elevated IV — but signals carry "composite_score"/"confidence", never
+    # a bare "composite" key. The KeyError aborts the whole loop on the first
+    # high-var name, so event_scale never gets set for the rest. We re-apply it
+    # here with the correct keys, after the notebook block has run.
+    _n_event_capped = 0
+    _n_event_normal = 0
+    for _tk_es, _sig_es in signals.items():
+        _ev_es  = _sig_es.get("event_type", "other")
+        _ivf_es = _sig_es.get("iv_flag", "NORMAL")
+        if _ev_es in ("earnings", "fda") and _ivf_es != "NORMAL":
+            # cap confidence (and composite_score if present) for high-variance events
+            if "composite_score" in _sig_es:
+                try:
+                    _sig_es["composite_score"] = round(min(float(_sig_es["composite_score"]), 0.72), 4)
+                except Exception:
+                    pass
+            try:
+                _sig_es["confidence"] = round(min(float(_sig_es.get("confidence", 0.5)), 0.72), 4)
+            except Exception:
+                pass
+            _sig_es["event_scale"] = 0.5
+            _n_event_capped += 1
+        else:
+            # only set default if the notebook block didn't already set it
+            if "event_scale" not in _sig_es:
+                _sig_es["event_scale"] = 1.0
+            _n_event_normal += 1
+    print(f"  [patch] Event-scale repair: {_n_event_capped} high-var events capped (0.5x), {_n_event_normal} normal")
 else:
     print("  [patch] signals not in scope — ternary/cost patches skipped")
 
@@ -2714,6 +2765,30 @@ try:
     print("  [patch] requests.Session.send patched: outgoing headers sanitized + responses forced to UTF-8 (Alpaca latin-1 fix)")
 except Exception as _rf13e:
     print(f"  [patch] requests UTF-8 patch skipped: {_rf13e}")
+
+# ── Fix: Lowest-level header guard — patch http.client.putheader ─────────────
+# The Session.send patch above cleans the PreparedRequest, but 24/41 orders on
+# 2026-05-28 still crashed with 'latin-1 can't encode' — meaning a non-ASCII
+# char reaches a header on some path that bypasses the requests layer (alpaca-py
+# retries, urllib3 connection pooling, or a header set after prepare). http.client
+# is where Python actually does header.encode('latin-1') on the socket write —
+# patching putheader catches EVERY outgoing header regardless of code path.
+try:
+    import http.client as _hc13
+    _orig_putheader_13 = _hc13.HTTPConnection.putheader
+    def _safe_putheader_13(self, header, *values):
+        _clean_vals = []
+        for _v in values:
+            if isinstance(_v, str):
+                _v = _v.encode("ascii", "ignore").decode("ascii")
+            elif isinstance(_v, bytes):
+                _v = _v.decode("latin-1", "ignore").encode("ascii", "ignore")
+            _clean_vals.append(_v)
+        return _orig_putheader_13(self, header, *_clean_vals)
+    _hc13.HTTPConnection.putheader = _safe_putheader_13
+    print("  [patch] http.client.putheader patched: all outgoing headers forced ASCII (bulletproof latin-1 fix)")
+except Exception as _hc13e:
+    print(f"  [patch] http.client putheader patch skipped: {_hc13e}")
 
 # ── Fix: Cash guard — cap BUY signals to what PORTFOLIO_CAPITAL can fund ─────
 # Kelly sizing can assign qty to 100+ tickers, but the portfolio only has
