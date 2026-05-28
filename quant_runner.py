@@ -4565,9 +4565,23 @@ print(f"{'='*60}\n")
 
 # ── Macro data enrichment (FRED + Quiver Quant + News + FOMC) ─────────────
 print("\n-- Macro Enrichment -----------------------------------------")
-_FRED_KEY   = os.environ.get("FRED_API_KEY", "")
-_NEWS_KEY   = os.environ.get("NEWS_API_KEY", "")
-_QUIVER_KEY = os.environ.get("QUIVER_QUANT_KEY", "")
+# Sanitize: strip whitespace + non-ASCII (smart quotes from copy-paste). The
+# Alpaca diagnostic confirmed both ALPACA keys carry 1 non-ASCII char; FRED_API_KEY
+# almost certainly has the same. A corrupted-but-truthy key is WORSE than empty —
+# _fred() builds the authenticated URL with the bad key, FRED returns 400, and
+# every macro_extended series falls back to null (fed_funds_rate, cpi_yoy,
+# consumer_sentiment, etc. all blank on the dashboard). Stripping restores a
+# valid key (or, if empty after strip, _fred() uses the working public endpoint).
+def _clean_key_macro(_v):
+    return _v.strip().encode("ascii", "ignore").decode("ascii")
+_FRED_KEY   = _clean_key_macro(os.environ.get("FRED_API_KEY", ""))
+_NEWS_KEY   = _clean_key_macro(os.environ.get("NEWS_API_KEY", ""))
+_QUIVER_KEY = _clean_key_macro(os.environ.get("QUIVER_QUANT_KEY", ""))
+_raw_fred_macro = os.environ.get("FRED_API_KEY", "")
+if _raw_fred_macro and len(_raw_fred_macro.strip()) != len(_FRED_KEY):
+    print(f"  [cred sanitize] FRED_API_KEY: stripped {len(_raw_fred_macro.strip()) - len(_FRED_KEY)} non-ASCII char(s) — macro_extended FRED series were failing because of this")
+if _FRED_KEY:
+    print(f"  [cred check] FRED_API_KEY ok: len={len(_FRED_KEY)}")
 
 try:
     import requests as _req
