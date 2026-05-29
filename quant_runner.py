@@ -2030,6 +2030,69 @@ try:
         print("  [newsapi diag] requests.get patched to tally NewsAPI statuses")
 except Exception as _d10e:
     print(f"  [newsapi diag] patch skipped: {_d10e}")
+
+# ── Headline fetch: 18h disk cache → Finnhub company-news → NewsAPI fallback ──
+# NewsAPI free tier (~100 req/day) is exhausted by 307 tickers/run → 429 for
+# all calls → 0/307 sentiment coverage. Fix per diagnostic verdict (cache +
+# second source): cache headlines 18h (survives all intraday runs, synced via
+# Drive), prefer Finnhub (60 req/min ceiling), fall back to NewsAPI only when
+# Finnhub is empty. _fetch_headlines is routed here via _SRC_REPLACE.
+try:
+    from collections import Counter as _Ctr10h
+    _FH_SRC_10 = _Ctr10h()   # tallies: cache / finnhub / newsapi / empty
+except Exception:
+    _FH_SRC_10 = None
+
+def _fh_smart_headlines(ticker, n=10):
+    import os as _os10, json as _json10, time as _time10, pathlib as _pl10
+    import requests as _rq10, datetime as _dt10
+    def _tally(_k):
+        try:
+            if _FH_SRC_10 is not None: _FH_SRC_10[_k] += 1
+        except Exception: pass
+    _cdir = _pl10.Path("data/cache/news"); _cdir.mkdir(parents=True, exist_ok=True)
+    _cf = _cdir / (str(ticker).replace("/", "_") + ".json")
+    _ttl = 18 * 3600
+    try:
+        if _cf.exists() and (_time10.time() - _cf.stat().st_mtime) < _ttl:
+            _c = _json10.loads(_cf.read_text())
+            if _c.get("headlines"):
+                _tally("cache"); return _c["headlines"][:n]
+    except Exception:
+        pass
+    _heads = []
+    _fk = _os10.environ.get("FINNHUB_API_KEY", "").strip()
+    if _fk:
+        try:
+            _to = _dt10.date.today(); _frm = _to - _dt10.timedelta(days=7)
+            _r = _rq10.get("https://finnhub.io/api/v1/company-news",
+                           params={"symbol": ticker, "from": _frm.isoformat(),
+                                   "to": _to.isoformat(), "token": _fk}, timeout=6)
+            if _r.status_code == 200:
+                _heads = [a.get("headline", "") for a in _r.json()[:n] if a.get("headline")]
+                if _heads: _tally("finnhub")
+        except Exception:
+            pass
+    if not _heads:
+        _nk = (globals().get("NEWS_API_KEY", "") or _os10.environ.get("NEWS_API_KEY", "")).strip()
+        if _nk:
+            try:
+                _r = _rq10.get("https://newsapi.org/v2/everything",
+                               params={"q": ticker, "language": "en", "pageSize": n,
+                                       "sortBy": "publishedAt", "apiKey": _nk}, timeout=6)
+                if _r.status_code == 200:
+                    _heads = [a.get("title", "") for a in _r.json().get("articles", []) if a.get("title")]
+                    if _heads: _tally("newsapi")
+            except Exception:
+                pass
+    if _heads:
+        try:
+            _cf.write_text(_json10.dumps({"ts": _time10.time(), "headlines": _heads}))
+        except Exception:
+            pass
+    else:
+        _tally("empty")
+    return _heads[:n]
 '''
 
 # ── CELL 10 POSTPATCH: print NewsAPI status tally + verdict ───────────────────
@@ -2045,6 +2108,11 @@ try:
             print("  [newsapi diag] VERDICT: most empties are HTTP 200 with no articles — genuine no-news, NOT a cap; no fix needed")
         else:
             print("  [newsapi diag] VERDICT: no 429s — coverage reflects actual news availability")
+    if "_FH_SRC_10" in dir() and _FH_SRC_10 is not None:
+        _d = dict(_FH_SRC_10)
+        _scored10 = _d.get("cache", 0) + _d.get("finnhub", 0) + _d.get("newsapi", 0)
+        print(f"  [headlines] sources={_d} | {_scored10} tickers with headlines "
+              f"(cache+finnhub+newsapi), {_d.get('empty', 0)} empty")
 except Exception as _d10pe:
     print(f"  [newsapi diag] summary skipped: {_d10pe}")
 '''
@@ -4333,6 +4401,10 @@ _SRC_REPLACE = [
     # block is display-only — guard it to skip cleanly instead of erroring.
     ("_ann_ret  = float(np.mean(_pr) * 252)",
      "if not len(_pr):\n                raise ValueError('portfolio returns empty — skipping risk metrics')\n            _ann_ret  = float(np.mean(_pr) * 252)"),
+    # Route headline fetch through the cached Finnhub-first helper defined in
+    # CELL_10_PREPATCH (NewsAPI alone 429s on all 307 tickers → 0 coverage).
+    ('        r = requests.get(url, timeout=5)\n        return [a.get("title", "") for a in r.json().get("articles", [])]',
+     "        return _fh_smart_headlines(ticker, n)"),
 ]
 
 failed_cells = []
