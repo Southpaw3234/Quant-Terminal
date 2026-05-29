@@ -4280,79 +4280,101 @@ _KILL_WEEKLY_DRAWDOWN = -0.20   # -20% over rolling 5-day window (paper account)
 _KILL_VIX_LEVEL       = 45.0   # hard VIX stop
 
 _pnl_kill_triggered = False
+_kill_reason = None
 if not _KILL_FLAG.exists():
+    _KILL_PEAK_DRAWDOWN = -0.15   # -15% from NAV peak
+    # ── Primary: drawdown from the Alpaca equity curve (source of truth) ──────
+    # ROOT CAUSE of false trips: the old path divided P&L by a hardcoded
+    # $10,000 (pnl_history has no portfolio_value column). On the real ~$100k
+    # account that inflated every drawdown ~10x — a true -2.6% week read as
+    # -25.7% and tripped the -20% switch, halting trading on a phantom loss.
+    # Compute daily/weekly/peak drawdown directly from broker equity instead.
+    _ks_alpaca_ok = False
     try:
-        import pandas as _pd_ks
-        _hist_ks = Path("data/predictions/pnl_history.csv")
-        if _hist_ks.exists():
-            _pnl_df = _pd_ks.read_csv(_hist_ks)
-            _pnl_df["date"]      = _pd_ks.to_datetime(_pnl_df["date"], errors="coerce")
-            _pnl_df["total_pnl"] = _pd_ks.to_numeric(_pnl_df["total_pnl"], errors="coerce")
-            _pnl_df = _pnl_df.sort_values("date").dropna(subset=["date","total_pnl"])
-            if len(_pnl_df) >= 2:
-                # Daily drawdown: last row vs second-to-last
-                _today_pnl     = float(_pnl_df["total_pnl"].iloc[-1])
-                _yesterday_pnl = float(_pnl_df["total_pnl"].iloc[-2])
-                _portfolio_val = float(
-                    _pnl_df.get("portfolio_value", _pd_ks.Series([10_000.0])).iloc[-1]
-                    if "portfolio_value" in _pnl_df.columns else 10_000.0
-                )
-                _daily_dd  = (_today_pnl - _yesterday_pnl) / max(_portfolio_val, 1)
-                # Weekly drawdown: max over last 5 rows
-                _last5      = _pnl_df.tail(6)
-                _peak_pnl   = float(_last5["total_pnl"].iloc[0])
-                _weekly_dd  = (_today_pnl - _peak_pnl) / max(_portfolio_val, 1)
-                print(f"\n[KILL SWITCH CHECK] daily_dd={_daily_dd:+.2%}  "
-                      f"weekly_dd={_weekly_dd:+.2%}  "
-                      f"limits=({_KILL_DAILY_DRAWDOWN:.0%} / {_KILL_WEEKLY_DRAWDOWN:.0%})")
-                _kill_reason = None
-                if _daily_dd  <= _KILL_DAILY_DRAWDOWN:
-                    _kill_reason = (f"Daily drawdown {_daily_dd:+.2%} "
-                                    f"breached limit {_KILL_DAILY_DRAWDOWN:.0%}")
+        import requests as _rq_ks
+        _ak_ks = "".join(_c for _c in os.environ.get("ALPACA_API_KEY", "") if ord(_c) < 128).strip()
+        _sk_ks = "".join(_c for _c in os.environ.get("ALPACA_SECRET_KEY", "") if ord(_c) < 128).strip()
+        _bu_ks = ("".join(_c for _c in os.environ.get("ALPACA_BASE_URL", "") if ord(_c) < 128).strip()
+                  or "https://paper-api.alpaca.markets").rstrip("/")
+        if _ak_ks and _sk_ks:
+            _ph_ks = _rq_ks.get(f"{_bu_ks}/v2/account/portfolio/history",
+                headers={"APCA-API-KEY-ID": _ak_ks, "APCA-API-SECRET-KEY": _sk_ks},
+                params={"period": "1M", "timeframe": "1D", "extended_hours": "true"},
+                timeout=15).json()
+            _E = [float(_x) for _x in (_ph_ks.get("equity") or []) if _x not in (None, "")]
+            _E = [_x for _x in _E if _x > 0]
+            if len(_E) >= 2:
+                _eq_now    = _E[-1]
+                _daily_dd  = (_E[-1] - _E[-2]) / max(_E[-2], 1)
+                _wk_peak   = max(_E[-6:-1]) if len(_E) >= 3 else _E[-2]
+                _weekly_dd = (_eq_now - _wk_peak) / max(_wk_peak, 1)
+                _hwm_eq    = max(_E)
+                _peak_dd   = (_eq_now - _hwm_eq) / max(_hwm_eq, 1)
+                print(f"\n[KILL SWITCH · Alpaca] equity=${_eq_now:,.0f}  "
+                      f"daily_dd={_daily_dd:+.2%}  weekly_dd={_weekly_dd:+.2%}  "
+                      f"peak_dd={_peak_dd:+.2%} (HWM=${_hwm_eq:,.0f})  limits=("
+                      f"{_KILL_DAILY_DRAWDOWN:.0%}/{_KILL_WEEKLY_DRAWDOWN:.0%}/{_KILL_PEAK_DRAWDOWN:.0%})")
+                if _daily_dd <= _KILL_DAILY_DRAWDOWN:
+                    _kill_reason = f"Daily drawdown {_daily_dd:+.2%} breached limit {_KILL_DAILY_DRAWDOWN:.0%}"
                 elif _weekly_dd <= _KILL_WEEKLY_DRAWDOWN:
-                    _kill_reason = (f"Weekly drawdown {_weekly_dd:+.2%} "
-                                    f"breached limit {_KILL_WEEKLY_DRAWDOWN:.0%}")
-                # Peak drawdown from all-time high
-                _KILL_PEAK_DRAWDOWN = -0.15   # -15% from NAV peak
-                _nav_hwm_file = Path("data/nav_high_watermark.json")
-                try:
-                    _nav_hwm_data = json.loads(_nav_hwm_file.read_text()) if _nav_hwm_file.exists() else {}
-                except Exception:
-                    _nav_hwm_data = {}
-                _hwm = float(_nav_hwm_data.get("hwm", _portfolio_val))
-                _hwm = max(_hwm, _portfolio_val)  # update high watermark
-                _nav_hwm_data["hwm"] = _hwm
-                _nav_hwm_data["updated"] = datetime.datetime.utcnow().isoformat()
-                try:
-                    _nav_hwm_file.write_text(json.dumps(_nav_hwm_data, indent=2))
-                except Exception:
-                    pass
-                _peak_dd = (_portfolio_val + _today_pnl - _hwm) / max(_hwm, 1)
-                print(f"  Peak drawdown check: {_peak_dd:+.2%} from HWM=${_hwm:,.0f} "
-                      f"(limit={_KILL_PEAK_DRAWDOWN:.0%})")
-                if _peak_dd <= _KILL_PEAK_DRAWDOWN and not _kill_reason:
-                    _kill_reason = (f"Peak drawdown {_peak_dd:+.2%} from HWM "
-                                    f"breached limit {_KILL_PEAK_DRAWDOWN:.0%}")
-                if _kill_reason:
-                    _KILL_FLAG.write_text(_kill_reason)
-                    _pnl_kill_triggered = True
-                    print(f"\n{'!'*60}")
-                    print(f"KILL SWITCH ACTIVATED: {_kill_reason}")
-                    print(f"HALTING new trades. Delete {_KILL_FLAG} to reset.")
-                    print(f"{'!'*60}\n")
-                    _discord_ks = os.environ.get("DISCORD_WEBHOOK_URL","")
-                    if _discord_ks:
-                        try:
-                            import requests as _rks
-                            _rks.post(_discord_ks, json={
-                                "embeds":[{"title":"🚨 KILL SWITCH ACTIVATED",
-                                           "color":15158332,
-                                           "description": _kill_reason}]
-                            }, timeout=10)
-                        except Exception:
-                            pass
-    except Exception as _ks_check_e:
-        print(f"  Kill switch check error (non-fatal): {_ks_check_e}")
+                    _kill_reason = f"Weekly drawdown {_weekly_dd:+.2%} breached limit {_KILL_WEEKLY_DRAWDOWN:.0%}"
+                elif _peak_dd <= _KILL_PEAK_DRAWDOWN:
+                    _kill_reason = f"Peak drawdown {_peak_dd:+.2%} from HWM breached limit {_KILL_PEAK_DRAWDOWN:.0%}"
+                _ks_alpaca_ok = True
+    except Exception as _ks_ae:
+        print(f"  [kill switch] Alpaca drawdown check failed ({_ks_ae}) — falling back to pnl_history")
+
+    # ── Fallback: internal pnl_history (only if Alpaca unreachable) ───────────
+    # Still requires a REAL account value — never the old hardcoded $10k. If we
+    # can't establish it, skip the P&L check rather than trip on a bad ratio.
+    if not _ks_alpaca_ok:
+        try:
+            import pandas as _pd_ks
+            _hist_ks = Path("data/predictions/pnl_history.csv")
+            if _hist_ks.exists():
+                _pnl_df = _pd_ks.read_csv(_hist_ks)
+                _pnl_df["date"]      = _pd_ks.to_datetime(_pnl_df["date"], errors="coerce")
+                _pnl_df["total_pnl"] = _pd_ks.to_numeric(_pnl_df["total_pnl"], errors="coerce")
+                _pnl_df = _pnl_df.sort_values("date").dropna(subset=["date", "total_pnl"])
+                _portfolio_val = None
+                if "portfolio_value" in _pnl_df.columns and len(_pnl_df):
+                    try: _portfolio_val = float(_pnl_df["portfolio_value"].iloc[-1])
+                    except Exception: _portfolio_val = None
+                if len(_pnl_df) >= 2 and _portfolio_val and _portfolio_val > 0:
+                    _today_pnl  = float(_pnl_df["total_pnl"].iloc[-1])
+                    _yest_pnl   = float(_pnl_df["total_pnl"].iloc[-2])
+                    _peak_pnl   = float(_pnl_df["total_pnl"].tail(6).iloc[0])
+                    _daily_dd   = (_today_pnl - _yest_pnl) / _portfolio_val
+                    _weekly_dd  = (_today_pnl - _peak_pnl) / _portfolio_val
+                    print(f"\n[KILL SWITCH · pnl_history] daily_dd={_daily_dd:+.2%}  "
+                          f"weekly_dd={_weekly_dd:+.2%}  (acct=${_portfolio_val:,.0f})")
+                    if _daily_dd <= _KILL_DAILY_DRAWDOWN:
+                        _kill_reason = f"Daily drawdown {_daily_dd:+.2%} breached limit {_KILL_DAILY_DRAWDOWN:.0%}"
+                    elif _weekly_dd <= _KILL_WEEKLY_DRAWDOWN:
+                        _kill_reason = f"Weekly drawdown {_weekly_dd:+.2%} breached limit {_KILL_WEEKLY_DRAWDOWN:.0%}"
+                else:
+                    print("  [kill switch] no real account value available — skipping P&L "
+                          "drawdown check (refuses to trip on a guessed denominator)")
+        except Exception as _ks_check_e:
+            print(f"  Kill switch check error (non-fatal): {_ks_check_e}")
+
+    # ── Trip the switch if either path found a genuine breach ────────────────
+    if _kill_reason:
+        _KILL_FLAG.write_text(_kill_reason)
+        _pnl_kill_triggered = True
+        print(f"\n{'!'*60}")
+        print(f"KILL SWITCH ACTIVATED: {_kill_reason}")
+        print(f"HALTING new trades. Delete {_KILL_FLAG} to reset.")
+        print(f"{'!'*60}\n")
+        _discord_ks = os.environ.get("DISCORD_WEBHOOK_URL", "")
+        if _discord_ks:
+            try:
+                import requests as _rks
+                _rks.post(_discord_ks, json={"embeds": [{
+                    "title": "🚨 KILL SWITCH ACTIVATED", "color": 15158332,
+                    "description": _kill_reason}]}, timeout=10)
+            except Exception:
+                pass
 
     # VIX hard stop (checked separately — does not require pnl_history)
     if not _pnl_kill_triggered:
