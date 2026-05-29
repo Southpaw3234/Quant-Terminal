@@ -126,6 +126,58 @@ if _drive_ok:
     print("Stage 0a: Drive -> local sync...")
     _rclone(f"gdrive:{GDRIVE_FOLDER}", str(LOCAL_DATA), "Drive->local")
 
+# Cumulative trade history for the dashboard. paper_trades.csv is reset to
+# today-only every run so the cash guard's BUY−SELL notional calc stays
+# correct (see data_reset below). That truncation also wiped the dashboard's
+# Trade Log down to a single day. To keep a real multi-day Trade Log without
+# breaking the cash guard, we mirror every *filled* trade into a separate
+# append-only trade_history.csv (last 60 days), which the dashboard reads
+# instead of the working file. Only filled rows are kept, so the phantom
+# May-12 rejected BUYs never accumulate here either.
+def _merge_trade_history(working_csv="data/paper_trades/paper_trades.csv",
+                         hist_csv="data/paper_trades/trade_history.csv",
+                         keep_days=60):
+    try:
+        import pandas as _pd_th
+        from pathlib import Path as _P_th
+        _cols = ("ts,ticker,action,price,qty,dollars,confidence,regime,vix,"
+                 "portfolio_value,notes,order_id,status,run_date,iv_flag,iv_scale,notional")
+        _hp = _P_th(hist_csv)
+        _frames = []
+        for _f in (_P_th(hist_csv), _P_th(working_csv)):
+            if _f.exists():
+                try:
+                    _d = _pd_th.read_csv(_f)
+                    if len(_d) > 0:
+                        _frames.append(_d)
+                except Exception:
+                    pass
+        if not _frames:
+            if not _hp.exists():
+                _hp.write_text(_cols + "\n")
+            return 0
+        _all = _pd_th.concat(_frames, ignore_index=True)
+        if "status" in _all.columns:
+            _all = _all[_all["status"].astype(str).str.lower() == "filled"]
+        _key = [c for c in ("ts", "ticker", "action", "order_id") if c in _all.columns]
+        if _key:
+            _all = _all.drop_duplicates(subset=_key, keep="last")
+        if "run_date" in _all.columns and len(_all) > 0:
+            _cut = (_pd_th.Timestamp.today() - _pd_th.Timedelta(days=keep_days)).strftime("%Y-%m-%d")
+            _all = _all[_all["run_date"].astype(str) >= _cut]
+        if "ts" in _all.columns:
+            _all = _all.sort_values("ts")
+        _all.to_csv(_hp, index=False)
+        print(f"  [trade_history] {len(_all)} filled trades retained (last {keep_days}d)")
+        return len(_all)
+    except Exception as _th_e:
+        print(f"  [trade_history] non-fatal: {_th_e}")
+        return 0
+
+# Capture any trades restored from Drive (prior runs) into the cumulative
+# history BEFORE the data_reset below truncates paper_trades.csv to today.
+_merge_trade_history()
+
 # Data reset: after every Drive sync, purge any stale phantom trades and
 # keep ONLY today-dated rows. This runs unconditionally so multi-run days
 # don't accumulate old Drive data in the cash guard's notional calc.
@@ -4115,12 +4167,25 @@ def _load_model_cache(ns):
 
 def _save_model_cache(ns):
     if RUN_TYPE == "morning":
+        keys = ["models", "regimes", "garch_res", "ADAPTIVE_WEIGHTS",
+                "LEARNED_RULES", "FEATURE_COLS"]
+        # Serialize key-by-key so one unpicklable object doesn't sink the whole
+        # cache. The prior all-at-once dumps() failed entirely with
+        # "Can't pickle <function display>" — an IPython display ref captured in
+        # one object — wiping the cache and forcing a full retrain every run.
+        cache, skipped = {}, []
+        for k in keys:
+            if k not in ns:
+                continue
+            try:
+                _serializer.dumps(ns[k], protocol=4)   # probe picklability
+                cache[k] = ns[k]
+            except Exception as _ke:
+                skipped.append(f"{k} ({type(_ke).__name__})")
         try:
-            keys = ["models", "regimes", "garch_res", "ADAPTIVE_WEIGHTS",
-                    "LEARNED_RULES", "FEATURE_COLS"]
-            cache = {k: ns[k] for k in keys if k in ns}
             MODEL_CACHE.write_bytes(_serializer.dumps(cache, protocol=4))
-            print(f"  Model cache saved ({_serializer_name}): {list(cache.keys())}")
+            print(f"  Model cache saved ({_serializer_name}): {list(cache.keys())}"
+                  + (f" | skipped: {skipped}" if skipped else ""))
         except Exception as e:
             print(f"  Model cache save failed: {e}")
 
@@ -4251,6 +4316,25 @@ if _KILL_FLAG.exists():
 namespace = {"__name__": "__main__"}
 _load_model_cache(namespace)
 
+# ── Notebook source rewrites ──────────────────────────────────────────────
+# Literal (old → new) substitutions applied to every cell's source before
+# exec. Used for one-line bugs inside notebook functions that the prepatch/
+# postpatch wrappers can't reach (they run in the cell's namespace, not its
+# function bodies). Each entry must be an exact, unique substring.
+_SRC_REPLACE = [
+    # River >= 0.21 changed learn_one() to return None (in-place) instead of
+    # self, breaking the chained scaler.learn_one(x).transform_one(x) idiom →
+    # 'NoneType' object has no attribute 'transform_one'. Split into two calls.
+    ("_xs = _river_scaler.learn_one(_x).transform_one(_x)",
+     "_river_scaler.learn_one(_x)\n                _xs = _river_scaler.transform_one(_x)"),
+    # CVaR risk metrics crash with a cryptic 'index -1 ... size 0' when the
+    # returns frame is empty (degenerate covariance on some neutral-regime
+    # runs). Portfolio weights are still produced by CELL_12_POSTPATCH, so this
+    # block is display-only — guard it to skip cleanly instead of erroring.
+    ("_ann_ret  = float(np.mean(_pr) * 252)",
+     "if not len(_pr):\n                raise ValueError('portfolio returns empty — skipping risk metrics')\n            _ann_ret  = float(np.mean(_pr) * 252)"),
+]
+
 failed_cells = []
 for i, cell in enumerate(cells):
     if cell["cell_type"] != "code":
@@ -4260,6 +4344,11 @@ for i, cell in enumerate(cells):
         continue
 
     src = "".join(cell["source"])
+
+    for _old_src, _new_src in _SRC_REPLACE:
+        if _old_src in src:
+            src = src.replace(_old_src, _new_src)
+            print(f"  [src rewrite] Cell {i}: applied {_old_src[:48]!r}…")
 
     # ── Special patches ───────────────────────────────────────────────────
     if i == 3:
@@ -4473,8 +4562,90 @@ if RUN_TYPE in ("morning", "evening"):
     except Exception as _ic9_e:
         print(f"  IC decomposition error (non-fatal): {_ic9_e}")
 
-# ── Daily P&L snapshot (unrealized + realized) ────────────────────────────
-if RUN_TYPE in ("morning", "intraday"):
+# ── Daily P&L snapshot via Alpaca (authoritative source of truth) ─────────
+# #1 positions → real unrealized P&L; account → equity / total P&L.
+# #2 portfolio/history → rebuild the full 60-day daily equity curve so the
+#    dashboard line graph no longer depends on accumulating CSV rows run-by-
+#    run. The whole curve repopulates from the broker every run, so a missed
+#    run or a wiped file can't lose history. Falls back to the legacy
+#    yfinance/CSV reconstruction below if Alpaca is unreachable / keys unset.
+_alpaca_pnl_ok = False
+if RUN_TYPE in ("morning", "intraday") and ALPACA_API_KEY and ALPACA_SECRET_KEY:
+    try:
+        import pandas as _pd_ap
+        import requests as _rq_ap
+        _ap_base = ALPACA_BASE_URL.rstrip("/")
+        _ap_hdr  = {"APCA-API-KEY-ID": ALPACA_API_KEY,
+                    "APCA-API-SECRET-KEY": ALPACA_SECRET_KEY}
+
+        # --- account: equity vs prior-close equity ---
+        _acct = _rq_ap.get(f"{_ap_base}/v2/account", headers=_ap_hdr, timeout=15).json()
+        _equity = float(_acct.get("equity", 0) or 0)
+
+        # --- positions: broker-computed unrealized P&L (authoritative) ---
+        _positions = _rq_ap.get(f"{_ap_base}/v2/positions", headers=_ap_hdr, timeout=15).json()
+        if not isinstance(_positions, list):
+            _positions = []
+        _unrealized = round(sum(float(p.get("unrealized_pl", 0) or 0) for p in _positions), 2)
+        _n_open = len(_positions)
+
+        # --- portfolio history: full daily equity curve (#2) ---
+        _ph = _rq_ap.get(f"{_ap_base}/v2/account/portfolio/history",
+                         headers=_ap_hdr,
+                         params={"period": "2M", "timeframe": "1D",
+                                 "extended_hours": "true"}, timeout=20).json()
+        _ts   = _ph.get("timestamp", []) or []
+        _eq   = _ph.get("equity", []) or []
+        _pl   = _ph.get("profit_loss", []) or []
+        _base = float(_ph.get("base_value", 0) or 0)
+
+        _rows = []
+        for _i in range(len(_ts)):
+            try:
+                _d = datetime.datetime.utcfromtimestamp(int(_ts[_i])).strftime("%Y-%m-%d")
+            except Exception:
+                continue
+            _eq_i = float(_eq[_i]) if _i < len(_eq) and _eq[_i] not in (None, "") else None
+            if _eq_i is None:
+                continue
+            # Alpaca-computed P/L vs window base; fall back to equity − base.
+            if _i < len(_pl) and _pl[_i] not in (None, ""):
+                _tot_i = round(float(_pl[_i]), 2)
+            else:
+                _tot_i = round(_eq_i - _base, 2) if _base else 0.0
+            _rows.append({"date": _d, "unrealized_pnl": "", "realized_pnl": "",
+                          "total_pnl": _tot_i, "open_positions": ""})
+
+        _hist_df = _pd_ap.DataFrame(_rows, columns=["date", "unrealized_pnl",
+                                    "realized_pnl", "total_pnl", "open_positions"])
+        if len(_hist_df):
+            _hist_df = _hist_df.drop_duplicates(subset="date", keep="last")
+
+        # Today's row: enrich with the live unrealized/realized split. Total is
+        # the broker curve value; unrealized is open-position MTM; realized is
+        # the remainder (locked-in P&L = total − currently-open unrealized).
+        _today_str   = datetime.datetime.utcnow().strftime("%Y-%m-%d")
+        _today_total = round(_equity - _base, 2) if _base else _unrealized
+        _today_real  = round(_today_total - _unrealized, 2)
+        _today_row   = {"date": _today_str, "unrealized_pnl": _unrealized,
+                        "realized_pnl": _today_real, "total_pnl": _today_total,
+                        "open_positions": _n_open}
+        _hist_df = _hist_df[_hist_df["date"] != _today_str]
+        _hist_df = _pd_ap.concat([_hist_df, _pd_ap.DataFrame([_today_row])],
+                                 ignore_index=True).sort_values("date")
+
+        _hist_path = Path("data/predictions/pnl_history.csv")
+        _hist_path.parent.mkdir(parents=True, exist_ok=True)
+        _hist_df.to_csv(_hist_path, index=False)
+        _alpaca_pnl_ok = True
+        print(f"  P&L snapshot via Alpaca [{_today_str}]: equity=${_equity:,.2f}  "
+              f"unrealized={_unrealized:+.2f}  total={_today_total:+.2f}  "
+              f"open={_n_open}  | {len(_hist_df)}-day curve from portfolio/history")
+    except Exception as _ap_pnl_e:
+        print(f"  P&L snapshot via Alpaca failed ({_ap_pnl_e}) — falling back to CSV reconstruction")
+
+# ── Daily P&L snapshot (legacy yfinance/CSV fallback) ─────────────────────
+if RUN_TYPE in ("morning", "intraday") and not _alpaca_pnl_ok:
     try:
         import yfinance as _yf
         import pandas as _pd
@@ -5349,10 +5520,14 @@ try:
         except Exception as _disc_e:
             print(f"  Discord alert error: {_disc_e}")
 
+    # Fold today's just-executed trades into the cumulative history so the
+    # dashboard Trade Log shows every day the model has traded, not just today.
+    _merge_trade_history()
+
     _dash_data = {
         "generated":      datetime.datetime.utcnow().isoformat()[:16] + " UTC",
         "run_type":       RUN_TYPE,
-        "trades":         _read_csv("data/paper_trades/paper_trades.csv"),
+        "trades":         _read_csv("data/paper_trades/trade_history.csv"),
         "predictions":    _preds_list,
         "pnl_log":        _read_csv("data/predictions/daily_pnl_log.csv"),
         "macro":          _macro_snap,
