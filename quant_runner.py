@@ -4405,6 +4405,15 @@ _SRC_REPLACE = [
     # CELL_10_PREPATCH (NewsAPI alone 429s on all 307 tickers → 0 coverage).
     ('        r = requests.get(url, timeout=5)\n        return [a.get("title", "") for a in r.json().get("articles", [])]',
      "        return _fh_smart_headlines(ticker, n)"),
+    # Cell 15's diagnose_failures_and_rewrite_rules does int(MACRO["macro_regime"]),
+    # which crashes when macro_regime is a string label like "Neutral / Mixed".
+    # Replace the whole guarded RHS so MACRO is only touched when present, and
+    # string regimes are mapped to their int code instead of erroring.
+    ('int(MACRO.get("macro_regime", 1)) if "MACRO" in globals() else 1',
+     '1 if "MACRO" not in globals() else '
+     '(lambda _mr: int(_mr) if str(_mr).strip().lstrip("-").isdigit() '
+     'else {"bear": 0, "neutral": 1, "mixed": 1, "bull": 2}.get('
+     'str(_mr).lower().replace(" / ", "/").split("/")[0].strip(), 1))(MACRO.get("macro_regime", 1))'),
 ]
 
 failed_cells = []
@@ -4642,13 +4651,23 @@ if RUN_TYPE in ("morning", "evening"):
 #    run or a wiped file can't lose history. Falls back to the legacy
 #    yfinance/CSV reconstruction below if Alpaca is unreachable / keys unset.
 _alpaca_pnl_ok = False
-if RUN_TYPE in ("morning", "intraday") and ALPACA_API_KEY and ALPACA_SECRET_KEY:
+# Credentials live in the notebook exec namespace (set by GH_PATCH), not in
+# this module's globals — and they may carry a non-ASCII char. Resolve them at
+# module scope: prefer the already-sanitized namespace value, else strip
+# os.environ. (Matches how the macro section re-reads NEWS_KEY/FINNHUB_KEY.)
+def _ascii_strip(_s):
+    return "".join(_c for _c in str(_s or "") if ord(_c) < 128).strip()
+_AK = _ascii_strip(namespace.get("ALPACA_API_KEY")    or os.environ.get("ALPACA_API_KEY", ""))
+_SK = _ascii_strip(namespace.get("ALPACA_SECRET_KEY") or os.environ.get("ALPACA_SECRET_KEY", ""))
+_BU = _ascii_strip(namespace.get("ALPACA_BASE_URL")   or os.environ.get("ALPACA_BASE_URL", "")) \
+      or "https://paper-api.alpaca.markets"
+if RUN_TYPE in ("morning", "intraday") and _AK and _SK:
     try:
         import pandas as _pd_ap
         import requests as _rq_ap
-        _ap_base = ALPACA_BASE_URL.rstrip("/")
-        _ap_hdr  = {"APCA-API-KEY-ID": ALPACA_API_KEY,
-                    "APCA-API-SECRET-KEY": ALPACA_SECRET_KEY}
+        _ap_base = _BU.rstrip("/")
+        _ap_hdr  = {"APCA-API-KEY-ID": _AK,
+                    "APCA-API-SECRET-KEY": _SK}
 
         # --- account: equity vs prior-close equity ---
         _acct = _rq_ap.get(f"{_ap_base}/v2/account", headers=_ap_hdr, timeout=15).json()
