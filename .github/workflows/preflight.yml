@@ -100,8 +100,8 @@ jobs:
           print(f"  PREPATCH  cells: {sorted(pre_keys)}")
           print(f"  POSTPATCH cells: {sorted(post_keys)}")
 
-          expected_pre  = [3, 4, 5, 6, 8, 9, 11, 12, 13]
-          expected_post = [4, 5, 6, 8, 9, 11, 12, 13, 15]
+          expected_pre  = [3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15]
+          expected_post = [4, 5, 6, 8, 9, 10, 11, 12, 13, 15]
 
           ok = True
           if sorted(pre_keys) != sorted(expected_pre):
