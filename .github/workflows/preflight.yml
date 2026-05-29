@@ -11,8 +11,9 @@ jobs:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: claude/peaceful-gould-4fdb1a
+        # No explicit ref: check out whatever branch the workflow is dispatched
+        # on, so preflight validates the actual code under review (was pinned to
+        # a stale branch, which silently tested the wrong commit).
 
       - uses: actions/setup-python@v5
         with:
