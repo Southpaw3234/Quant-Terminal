@@ -121,6 +121,21 @@ def _rclone(src, dst, label):
     except Exception as e:
         print(f"  {label} error: {e}")
 
+def _rclone_delete(remote_relpath, label="rclone delete"):
+    # local->Drive uses `rclone copy`, which never deletes — so a file removed
+    # locally lingers on Drive forever and gets restored next run. Use this to
+    # explicitly delete a single file on Drive (e.g. a cleared kill-switch flag)
+    # so the clear actually propagates.
+    try:
+        r = subprocess.run(
+            ["rclone", "deletefile", f"gdrive:{GDRIVE_FOLDER}/{remote_relpath}", "--quiet"],
+            capture_output=True, text=True, timeout=60)
+        if r.returncode == 0:
+            print(f"  {label}: deleted {remote_relpath} on Drive")
+        # non-zero (e.g. file already absent) is fine — silent
+    except Exception as e:
+        print(f"  {label} error: {e}")
+
 _drive_ok = _write_rclone_conf()
 if _drive_ok:
     print("Stage 0a: Drive -> local sync...")
@@ -4393,7 +4408,12 @@ _KILL_VIX_LEVEL       = 45.0   # hard VIX stop
 
 _pnl_kill_triggered = False
 _kill_reason = None
-if not _KILL_FLAG.exists():
+_ks_evaluated = False   # True once we have a valid drawdown reading this run
+# Always re-evaluate (self-healing): rclone copy never deletes, so a flag from
+# a prior (often phantom) trip persists on Drive and is restored every run. By
+# re-checking real Alpaca drawdown each run we can CLEAR a stale flag when the
+# account is healthy, instead of staying latched forever.
+if True:
     _KILL_PEAK_DRAWDOWN = -0.15   # -15% from NAV peak
     # ── Primary: drawdown from the Alpaca equity curve (source of truth) ──────
     # ROOT CAUSE of false trips: the old path divided P&L by a hardcoded
@@ -4433,6 +4453,7 @@ if not _KILL_FLAG.exists():
                 elif _peak_dd <= _KILL_PEAK_DRAWDOWN:
                     _kill_reason = f"Peak drawdown {_peak_dd:+.2%} from HWM breached limit {_KILL_PEAK_DRAWDOWN:.0%}"
                 _ks_alpaca_ok = True
+                _ks_evaluated = True
     except Exception as _ks_ae:
         print(f"  [kill switch] Alpaca drawdown check failed ({_ks_ae}) — falling back to pnl_history")
 
@@ -4458,6 +4479,7 @@ if not _KILL_FLAG.exists():
                     _peak_pnl   = float(_pnl_df["total_pnl"].tail(6).iloc[0])
                     _daily_dd   = (_today_pnl - _yest_pnl) / _portfolio_val
                     _weekly_dd  = (_today_pnl - _peak_pnl) / _portfolio_val
+                    _ks_evaluated = True
                     print(f"\n[KILL SWITCH · pnl_history] daily_dd={_daily_dd:+.2%}  "
                           f"weekly_dd={_weekly_dd:+.2%}  (acct=${_portfolio_val:,.0f})")
                     if _daily_dd <= _KILL_DAILY_DRAWDOWN:
@@ -4505,6 +4527,21 @@ if not _KILL_FLAG.exists():
                 print(f"{'!'*60}\n")
         except Exception as _vix_ks_e:
             print(f"  VIX kill switch check error (non-fatal): {_vix_ks_e}")
+
+    # ── Self-heal: account healthy → clear any stale flag (local + Drive) ─────
+    # Only when we actually got a valid drawdown reading this run (never clear
+    # blindly when the check couldn't evaluate — that could mask a real breach).
+    # The Drive delete is unconditional (idempotent) because the morning
+    # auto-clear may have already removed the flag LOCALLY while the immortal
+    # Drive copy lingers; we must delete it on Drive regardless.
+    if not _pnl_kill_triggered and _ks_evaluated:
+        _had_local_flag = _KILL_FLAG.exists()
+        _KILL_FLAG.unlink(missing_ok=True)
+        (LOCAL_DATA / "cvar_failure_log.json").unlink(missing_ok=True)
+        if _drive_ok:
+            _rclone_delete(_KILL_FLAG.name, "kill switch self-heal")
+        if _had_local_flag:
+            print("  [kill switch] account healthy — cleared stale flag (local + Drive)")
 
 if _KILL_FLAG.exists():
     _flag_msg = _KILL_FLAG.read_text()
