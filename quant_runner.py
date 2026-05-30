@@ -559,6 +559,43 @@ if _bad_tickers:
     print(f"  [patch] OHLCV sanity: dropped {len(_bad_tickers)} tickers: {_bad_tickers[:10]}")
 else:
     print("  [patch] OHLCV sanity: all tickers clean")
+
+# ── Tier A: survivorship — dead-ticker registry ──────────────────────────────
+# Survivorship bias: the universe is CURRENT constituents, so training on 10y of
+# survivors over-represents winners. A full correction needs survivorship-free
+# price history for delisted names, which the free yfinance pipeline lacks. As
+# the foundation, persist a record of every ticker dropped as delisted/corrupt
+# (with first/last dead dates) so the dead set is known for future backfill and
+# the silent drops become visible/auditable.
+try:
+    import csv as _csv5, datetime as _dt5
+    from pathlib import Path as _P5
+    _dead_path = _P5("data/dead_tickers.csv")
+    _today5 = _dt5.date.today().isoformat()
+    _reg5 = {}
+    if _dead_path.exists():
+        with open(_dead_path, newline="") as _f5r:
+            for _row5 in _csv5.DictReader(_f5r):
+                if _row5.get("ticker"):
+                    _reg5[_row5["ticker"]] = _row5
+    for _tk5d in _bad_tickers:
+        if not _tk5d:
+            continue
+        if _tk5d in _reg5:
+            _reg5[_tk5d]["last_dead"] = _today5
+        else:
+            _reg5[_tk5d] = {"ticker": _tk5d, "first_dead": _today5,
+                            "last_dead": _today5, "reason": "ohlcv_sanity"}
+    _P5("data").mkdir(exist_ok=True)
+    with open(_dead_path, "w", newline="") as _f5w:
+        _w5 = _csv5.DictWriter(_f5w, fieldnames=["ticker", "first_dead", "last_dead", "reason"])
+        _w5.writeheader()
+        for _r5 in sorted(_reg5.values(), key=lambda r: r["ticker"]):
+            _w5.writerow(_r5)
+    print(f"  [survivorship] dead-ticker registry: {len(_reg5)} recorded "
+          f"(+{len([t for t in _bad_tickers if t])} this run)")
+except Exception as _ds5e:
+    print(f"  [survivorship] registry update skipped: {_ds5e}")
 """
 
 # ── CELL 6 PREPATCH: helper functions for Fixes 10-13 ───────────────────────
