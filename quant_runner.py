@@ -2336,9 +2336,36 @@ except Exception as _conf11e:
 # Round-trip cost ≈ 2 × half-spread. For liquid equities assume ~0.05% each way.
 # A trade is only taken if expected alpha (|composite_score - 0.5|) > cost.
 # This filters low-edge signals that are unlikely to cover spread + slippage.
-_ROUND_TRIP_COST_PCT = 0.0002   # 0.02% round-trip (lowered to match Huber composite score range)
+_ROUND_TRIP_COST_PCT = 0.0002   # 0.02% round-trip floor (most-liquid names)
 # Convert cost to composite_score units: Δp ≈ Δreturn / 0.02 (2% per unit prob shift)
 _MIN_ALPHA_SCORE = 0.5 + (_ROUND_TRIP_COST_PCT / 0.02)   # ≈ 0.51 (aligns with HOLD_HI)
+
+# ── Tier A: per-ticker transaction-cost model (replaces flat 0.02%) ───────────
+# A real round-trip cost is driven by liquidity: illiquid names have wider
+# spreads, so a signal there must clear a higher edge bar to be worth trading.
+# Estimate round-trip cost per ticker from average dollar volume (ADV) tier plus
+# a small volatility kicker (recent High-Low range), both from `featured`. The
+# flat _ROUND_TRIP_COST_PCT is the floor; cost is capped to avoid over-suppression.
+_RT_COST_CAP = 0.005   # 0.5% round-trip ceiling
+def _rt_cost(_tk):
+    try:
+        _df = featured.get(_tk) if "featured" in dir() else None
+        if _df is None or "Close" not in _df.columns or "Volume" not in _df.columns:
+            return _ROUND_TRIP_COST_PCT
+        _c = _df["Close"].astype(float)
+        _v = _df["Volume"].astype(float)
+        _adv = float((_c * _v).tail(20).mean())
+        if   _adv >= 1e9: _hs = 0.0001   # mega-cap (~AAPL/MSFT)
+        elif _adv >= 1e8: _hs = 0.0003   # large-cap
+        elif _adv >= 1e7: _hs = 0.0006   # mid-cap
+        else:             _hs = 0.0012   # small/illiquid
+        _rng = 0.0
+        if "High" in _df.columns and "Low" in _df.columns:
+            _rng = float(((_df["High"].astype(float) - _df["Low"].astype(float)) / _c).tail(20).mean())
+        _cost = 2.0 * _hs + 0.10 * (_rng if _rng == _rng else 0.0)   # round-trip + vol kicker
+        return float(min(max(_cost, _ROUND_TRIP_COST_PCT), _RT_COST_CAP))
+    except Exception:
+        return _ROUND_TRIP_COST_PCT
 
 # Apply all three fixes in one pass
 # ROOT CAUSE FIX: composite_score clusters near 0.5 (raw ensemble output) while
@@ -2366,9 +2393,12 @@ if "signals" in dir():
                 signals[_tk11]["confidence"] = _conf_val
                 _n_adjusted_conf += 1
 
-        # Net-of-cost filter: edge = |P(bull) - 0.5|; must exceed cost in prob units
+        # Net-of-cost filter: edge = |P(bull) - 0.5|; must exceed per-ticker cost
+        # in prob units (Δp ≈ cost / 0.02). Illiquid names face a higher bar.
         _alpha = abs(_conf_val - 0.5)
-        if _alpha < (_MIN_ALPHA_SCORE - 0.5):
+        _cost_tk = _rt_cost(_tk11)
+        signals[_tk11]["rt_cost"] = round(_cost_tk, 5)
+        if _alpha < (_cost_tk / 0.02):
             signals[_tk11]["net_of_cost_hold"] = True
             _n_filtered_cost += 1
         else:
@@ -2386,8 +2416,10 @@ if "signals" in dir():
             _n_hold += 1
 
     print(f"  [patch] Conformal bands adjusted {_n_adjusted_conf} signals")
+    _costs_all = [s.get("rt_cost") for s in signals.values() if isinstance(s.get("rt_cost"), (int, float))]
+    _avg_cost = (sum(_costs_all) / len(_costs_all)) if _costs_all else _ROUND_TRIP_COST_PCT
     print(f"  [patch] Net-of-cost filter suppressed {_n_filtered_cost} low-edge signals "
-          f"(cost threshold={_ROUND_TRIP_COST_PCT:.2%})")
+          f"(per-ticker cost: avg={_avg_cost:.2%}, floor={_ROUND_TRIP_COST_PCT:.2%}, cap={_RT_COST_CAP:.2%})")
     print(f"  [patch] Ternary labels — BUY:{_n_buy}  HOLD:{_n_hold}  SELL:{_n_sell}")
 
     # ── Fix D: event_scale repair (root cause of "Event classification error:
