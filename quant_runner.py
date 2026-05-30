@@ -1676,6 +1676,96 @@ else:
 """
 CELL_8_POSTPATCH += "\n\n" + _CELL_8_T3_DSR
 
+# ── Tier A #1: Walk-forward validation (rolling OOS AUC + drift monitor) ──────
+# The notebook trains on one fixed 62.5/37.5 split decided on day 1; the OOS
+# window ages and never re-proves on recent regimes. This adds an INDEPENDENT
+# credibility monitor (not production retraining): pool every ticker into one
+# date-sorted panel, roll train=504d / test=63d / step=63d, fit a single
+# lightweight XGB per fold, and report mean OOS AUC + a drift flag. This is the
+# honest repeated-OOS number the eventual data-upgrade gate (AUC 0.55–0.68)
+# checks. Capped to the most recent _MAX_FOLDS to bound CI runtime. Morning only.
+_CELL_8_WALKFORWARD = '''
+if RUN_TYPE == "morning" and "featured" in dir() and "FEATURE_COLS" in dir():
+    try:
+        import numpy as _npwf, pandas as _pdwf, json as _jwf, datetime as _dtwf
+        from pathlib import Path as _Pwf
+        from sklearn.metrics import roc_auc_score as _aucwf
+        import xgboost as _xgbwf
+        _H_wf = 5  # FORECAST_DAYS — 5-day sign label, matches sign_based_v8
+        _MAX_FOLDS = 12
+        _TRAIN_D, _TEST_D, _STEP_D = 504, 63, 63
+        _cols_wf = [c for c in FEATURE_COLS if c]
+        _frames_wf = []
+        for _tk_wf, _df_wf in featured.items():
+            if _df_wf is None or len(_df_wf) < 60 or "Close" not in _df_wf.columns:
+                continue
+            _have = [c for c in _cols_wf if c in _df_wf.columns]
+            if not _have:
+                continue
+            _c_wf = _pdwf.to_numeric(_df_wf["Close"], errors="coerce")
+            _sub = _df_wf[_have].copy().replace([_npwf.inf, -_npwf.inf], _npwf.nan)
+            _sub["_y_wf"]    = (_c_wf.shift(-_H_wf) / _c_wf - 1.0 > 0).astype("float")
+            _sub["_date_wf"] = _pdwf.to_datetime(_df_wf.index)
+            _frames_wf.append(_sub)
+        if not _frames_wf:
+            print("  [walkforward] no usable ticker frames")
+        else:
+            _feat_wf = [c for c in _cols_wf if all(c in f.columns for f in _frames_wf)]
+            _panel = _pdwf.concat(_frames_wf, ignore_index=True)
+            _panel = _panel[_feat_wf + ["_y_wf", "_date_wf"]].dropna()
+            _panel = _panel.sort_values("_date_wf").reset_index(drop=True)
+            _dates_wf = _panel["_date_wf"].drop_duplicates().sort_values().reset_index(drop=True)
+            _starts = list(range(0, len(_dates_wf) - _TRAIN_D - _TEST_D + 1, _STEP_D))
+            _starts = _starts[-_MAX_FOLDS:]   # most recent folds only
+            _aucs_wf, _folds_wf = [], []
+            for _s in _starts:
+                _tr_hi = _dates_wf.iloc[_s + _TRAIN_D - 1]
+                _te_hi = _dates_wf.iloc[_s + _TRAIN_D + _TEST_D - 1]
+                _tr_lo = _dates_wf.iloc[_s]
+                _trm = (_panel["_date_wf"] >= _tr_lo) & (_panel["_date_wf"] <= _tr_hi)
+                _tem = (_panel["_date_wf"] > _tr_hi) & (_panel["_date_wf"] <= _te_hi)
+                _Xtr, _ytr = _panel.loc[_trm, _feat_wf], _panel.loc[_trm, "_y_wf"]
+                _Xte, _yte = _panel.loc[_tem, _feat_wf], _panel.loc[_tem, "_y_wf"]
+                if len(_Xtr) < 200 or len(_Xte) < 50 or _ytr.nunique() < 2 or _yte.nunique() < 2:
+                    continue
+                _m_wf = _xgbwf.XGBClassifier(
+                    n_estimators=80, max_depth=4, learning_rate=0.05,
+                    subsample=0.8, colsample_bytree=0.8, n_jobs=2,
+                    eval_metric="logloss", verbosity=0)
+                _m_wf.fit(_Xtr, _ytr)
+                _a_wf = float(_aucwf(_yte, _m_wf.predict_proba(_Xte)[:, 1]))
+                _aucs_wf.append(_a_wf)
+                _folds_wf.append({"fold": len(_aucs_wf), "train_end": str(_tr_hi.date()),
+                                  "test_end": str(_te_hi.date()), "n_test": int(len(_Xte)),
+                                  "auc": round(_a_wf, 4)})
+                print(f"  [walkforward] fold {len(_aucs_wf)}/{len(_starts)}: "
+                      f"train->{_tr_hi.date()} test->{_te_hi.date()} "
+                      f"n={len(_Xte)} AUC={_a_wf:.4f}")
+            if _aucs_wf:
+                _mean_auc = float(_npwf.mean(_aucs_wf))
+                _last_auc = _aucs_wf[-1]
+                _trail = float(_npwf.mean(_aucs_wf[:-1])) if len(_aucs_wf) > 1 else _mean_auc
+                _drift = bool(_last_auc < _trail - 0.05)
+                _verdict = ("genuine edge" if 0.55 <= _mean_auc <= 0.68 else
+                            "suspiciously high — check leakage" if _mean_auc > 0.68 else
+                            "weak/no edge")
+                print(f"  [walkforward] {len(_aucs_wf)} folds | mean OOS AUC={_mean_auc:.4f} "
+                      f"| last={_last_auc:.4f} | {_verdict}"
+                      + (" | DRIFT DETECTED" if _drift else ""))
+                _Pwf("data/predictions").mkdir(parents=True, exist_ok=True)
+                _Pwf("data/predictions/walkforward.json").write_text(_jwf.dumps({
+                    "generated": _dtwf.datetime.utcnow().isoformat()[:16] + " UTC",
+                    "n_folds": len(_aucs_wf), "mean_oos_auc": round(_mean_auc, 4),
+                    "last_auc": round(_last_auc, 4), "trailing_mean": round(_trail, 4),
+                    "drift_detected": _drift, "verdict": _verdict, "folds": _folds_wf},
+                    indent=2))
+            else:
+                print("  [walkforward] no valid folds (insufficient history)")
+    except Exception as _wfe:
+        print(f"  [walkforward] non-fatal: {_wfe}")
+'''
+CELL_8_POSTPATCH += "\n\n" + _CELL_8_WALKFORWARD
+
 # ── CELL 9 PREPATCH: disable EarningsWhispers scraper ────────────────────────
 CELL_9_PREPATCH = """
 # Stub out earningswhispers.com requests — DOM changes cause silent failures.
@@ -5682,6 +5772,7 @@ try:
         "calibration":    _read_json("data/weights/ticker_calibration.json"),
         "ticker_accuracy":_read_json("data/predictions/ticker_accuracy.json"),
         "snapshot_60d":   _read_json("data/predictions/snapshot_60d.json"),
+        "walkforward":    _read_json("data/predictions/walkforward.json"),
         "pnl_history":    _read_csv("data/predictions/pnl_history.csv"),
     }
 
