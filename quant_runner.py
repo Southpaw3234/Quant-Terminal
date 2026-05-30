@@ -1685,7 +1685,7 @@ CELL_8_POSTPATCH += "\n\n" + _CELL_8_T3_DSR
 # honest repeated-OOS number the eventual data-upgrade gate (AUC 0.55–0.68)
 # checks. Capped to the most recent _MAX_FOLDS to bound CI runtime. Morning only.
 _CELL_8_WALKFORWARD = '''
-if RUN_TYPE == "morning" and "featured" in dir() and "FEATURE_COLS" in dir():
+if __import__("os").environ.get("RUN_TYPE", "morning") == "morning" and "featured" in dir() and "FEATURE_COLS" in dir():
     try:
         import numpy as _npwf, pandas as _pdwf, json as _jwf, datetime as _dtwf
         from pathlib import Path as _Pwf
