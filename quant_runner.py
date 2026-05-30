@@ -4654,6 +4654,31 @@ _SRC_REPLACE = [
      '(lambda _mr: int(_mr) if str(_mr).strip().lstrip("-").isdigit() '
      'else {"bear": 0, "neutral": 1, "mixed": 1, "bull": 2}.get('
      'str(_mr).lower().replace(" / ", "/").split("/")[0].strip(), 1))(MACRO.get("macro_regime", 1))'),
+    # Tier A: HMM rolling/causal regime labels. The notebook decodes regimes with
+    # full-sequence smoothed Viterbi (model.predict), so historical labels peek at
+    # future bars — look-ahead in regime training features. Replace with the
+    # forward-algorithm FILTERED state (each label uses only past data).
+    # Defense-in-depth: smoothed predict stays the baseline; the filtered path is
+    # used ONLY if it computes AND agrees >=60% with smoothed; any error keeps the
+    # original behavior. (The live regime = last bar is already causal regardless.)
+    ("labels=model.predict(returns)",
+     "labels=model.predict(returns)\n"
+     "    try:\n"
+     "        import numpy as _np_hmm\n"
+     "        from scipy.special import logsumexp as _lse_hmm\n"
+     "        _fl_h = model._compute_log_likelihood(returns)\n"
+     "        _lsp_h = _np_hmm.log(model.startprob_ + 1e-300)\n"
+     "        _ltm_h = _np_hmm.log(model.transmat_ + 1e-300)\n"
+     "        _n_h, _k_h = _fl_h.shape\n"
+     "        _la_h = _np_hmm.full((_n_h, _k_h), -_np_hmm.inf)\n"
+     "        _la_h[0] = _lsp_h + _fl_h[0]\n"
+     "        for _t_h in range(1, _n_h):\n"
+     "            _la_h[_t_h] = _lse_hmm(_la_h[_t_h - 1][:, None] + _ltm_h, axis=0) + _fl_h[_t_h]\n"
+     "        _filt_h = _np_hmm.argmax(_la_h, axis=1)\n"
+     "        if (_filt_h == labels).mean() >= 0.6:\n"
+     "            labels = _filt_h\n"
+     "    except Exception:\n"
+     "        pass"),
 ]
 
 failed_cells = []
