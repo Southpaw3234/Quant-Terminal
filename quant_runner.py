@@ -303,6 +303,28 @@ if _os.environ.get("GH_ACTIONS"):
         print(f"  [cred sanitize] ALPACA_SECRET_KEY: stripped {len(_raw_sec_gh.strip()) - len(ALPACA_SECRET_KEY)} non-ASCII char(s) — re-set GitHub secret from plain text")
     if ALPACA_API_KEY:
         print(f"  [cred check] ALPACA_API_KEY ok: len={len(ALPACA_API_KEY)} preview={ALPACA_API_KEY[:4]}...{ALPACA_API_KEY[-4:]}")
+    # ── Capital base = live Alpaca account equity (dynamic, compounding) ──────
+    # The notebook hardcodes PORTFOLIO_CAPITAL = $10k, but the live paper
+    # account is ~$100k — so position sizing, Kelly, and the cash guard deployed
+    # only ~10% of the account. Size against real account equity each run so
+    # positions scale to (and compound with) the actual account. The kill switch
+    # already measures drawdown from this same Alpaca equity.
+    if ALPACA_API_KEY and ALPACA_SECRET_KEY:
+        try:
+            import requests as _rq_pc
+            _acct_pc = _rq_pc.get(ALPACA_BASE_URL.rstrip("/") + "/v2/account",
+                headers={"APCA-API-KEY-ID": ALPACA_API_KEY,
+                         "APCA-API-SECRET-KEY": ALPACA_SECRET_KEY}, timeout=15).json()
+            _eq_pc = float(_acct_pc.get("equity") or _acct_pc.get("portfolio_value") or 0)
+            if _eq_pc > 0:
+                _prev_pc = float(globals().get("PORTFOLIO_CAPITAL", 0) or 0)
+                PORTFOLIO_CAPITAL = _eq_pc
+                print(f"  [capital] PORTFOLIO_CAPITAL set to live Alpaca equity "
+                      f"${_eq_pc:,.2f} (notebook default was ${_prev_pc:,.0f})")
+            else:
+                print("  [capital] Alpaca equity unavailable (0) — keeping notebook PORTFOLIO_CAPITAL")
+        except Exception as _pc_e:
+            print(f"  [capital] equity fetch failed ({_pc_e}) — keeping notebook PORTFOLIO_CAPITAL")
     RUN_TYPE_GH         = _os.environ.get("RUN_TYPE", "morning")
     FAST_MODE           = (RUN_TYPE_GH != "morning")
     GARCH_PATHS         = 100 if RUN_TYPE_GH == "morning" else 30
