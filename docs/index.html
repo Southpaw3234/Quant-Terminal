@@ -1770,21 +1770,28 @@ async function symbolSearch(query) {
     _acCache[query] = r; return r;
   }
 
-  // 2. Model ticker prefix/contains match (instant, no network)
-  const tkMatches = _allTickers
-    .filter(t => t.toLowerCase().startsWith(q) || t.toLowerCase().includes(q))
-    .slice(0, 5)
-    .map(t => ({ symbol: t, name: companyName(t), exchange: '', type: 'EQUITY' }));
-
-  // 3. Built-in name map (instant, CORS-safe) — match company name OR ticker
-  const nameHits = Object.entries(_NAME_MAP)
-    .filter(([name]) => name.includes(q))
-    .map(([, sym]) => ({ symbol: sym, name: companyName(sym), exchange: '', type: 'EQUITY' }))
-    .filter(r => !tkMatches.find(m => m.symbol === r.symbol))
-    .filter((r, i, arr) => arr.findIndex(x => x.symbol === r.symbol) === i)  // dedup
-    .slice(0, 6);
-
-  const localResults = [...tkMatches, ...nameHits];
+  // 2. Scored local match — COMPANY NAMES rank above ticker substrings, so
+  //    typing "apple" surfaces AAPL (Apple) above APP (AppLovin). Lower = better.
+  //    0 exact-name · 1 name-prefix · 2 ticker-prefix · 3 name-contains · 4 ticker-contains
+  const best = {};   // symbol -> score
+  const consider = (sym, score) => {
+    const s = sym.toUpperCase();
+    if (best[s] === undefined || score < best[s]) best[s] = score;
+  };
+  for (const [name, sym] of Object.entries(_NAME_MAP)) {
+    if (name === q)             consider(sym, 0);
+    else if (name.startsWith(q)) consider(sym, 1);
+    else if (name.includes(q))   consider(sym, 3);
+  }
+  for (const t of _allTickers) {
+    const tl = t.toLowerCase();
+    if (tl.startsWith(q))      consider(t, 2);
+    else if (tl.includes(q))   consider(t, 4);
+  }
+  const localResults = Object.entries(best)
+    .sort((a, b) => a[1] - b[1] || a[0].localeCompare(b[0]))
+    .slice(0, 8)
+    .map(([sym]) => ({ symbol: sym, name: companyName(sym), exchange: '', type: 'EQUITY' }));
   if (localResults.length) { _acCache[query] = localResults; return localResults; }
 
   // 4. Yahoo Finance fallback (may be blocked by CORS on some hosts)
