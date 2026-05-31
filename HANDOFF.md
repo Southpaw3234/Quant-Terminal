@@ -1,8 +1,133 @@
 # Quant Terminal v25 — Session Handoff
-**Date:** 2026-05-28 (updated, continued session)  
+**Date:** 2026-05-30 (updated, continued session)  
 **Branch:** `master`  
-**Last commit:** `fdc7866`  
+**Last commit:** `9729be7`  
 **Repo:** https://github.com/Southpaw3234/Quant-Terminal
+
+---
+
+## ⭐ SESSION 2026-05-30 — P&L truth, risk fixes, Tier A upgrades (17 PRs)
+
+**HEAD:** `9729be7` · **Dashboard:** https://radiant-unicorn-2600a7.netlify.app
+**Validated live on morning runs** `26669213343` and `26697391655`.
+
+### TL;DR
+Spent the session making the model **correct and honest**, then ran the first
+true out-of-sample measurement. Headline finding: **walk-forward mean OOS
+AUC = 0.547** — a weak-but-real edge, *just below* the 0.55 data-upgrade gate.
+All trading-critical plumbing (P&L, sizing, risk, sentiment) is now broker-true
+and validated. 17 PRs merged (#6–#17).
+
+### Upgrades shipped today
+
+**P&L / data persistence**
+- **#6 Alpaca-truth P&L** — `/v2/positions` + `/v2/account` for unrealized/total;
+  `/v2/account/portfolio/history` rebuilds the full 60-day equity curve every run
+  (can't be lost by a wiped file). Legacy yfinance/CSV path kept as fallback.
+- **#6 Durable Trade Log** — cumulative `data/paper_trades/trade_history.csv`
+  (filled-only, 60-day, deduped) so the dashboard shows every day traded, while
+  `paper_trades.csv` stays today-only for the cash guard.
+- **#7 Sentiment cache + Finnhub** — 18h disk cache + Finnhub `company-news` as a
+  second source (NewsAPI free tier 429s on 307 tickers). `FINNHUB_API_KEY` secret
+  added. Also unlocks `finnhub_analyst.json`.
+
+**Risk / sizing (all now sourced from live Alpaca equity)**
+- **#9 hotfix** — Alpaca creds resolved at module scope (were in cell namespace →
+  NameError crash); string `macro_regime` coercion.
+- **#10 Kill-switch denominator** — was dividing P&L by a hardcoded **$10k**,
+  inflating drawdown ~10× and false-tripping on a phantom −25.68% (real account
+  was +0.16%). Now computes daily/weekly/peak drawdown from the Alpaca equity curve.
+- **#11 Capital base** — `PORTFOLIO_CAPITAL` was hardcoded $10k while the account
+  is ~$100k (sizing used 10% of the account). Now set to live Alpaca equity each
+  run (dynamic/compounding).
+- **#13 Self-healing kill switch** — `rclone copy` never deletes, so a cleared flag
+  was immortal on Drive and restored every run (the phantom trip stayed latched).
+  Added `_rclone_delete`; kill switch re-evaluates each run and clears a stale flag
+  (local + Drive) when the account is healthy. Never clears without a valid reading.
+
+**Run-stability fixes (surfaced by validation)**
+- **#9/#12** — River 0.24 `learn_one()` returns None (split chained call); CVaR
+  empty-frame guard; model-cache saved key-by-key (one unpicklable `display` ref
+  was wiping the whole cache → full retrain every run); walk-forward `RUN_TYPE`
+  read from env (was NameError in cell namespace).
+- New **`_SRC_REPLACE`** mechanism in the cell-exec loop for one-line fixes inside
+  notebook function bodies that prepatch/postpatch can't reach.
+
+**Tier A upgrades**
+- **#12 Walk-forward validation** — pooled-panel rolling OOS AUC monitor (train
+  504d / test 63d / step 63d, last 12 folds, lightweight XGB). Writes
+  `data/predictions/walkforward.json`. Morning-only.
+- **#14/#17 Per-ticker transaction cost** — flat 0.02% → ADV-tiered spread + vol
+  kicker from `featured`, floor 0.02% / cap 0.5%. (#17 fixed a `dir()`-vs-globals
+  scoping bug that had pinned every ticker to the floor.)
+- **#15 Survivorship dead-ticker registry** — records every delisted/corrupt drop
+  to `data/dead_tickers.csv`. Scaffolding only; full bias correction needs
+  survivorship-free price history the free pipeline lacks.
+- **#16 Causal forward-filtered HMM regimes** — removes look-ahead in historical
+  regime labels (smoothed Viterbi → forward-algorithm filtered). Defense-in-depth:
+  smoothed stays baseline, filtered used only if it computes AND agrees ≥60%.
+
+**CI**
+- Preflight (`preflight.yml`) un-pinned from a stale branch (was always testing
+  one frozen commit) and its dispatcher-dict assertion updated for cells 10 & 14.
+
+### Findings from the validation runs
+
+- **Walk-forward mean OOS AUC = 0.5471** (12 folds; recent folds 0.61/0.61/0.63).
+  Marginal edge, just below the 0.55 "genuine edge" gate. **This is the honest
+  number that gates the data upgrade — and it is NOT yet met.**
+- **The kill switch had been firing on phantom data** — internal P&L said
+  −25.68% weekly while the real Alpaca account was +0.16% ($100,157). The −20%
+  limit halted trading on garbage. Root causes (hardcoded $10k denominator +
+  immortal Drive flag) now fixed.
+- **The model trades a $100k account but had been sizing for $10k** — ~10%
+  utilization, tiny positions. Now sizes to the full account (~$10k positions).
+- **Sentiment recovered to 208/307** (best ever) once Finnhub + cache + a NewsAPI
+  quota reset combined: `sources={cache:60, finnhub:60, newsapi:99, empty:88}`.
+- **Model cache pickle failure** was forcing a full retrain every run (~1h54m).
+
+### What to look for in the Monday 9:35 AM ET run (first unattended full-stack run)
+
+Pull the log (`gh run view --job=<id> --log`) and confirm:
+1. `[capital] PORTFOLIO_CAPITAL set to live Alpaca equity $100,xxx` and engine
+   `Capital: $100,xxx` — sizing on the real account.
+2. `[KILL SWITCH · Alpaca] ... weekly_dd≈small` → **no trip**; flag stays clear.
+3. `[walkforward] 12 folds | mean OOS AUC=0.XX` — track whether AUC holds ≥~0.55.
+4. **Per-ticker cost now ABOVE floor**: `Net-of-cost filter ... per-ticker cost:
+   avg=0.1–0.3%` (was avg=0.02% floor pre-#17) → slightly fewer low-edge trades.
+5. `[headlines] sources={...}` with finnhub + newsapi both contributing; VADER
+   coverage ~150–220/307.
+6. `[survivorship] dead-ticker registry: N recorded`.
+7. `Model cache saved` and a shorter runtime than the old ~1h54m.
+8. No `Cell N raised` tracebacks; `MORNING cycle complete`.
+
+### Next steps
+- **Let the 30-day clean clock run.** Today is the first day the model is correct
+  AND honest. The AUC=0.547 baseline is now measured on a clean model; watch
+  whether the 30-day forward AUC confirms the encouraging recent folds (0.61+).
+- **Do NOT upgrade data yet** (Polygon $29/mo). The gate (AUC 0.55–0.68) is not
+  met at 0.547. Revisit only after 30 days of forward evidence.
+- **If you want to lift AUC**, that is the real lever now — frame/feature work,
+  not plumbing. The Level 3 rebuild plan (§5) is the structural path beyond the
+  ~0.12–0.14 IC ceiling.
+
+### Open / unresolved issues
+- **Edge is thin (AUC 0.547).** The central issue. Everything works; the model
+  just isn't very predictive yet. Not a bug — a modeling problem.
+- **HMM causal filter engagement unconfirmed.** It's silent by design and
+  fallback-protected (no regression possible), but we haven't confirmed the
+  filtered path actually replaced smoothed labels. Add a one-line `[hmm]` log if
+  you want to verify it engaged.
+- **Sentiment coverage is variable** (60–220/run) — depends on NewsAPI quota
+  resets and Finnhub's per-ticker news availability (~60 of 307). Accepted for
+  now (10% signal weight); revisit post-30-day.
+- **Survivorship is scaffolding only** — records dead tickers but doesn't backfill
+  their history (needs a survivorship-free dataset, i.e. paid).
+- **rclone `copy` semantics** — only the kill flag is explicitly Drive-deleted;
+  any *other* file the model deletes still lingers on Drive. Fine for now, but a
+  general `sync`-with-care or targeted deletes may be needed if more deletions matter.
+- **River self-learning accuracy ~46%** — runs cleanly now but below 50%; the
+  online learner may not be adding value. Worth a look later.
 
 ---
 
