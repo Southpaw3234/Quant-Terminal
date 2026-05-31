@@ -2047,6 +2047,12 @@ let _searchTimer2 = null;
 
 async function doSearch(ticker) {
   closeAC();
+  // Resolve a typed company name to its ticker (e.g. "nvidia" -> NVDA, "apple"
+  // -> AAPL). If it's already a ticker (or unknown), just normalize to upper.
+  if (ticker) {
+    const _t = String(ticker).trim();
+    ticker = _NAME_MAP[_t.toLowerCase()] || _t.toUpperCase();
+  }
   const wrap     = document.getElementById('result-wrap');
   const notFound = document.getElementById('not-found');
 
