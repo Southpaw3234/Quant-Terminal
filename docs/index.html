@@ -1671,6 +1671,94 @@ const _NAME_MAP = {
   'dogecoin':'DOGE-USD','doge':'DOGE-USD',
 };
 
+// ── Ticker → company name (reverse of _NAME_MAP, + curated proper names) ───────
+// Used to (a) show company names in the search autocomplete and (b) power the
+// hover tooltips across the page. Curated overrides win; everything else is
+// derived from _NAME_MAP (longest alias, title-cased) so coverage is automatic.
+const _TICKER_NAME_OVERRIDE = {
+  AAPL:'Apple', MSFT:'Microsoft', NVDA:'NVIDIA', GOOGL:'Alphabet (Google)',
+  AMZN:'Amazon', META:'Meta Platforms', TSLA:'Tesla', AVGO:'Broadcom',
+  ORCL:'Oracle', ADBE:'Adobe', CRM:'Salesforce', NOW:'ServiceNow',
+  IBM:'IBM', CSCO:'Cisco', IT:'Gartner', AMD:'AMD', INTC:'Intel',
+  QCOM:'Qualcomm', TXN:'Texas Instruments', MU:'Micron', LRCX:'Lam Research',
+  KLAC:'KLA Corp', ADI:'Analog Devices', MRVL:'Marvell', NXPI:'NXP Semiconductors',
+  JPM:'JPMorgan Chase', V:'Visa', MA:'Mastercard', BAC:'Bank of America',
+  GS:'Goldman Sachs', MS:'Morgan Stanley', BLK:'BlackRock', AXP:'American Express',
+  WFC:'Wells Fargo', C:'Citigroup', SCHW:'Charles Schwab', SPGI:'S&P Global',
+  ICE:'Intercontinental Exchange', CME:'CME Group', MCO:"Moody's",
+  UNH:'UnitedHealth', LLY:'Eli Lilly', JNJ:'Johnson & Johnson', ABBV:'AbbVie',
+  MRK:'Merck', TMO:'Thermo Fisher', ABT:'Abbott', DHR:'Danaher', PFE:'Pfizer',
+  AMGN:'Amgen', CVS:'CVS Health', CI:'Cigna', HUM:'Humana', BSX:'Boston Scientific',
+  MDT:'Medtronic', SYK:'Stryker', ISRG:'Intuitive Surgical', VRTX:'Vertex Pharma',
+  REGN:'Regeneron', BMY:'Bristol Myers Squibb', GILD:'Gilead', ZBH:'Zimmer Biomet',
+  DXCM:'DexCom', EW:'Edwards Lifesciences', HOLX:'Hologic',
+  HD:'Home Depot', NKE:'Nike', LOW:"Lowe's", TJX:'TJX Companies', ROST:'Ross Stores',
+  SBUX:'Starbucks', CMG:'Chipotle', MCD:"McDonald's", COST:'Costco', TGT:'Target',
+  GM:'General Motors', F:'Ford', UBER:'Uber', BKNG:'Booking Holdings', ABNB:'Airbnb',
+  WMT:'Walmart', PG:'Procter & Gamble', KO:'Coca-Cola', PEP:'PepsiCo',
+  XOM:'ExxonMobil', CVX:'Chevron', COP:'ConocoPhillips', SLB:'SLB (Schlumberger)',
+  BA:'Boeing', CAT:'Caterpillar', DE:'John Deere', HON:'Honeywell', GE:'GE Aerospace',
+  RTX:'RTX (Raytheon)', LMT:'Lockheed Martin', NOC:'Northrop Grumman', UPS:'UPS',
+  FDX:'FedEx', MMM:'3M', EXPD:'Expeditors Intl', TTWO:'Take-Two Interactive',
+  NFLX:'Netflix', DIS:'Disney', CMCSA:'Comcast', VZ:'Verizon', T:'AT&T',
+  TMUS:'T-Mobile', EA:'Electronic Arts', QQQ:'Invesco QQQ ETF', SPY:'SPDR S&P 500 ETF',
+  IWM:'iShares Russell 2000 ETF', GLD:'SPDR Gold ETF', SLV:'iShares Silver ETF',
+  SMH:'VanEck Semiconductor ETF', SOXX:'iShares Semiconductor ETF',
+  'BTC-USD':'Bitcoin', 'ETH-USD':'Ethereum', 'SOL-USD':'Solana',
+};
+const _TICKER_NAME = (() => {
+  const m = Object.assign({}, _TICKER_NAME_OVERRIDE);
+  const longest = {};
+  for (const [name, sym] of Object.entries(_NAME_MAP)) {
+    if (!longest[sym] || name.length > longest[sym].length) longest[sym] = name;
+  }
+  for (const [sym, name] of Object.entries(longest)) {
+    if (!m[sym]) m[sym] = name.replace(/\b\w/g, c => c.toUpperCase());
+  }
+  return m;
+})();
+function companyName(t) {
+  if (!t) return '';
+  return _TICKER_NAME[String(t).toUpperCase()] || String(t).toUpperCase();
+}
+
+// ── Global ticker hover tooltip — shows the company name on any ticker text ────
+// Detects ticker symbols rendered as their own leaf element anywhere on the
+// page (trade log, positions, predictions, sector heatmap, smart money, etc.)
+// and shows a floating tooltip with the company name. Excludes nav/buttons and
+// only shows when a real name is known, to avoid false positives.
+function _initTickerTooltips() {
+  const tip = document.createElement('div');
+  tip.style.cssText = 'position:fixed;z-index:9999;pointer-events:none;display:none;'
+    + 'background:#161b22;border:1px solid #30363d;border-radius:6px;padding:4px 9px;'
+    + 'font-size:11px;color:#e6edf3;box-shadow:0 4px 14px rgba(0,0,0,.45);max-width:260px';
+  document.body.appendChild(tip);
+  function tickerOf(el) {
+    if (!el || el.children.length) return null;                       // leaf only
+    if (el.closest('nav, button, .nav-link, input, textarea, select, a')) return null;
+    const txt = (el.textContent || '').trim();
+    if (!txt || txt.length > 9 || /\s/.test(txt)) return null;
+    const key = txt.toUpperCase();
+    const known = _TICKER_NAME[key]
+      || (Array.isArray(_allTickers) && _allTickers.map(x => x.toUpperCase()).includes(key));
+    return known ? key : null;
+  }
+  document.addEventListener('mouseover', e => {
+    const key = tickerOf(e.target);
+    if (!key) { tip.style.display = 'none'; return; }
+    const nm = companyName(key);
+    if (!nm || nm === key) { tip.style.display = 'none'; return; }    // only when a real name exists
+    tip.textContent = nm;
+    tip.style.display = 'block';
+    const r = e.target.getBoundingClientRect();
+    tip.style.left = Math.max(6, Math.min(r.left, window.innerWidth - 270)) + 'px';
+    tip.style.top  = (r.bottom + 6) + 'px';
+  });
+  document.addEventListener('mouseout', () => { tip.style.display = 'none'; });
+}
+if (document.body) _initTickerTooltips();
+else document.addEventListener('DOMContentLoaded', _initTickerTooltips);
+
 async function symbolSearch(query) {
   if (_acCache[query]) return _acCache[query];
   const q = query.toLowerCase().trim();
@@ -1678,7 +1766,7 @@ async function symbolSearch(query) {
   // 1. Exact ticker match in model tickers (instant, no network)
   const exactTk = _allTickers.find(t => t.toLowerCase() === q);
   if (exactTk) {
-    const r = [{ symbol: exactTk, name: exactTk, exchange: '', type: 'EQUITY' }];
+    const r = [{ symbol: exactTk, name: companyName(exactTk), exchange: '', type: 'EQUITY' }];
     _acCache[query] = r; return r;
   }
 
@@ -1686,14 +1774,15 @@ async function symbolSearch(query) {
   const tkMatches = _allTickers
     .filter(t => t.toLowerCase().startsWith(q) || t.toLowerCase().includes(q))
     .slice(0, 5)
-    .map(t => ({ symbol: t, name: t, exchange: '', type: 'EQUITY' }));
+    .map(t => ({ symbol: t, name: companyName(t), exchange: '', type: 'EQUITY' }));
 
-  // 3. Built-in name map (instant, CORS-safe)
+  // 3. Built-in name map (instant, CORS-safe) — match company name OR ticker
   const nameHits = Object.entries(_NAME_MAP)
     .filter(([name]) => name.includes(q))
-    .map(([, sym]) => ({ symbol: sym, name: sym, exchange: '', type: 'EQUITY' }))
+    .map(([, sym]) => ({ symbol: sym, name: companyName(sym), exchange: '', type: 'EQUITY' }))
     .filter(r => !tkMatches.find(m => m.symbol === r.symbol))
-    .slice(0, 4);
+    .filter((r, i, arr) => arr.findIndex(x => x.symbol === r.symbol) === i)  // dedup
+    .slice(0, 6);
 
   const localResults = [...tkMatches, ...nameHits];
   if (localResults.length) { _acCache[query] = localResults; return localResults; }
@@ -1828,7 +1917,7 @@ function populateLiveCard(ticker, q) {
 
   document.getElementById('live-ticker').textContent      = ticker;
   document.getElementById('live-ticker-note').textContent = ticker;
-  document.getElementById('live-name').textContent        = q.name || '—';
+  document.getElementById('live-name').textContent        = q.name || companyName(ticker);
   document.getElementById('live-exchange').textContent    = [q.exchange, q.currency].filter(Boolean).join(' · ');
   document.getElementById('live-price').textContent       = '$'+q.price.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
   document.getElementById('live-change').innerHTML =
@@ -1892,9 +1981,13 @@ function onSearchKey(e) {
   } else if (e.key === 'Enter') {
     if (_acSelected >= 0 && items[_acSelected]) {
       pickAC(items[_acSelected].dataset.symbol);
+    } else if (items.length) {
+      pickAC(items[0].dataset.symbol);                 // best match (resolves company names)
     } else {
       closeAC();
-      doSearch(document.getElementById('search-input').value.trim().toUpperCase());
+      const raw = document.getElementById('search-input').value.trim();
+      const resolved = _NAME_MAP[raw.toLowerCase()] || raw.toUpperCase();
+      doSearch(resolved);
     }
   } else if (e.key === 'Escape') {
     closeAC();
