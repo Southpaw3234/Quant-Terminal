@@ -5362,7 +5362,9 @@ try:
         print("  Fetching SEC EDGAR Form 4 insider trades (no API key)…")
         try:
             import xml.etree.ElementTree as _ET
-            _edgar_hdrs = {"User-Agent": "QuantTerminal dashboard research@example.com",
+            # SEC requires a descriptive User-Agent with a real contact; a
+            # placeholder (example.com) gets throttled/blocked → empty results.
+            _edgar_hdrs = {"User-Agent": "Quant-Terminal/1.0 (Southpaw3234; southpaw3234@users.noreply.github.com)",
                            "Accept-Encoding": "gzip, deflate"}
             # 1. CIK lookup map
             _cik_r = _req.get("https://www.sec.gov/files/company_tickers.json",
@@ -5406,13 +5408,30 @@ try:
                         if _fd < _cutoff_ins:
                             break      # filings sorted newest-first
                         _accn_clean = _fa.replace("-", "")
-                        _xml_url = (f"https://www.sec.gov/Archives/edgar/data/"
-                                    f"{int(_cik)}/{_accn_clean}/{_fdoc}")
-                        try:
-                            _xr = _req.get(_xml_url, headers=_edgar_hdrs, timeout=8)
-                            if not _xr.ok:
+                        _base_url = (f"https://www.sec.gov/Archives/edgar/data/"
+                                     f"{int(_cik)}/{_accn_clean}/")
+                        # Form 4 primaryDocument is often the XSL-rendered HTML
+                        # (xslF345X0N/<name>.xml), which is NOT parseable ownership
+                        # XML. Try the raw XML (strip the xsl folder) first, then
+                        # the doc as given.
+                        _doc_cands = ([_fdoc.split("/")[-1]] if "/" in _fdoc else []) + [_fdoc]
+                        _tree = None
+                        for _dc in _doc_cands:
+                            try:
+                                _xr = _req.get(_base_url + _dc, headers=_edgar_hdrs, timeout=8)
+                                _edgar_time.sleep(0.12)   # stay under SEC 10 req/s
+                                if not _xr.ok:
+                                    continue
+                                _ct = _ET.fromstring(_xr.content)
+                                if _ct.tag.endswith("ownershipDocument") \
+                                   or _ct.find(".//nonDerivativeTransaction") is not None:
+                                    _tree = _ct
+                                    break
+                            except Exception:
                                 continue
-                            _tree = _ET.fromstring(_xr.content)
+                        if _tree is None:
+                            continue
+                        try:
                             # Insider name + title
                             _oname = _otitle = ""
                             _ro = _tree.find(".//reportingOwner")
