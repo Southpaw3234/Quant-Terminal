@@ -5357,6 +5357,57 @@ try:
         except Exception as _ins_e:
             print(f"  Insider fetch error: {_ins_e}")
 
+    if not _insiders and _FINNHUB_KEY:
+        # ── Finnhub insider transactions (primary free source) ───────────────
+        # The SEC EDGAR scraper returns 0 from GitHub Actions because SEC
+        # throttles shared datacenter IPs regardless of User-Agent. Finnhub's
+        # API works from those IPs and we already have the key.
+        print("  Fetching insider transactions (Finnhub)…")
+        try:
+            import datetime as _dt_ins
+            _fh_ins_tickers = [
+                "AAPL","MSFT","NVDA","GOOGL","AMZN","META","TSLA","JPM","V","MA",
+                "AMD","NFLX","AVGO","CRM","NOW","PLTR","GS","MS","WMT","COST",
+                "UNH","LLY","XOM","HD","INTC","QCOM","MU","TXN","BA","CVX",
+            ]
+            _to_ins   = _dt_ins.date.today()
+            _from_ins = (_to_ins - _dt_ins.timedelta(days=45)).isoformat()
+            for _ftk in _fh_ins_tickers:
+                try:
+                    _r = _req.get("https://finnhub.io/api/v1/stock/insider-transactions",
+                                  params={"symbol": _ftk, "from": _from_ins,
+                                          "to": _to_ins.isoformat(), "token": _FINNHUB_KEY},
+                                  timeout=10)
+                    if _r.status_code != 200:
+                        continue
+                    for _d in (_r.json().get("data") or [])[:8]:
+                        _chg = _d.get("change", 0) or 0
+                        _px  = _d.get("transactionPrice", 0) or 0
+                        try:
+                            _val = str(round(abs(float(_chg)) * float(_px)))
+                        except Exception:
+                            _val = ""
+                        # "Acquired"/"Disposed" so the dashboard's includes('A')
+                        # buy/sell check colors them correctly.
+                        _insiders.append({
+                            "date":        _d.get("filingDate","") or _d.get("transactionDate",""),
+                            "ticker":      _ftk,
+                            "name":        _d.get("name",""),
+                            "title":       "",
+                            "transaction": "Acquired" if float(_chg or 0) > 0 else "Disposed",
+                            "shares":      abs(int(float(_chg))) if _chg else "",
+                            "price":       _px or "",
+                            "value":       _val,
+                            "source":      "finnhub",
+                        })
+                except Exception:
+                    continue
+            _insiders.sort(key=lambda x: x.get("date",""), reverse=True)
+            _insiders = _insiders[:100]
+            print(f"  Insiders (Finnhub): {len(_insiders)} transactions")
+        except Exception as _fhi_e:
+            print(f"  Finnhub insider error: {_fhi_e}")
+
     if not _insiders:
         # ── SEC EDGAR Form 4 fallback (free, no key needed) ──────────────────
         print("  Fetching SEC EDGAR Form 4 insider trades (no API key)…")
