@@ -2386,7 +2386,10 @@ _MIN_ALPHA_SCORE = 0.5 + (_ROUND_TRIP_COST_PCT / 0.02)   # ≈ 0.51 (aligns with
 _RT_COST_CAP = 0.005   # 0.5% round-trip ceiling
 def _rt_cost(_tk):
     try:
-        _df = featured.get(_tk) if "featured" in dir() else None
+        # NOTE: reference `featured` directly — it's a global in the exec
+        # namespace (function __globals__). A `"featured" in dir()` guard would
+        # check LOCALS and always fail, silently pinning every cost to the floor.
+        _df = featured.get(_tk)
         if _df is None or "Close" not in _df.columns or "Volume" not in _df.columns:
             return _ROUND_TRIP_COST_PCT
         _c = _df["Close"].astype(float)
