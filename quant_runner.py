@@ -3956,6 +3956,85 @@ if "signals" in dir() and "_sector_mom_scores" in dir():
 """
 CELL_11_POSTPATCH += "\n\n" + _CELL_11_SECTOR_BOOST
 
+# ── Frame-1 shadow harness: cross-sectional long-short (LOGGED, NOT TRADED) ────
+# During the 30-day clean-baseline window we must NOT change the live model.
+# This computes a hypothetical dollar-neutral long-short book each run — long the
+# top-decile, short the bottom-decile by the model's confidence (same field
+# Cell 13 trades) — and scores prior entries at the 5-day horizon from the price
+# history already in `featured`. It trades nothing; it only writes a shadow P&L
+# track to data/shadow/ so we can compare a cross-sectional frame against the
+# live baseline before deciding whether to deploy it. Fully exception-wrapped.
+_CELL_11_SHADOW_XSEC = '''
+try:
+    import json as _js_sh, datetime as _dt_sh
+    import pandas as _pd_sh
+    from pathlib import Path as _P_sh
+    if "signals" in dir() and "featured" in dir() and signals:
+        _sh_dir = _P_sh("data/shadow"); _sh_dir.mkdir(parents=True, exist_ok=True)
+        _pos_path = _sh_dir / "cross_sectional_positions.jsonl"
+        _pnl_path = _sh_dir / "cross_sectional_pnl.csv"
+        _H_sh, _DECILE = 5, 30
+        _today_sh = _dt_sh.date.today().isoformat()
+
+        # Rank universe by confidence (calibrated P(bull)) — what Cell 13 trades.
+        _ranked_sh = sorted(
+            [(t, float(s.get("confidence", 0.5) or 0.5)) for t, s in signals.items()],
+            key=lambda x: x[1], reverse=True)
+        _longs  = [t for t, _ in _ranked_sh[:_DECILE]] if len(_ranked_sh) >= 2 * _DECILE else []
+        _shorts = [t for t, _ in _ranked_sh[-_DECILE:]] if len(_ranked_sh) >= 2 * _DECILE else []
+
+        _existing = []
+        if _pos_path.exists():
+            for _ln in _pos_path.read_text().splitlines():
+                try: _existing.append(_js_sh.loads(_ln))
+                except Exception: pass
+
+        def _fwd_ret_sh(_tk, _entry_iso, _h):
+            try:
+                _df = featured.get(_tk)
+                if _df is None or "Close" not in _df.columns: return None
+                _c = _pd_sh.to_numeric(_df["Close"], errors="coerce").dropna()
+                _ix = _pd_sh.to_datetime(_c.index)
+                _p = int(_ix.searchsorted(_pd_sh.Timestamp(_entry_iso)))
+                if _p >= len(_c) or _p + _h >= len(_c): return None   # not matured
+                return float(_c.iloc[_p + _h] / _c.iloc[_p] - 1.0)
+            except Exception:
+                return None
+
+        # Score matured (5-day-old) entries not yet scored.
+        _new_rows = []
+        for _e in _existing:
+            _ed = _e.get("date")
+            if not _ed or _e.get("scored"): continue
+            _lr = [r for r in (_fwd_ret_sh(t, _ed, _H_sh) for t in _e.get("longs", [])) if r is not None]
+            _sr = [r for r in (_fwd_ret_sh(t, _ed, _H_sh) for t in _e.get("shorts", [])) if r is not None]
+            if len(_lr) >= 5 and len(_sr) >= 5:
+                _lret, _sret = sum(_lr)/len(_lr), sum(_sr)/len(_sr)
+                _new_rows.append((_ed, _today_sh, round(_lret,5), round(_sret,5),
+                                  round(_lret-_sret,5), len(_lr), len(_sr)))
+                _e["scored"] = True
+
+        if _new_rows:
+            if not _pnl_path.exists():
+                _pnl_path.write_text("entry_date,scored_date,long_ret,short_ret,long_short,n_long,n_short\\n")
+            with open(_pnl_path, "a") as _f:
+                for _r in _new_rows: _f.write(",".join(str(x) for x in _r) + "\\n")
+            _pos_path.write_text("\\n".join(_js_sh.dumps(_e) for _e in _existing) + "\\n")
+
+        # Record today's book once per date.
+        if _longs and _shorts and not any(_e.get("date") == _today_sh for _e in _existing):
+            with open(_pos_path, "a") as _f:
+                _f.write(_js_sh.dumps({"date": _today_sh, "longs": _longs,
+                                       "shorts": _shorts, "scored": False}) + "\\n")
+            print(f"  [shadow X-sec] recorded {len(_longs)}L/{len(_shorts)}S book; "
+                  f"scored {len(_new_rows)} matured entries")
+        else:
+            print(f"  [shadow X-sec] scored {len(_new_rows)} matured entries (no new book this run)")
+except Exception as _sh_e:
+    print(f"  [shadow X-sec] non-fatal: {_sh_e}")
+'''
+CELL_11_POSTPATCH += "\n\n" + _CELL_11_SHADOW_XSEC
+
 # ── Tier B: Fama-French RMW + CMA factors ─────────────────────────────────────
 # RMW (Robust-Minus-Weak): profitability factor
 # CMA (Conservative-Minus-Aggressive): investment factor
@@ -5977,6 +6056,7 @@ try:
         "ticker_accuracy":_read_json("data/predictions/ticker_accuracy.json"),
         "snapshot_60d":   _read_json("data/predictions/snapshot_60d.json"),
         "walkforward":    _read_json("data/predictions/walkforward.json"),
+        "shadow_xsec":    _read_csv("data/shadow/cross_sectional_pnl.csv"),
         "pnl_history":    _read_csv("data/predictions/pnl_history.csv"),
     }
 
