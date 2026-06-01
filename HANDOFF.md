@@ -1,8 +1,118 @@
 # Quant Terminal v25 — Session Handoff
-**Date:** 2026-05-30 (updated, continued session)  
+**Date:** 2026-05-31 (updated, continued session)  
 **Branch:** `master`  
-**Last commit:** `9729be7`  
+**Last commit:** `0fe58a9`  
 **Repo:** https://github.com/Southpaw3234/Quant-Terminal
+
+---
+
+## 🧊 CURRENT STATE: MODEL FROZEN FOR 30-DAY CLEAN BASELINE
+
+**As of 2026-05-31, the live model is FROZEN.** Do not change anything that
+alters trading logic until **~late June 2026** (after 30 clean trading days).
+
+**Why:** today's walk-forward gave the first honest out-of-sample read —
+**mean OOS AUC = 0.547** (marginal edge, just below the 0.55 data-upgrade gate).
+The model is now correct and honest (broker-true P&L, correct $100k sizing,
+self-healing risk, no look-ahead). The 30-day forward measurement on this clean
+model is the gold-standard verdict — and changing the model mid-window destroys
+that measurement (clinical-trial rule: don't change the drug mid-trial).
+
+**Frozen = stop editing decision logic, NOT stop running.** The model keeps
+trading 6×/weekday, retrains its ensemble each morning, and adapts its online
+weights — that's designed behavior we're measuring. What's forbidden: new
+features/signals/data, tuning thresholds/weights/sizing/universe, architecture
+or frame changes, "improvements," and fixing the deferred intraday-pickle bug.
+
+**Allowed during the window:**
+- Dashboard / visual-only changes (don't touch trading).
+- ONE exception: if a morning run actually BREAKS and stops producing data, do
+  the *minimal* keep-it-alive fix — distinguish "keep it functional" (allowed)
+  from "make it better/different" (forbidden).
+
+**Day 1 = the next morning cron (Mon 2026-06-01, 9:35 AM ET).** Let it run.
+
+**Watch (don't react to single days):** clean `MORNING cycle complete`, the
+walk-forward AUC trend, and the shadow long-short P&L once 5+ days accumulate.
+The 30-day aggregate is the verdict.
+
+---
+
+## SESSION 2026-05-31 (cont.) — Dashboard, smart money, shadow harness, FREEZE
+
+**HEAD:** `0fe58a9`. Continuation of the 2026-05-30 session (below).
+
+### Dashboard (Radiant Unicorn) — live
+- **Company-name search** (`3dffd76`, `8fd3f05`, `e0eb34f`): added a ticker→name
+  map (`_TICKER_NAME`, curated + auto-derived) and `companyName()`. Search shows
+  real company names; scored ranking puts company-name matches above ticker
+  substrings ("apple"→AAPL, not APP); `doSearch` resolves a typed name→ticker at
+  entry so it works on Enter/click/type. Fixed "can't look up nvidia" (was
+  searching the literal name as a ticker).
+- **Hover tooltips** (`3dffd76`): global delegated tooltip shows the company name
+  on any ticker rendered as a leaf element anywhere on the page.
+
+### Smart-money tracker — diagnosed + partially fixed
+- **Not a dashboard bug** — all 3 feeds were empty at the source.
+- **Insider trades** (`#18` failed → `#19` works): EDGAR Form 4 scraper returns 0
+  because **SEC blocks GitHub Actions' shared datacenter IPs** (UA/XML fixes in
+  #18 didn't help — IP-level block). Fixed by routing insiders through
+  **Finnhub's insider-transactions endpoint** (#19) — 100 transactions, uses the
+  existing FINNHUB_API_KEY. `insider_trades` now populated in data.json.
+- **Congress trades + short interest**: empty **by choice** — they need a paid
+  **Quiver Quant key** (`QUIVER_QUANT_KEY` unset). User opted to skip Quiver.
+
+### Frame-1 shadow harness (`#20`) — research, logged-only
+- `data/shadow/`: each run computes a hypothetical dollar-neutral long-short book
+  (long top-decile / short bottom-decile by confidence), scores prior entries at
+  the 5-day horizon from `featured` prices, writes `cross_sectional_pnl.csv` +
+  `cross_sectional_positions.jsonl`. **Trades nothing.** Surfaced in dashboard
+  payload (`shadow_xsec`). Runs on morning (models present); records once/day.
+  Purpose: build a market-neutral track record IN PARALLEL with the frozen
+  baseline so a frame-change deploy decision (post-30-day) is evidence-based.
+  Tests the beta-vs-alpha question directly (market-neutral P&L ≈ pure skill).
+
+### Honest model evaluation (verbatim takeaways)
+- **Well-engineered vehicle around a thin signal.** Risk mgmt, evaluation
+  honesty, production engineering = top-decile retail. The alpha core is
+  marginal (AUC 0.547).
+- **Self-reported 57.7% accuracy overstates the truth** — flattered by the
+  now-fixed look-ahead, alpha-vs-SPY scoring, and survivorship. Walk-forward
+  0.547 is the honest number.
+- **Long-biased** (210 BUY / 66 SELL) → a chunk of returns is beta, not alpha.
+  P&L is ~flat (+0.16%), consistent with AUC ~0.55.
+- **At the architectural ceiling** (~0.12–0.14 IC for the one-question-per-
+  ticker-per-day frame). More features/data/sentiment won't break it — only a
+  **frame change** lifts the ceiling.
+
+### Frame-change roadmap (max-level, honest)
+Ordered by ROI, NOT by glamour:
+1. **Frame 1 — cross-sectional long-short ranking** (shadow harness started).
+   Strips beta, measures relative skill. Low cost. SR 0.8–1.3.
+2. **Frame 3 — stat-arb book** (`stat_arb.py`, daily closes only, buildable now).
+   Uncorrelated → portfolio Sharpe lift. SR 1.5–3.0 (portfolio).
+3. **Frame 2 — multi-horizon stacking** (intraday model, data ~mid-Aug 2026).
+4. **Frame 4 — GNN relational model** (needs paid data + GPU). Highest ceiling.
+5. **Frame 5 — distributional + RL execution** (practical ceiling, SR 2–4 aspir.).
+- Constraints that cap everything: free yfinance data (floor) + GitHub Actions
+  compute (no GPU). Realistic ceiling for this operation: **Level 4–5, SR ~1.5–2.5**
+  — NOT the HFT tier. Build cheap diversifying frames (1, 3) FIRST; expensive
+  ceiling-breakers (GNN/RL) only after paid data + real compute (user has a local
+  NVIDIA GPU — changes the calculus).
+- **Sequencing rule:** build candidate frames in SHADOW mode during the 30-day
+  window; promote to live only after the window, only if the shadow track beats
+  the clean baseline.
+
+### Deferred (do NOT do during the freeze window)
+- **Intraday `models`-pickle bug** (spawned task): trained XGB/LGB models are
+  subclassed inside `exec()` → unpicklable (`TypeError`) → skipped from the model
+  cache → on intraday runs `models` is undefined → Cell 11 NameErrors and aborts
+  (incl. the shadow block on intraday). Was masked by the always-active kill
+  switch; exposed now that the kill switch self-heals (#13). **Benign for the
+  baseline** (morning runs clean; intraday is stops/P&L-focused; P&L still
+  publishes). Fix after the window: make the exec-subclassed models picklable.
+- Sentiment strengthening (FinBERT vs VADER) — revisit post-30-day per IC data.
+- Quiver Quant (congress + short interest) — only if user decides to pay.
 
 ---
 
