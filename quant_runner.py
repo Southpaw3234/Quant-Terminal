@@ -4665,9 +4665,12 @@ if True:
     if not _pnl_kill_triggered:
         try:
             import yfinance as _yf_ks
-            _vix_ks = float(
-                _yf_ks.download("^VIX", period="2d", progress=False)["Close"]
-                .dropna().iloc[-1])
+            _vix_raw = _yf_ks.download("^VIX", period="2d", progress=False)["Close"]
+            # Newer yfinance returns a multi-index frame, so ["Close"] can be a
+            # DataFrame (one col per ticker) rather than a Series — collapse it.
+            if hasattr(_vix_raw, "columns"):
+                _vix_raw = _vix_raw.iloc[:, 0]
+            _vix_ks = float(_vix_raw.dropna().iloc[-1])
             print(f"  VIX check: {_vix_ks:.1f} (hard stop={_KILL_VIX_LEVEL:.0f})")
             if _vix_ks >= _KILL_VIX_LEVEL:
                 _kill_reason_vix = (f"VIX={_vix_ks:.1f} >= hard stop {_KILL_VIX_LEVEL:.0f}")
