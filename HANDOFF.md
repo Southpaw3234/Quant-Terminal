@@ -1,7 +1,7 @@
 # Quant Terminal v25 — Session Handoff
-**Date:** 2026-05-31 (updated, continued session)  
+**Date:** 2026-06-02 (updated, continued session)  
 **Branch:** `master`  
-**Last commit:** `0fe58a9`  
+**Last commit:** `0de85bc`  
 **Repo:** https://github.com/Southpaw3234/Quant-Terminal
 
 ---
@@ -35,6 +35,90 @@ or frame changes, "improvements," and fixing the deferred intraday-pickle bug.
 **Watch (don't react to single days):** clean `MORNING cycle complete`, the
 walk-forward AUC trend, and the shadow long-short P&L once 5+ days accumulate.
 The 30-day aggregate is the verdict.
+
+---
+
+## SESSION 2026-06-01/02 — Reliable scheduling + VIX kill-switch fix
+
+**HEAD:** `0de85bc`. Day-1 of the 30-day clean window (Mon 2026-06-01). Operations
+/ safety only — **no trading-logic changes** (freeze respected). The one code
+change (VIX kill-switch) is a "keep it functional" safety fix, not an improvement.
+
+### Problem: scheduled runs silently missing
+- The 9:35 AM ET morning run (and the 11:00/12:00 crons) **did not fire** on
+  Mon 2026-06-01. Workflow was `active` (not disabled), cron block unchanged.
+- Root cause: **GitHub's `schedule` triggers are best-effort** and were being
+  delayed by hours or dropped under load. Historical `schedule`-event runs fire
+  at wildly inconsistent times vs. their crons (e.g. crons at 13:35/15:00/16:00
+  UTC but runs landing 17:45, 21:xx, 22:xx, 10:56…). Today's ticks eventually
+  arrived **hours late** (a 22:37 UTC run = the delayed morning cron).
+- This is a known GitHub limitation, not a repo bug. No error to find — GitHub
+  just never creates the run.
+
+### Fix: external trigger via Windows Task Scheduler (reliable)
+Chose Task Scheduler over cron-job.org (no PAT/secret to manage) and over a
+Claude Code routine (claude.ai scheduling backend was down at the time).
+- **`scripts/trigger_cycle.ps1`** — wrapper that dispatches the workflow via
+  `gh workflow run quant_daily.yml -f run_type=<TYPE>`, logs to
+  `run_logs/trigger.log`. **Auth gotcha:** scheduled tasks can't read gh's
+  keyring auth (session-bound) — even with Interactive logon. Solution: the
+  existing gh token is captured once, **DPAPI-encrypted** to
+  `scripts/.gh_token.dpapi` (decryptable only by this Windows account,
+  git-ignored), and loaded into `GH_TOKEN` at runtime. (`repo` scope is
+  sufficient for `workflow_dispatch`; `workflow` scope only needed to edit
+  workflow files.)
+- **4 scheduled tasks** under `\QuantTerminal\` (local ET, tracks DST):
+  `QT-Morning` (Mon–Fri 9:35 AM, morning), `QT-Intraday` (Mon–Fri 11:00 AM /
+  12:00 PM / 3:00 PM, intraday), `QT-Evening` (Mon–Fri 5:30 PM, evening),
+  `QT-Weekend` (Sat 10:00 AM, evening). Verified live: a fire dispatched a run
+  with exit 0, and `QT-Evening` fired on its own at exactly 17:30 ET.
+- **Tradeoff:** only fires when the PC is on/logged in. GitHub's own crons are
+  **left in place as a free fallback**; `concurrency: quant-terminal` +
+  `cancel-in-progress: false` serializes duplicates safely (you'll see some
+  `cancelled` runs when both sources fire — that's expected, GitHub only lets one
+  run wait per group; "Canceling since a higher priority waiting request exists").
+- **Open option:** if duplicate runs become annoying, remove the `schedule:`
+  crons now that Task Scheduler covers timing. (Not done — kept as fallback.)
+
+### P&L review (today showed −$1,200 on the dashboard)
+- Dashboard `data.json` (`pnl_history`): 05-29 +$33 → 05-30 +$122 →
+  **06-02 total −$1,252.68** (`unrealized −1259.68`, `realized +7.0`, 39 open).
+- **It's mark-to-market on open positions, not realized losses.** Account ≈
+  $100k (Alpaca equity $98,747 end-of-run) → only **−1.25%**. First remark since
+  the weekend.
+- Book is heavily long (76 BUY / 6 SELL, 31 tickers) → broad down-move hits the
+  whole book. Worst names: SHOP −21.6%, MTD −21%, CE −19.4%, NET −17.7% — all
+  **low confidence (~0.40–0.51)**. Consistent with the thin AUC-0.547 edge; not
+  a bug. Decision: **leave the model be and let it learn** (don't curve-fit to
+  one down day; the scoring loop needs these negative examples).
+
+### Safety-net audit + VIX fix
+- **Kill switch confirmed working** on the broker-equity path (source of truth):
+  log shows `[KILL SWITCH · Alpaca] equity=$100,156 daily_dd=+0.12% weekly_dd=
+  +0.12% peak_dd=+0.00% limits=(-10%/-20%/-15%)`. Limits: **−10% daily / −20%
+  weekly / −15% peak** of the real account (≈ −$10k/−$20k/−$15k), plus
+  Gain-to-Pain <0.20 and 2× CVaR-solver-failure kills. Today's −1.25% is nowhere
+  near a trip. Self-healing (clears stale Drive flag when account healthy).
+- **VIX hard-stop was silently broken** (`fix/vix-killswitch-series-float` →
+  merged `0de85bc`): newer yfinance returns a multi-index frame, so
+  `download("^VIX")["Close"].iloc[-1]` was a Series and `float()` raised
+  "argument must be ... not 'Series'", swallowed as non-fatal → the **VIX>45
+  flash-crash stop never ran**. Fixed by collapsing the single-ticker frame to a
+  Series before `float()`. **Preflight: all 9 checks passed** on the branch.
+- Alpaca secrets (`ALPACA_API_KEY/SECRET`) confirmed set + wired → broker path
+  active (not the pnl_history fallback).
+
+### Open item (needs user)
+- **`DISCORD_WEBHOOK_URL` secret is NOT set** (referenced in workflow). Kill
+  switch will halt trading correctly but **won't notify** — user finds out only
+  via dashboard. Add the webhook as a repo secret to enable trip alerts. (Also
+  unset, lower-stakes: `QUIVER_QUANT_KEY`, `ALPHAVANTAGE_API_KEY` — data only.)
+
+### Files this session
+- `quant_runner.py` — VIX kill-switch Series→float fix (only code change).
+- `scripts/trigger_cycle.ps1` (new), `scripts/.gh_token.dpapi` (new, git-ignored),
+  `.gitignore` (ignore the token file), `run_logs/trigger.log` (runtime).
+- Windows: 4 scheduled tasks under `\QuantTerminal\` (machine-local, not in repo).
 
 ---
 
