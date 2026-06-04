@@ -3,7 +3,14 @@
 on:
   schedule:
     # ── Morning full cycle: macro + train + signals + trade (9:35 AM ET) ──
+    # GitHub's scheduler is best-effort and silently drops ticks, so fire
+    # several redundant morning attempts (9:35 / 9:50 / 10:05 ET). The run-type
+    # logic below makes the FIRST one that lands do the retrain (marker-gated);
+    # any later duplicate downgrades to a cheap intraday refresh. One on-time
+    # success is all that's needed — no PC / external trigger dependency.
     - cron: '35 13 * * 1-5'
+    - cron: '50 13 * * 1-5'
+    - cron: '05 14 * * 1-5'
     # ── Midday signal refresh: load cached models + re-signal (12:00 PM ET) ──
     - cron: '00 16 * * 1-5'
     # ── Intraday model refresh: 2-hour resolution (11:00 AM ET) ─────────────
@@ -83,21 +90,28 @@ jobs:
             TYPE="morning"
           fi
 
-          # ── Self-heal: catch-up morning retrain ────────────────────────────
-          # GitHub's `schedule` cron is best-effort and has been silently
-          # dropping the 9:35 ET morning trigger (whole days with no retrain →
-          # "No model cache found"). The intraday cycles DO fire, so if this is
-          # a weekday scheduled run and no morning retrain has been recorded for
-          # today yet, promote this cycle to a morning retrain. Keeps the daily
-          # retrain alive regardless of which trigger lands. Manual dispatches
-          # are left untouched (explicit intent).
-          if [ -z "$MANUAL" ] && [ "$TYPE" != "morning" ] && [ "$DAY" -le 5 ]; then
+          # ── Self-healing morning retrain (scheduled weekday runs) ──────────
+          # GitHub's `schedule` cron is best-effort and silently drops ticks, so
+          # the single 9:35 ET morning trigger has missed for days (no retrain →
+          # no signals all day). Strategy: fire several morning-window crons
+          # (above) AND make the day's FIRST scheduled cycle do the retrain,
+          # tracked by a committed data/last_morning_run.txt marker:
+          #   • no morning recorded today  -> force morning (covers a dropped
+          #     9:35 tick; a later intraday cycle will catch up if all morning
+          #     ticks drop)
+          #   • morning already done today -> a duplicate morning-window cron
+          #     downgrades to a cheap intraday refresh (no wasteful 2nd retrain)
+          # Manual dispatches are left exactly as requested (explicit intent).
+          if [ -z "$MANUAL" ] && [ "$DAY" -le 5 ]; then
             LAST_MORNING=""
             [ -f data/last_morning_run.txt ] && LAST_MORNING="$(cat data/last_morning_run.txt | tr -d '[:space:]')"
             TODAY=$(date -u +%Y-%m-%d)
             if [ "$LAST_MORNING" != "$TODAY" ]; then
-              echo "Self-heal: no morning retrain for $TODAY (last=$LAST_MORNING) — promoting $TYPE -> morning catch-up."
+              echo "Self-heal: no morning retrain for $TODAY (last=$LAST_MORNING) — running morning."
               TYPE="morning"
+            elif [ "$TYPE" = "morning" ]; then
+              echo "Morning retrain already done for $TODAY — downgrading duplicate morning cron to intraday refresh."
+              TYPE="intraday"
             fi
           fi
 
