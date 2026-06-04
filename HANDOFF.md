@@ -1,7 +1,7 @@
 # Quant Terminal v25 — Session Handoff
-**Date:** 2026-06-02 (updated, continued session)  
+**Date:** 2026-06-03 (updated, continued session)  
 **Branch:** `master`  
-**Last commit:** `0de85bc`  
+**Last commit:** `9931b30`  
 **Repo:** https://github.com/Southpaw3234/Quant-Terminal
 
 ---
@@ -35,6 +35,72 @@ or frame changes, "improvements," and fixing the deferred intraday-pickle bug.
 **Watch (don't react to single days):** clean `MORNING cycle complete`, the
 walk-forward AUC trend, and the shadow long-short P&L once 5+ days accumulate.
 The 30-day aggregate is the verdict.
+
+---
+
+## SESSION 2026-06-03 — Missed morning run diagnosis + scheduler hardening
+
+Operations/reliability only — **no trading-logic changes** (freeze respected). No
+commits this session; changes are machine-local (Task Scheduler) + an external
+service (cron-job.org). Day 3 of the 30-day clean window.
+
+### What happened: today's 9:35 AM ET morning run did NOT fire
+- **Both trigger paths failed simultaneously.** (1) GitHub's `schedule` cron
+  (13:35 UTC) was silently dropped — the known best-effort unreliability (yesterday
+  it fired early at 12:27 UTC; today it just never created a run). (2) Windows Task
+  Scheduler `QT-Morning` had **never successfully fired** (`LastRun=11/30/1999`,
+  `LastResult=0x41303` "task has not yet run") — it kept catching the PC asleep/off/
+  on-battery, and its settings blocked it: `WakeToRun=False`, `DisallowStartIfOnBatteries
+  =True`. Only `QT-Evening` had ever run (once, during setup when the PC was awake).
+- **Consequence:** no morning retrain → no trained model cache all day. Every run today
+  (scheduled + manual dispatch) was intraday/evening and hit `No model cache found —
+  cannot predict` / the benign Cell 11 `NameError: 'models'` (the deferred intraday-
+  pickle bug). **No new signals generated today.** P&L still published correctly every
+  cycle via the Alpaca path (kill switch healthy, no trip).
+
+### Fix 1: hardened all 4 Task Scheduler jobs (applied, verified)
+`Set-ScheduledTask` on `\QuantTerminal\{QT-Morning,QT-Intraday,QT-Evening,QT-Weekend}`
+with `New-ScheduledTaskSettingsSet -WakeToRun -AllowStartIfOnBatteries
+-DontStopIfGoingOnBatteries -StartWhenAvailable`. Now: wakes the PC from sleep, runs
+on battery, won't die if unplugged, catches up missed starts. **Verified working** —
+`QT-Evening` fired on its own at 5:30 PM ET today (event=workflow_dispatch) right after
+the fix. **Remaining limit:** WakeToRun wakes from *sleep* only, not from a full
+*shutdown* — if the PC is fully powered off at 9:35 AM, nothing local can fire it.
+
+### Fix 2: cron-job.org cloud backup (in progress — user doing browser steps)
+Removes the PC dependency entirely. Decided with the user (security tradeoff vs. the
+original Task-Scheduler-only design, which avoided putting a PAT in a third party):
+- **Fine-grained PAT** `cron-job-quant-dispatch`, scoped to ONLY the Quant-Terminal
+  repo, **Actions: read/write** (nothing else). Stored as an `Authorization: Bearer`
+  header in cron-job.org. Rotate it there if leaked/expired.
+- **Dispatch:** `POST .../actions/workflows/quant_daily.yml/dispatches`, body
+  `{"ref":"master","inputs":{"run_type":"morning"}}`. Job timezone `America/New_York`
+  (tracks DST). Recommended starting with just **QT-Cloud-Morning** (Mon–Fri 9:35 ET) —
+  the only critical retrain; adding all 6 cycles causes harmless duplicate/`cancelled`
+  runs via the `quant-terminal` concurrency guard.
+- **Status:** user is creating the PAT + cron-job.org account; not yet verified live.
+  Next: a "Test run" should return HTTP 204 and create a dispatched run.
+
+### P&L snapshot (today, after-hours)
+Equity ≈ **$106,386, +$6,386 total** (+6.4%), 42 open, unrealized +$6,062, realized
++$266. Big rebound from the Jun 2 −1.25% low — mostly beta from a long book in an up
+market, not proven alpha (consistent with walkforward AUC ~0.55). Decided to **let
+tomorrow's 9:35 AM run come naturally** rather than dispatch a late manual morning run
+(market closed at 4 PM ET; orders would just queue).
+
+### Open follow-ups (next session)
+- [ ] **Verify tomorrow's (Thu 6/4) 9:35 AM morning run actually fired** and looks like
+  Tuesday (retrain + walkforward + ~307 signals + trades). This is the real test of the
+  scheduler hardening. If it still misses, the PC was fully shut down (not asleep) —
+  lean on the cron-job.org cloud backup.
+- [ ] **Finish + verify cron-job.org backup:** user creating the fine-grained PAT +
+  account; flip status here from "in progress" to "verified live" after the first
+  successful Test run (expect HTTP 204 + a new dispatched run in `gh run list`).
+- [ ] **Commit this handoff edit** — no code changed this session, so the doc update is
+  uncommitted. Suggested message: `docs(handoff): 2026-06-03 — missed morning run +
+  scheduler hardening`.
+- Memory written this session: `cron-job-org-dispatch.md` (records the PAT location +
+  rotation + dispatch endpoint for future sessions).
 
 ---
 
