@@ -1,7 +1,7 @@
 # Quant Terminal v25 — Session Handoff
-**Date:** 2026-06-03 (updated, continued session)  
+**Date:** 2026-06-04 (updated, continued session)  
 **Branch:** `master`  
-**Last commit:** `9931b30`  
+**Last commit:** `756ced0`  
 **Repo:** https://github.com/Southpaw3234/Quant-Terminal
 
 ---
@@ -35,6 +35,65 @@ or frame changes, "improvements," and fixing the deferred intraday-pickle bug.
 **Watch (don't react to single days):** clean `MORNING cycle complete`, the
 walk-forward AUC trend, and the shadow long-short P&L once 5+ days accumulate.
 The 30-day aggregate is the verdict.
+
+---
+
+## SESSION 2026-06-04 — Morning run made self-healing (root-cause fix)
+
+Operations/reliability only — **no trading-logic changes** (freeze respected).
+Day 4 of the 30-day clean window. Two commits to `master`: `44e9754` + `756ced0`
+(workflow only). This is the "keep-it-alive" exception applied properly — it
+restores the intended daily-retrain behavior, it does not change decision logic.
+
+### What happened: morning run missed AGAIN (3rd day running)
+- Thu 6/4's 9:35 AM ET morning cron was dropped again (GitHub `schedule` best-
+  effort). Yesterday's Task Scheduler hardening (WakeToRun etc.) did NOT save it —
+  the PC was fully **powered off** at 9:35 (WakeToRun only wakes from sleep). All
+  3 cycles that DID fire today (16:32 / 17:37 / 18:13 UTC) were `intraday` and hit
+  `No model cache found — cannot predict`. No retrain, no new signals — same dead-
+  day failure as 6/3.
+
+### Root-cause fix (in-repo, no PC / no PAT / no external dependency)
+The intraday cycles reliably fire even when the morning cron drops, so:
+- **`44e9754` — self-healing retrain.** In the "Determine run type" step, a
+  committed marker `data/last_morning_run.txt` records the date of the last
+  morning retrain. On a **scheduled weekday** run, if no morning is recorded for
+  today, the cycle is promoted to `morning`. → A dropped 9:35 tick is caught up by
+  the first cycle that fires (e.g. noon). Manual dispatches are never overridden.
+- **`756ced0` — redundant morning crons + idempotent gate.** Added two more
+  morning-window crons (now **9:35 / 9:50 / 10:05 ET**) so one on-time success is
+  enough. Once today's morning is recorded, a duplicate morning cron **downgrades
+  to a cheap intraday refresh** (no wasteful 2nd full retrain). Marker is written
+  by a new "Record morning retrain marker" step (morning only) and committed with
+  the other state files.
+
+**Net effect:** dead, signal-less days **can no longer happen** as long as ANY
+weekday cycle fires; the on-time-at-open retrain now has 3 independent attempts
+instead of 1 flaky tick. **cron-job.org is now OPTIONAL redundancy**, not load-
+bearing (still unverified — its "Test run" was never run this session).
+
+### Recovery + verification (manual morning run today)
+Dispatched a manual `morning` run (`26978288789`) — completed clean:
+`Run type: morning` · kill switch healthy (no trip, equity ≈$106,464) · capital
+$107,244 · **walk-forward 12 folds mean OOS AUC=0.5486, last=0.6126** (in line
+with the 0.547 baseline) · **307 signals** → net-of-cost suppressed 290, ternary
+290 HOLD, **cash guard allowed max 8 new BUYs** · `Model cache saved` ·
+`MORNING cycle complete`. Ran at 4:41 PM ET (after close) so BUYs queue to next
+open. (The live self-heal test is tomorrow's first *scheduled* cycle — manual
+dispatches bypass it by design; today's 20:54 schedule run was cancelled by the
+concurrency guard, so it couldn't demo it.)
+
+### Notes / still-open
+- **Deferred intraday-pickle bug unchanged** (frozen): morning cache still logs
+  `skipped: ['models (TypeError)']`, which is why intraday cycles say "No model
+  cache found." Benign — morning generates/trades signals; intraday does stops/P&L.
+- **cron-job.org:** finish + verify if you still want a guaranteed on-time
+  external trigger (PAT validation snippet / "Test run" → expect a new
+  `workflow_dispatch` run). No longer urgent given the self-heal.
+- **P&L snapshot (data.json, 18:24 UTC):** total **+$8,667** (+8.7%): unrealized
+  +$8,168, realized +$500, 42 open. Big up day — mostly long-book beta in an up
+  market, not proven alpha (consistent with AUC ~0.55). Up from 6/3's −$1,599.
+- Memory written: `morning-run-selfheal.md`.
 
 ---
 
