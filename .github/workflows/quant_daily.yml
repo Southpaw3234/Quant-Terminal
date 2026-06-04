@@ -83,6 +83,24 @@ jobs:
             TYPE="morning"
           fi
 
+          # ── Self-heal: catch-up morning retrain ────────────────────────────
+          # GitHub's `schedule` cron is best-effort and has been silently
+          # dropping the 9:35 ET morning trigger (whole days with no retrain →
+          # "No model cache found"). The intraday cycles DO fire, so if this is
+          # a weekday scheduled run and no morning retrain has been recorded for
+          # today yet, promote this cycle to a morning retrain. Keeps the daily
+          # retrain alive regardless of which trigger lands. Manual dispatches
+          # are left untouched (explicit intent).
+          if [ -z "$MANUAL" ] && [ "$TYPE" != "morning" ] && [ "$DAY" -le 5 ]; then
+            LAST_MORNING=""
+            [ -f data/last_morning_run.txt ] && LAST_MORNING="$(cat data/last_morning_run.txt | tr -d '[:space:]')"
+            TODAY=$(date -u +%Y-%m-%d)
+            if [ "$LAST_MORNING" != "$TODAY" ]; then
+              echo "Self-heal: no morning retrain for $TODAY (last=$LAST_MORNING) — promoting $TYPE -> morning catch-up."
+              TYPE="morning"
+            fi
+          fi
+
           echo "type=$TYPE" >> $GITHUB_OUTPUT
           echo "Run type: $TYPE (UTC hour=$HOUR day=$DAY)"
 
@@ -111,6 +129,10 @@ jobs:
           GIT_USER_EMAIL:        'quant-bot@github-actions'
           GIT_USER_NAME:         'Quant Terminal Bot'
         run: python quant_runner.py
+
+      - name: Record morning retrain marker
+        if: steps.run_type.outputs.type == 'morning'
+        run: date -u +%Y-%m-%d > data/last_morning_run.txt
 
       - name: Run stat-arb pairs scanner (morning weekly)
         if: steps.run_type.outputs.type == 'morning'
@@ -161,7 +183,7 @@ jobs:
           git config user.email "$GIT_USER_EMAIL"
           git config user.name  "$GIT_USER_NAME"
           # Stage state files — explicitly exclude docs/data.json (lives on data branch)
-          git add data/paper_trades/ data/predictions/ data/weights/ data/intraday_history/ data/models/intraday_model.pkl data/stat_arb/ docs/index.html || true
+          git add data/paper_trades/ data/predictions/ data/weights/ data/intraday_history/ data/models/intraday_model.pkl data/stat_arb/ data/last_morning_run.txt docs/index.html || true
           # Stash any remaining unstaged changes to avoid rebase conflict
           git stash --include-untracked || true
           git pull --rebase origin master || true
