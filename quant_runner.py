@@ -980,6 +980,12 @@ try:
     _rep_tk = next(iter(featured))
     _rep_df = featured[_rep_tk].dropna(subset=["target"])
     _rep_X  = _rep_df[FEATURE_COLS].replace([_np6p.inf, -_np6p.inf], _np6p.nan).dropna()
+    # Honesty fix A2: select features on the TRAINING window only (no look-ahead).
+    # Fitting VIF on 100% of rows lets validation-window collinearity decide which
+    # features survive. Restrict to the first 62.5% (matches EmbargoTSS optuna_fraction
+    # and the StandardScaler train-window fit).
+    _VIF_TRAIN_FRACTION = 0.625
+    _rep_X  = _rep_X.iloc[:max(int(len(_rep_X) * _VIF_TRAIN_FRACTION), 50)]
     if len(_rep_X) >= 50:
         _keep_cols = list(FEATURE_COLS)  # start with all
         # Iterative VIF: remove highest VIF > threshold, repeat
@@ -1031,7 +1037,11 @@ try:
         if _etf6xs:
             _needed_etfs.add(_etf6xs)
 
-    _etf_returns = _fetch_sector_etf_returns(_needed_etfs) if _needed_etfs else {}
+    # Honesty fix A3: pull 10y of ETF history (matches the 10y ticker panel) so the
+    # cross-sectional adjustment is consistent across all rows. With the default 1y,
+    # rows older than a year had no ETF return (filled 0) -> sector-adjusted recently
+    # but raw-return historically, so xs_mom_5d meant two different things in one panel.
+    _etf_returns = _fetch_sector_etf_returns(_needed_etfs, period="10y") if _needed_etfs else {}
 
     # Compute 5-day rolling return for each ticker and subtract sector ETF
     _xs_raw = {}  # {ticker: pd.Series of xs_mom values}
@@ -1756,7 +1766,9 @@ if __import__("os").environ.get("RUN_TYPE", "morning") == "morning" and "feature
                 continue
             _c_wf = _pdwf.to_numeric(_df_wf["Close"], errors="coerce")
             _sub = _df_wf[_have].copy().replace([_npwf.inf, -_npwf.inf], _npwf.nan)
-            _sub["_y_wf"]    = (_c_wf.shift(-_H_wf) / _c_wf - 1.0 > 0).astype("float")
+            _fwd_wf          = _c_wf.shift(-_H_wf) / _c_wf - 1.0
+            _sub["_y_wf"]    = (_fwd_wf > 0).astype("float")
+            _sub["_r_wf"]    = _fwd_wf            # continuous fwd return for rank IC
             _sub["_date_wf"] = _pdwf.to_datetime(_df_wf.index)
             _frames_wf.append(_sub)
         if not _frames_wf:
@@ -1764,12 +1776,12 @@ if __import__("os").environ.get("RUN_TYPE", "morning") == "morning" and "feature
         else:
             _feat_wf = [c for c in _cols_wf if all(c in f.columns for f in _frames_wf)]
             _panel = _pdwf.concat(_frames_wf, ignore_index=True)
-            _panel = _panel[_feat_wf + ["_y_wf", "_date_wf"]].dropna()
+            _panel = _panel[_feat_wf + ["_y_wf", "_r_wf", "_date_wf"]].dropna()
             _panel = _panel.sort_values("_date_wf").reset_index(drop=True)
             _dates_wf = _panel["_date_wf"].drop_duplicates().sort_values().reset_index(drop=True)
             _starts = list(range(0, len(_dates_wf) - _TRAIN_D - _TEST_D + 1, _STEP_D))
             _starts = _starts[-_MAX_FOLDS:]   # most recent folds only
-            _aucs_wf, _folds_wf = [], []
+            _aucs_wf, _ics_wf, _folds_wf = [], [], []
             for _s in _starts:
                 _tr_hi = _dates_wf.iloc[_s + _TRAIN_D - 1]
                 _te_hi = _dates_wf.iloc[_s + _TRAIN_D + _TEST_D - 1]
@@ -1778,6 +1790,7 @@ if __import__("os").environ.get("RUN_TYPE", "morning") == "morning" and "feature
                 _tem = (_panel["_date_wf"] > _tr_hi) & (_panel["_date_wf"] <= _te_hi)
                 _Xtr, _ytr = _panel.loc[_trm, _feat_wf], _panel.loc[_trm, "_y_wf"]
                 _Xte, _yte = _panel.loc[_tem, _feat_wf], _panel.loc[_tem, "_y_wf"]
+                _rte = _panel.loc[_tem, "_r_wf"]
                 if len(_Xtr) < 200 or len(_Xte) < 50 or _ytr.nunique() < 2 or _yte.nunique() < 2:
                     continue
                 _m_wf = _xgbwf.XGBClassifier(
@@ -1785,30 +1798,40 @@ if __import__("os").environ.get("RUN_TYPE", "morning") == "morning" and "feature
                     subsample=0.8, colsample_bytree=0.8, n_jobs=2,
                     eval_metric="logloss", verbosity=0)
                 _m_wf.fit(_Xtr, _ytr)
-                _a_wf = float(_aucwf(_yte, _m_wf.predict_proba(_Xte)[:, 1]))
+                _p_wf = _m_wf.predict_proba(_Xte)[:, 1]
+                _a_wf = float(_aucwf(_yte, _p_wf))
+                # Honesty fix A4: rank IC = Spearman(predicted prob, realized fwd return).
+                # IC is the tradeable-edge metric; AUC only sees the sign.
+                _ic_wf = _pdwf.Series(_p_wf).corr(
+                    _pdwf.Series(_rte.values), method="spearman")
+                _ic_wf = float(_ic_wf) if _ic_wf == _ic_wf else 0.0   # NaN guard
                 _aucs_wf.append(_a_wf)
+                _ics_wf.append(_ic_wf)
                 _folds_wf.append({"fold": len(_aucs_wf), "train_end": str(_tr_hi.date()),
                                   "test_end": str(_te_hi.date()), "n_test": int(len(_Xte)),
-                                  "auc": round(_a_wf, 4)})
+                                  "auc": round(_a_wf, 4), "ic": round(_ic_wf, 4)})
                 print(f"  [walkforward] fold {len(_aucs_wf)}/{len(_starts)}: "
                       f"train->{_tr_hi.date()} test->{_te_hi.date()} "
-                      f"n={len(_Xte)} AUC={_a_wf:.4f}")
+                      f"n={len(_Xte)} AUC={_a_wf:.4f} IC={_ic_wf:.4f}")
             if _aucs_wf:
                 _mean_auc = float(_npwf.mean(_aucs_wf))
                 _last_auc = _aucs_wf[-1]
+                _mean_ic  = float(_npwf.mean(_ics_wf)) if _ics_wf else 0.0
+                _last_ic  = _ics_wf[-1] if _ics_wf else 0.0
                 _trail = float(_npwf.mean(_aucs_wf[:-1])) if len(_aucs_wf) > 1 else _mean_auc
                 _drift = bool(_last_auc < _trail - 0.05)
                 _verdict = ("genuine edge" if 0.55 <= _mean_auc <= 0.68 else
                             "suspiciously high — check leakage" if _mean_auc > 0.68 else
                             "weak/no edge")
                 print(f"  [walkforward] {len(_aucs_wf)} folds | mean OOS AUC={_mean_auc:.4f} "
-                      f"| last={_last_auc:.4f} | {_verdict}"
+                      f"| mean IC={_mean_ic:.4f} | last AUC={_last_auc:.4f} | {_verdict}"
                       + (" | DRIFT DETECTED" if _drift else ""))
                 _Pwf("data/predictions").mkdir(parents=True, exist_ok=True)
                 _Pwf("data/predictions/walkforward.json").write_text(_jwf.dumps({
                     "generated": _dtwf.datetime.utcnow().isoformat()[:16] + " UTC",
                     "n_folds": len(_aucs_wf), "mean_oos_auc": round(_mean_auc, 4),
                     "last_auc": round(_last_auc, 4), "trailing_mean": round(_trail, 4),
+                    "mean_oos_ic": round(_mean_ic, 4), "last_ic": round(_last_ic, 4),
                     "drift_detected": _drift, "verdict": _verdict, "folds": _folds_wf},
                     indent=2))
             else:
@@ -4739,13 +4762,15 @@ _SRC_REPLACE = [
      '(lambda _mr: int(_mr) if str(_mr).strip().lstrip("-").isdigit() '
      'else {"bear": 0, "neutral": 1, "mixed": 1, "bull": 2}.get('
      'str(_mr).lower().replace(" / ", "/").split("/")[0].strip(), 1))(MACRO.get("macro_regime", 1))'),
-    # Tier A: HMM rolling/causal regime labels. The notebook decodes regimes with
+    # Honesty fix A1: HMM causal regime labels. The notebook decodes regimes with
     # full-sequence smoothed Viterbi (model.predict), so historical labels peek at
-    # future bars — look-ahead in regime training features. Replace with the
-    # forward-algorithm FILTERED state (each label uses only past data).
-    # Defense-in-depth: smoothed predict stays the baseline; the filtered path is
-    # used ONLY if it computes AND agrees >=60% with smoothed; any error keeps the
-    # original behavior. (The live regime = last bar is already causal regardless.)
+    # future bars — look-ahead in the regime training feature. Replace with the
+    # forward-algorithm FILTERED state (each label uses only past+current data).
+    # The filtered path is now the DEFAULT whenever it computes and is non-degenerate
+    # (>=2 states); we no longer gate it behind >=60% agreement with the leaky
+    # smoothed labels (that gate discarded the causal fix exactly when look-ahead
+    # mattered most). Fall back to smoothed only on error/degeneracy. A [hmm] log
+    # line confirms engagement. (The live regime = last bar is causal either way.)
     ("labels=model.predict(returns)",
      "labels=model.predict(returns)\n"
      "    try:\n"
@@ -4760,10 +4785,16 @@ _SRC_REPLACE = [
      "        for _t_h in range(1, _n_h):\n"
      "            _la_h[_t_h] = _lse_hmm(_la_h[_t_h - 1][:, None] + _ltm_h, axis=0) + _fl_h[_t_h]\n"
      "        _filt_h = _np_hmm.argmax(_la_h, axis=1)\n"
-     "        if (_filt_h == labels).mean() >= 0.6:\n"
+     "        if len(_np_hmm.unique(_filt_h)) >= 2:\n"
+     "            _agree_h = float((_filt_h == labels).mean())\n"
      "            labels = _filt_h\n"
-     "    except Exception:\n"
-     "        pass"),
+     "            print('  [hmm] causal forward-filtered regimes ENGAGED '\n"
+     "                  '(agreement with smoothed={:.0%}, states={})'.format(\n"
+     "                  _agree_h, sorted(_np_hmm.unique(_filt_h).tolist())))\n"
+     "        else:\n"
+     "            print('  [hmm] filtered labels degenerate (single state) — kept smoothed')\n"
+     "    except Exception as _hmm_e:\n"
+     "        print('  [hmm] causal filter failed, kept smoothed: {}'.format(_hmm_e))"),
 ]
 
 failed_cells = []

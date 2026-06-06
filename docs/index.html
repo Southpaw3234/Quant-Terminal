@@ -555,6 +555,20 @@ tr:hover td{background:rgba(88,166,255,.04)}
       </div>
     </div>
 
+    <!-- ── HONEST OUT-OF-SAMPLE EDGE (walk-forward) ───────────── -->
+    <div class="panel" style="margin-bottom:20px" id="wf-panel">
+      <div class="panel-hdr">
+        <span class="panel-title">🧪 Honest Out-of-Sample Edge — Walk-Forward</span>
+        <span style="color:var(--mu);font-size:10px" id="wf-updated">—</span>
+      </div>
+      <div style="font-size:10px;color:var(--mu);padding:6px 14px 2px">
+        The only leakage-free read of skill: a rolling out-of-sample test (train 504d / test 63d, most recent folds). AUC 0.50 = coin flip; IC is the tradeable rank correlation between prediction and realized return. Everything else below (confidence, projected growth) is in-sample and optimistic by comparison.
+      </div>
+      <div id="wf-body" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:12px 14px">
+        <div class="empty-msg" style="grid-column:1/-1">No walk-forward run yet</div>
+      </div>
+    </div>
+
     <!-- ── TOP 25 GROWTH PICKS ───────────────────────────────── -->
     <div class="panel" style="margin-bottom:20px">
       <div class="panel-hdr">
@@ -562,7 +576,7 @@ tr:hover td{background:rgba(88,166,255,.04)}
         <span style="color:var(--mu);font-size:10px" id="top25-updated">Updated each cycle</span>
       </div>
       <div style="font-size:10px;color:var(--mu);padding:6px 14px 2px">
-        Highest-confidence BUY signals ranked by model edge. Est. Growth % annualizes the model's per-signal edge over remaining trading days in the year.
+        Highest-confidence BUY signals ranked by model edge. <strong>Est. Growth % is model-implied, not realized</strong> — it extrapolates the model's in-sample per-signal edge and will overstate reality whenever the honest OOS AUC above is near 0.5. Treat it as a ranking, not a forecast.
       </div>
       <div class="tbl-wrap" style="max-height:420px;overflow-y:auto">
         <table>
@@ -1306,6 +1320,30 @@ function renderSnapshot(snapshotData) {
   const el = document.getElementById('snapshot-panel');
   if (!el) return;
   if (!snapshotData) return;
+}
+
+// ── Honest out-of-sample edge (walk-forward AUC + IC) ──────────────────────
+function renderWalkforward(wf) {
+  const body = document.getElementById('wf-body');
+  const upd  = document.getElementById('wf-updated');
+  if (!body) return;
+  if (!wf || wf.mean_oos_auc == null) {
+    body.innerHTML = '<div class="empty-msg" style="grid-column:1/-1">No walk-forward run yet</div>';
+    return;
+  }
+  if (upd) upd.textContent = (wf.generated || '') + ' · ' + (wf.n_folds || 0) + ' folds';
+  const auc = wf.mean_oos_auc;
+  const ic  = (wf.mean_oos_ic != null) ? wf.mean_oos_ic : null;
+  const aucCol = auc >= 0.55 ? 'var(--gr)' : auc >= 0.53 ? 'var(--yw)' : 'var(--or)';
+  const icCol  = (ic != null && ic >= 0.03) ? 'var(--gr)' : (ic != null && ic > 0) ? 'var(--yw)' : 'var(--or)';
+  const cell = (lab, val, col) =>
+    `<div style="text-align:center"><div style="font-size:24px;font-weight:700;color:${col}">${val}</div>`
+    + `<div style="font-size:10px;color:var(--mu);letter-spacing:.5px">${lab}</div></div>`;
+  body.innerHTML =
+    cell('MEAN OOS AUC', auc.toFixed(3), aucCol) +
+    cell('MEAN OOS IC', ic != null ? ic.toFixed(3) : '—', icCol) +
+    cell('LAST FOLD AUC', wf.last_auc != null ? wf.last_auc.toFixed(3) : '—', 'var(--tx)') +
+    cell('VERDICT', wf.verdict || '—', aucCol);
 }
 
 // ── Top 25 Growth Picks ───────────────────────────────────────────────────
@@ -3217,6 +3255,7 @@ async function loadAll() {
   renderIC(d.ic_decomposition || null, d.ic_composite_weights || null);
   renderHedges(d.hedge_positions || null);
   renderSnapshot(d.snapshot_60d || null);
+  renderWalkforward(d.walkforward || null);
   renderTop25Growth(preds);
 
   // Search hint
