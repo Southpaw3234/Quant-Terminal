@@ -29,6 +29,11 @@ on:
         default: 'morning'
         type: choice
         options: [morning, intraday, evening, scoring]
+      use_gpu:
+        description: 'Enable GPU compute (deep Optuna, FinBERT, full GARCH). Only set true when dispatched on the self-hosted NVIDIA runner.'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -39,7 +44,10 @@ concurrency:
 
 jobs:
   trade:
-    runs-on: ubuntu-latest
+    # C2: route to the self-hosted NVIDIA runner only when explicitly dispatched
+    # with use_gpu=true; every scheduled/normal run stays on GitHub-hosted CPU so
+    # nothing hangs if the self-hosted runner is offline or not yet registered.
+    runs-on: ${{ (github.event.inputs.use_gpu == 'true') && fromJSON('["self-hosted","gpu"]') || 'ubuntu-latest' }}
     timeout-minutes: 350
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -129,6 +137,7 @@ jobs:
       - name: Run trading cycle
         env:
           GH_ACTIONS: 'true'
+          QT_GPU:                ${{ github.event.inputs.use_gpu == 'true' && '1' || '0' }}
           RUN_TYPE:              ${{ steps.run_type.outputs.type }}
           GDRIVE_RCLONE_CONF:    ${{ secrets.GDRIVE_RCLONE_CONF }}
           ALPACA_API_KEY:        ${{ secrets.ALPACA_API_KEY }}
@@ -156,6 +165,7 @@ jobs:
         if: steps.run_type.outputs.type != 'evening'
         env:
           GH_ACTIONS: 'true'
+          QT_GPU: ${{ github.event.inputs.use_gpu == 'true' && '1' || '0' }}
           RUN_TYPE: ${{ steps.run_type.outputs.type }}
         run: python model_intraday.py || echo "Intraday model non-fatal error — continuing"
 

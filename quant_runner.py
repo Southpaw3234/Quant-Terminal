@@ -77,21 +77,59 @@ try:
     _xgb_orig_fit = _xgb_bl.XGBClassifier.fit
     _lgb_orig_fit = _lgb_bl.LGBMClassifier.fit
 
+    # C3 compute: route training through the histogram algorithm (fast on CPU,
+    # GPU-capable). On the self-hosted NVIDIA runner (QT_GPU=1) push XGB to the
+    # CUDA device; if no GPU is actually present the fit retries on CPU so a
+    # mis-set env can never kill a live run. Done at fit() time via set_params
+    # so the classes stay picklable (no exec-subclassing) — unlike CatBoost.
+    import os as _os_acc
+    _ACC_GPU = _os_acc.environ.get("QT_GPU", "0") == "1"
+
     def _xgb_round_fit(self, X, y, **kwargs):
         _y = _np_bl.asarray(y)
         if not _np_bl.issubdtype(_y.dtype, _np_bl.integer):
             _y = _np_bl.rint(_y).astype(int)
-        return _xgb_orig_fit(self, X, _y, **kwargs)
+        try:
+            self.set_params(tree_method="hist",
+                            device=("cuda" if _ACC_GPU else "cpu"))
+        except Exception:
+            pass
+        try:
+            return _xgb_orig_fit(self, X, _y, **kwargs)
+        except Exception as _gpu_e:
+            if _ACC_GPU:
+                # GPU unavailable/incompatible — fall back to CPU, never abort.
+                try:
+                    self.set_params(device="cpu")
+                except Exception:
+                    pass
+                return _xgb_orig_fit(self, X, _y, **kwargs)
+            raise
 
     def _lgb_round_fit(self, X, y, **kwargs):
         _y = _np_bl.asarray(y)
         if not _np_bl.issubdtype(_y.dtype, _np_bl.integer):
             _y = _np_bl.rint(_y).astype(int)
-        return _lgb_orig_fit(self, X, _y, **kwargs)
+        if _ACC_GPU:
+            try:
+                self.set_params(device_type="gpu")
+            except Exception:
+                pass
+        try:
+            return _lgb_orig_fit(self, X, _y, **kwargs)
+        except Exception:
+            if _ACC_GPU:
+                try:
+                    self.set_params(device_type="cpu")
+                except Exception:
+                    pass
+                return _lgb_orig_fit(self, X, _y, **kwargs)
+            raise
 
     _xgb_bl.XGBClassifier.fit = _xgb_round_fit
     _lgb_bl.LGBMClassifier.fit = _lgb_round_fit
-    print("  [label patch] XGB+LGB .fit() patched: float labels rounded to int (handles label smoothing)")
+    print(f"  [label patch] XGB+LGB .fit() patched: int labels + tree_method=hist "
+          f"(device={'cuda' if _ACC_GPU else 'cpu'}, CPU fallback armed)")
 except Exception as _bl_e:
     print(f"  [label patch] Warning: {_bl_e}")
 
@@ -342,12 +380,29 @@ if _os.environ.get("GH_ACTIONS"):
             print(f"  [capital] equity fetch failed ({_pc_e}) — keeping notebook PORTFOLIO_CAPITAL")
     RUN_TYPE_GH         = _os.environ.get("RUN_TYPE", "morning")
     FAST_MODE           = (RUN_TYPE_GH != "morning")
-    GARCH_PATHS         = 100 if RUN_TYPE_GH == "morning" else 30
-    QUICK_TUNE_TRIALS   = 2
-    FULL_TUNE_TRIALS_XGB = 15
-    FULL_TUNE_TRIALS_LGB = 15
-    FULL_TUNE_TRIALS_CAT = 15
-    print(f"GH_ACTIONS {RUN_TYPE_GH}: FAST_MODE={FAST_MODE} GARCH_PATHS={GARCH_PATHS}")
+    # Compute capacity is gated on QT_GPU. On the self-hosted NVIDIA runner
+    # (QT_GPU=1) we spend the compute the thin edge was being starved of:
+    # deep Optuna tuning + full GARCH MC paths. On GitHub-hosted CPU runners
+    # (QT_GPU unset) we restore the notebook's saner defaults (5/25/20/20) —
+    # the previous 2/15 overrides were *throttling below* the notebook itself,
+    # which likely measured hyperparameter noise rather than the real ceiling.
+    _QT_GPU = _os.environ.get("QT_GPU", "0") == "1"
+    _STUDY_TIMEOUT      = 600 if _QT_GPU else 45   # per-study Optuna wall clock
+    if _QT_GPU:
+        GARCH_PATHS         = 500
+        QUICK_TUNE_TRIALS   = 30
+        FULL_TUNE_TRIALS_XGB = 300
+        FULL_TUNE_TRIALS_LGB = 300
+        FULL_TUNE_TRIALS_CAT = 300
+    else:
+        GARCH_PATHS         = 100 if RUN_TYPE_GH == "morning" else 30
+        QUICK_TUNE_TRIALS   = 5
+        FULL_TUNE_TRIALS_XGB = 25
+        FULL_TUNE_TRIALS_LGB = 20
+        FULL_TUNE_TRIALS_CAT = 20
+    print(f"GH_ACTIONS {RUN_TYPE_GH}: FAST_MODE={FAST_MODE} GARCH_PATHS={GARCH_PATHS} "
+          f"QT_GPU={_QT_GPU} OPTUNA(full={FULL_TUNE_TRIALS_XGB},quick={QUICK_TUNE_TRIALS},"
+          f"timeout={_STUDY_TIMEOUT}s)")
 """
 
 # ── Cell skip rules per run type ──────────────────────────────────────────
@@ -1699,7 +1754,11 @@ def _deflated_sharpe(returns_series, n_trials=30, sr_benchmark=0.0):
     return float(_np8dsr.clip(_dsr, -5.0, 5.0))
 
 _DSR_SCORES   = {}
-_N_OPTUNA_TRIALS = 30   # conservative estimate matching QUICK_TUNE_TRIALS
+# DSR multiple-testing correction must reflect the ACTUAL number of Optuna
+# trials run (more trials searched = higher E[max SR] under the null = more
+# deflation). Track the live full-tune budget when it's in scope; fall back to
+# a conservative 30 otherwise.
+_N_OPTUNA_TRIALS = int(globals().get("FULL_TUNE_TRIALS_XGB", 30))
 _n_dsr_flagged   = 0
 
 if "models" in dir() and "featured" in dir():
@@ -2280,6 +2339,52 @@ def _fh_smart_headlines(ticker, n=10):
     else:
         _tally("empty")
     return _heads[:n]
+
+# ── S1: FinBERT sentiment scorer (financial-domain) with VADER fallback ───────
+# VADER is tuned for social-media text and systematically mis-scores earnings/
+# guidance language. FinBERT (ProsusAI/finbert) is trained on financial news.
+# Loaded lazily and ONCE; gated on QT_GPU or QT_FINBERT so GH-hosted CPU runs
+# stay fast (VADER) while the self-hosted GPU runner gets the better signal.
+# Returns a VADER-compatible compound score in [-1, 1]; any failure at load or
+# inference falls back to per-headline VADER, so this can never break Cell 10.
+_QT_FINBERT_ENABLED = (os.environ.get("QT_GPU", "0") == "1"
+                       or os.environ.get("QT_FINBERT", "0") == "1")
+_FINBERT_PIPE_10 = [None]   # boxed singleton: None=unloaded, False=unavailable
+
+def _get_finbert_10():
+    if _FINBERT_PIPE_10[0] is not None:
+        return _FINBERT_PIPE_10[0]
+    if not _QT_FINBERT_ENABLED:
+        _FINBERT_PIPE_10[0] = False
+        return False
+    try:
+        import torch as _torch10
+        from transformers import pipeline as _pl10
+        _dev10 = 0 if (hasattr(_torch10, "cuda") and _torch10.cuda.is_available()) else -1
+        _FINBERT_PIPE_10[0] = _pl10("sentiment-analysis", model="ProsusAI/finbert",
+                                    device=_dev10, truncation=True, max_length=256)
+        print(f"  [finbert] loaded ProsusAI/finbert (device={'cuda' if _dev10==0 else 'cpu'})")
+    except Exception as _fb10e:
+        print(f"  [finbert] unavailable, falling back to VADER: {_fb10e}")
+        _FINBERT_PIPE_10[0] = False
+    return _FINBERT_PIPE_10[0]
+
+def _qt_sent_scores(headlines, _va):
+    """Score a list of headlines → compound in [-1,1]. FinBERT if available,
+    else per-headline VADER. Matches the notebook's prior mean-compound shape."""
+    _hl = [h for h in headlines if h]
+    if not _hl:
+        return []
+    _pipe = _get_finbert_10()
+    if _pipe:
+        try:
+            _out = _pipe(_hl)
+            _map = {"positive": 1.0, "negative": -1.0, "neutral": 0.0}
+            return [_map.get(str(r.get("label", "")).lower(), 0.0)
+                    * float(r.get("score", 0.0)) for r in _out]
+        except Exception as _fbse:
+            print(f"  [finbert] inference failed, VADER fallback: {_fbse}")
+    return [_va.polarity_scores(h)["compound"] for h in _hl]
 '''
 
 # ── CELL 10 POSTPATCH: print NewsAPI status tally + verdict ───────────────────
@@ -4738,6 +4843,27 @@ _load_model_cache(namespace)
 # postpatch wrappers can't reach (they run in the cell's namespace, not its
 # function bodies). Each entry must be an exact, unique substring.
 _SRC_REPLACE = [
+    # A1: River online learner runs at ~46% prequential accuracy (below
+    # coin-flip = anti-signal). It is NOT blended into the composite, but it
+    # DOES steer ADAPTIVE_WEIGHTS through two paths — both of which use the
+    # broken River accuracy as a reference, so a sub-coin-flip learner drags
+    # the (good) ensemble weight down and spuriously boosts garch. Clamp River's
+    # influence to ~0 until it is actually predictive (>=52%, a small margin
+    # over coin-flip). When River recovers, its adaptation re-engages on its own.
+    ("if abs(_delta) > 0.03:",
+     "if abs(_delta) > 0.03 and _river_acc >= 0.52:"),
+    ("if _garch_acc > _river_acc + 0.08:",
+     "if _garch_acc > _river_acc + 0.08 and _river_acc >= 0.52:"),
+    # S1: route Cell 10's per-headline VADER scoring through the FinBERT helper
+    # (defined in CELL_10_PREPATCH). Falls back to the identical VADER call when
+    # FinBERT is disabled/unavailable, so the numeric shape is unchanged.
+    ('scores = [_va.polarity_scores(h)["compound"] for h in headlines if h]',
+     "scores = _qt_sent_scores(headlines, _va)"),
+    # C1 compute: the notebook hard-caps every Optuna study at 45s wall clock,
+    # so bumping trial counts alone does nothing — the study stops on time, not
+    # on trials. Route the cap through _STUDY_TIMEOUT (600s on the GPU runner,
+    # 45s on GH-hosted CPU) so the higher trial budget can actually be spent.
+    ("timeout=45,", "timeout=_STUDY_TIMEOUT,"),
     # River >= 0.21 changed learn_one() to return None (in-place) instead of
     # self, breaking the chained scaler.learn_one(x).transform_one(x) idiom →
     # 'NoneType' object has no attribute 'transform_one'. Split into two calls.
@@ -4986,10 +5112,15 @@ if RUN_TYPE in ("morning", "evening"):
                     _aret9  = _scored9.loc[_p_ens9.index, "actual_return"]
                     if len(_p_ens9) >= 20:
                         _ic_ens9 = max(float(_spr9(_p_ens9, _aret9)[0]), 0.001)
+                        # S2: keep sentiment a real contributor. These are the
+                        # static post-ensemble floors (re-normalized below). With
+                        # FinBERT now scoring the sentiment channel (vs VADER), it
+                        # earns a larger floor so an improved channel is not muted
+                        # to a rounding error whenever ensemble IC rises.
                         _w_new9  = {
                             "ensemble":  round(_ic_ens9, 4),
                             "garch":     0.015,
-                            "sentiment": 0.010,
+                            "sentiment": 0.025,
                             "regime":    0.010,
                             "macro":     0.005,
                         }
