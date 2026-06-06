@@ -1,8 +1,58 @@
 # Quant Terminal v25 — Session Handoff
-**Date:** 2026-06-04 (updated, continued session)  
+**Date:** 2026-06-06 (updated, continued session)  
 **Branch:** `master`  
-**Last commit:** `756ced0`  
+**Last commit:** `756ced0` (code); docs updated since  
 **Repo:** https://github.com/Southpaw3234/Quant-Terminal
+
+---
+
+## 🔁 PENDING: 30-DAY BASELINE RESTARTS MON 2026-06-08 @ $100k
+
+**Decision (2026-06-06):** the 6/1–6/5 window was a shakeout, not a clean read —
+several mornings were dead days (missed-cron problem, now fixed). The **real**
+30-day clean baseline **restarts Monday 2026-06-08 = Day 1**, at **$100,000**.
+
+**Reset is LEDGER-ONLY** (reset the money, KEEP the frozen model's learned state —
+ensemble/River weights/adaptive weights/calibration untouched).
+
+**Key fact:** everything derives from Alpaca. `PORTFOLIO_CAPITAL` is set to live
+Alpaca equity each run; the equity curve rebuilds from Alpaca `portfolio/history`;
+the kill-switch HWM = `max()` of Alpaca's 1-month equity (NOT a stored file, so it
+self-corrects to $100k after the reset — no stale-watermark mis-fire). So resetting
+the Alpaca paper account is ~90% of the job.
+
+**Restart procedure:**
+1. **User — Alpaca dashboard, SUNDAY NIGHT 6/7** (user committed to this): Paper
+   account → Reset Account → starting cash **$100,000** → confirm (flattens all
+   positions). NOT Saturday — the Sat 10 AM cron would repopulate from old state.
+   After a Sunday reset nothing runs until Mon 9:35.
+2. **Next session (after user confirms reset) — clear tiny derived ledger files to
+   headers-only + commit/push:** `data/paper_trades/trade_history.csv`,
+   `data/paper_trades/paper_trades.csv`, `data/predictions/pnl_history.csv`,
+   `data/predictions/daily_pnl_log.csv`. (They regenerate clean from Alpaca.) Do
+   NOT touch model_cache / weights/ / river_model / adaptive_weights / calibration.
+3. **Mon 6/8 9:35 ET:** cron-job.org fires morning run → reads Alpaca ($100k, flat)
+   → fresh $100k book → clean dashboard = Day 1.
+
+---
+
+## ✅ 2026-06-05/06 — cron-job.org cloud trigger VERIFIED LIVE
+
+On-time 9:35 ET morning retrain no longer depends on the PC or GitHub's flaky cron.
+- **cron-job.org job QT-Cloud-Morning** (job id 7748961): Mon–Fri 9:35
+  America/New_York, POST to the dispatch endpoint, body
+  `{"ref":"master","inputs":{"run_type":"morning"}}`, 5 headers (Authorization
+  Bearer PAT, Accept, Content-Type, X-GitHub-Api-Version, User-Agent). **Test run
+  → 204 No Content**, created a real `workflow_dispatch` run. See memory
+  `cron-job-org-dispatch.md`.
+- **Gotcha:** the PAT was created Actions **read-only** → dispatch 403'd
+  ("Resource not accessible by personal access token"). Fixed by editing the
+  fine-grained PAT in place to Actions **Read and write** (same token string).
+- **Now belt-and-suspenders:** cron-job.org (on-time, cloud) + the in-repo
+  self-heal (catches any miss on the next cycle). Dead days can't recur.
+- **Security note:** the PAT was pasted in plaintext during setup — low risk
+  (scoped to Actions on this one paper repo), but rotating it later + updating the
+  cron-job.org Authorization header is the clean move.
 
 ---
 
