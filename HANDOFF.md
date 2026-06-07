@@ -35,6 +35,67 @@
 
 ---
 
+## 🖥️ RUNBOOK: register the self-hosted NVIDIA runner + validate Phase 1
+
+Goal: stand up the local GPU box as a GitHub Actions runner labeled `gpu`, then
+validate `feat/maximize-model` with one `use_gpu=true` dispatch and read the
+re-measured walk-forward AUC/IC. The workflow already routes to it only when
+dispatched with `use_gpu=true` (otherwise GitHub-hosted CPU) — nothing hangs if
+the runner is offline.
+
+### Step 1 — register the runner (one-time)
+1. GitHub → repo **Settings → Actions → Runners → New self-hosted runner**.
+2. Pick the box's OS (Windows). GitHub shows download + `config` commands with a
+   one-time token. Run them on the GPU box.
+3. **When `config` asks for labels, add `gpu`** (it auto-adds `self-hosted`). Final
+   labels must include both — the workflow targets `["self-hosted","gpu"]`.
+4. Run it as a service so it survives reboots: `./svc.sh install && ./svc.sh start`
+   (Linux) or "Install service" (Windows config prompt). Confirm it shows **Idle**
+   in Settings → Actions → Runners.
+
+### Step 2 — prerequisites on the box (the gotchas)
+The workflow runs `pip install -r requirements.txt`, and **that's where the GPU
+caveats bite** — verify these or the GPU levers silently fall back to CPU:
+- **NVIDIA driver + CUDA runtime** installed and visible (`nvidia-smi` works).
+- **Python 3.11** + git on PATH (Actions `setup-python` handles Python; git must exist).
+- **torch is pinned to the CPU wheel** in `requirements.txt`
+  (`torch>=2.0 --index-url .../whl/cpu`). So **FinBERT will run on CPU even on the
+  GPU box** unless you install a CUDA torch wheel on the runner (or add a
+  `requirements-gpu.txt`). Without it, `torch.cuda.is_available()` → False → FinBERT
+  uses CPU (works, just slower).
+- **XGBoost** `device="cuda"` works with the standard pip wheel **if** CUDA runtime
+  is present — this is the main GPU training win.
+- **LightGBM** pip wheel has **no GPU support**; `device_type="gpu"` will fail and
+  hit the armed CPU fallback (harmless). True LGB-GPU needs a custom OpenCL build —
+  skip unless you want it.
+- **Net:** even before solving torch/LGB GPU, the runner's biggest immediate win is
+  **removing the 350-min CI ceiling** so Optuna actually spends 300 trials × 600s
+  (`QT_GPU=1` sets both), plus XGBoost CUDA. That alone is the under-tuning test.
+
+### Step 3 — validate Phase 1
+1. Actions → "Quant Terminal v25.1" → **Run workflow** → branch
+   **`feat/maximize-model`**, `run_type=morning`, **`use_gpu=true`**.
+2. Confirm it lands on the self-hosted runner (job header shows the runner name).
+3. Watch the log for: `QT_GPU=True OPTUNA(full=300,quick=30,timeout=600s)`,
+   `[label patch] … device=cuda`, `[finbert] loaded ProsusAI/finbert (device=…)`,
+   the `[walkforward] 12 folds | mean OOS AUC=… | mean IC=…` line, and no
+   `Cell N raised an exception`.
+4. **Compare AUC/IC to the Phase 0 baseline (0.5461 / 0.0754).** A meaningful lift
+   ⇒ the frame was under-tuned (tuning helps). Roughly flat ⇒ 0.546 is the real
+   frame ceiling ⇒ redirect to the frame change, not more tuning. Either result is
+   the finding.
+
+### Caveats / side effects
+- A `use_gpu=true` dispatch on the branch **places paper orders** (queues to next
+  open) and **republishes the live dashboard** (data-branch push is not master-
+  gated) until the next master run overwrites it. The master *state* commit IS
+  gated off (`if: github.ref_name == 'master'`), so it won't push state to master.
+- When merging `feat/maximize-model` to master later, **rebase on master** so the
+  shadow-persistence + stat-arb fixes aren't reverted (branch carries the shadow
+  fix via `c0f4e6b`; the stat-arb fix `b28cfb6` is master-only — rebase picks it up).
+
+---
+
 ## 🔁 PENDING: 30-DAY BASELINE RESTARTS MON 2026-06-08 @ $100k
 
 **Decision (2026-06-06):** the 6/1–6/5 window was a shakeout, not a clean read —
