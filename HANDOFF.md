@@ -483,6 +483,18 @@ Claude Code routine (claude.ai scheduling backend was down at the time).
   baseline so a frame-change deploy decision (post-30-day) is evidence-based.
   Tests the beta-vs-alpha question directly (market-neutral P&L ≈ pure skill).
 
+> ⚠️ **CORRECTION (2026-06-06, cont. 2): the shadow track was never persisting.**
+> `data/shadow/` was written at runtime but **was NOT in the workflow's `git add`
+> line**, so every run discarded it on the ephemeral runner. Because the next run
+> starts clean with no prior `positions.jsonl`, it had nothing to score at the
+> 5-day horizon → recorded 0 matured entries → **the harness could never
+> accumulate a track record** (confirmed: `shadow_xsec":[]` live, no `data/shadow/*`
+> in any branch's git history). It had been a measurement no-op since it was added
+> on 2026-05-31. **Fixed:** `data/shadow/` added to the master commit line so it
+> persists from the next morning run. Positions logged then mature ~5 trading days
+> later → a **readable rank-IC / long-short spread in ~2–3 weeks**. Until then the
+> Frame-1 beta-vs-alpha question remains a projection, not a measured number.
+
 ### Honest model evaluation (verbatim takeaways)
 - **Well-engineered vehicle around a thin signal.** Risk mgmt, evaluation
   honesty, production engineering = top-decile retail. The alpha core is
