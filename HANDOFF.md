@@ -78,10 +78,16 @@ because two instruments were being conflated:
   question.
 
 **The tradeoff we accepted:** we gave up a clean forward read on a single frozen
-model in exchange for actively improving it. You cannot do both at once. **If a clean
-"untouched model, 60 forward days" read is wanted, the model must be RE-FROZEN**
-(stop merging changes) — open decision for the user. Current default = the
-improve-and-measure-via-shadows path (recommended).
+model in exchange for actively improving it. You cannot do both at once.
+
+> ✅ **DECISION (2026-06-06): the user chose the IMPROVE-AND-MEASURE path.**
+> No re-freeze. Keep merging validated improvements; measure with the **daily
+> walk-forward AUC/IC** (the AUC of record) + the **shadow rank-IC** over ~6–8 weeks
+> (the beta-vs-alpha / frame read). The "frozen clean 60-day paper trial" is
+> formally retired. Operating rule still holds: **change one thing at a time and
+> measure each change against the Phase 0 baseline (0.5461 / 0.0754)** so any AUC
+> move is attributable. Live paper P&L continues as a secondary, cost-aware reality
+> check (not the AUC metric).
 
 ---
 
