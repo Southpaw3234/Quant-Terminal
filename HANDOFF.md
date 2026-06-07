@@ -1,10 +1,162 @@
 # Quant Terminal v25 — Session Handoff
-**Date:** 2026-06-06 (updated, continued session)  
-**Branch:** `master`  
-**Last commit:** `756ced0` (code); docs updated since  
+**Date:** 2026-06-06 (updated — Phase 1 learning-capacity levers shipped)  
+**Branch:** `feat/maximize-model` (code, this sprint); `feat/phase0-honesty-fixes` (Phase 0); `master` is the live/cron branch  
+**Last commit:** `226bf4d` (Phase 1 compute/accuracy/sentiment levers, on `feat/maximize-model`)  
 **Repo:** https://github.com/Southpaw3234/Quant-Terminal
 
 ---
+
+## ⭐ SESSION 2026-06-06 (cont. 2) — Phase 1 learning-capacity levers SHIPPED (`feat/maximize-model`, `226bf4d`)
+
+Implemented the handoff's **Phase 1 (B1–B5)** plan as code, plus the sentiment
+upgrade, after a full model analysis. Preflight **all 9 checks PASS** on the branch
+([run `27077318694`](https://github.com/Southpaw3234/Quant-Terminal/actions/runs/27077318694)).
+**Everything GPU/env-gated defaults OFF** → a normal GitHub-hosted scheduled run is
+behavior-preserving except for two intentional always-on changes (restored saner CPU
+Optuna defaults; River clamp).
+
+### Key finding that reframes the compute story
+The throttle was **worse than this doc documented**, and partly self-inflicted:
+- The **notebook hard-caps every Optuna study at `timeout=45s`** — so the "raise
+  trials" advice does *nothing alone*; the study stops on the clock, not on trials.
+  Fixed by routing the cap through `_STUDY_TIMEOUT` (600s GPU / 45s CPU) via
+  `_SRC_REPLACE` so a larger trial budget can actually be spent.
+- `quant_runner.py` was **overriding the notebook's own saner defaults *downward***
+  (to `QUICK_TUNE_TRIALS=2`, `FULL=15`, vs the notebook's 5 / 25-20-20). CPU runs
+  now restore 25/20/20; this was likely measuring hyperparameter noise, not the
+  real ceiling.
+
+### What shipped (maps to the B-list)
+| Lever | Handoff item | Change | Gating |
+|-------|--------------|--------|--------|
+| **C1** Optuna budget + real timeout | B2 | full 300 / quick 30 trials, per-study timeout 45→600s; DSR `n_trials` tracks live budget | GPU; CPU restored to 25/20/20 |
+| **C2** Self-hosted GPU runner | B1 | workflow `use_gpu` input + `QT_GPU` env; `runs-on` routes to `[self-hosted, gpu]` only when dispatched `true` | scheduled runs stay GH-hosted — nothing hangs if runner offline |
+| **C3** `tree_method=hist` + CUDA | B3 | injected at `fit()` (stays picklable — no exec-subclass), **CPU fallback armed** | GPU device on `QT_GPU=1` |
+| **C4** GARCH MC paths 100→500 | B4 | — | GPU |
+| **A1** River clamp | B5 | gated *both* `ADAPTIVE_WEIGHTS` paths (w_ensemble nudge + w_garch boost) to require River ≥52% accuracy → clamps the sub-coin-flip anti-signal to ~0; re-engages on its own if River recovers | always on |
+| **S1** FinBERT sentiment | (sentiment) | `ProsusAI/finbert` lazy singleton, VADER fallback on any failure; Cell 10 scoring routed through it via `_SRC_REPLACE` | `QT_GPU` or `QT_FINBERT=1`; CPU default = VADER |
+| **S2** Sentiment weight floor | (sentiment) | raised sentiment floor in IC-recompute so an improved channel isn't normalized to a rounding error | always on |
+
+### How to activate the heavy levers
+1. Register the local NVIDIA box as a **self-hosted GH Actions runner labeled `gpu`**.
+2. Dispatch the workflow with **`use_gpu=true`** → routes to the runner, sets `QT_GPU=1`
+   → deep Optuna + 600s studies + CUDA trees + 500 GARCH paths + FinBERT all engage.
+3. To get **FinBERT on CPU** without the GPU runner, set repo/env `QT_FINBERT=1`
+   (slower, but the better financial-domain sentiment).
+
+### NOT auto-applied (deliberate, with reasons)
+- **C5 — `_CalWrapper` pickle fix:** exec-subclassed; rewriting blind risks the live
+  cache and needs a live morning run to validate (no local Python this box). Deferred.
+- **A3 — promote stat-arb to live:** the project's own clinical-trial rule says
+  shadow-validate first. Left in shadow.
+
+### Correction logged
+An earlier in-session claim that the IC-recompute "collapses sentiment to ~1%" was
+wrong — that's the *pre-normalization* value; post-normalization it's ~11%. The real
+defect is that non-ensemble floors are *static* (don't reflect their own measured IC).
+S2 mitigates the muting risk; a true `p_sentiment` IC is the deeper fix (future).
+
+### NEXT
+1. Open/merge PR for `feat/maximize-model` after review (also still-open: merge
+   `feat/phase0-honesty-fixes` → master per Phase 0 plan).
+2. Stand up the self-hosted GPU runner, then dispatch `use_gpu=true` and read the
+   re-measured walk-forward AUC/IC — until trials are real, every AUC (incl. 0.547)
+   was measured through a 2-trial / 45s fog.
+3. Then revisit C5 (pickle) and A3 (stat-arb promotion) with a live run in hand.
+
+---
+
+## ⭐ SESSION 2026-06-06 (cont.) — Freeze lifted; model-maximization sprint; Phase 0 honesty fixes shipped
+
+This session pivoted from "hold the model still and measure it" to **"maximize the
+model on all fronts"** (how much/how fast it learns, how honest its self-assessment
+is, and data quality). That pivot **ends the 30-day measurement-freeze posture** —
+the clean clinical baseline now restarts whenever the dev dust settles, not 6/8.
+
+### Decision 1 — NO Alpaca reset; keep the running book
+- Plan had been to reset the paper account to a clean $100k for a 6/8 Day-1. **Killed.**
+- **Alpaca removed the in-place "Reset Account" button.** The redesigned Manage-Accounts
+  panel offers only **Delete Account**, **Save** (nickname), and **Regenerate** (keys) —
+  no balance reset. (Verified live in the dashboard this session.)
+- The only clean-$100k paths now are (a) new paper account at $100k + swap the two repo
+  secrets `ALPACA_API_KEY`/`ALPACA_SECRET_KEY`, or (b) delete+recreate. Both require a
+  **key swap**. User chose to **keep the existing account `PA3X9ZOAN7BS` (~$98k, positions
+  open)**. So 6/8 is a *continuation*, not a clean Day-1; equity/positions/P&L carry
+  forward; kill-switch HWM stays anchored to the recent ~$98–106k range.
+- Memory worth writing next session: "Alpaca has no in-place paper reset anymore" so we
+  don't rediscover it.
+
+### Decision 2 — the data upgrade is NOT the AUC lever (analysis)
+Polygon ($29/mo) is the model's weakest *link* (data quality 3/10) but **not** its
+highest-ROI *AUC* lever. Three of its four wins (survivorship, point-in-time,
+clean prints) are **honesty** fixes that, if anything, **lower** measured AUC. The one
+real signal-adding win is **2yr minute bars unblocking the intraday/Level-3 model now**
+(vs. waiting until ~mid-Aug 2026). Cleaner data does **not** raise a frame's IC ceiling —
+only a frame change does. And **compute (3/10) is co-limiting**: Polygon-grade data is
+wasted on 15 Optuna trials + a 350-min CI ceiling. ⇒ Don't buy data to "fix AUC."
+
+### Phase 0 — honesty fixes (SHIPPED to `feat/phase0-honesty-fixes`, commit `c6e768d`)
+Goal: make the self-assessment trustworthy so every later decision gates on a clean
+number. Reconciliation of the apparent contradiction with the prior "0.547 is honest":
+0.547 was honest *methodologically* (embargoed rolling OOS) but the **feature-contamination
+audit in this very doc** still listed HMM/VIF/xs_mom leakage as "Not yet fixed." The
+walk-forward protects the *evaluation split*, not *feature construction* — so contaminated
+columns still leaked a sliver. Phase 0 closes those. Expect the clean AUC **at/slightly
+below 0.547** (A1/A2 are look-ahead → removing them can only lower it); a *large* drop
+would itself be the finding.
+
+| Fix | What changed | Location |
+|-----|--------------|----------|
+| **A1 HMM causal regimes** | Forward-algorithm **filtered** state is now the DEFAULT whenever it computes & is non-degenerate; removed the backwards "≥60% agreement with smoothed Viterbi" gate. Adds `[hmm] … ENGAGED` log → resolves the long-open "engagement unconfirmed" item. | `quant_runner.py` `_SRC_REPLACE` (~L4765) |
+| **A2 Causal VIF** | Feature-selection VIF fits on first 62.5% (train window) only — no validation-window collinearity choosing survivors. | `quant_runner.py` ~L982 |
+| **A3 xs_mom consistency** | Sector-ETF history pulled at 10y so the cross-sectional adjustment is uniform across the panel (was sector-adj only last 1y, raw before). | `quant_runner.py` ~L1040 |
+| **A4 Walk-forward IC** | Every fold logs Spearman **IC** beside AUC; `mean_oos_ic`/`last_ic` → `walkforward.json`. IC is the tradeable-edge metric. | walk-forward patch string (~L1759) |
+| **A5 Honest dashboard headline** | New card renders **mean OOS AUC + IC + verdict** (was computed, never shown); growth projection relabeled **"model-implied, not realized."** `renderWalkforward()` added; `renderSnapshot` was a no-op stub. | `docs/index.html` |
+| A6 Survivorship backfill | Still blocked on delisted price history → deferred to Polygon (Phase 2). Not faked. | — |
+
+**Validation status:** preflight (9 checks incl. patch-string `exec`) **all PASS** on the
+branch (run `27075586684`). A manual `morning` validation run is **in flight on the branch**
+(run `27075633245`, ~1–2h) to produce the before/after AUC+IC. NOTE: a morning run
+**retrains + overwrites the Drive model cache** with the causal-fixed model and **queues any
+BUYs to Monday's open** — intended now that the freeze is lifted.
+
+### What to check when the validation run lands
+- `[hmm] causal forward-filtered regimes ENGAGED (agreement … states …)`
+- `[walkforward] … mean OOS AUC=0.XX | mean IC=0.0X` (expect AUC ≤ ~0.547)
+- `[patch] VIF pruning: dropped N …` (count may shift)
+- no new `[WARNING] Cell N raised an exception`
+
+### NEXT PROPOSED STEPS (ordered)
+1. **Wait for the in-flight validation run**, read the honest AUC/IC delta. (Don't start
+   Phase 1 until this lands — a big AUC move reorders priorities.)
+2. **Merge `feat/phase0-honesty-fixes` → master** if the run is clean, so Monday's 9:35
+   cron uses the honest model. (Bring numbers to user first.)
+3. **Phase 1 — Learning capacity** (the next batch):
+   - **B1 (keystone, free):** register the local **NVIDIA GPU box as a self-hosted GitHub
+     Actions runner** (`runs-on: [self-hosted, gpu]`, keep GH-hosted as fallback). Compute
+     is 3/10 and the real throttle.
+   - **B2:** Optuna **15 → ~300–500 trials** (`_N_OPTUNA_TRIALS`). Likely the single biggest
+     quality lever — much of the thin edge may be under-tuning.
+   - **B3:** GPU training (XGB/LGB `device="cuda"`/`hist`) → full retrain in minutes (also
+     ends the dropped-morning problem).
+   - **B4:** restore full GARCH MC paths (500+).
+   - **B5 (runner-independent, code-only):** fix the **River online learner — currently ~46%
+     accuracy, below coin-flip = anti-signal** (`quant_runner.py:4337-4382`). Diagnose label
+     alignment → feature scaling → ADWIN reset; else swap to ARF/Hoeffding or clamp its blend
+     weight to ~0. Measure each Phase-1 change against the Phase-0 clean baseline.
+   - **B6:** recompute source blend (`{ens:0.55,…}`) from realized rolling IC per source.
+4. **Phase 2 — Polygon ($29/mo)** via a single `data_provider.py` adapter (collapse the ~10
+   `yfinance.download` call sites + 2 monkey-patches into one switch). Only AFTER Phase 0+1
+   give a trustworthy, capacity-maxed number. Unblocks intraday model + options + A6.
+5. **Phase 3 — frame change** (cross-sectional ranking / stat_arb / GNN) — the only real
+   ceiling lift beyond ~0.12–0.14 IC.
+
+---
+
+## ⚠️ SUPERSEDED (2026-06-06): 30-DAY BASELINE RESTART @ $100k
+
+> Superseded by this session's Decision 1 (keep the running book — Alpaca has no
+> in-place reset) and the freeze being lifted. Kept below for history.
 
 ## 🔁 PENDING: 30-DAY BASELINE RESTARTS MON 2026-06-08 @ $100k
 
