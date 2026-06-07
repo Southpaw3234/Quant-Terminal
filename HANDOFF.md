@@ -1,8 +1,37 @@
 # Quant Terminal v25 — Session Handoff
-**Date:** 2026-06-06 (updated, continued session)  
-**Branch:** `master`  
-**Last commit:** `756ced0` (code); docs updated since  
+**Date:** 2026-06-06 (updated — Phase 0 merged to master; Phase 1 on a branch)  
+**Branch:** `master` (live/cron)  
+**Last commit:** `6f9491a` (master) — Phase 0 honesty fixes + shadow-persistence fix  
 **Repo:** https://github.com/Southpaw3234/Quant-Terminal
+
+---
+
+## 📍 STATE AS OF 2026-06-06 (read this first)
+
+- **Live on `master` (what Monday 9:35 runs): Phase 0 honest model.** Causal HMM
+  regimes (confirmed ENGAGED), causal VIF, honest dashboard headline, CI fixes.
+  **Validated walk-forward: mean OOS AUC = 0.5461, mean IC = 0.0754** (run
+  `27075633245`; the run's only failure was a since-fixed git step, not the model).
+- **Shadow-persistence fix shipped (`6f9491a`).** The Frame-1 cross-sectional
+  long-short harness was writing `data/shadow/` but the workflow never committed it,
+  so it never accumulated (measurement no-op since 2026-05-31). Now persisted →
+  a readable **rank-IC / long-short spread in ~2–3 weeks**, which turns the
+  beta-vs-alpha (Frame-1) question into a measured number. See the ⚠️ correction
+  in the Frame-1 shadow-harness section below.
+- **Phase 1 (learning-capacity) levers are NOT on master.** They live on branch
+  **`feat/maximize-model` (PR #21)**: GPU-gated deep Optuna + 600s study timeout
+  (the notebook 45s cap was the real throttle), `tree_method=hist`/CUDA, GARCH
+  500 paths, River anti-signal clamp, FinBERT sentiment, sentiment-weight floor.
+  Preflight 9/9 on that branch but **never run live** — validate with one
+  `use_gpu=true` dispatch on a self-hosted NVIDIA runner before merging. Full
+  writeup is in that branch's `HANDOFF.md` (session "cont. 2"). **Do not assume
+  master has these.** When merging `feat/maximize-model`, rebase on master so the
+  shadow-persistence fix is not reverted (the branch already carries an equivalent
+  copy via cherry-pick `c0f4e6b`, so this should reconcile cleanly).
+- **Frame analysis (this session):** compute/data upgrades only *push toward* the
+  ~0.12–0.14 IC ceiling; only a **frame change** raises it. Cheapest, highest-info
+  next step = read the now-persisting cross-sectional shadow (free, already
+  instrumented) before spending on Polygon/Quiver data.
 
 ---
 
