@@ -192,7 +192,13 @@ jobs:
             git add -f docs/data.json
             git commit -m "data: ${{ steps.run_type.outputs.type }} $(date -u +'%Y-%m-%d %H:%M UTC')"
             git push origin data-tmp:data --force
-            git checkout -f master || git checkout --force master
+            # Return to the branch the run was dispatched on. Was hardcoded to
+            # `master`, which fails on a feature-branch dispatch: the shallow
+            # (fetch-depth:1) checkout has no local `master` ref, so the orphan
+            # dance left HEAD detached and `git checkout master` errored out
+            # (exit 1) after the data push had already succeeded. $GITHUB_REF_NAME
+            # is the dispatched branch on master AND on feature branches.
+            git checkout -f "$GITHUB_REF_NAME" || git checkout -f master
             git branch -D data-tmp || true
             echo "data.json pushed to data branch OK"
           else
