@@ -209,7 +209,7 @@ jobs:
           git config user.email "$GIT_USER_EMAIL"
           git config user.name  "$GIT_USER_NAME"
           # Stage state files — explicitly exclude docs/data.json (lives on data branch)
-          git add data/paper_trades/ data/predictions/ data/weights/ data/intraday_history/ data/models/intraday_model.pkl data/stat_arb/ data/last_morning_run.txt docs/index.html || true
+          git add data/paper_trades/ data/predictions/ data/weights/ data/intraday_history/ data/models/intraday_model.pkl data/stat_arb/ data/shadow/ data/last_morning_run.txt docs/index.html || true
           # Stash any remaining unstaged changes to avoid rebase conflict
           git stash --include-untracked || true
           git pull --rebase origin master || true
