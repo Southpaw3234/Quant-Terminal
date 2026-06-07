@@ -35,7 +35,63 @@
 
 ---
 
+## 🗓️ SESSION LEDGER — 2026-06-06 (cont. 2), what shipped this session
+
+Full analysis → fixes → evidence-engine setup. All on `master` unless noted.
+| Commit | Branch | What |
+|--------|--------|------|
+| (merge) | master | **Phase 0 honest model fast-forwarded to master** (was `feat/phase0-honesty-fixes`) → Monday runs the validated causal model |
+| `8b6a462`,`e3ec3f2` | maximize-model | CI fixes: data-branch checkout uses `$GITHUB_REF_NAME` (not hardcoded `master`); non-master dispatches skip the master state-commit (isolation) — also cherry-picked to phase0/master |
+| `226bf4d`,`59b585b`,`c0f4e6b` | **feat/maximize-model** | **Phase 1 levers (NOT on master, PR #21):** GPU-gated Optuna 300/600s (notebook 45s cap was the real throttle), `hist`/CUDA trees, GARCH 500, River anti-signal clamp, FinBERT, sentiment floor; + branch handoff "cont. 2"; + shadow fix |
+| `6f9491a` | master | **Shadow-persistence fix** — `data/shadow/` added to commit line (was discarded every run → measurement no-op since 2026-05-31) |
+| `b28cfb6` | master | **Stat-arb fix** — Engle-Granger was missing an intercept on log-price levels → 0/172 pairs every run; now uses statsmodels `coint` (with constant); half-life demeaned; band 5–40→3–60 |
+| `0a899ef`,`3d14831`,`ade8159`,(this) | master | Handoff: state pointer, GPU runner runbook, Monday checkpoint, scheduled-task + measurement-posture |
+
+**Validated Phase 0 walk-forward (run `27075633245`):** mean OOS AUC=0.5461, IC=0.0754,
+HMM causal regimes ENGAGED, VIF dropped 5. (Run's only failure was the since-fixed git
+step, not the model.) Preflight 9/9 on master and on `feat/maximize-model`.
+
+**Two free evidence engines now record from Monday** (cross-sectional shadow + stat-arb)
+— see CHECKPOINT. **Frame analysis:** compute/data only *push toward* the ~0.12–0.14 IC
+ceiling; only a frame change *raises* it. Cheapest next read = the now-persisting
+cross-sectional shadow (free, instrumented) before any paid data.
+
+---
+
+## 🧭 MEASUREMENT POSTURE (2026-06-06) — what replaced the 60-day clean trial
+
+The original plan was a **frozen, clean 30→60-day clinical trial**: freeze one model
+version and watch it trade forward untouched. **That posture is OVER.** The freeze
+was lifted this session (merging Phase 0 + queuing Phase 1 changes the model, which
+by definition breaks a clean single-model forward read). What this means, precisely,
+because two instruments were being conflated:
+
+- **AUC/IC is NOT measured by paper trading.** It comes from the **walk-forward
+  backtest** (embargoed OOS folds) that runs **every morning** → currently
+  **0.5461 AUC / 0.0754 IC**. That is the "real AUC level," and it keeps updating
+  every run regardless of the freeze.
+- **Live paper trading measures realized P&L** — real money outcome, confounded by
+  beta + costs + execution. It never stopped; it just is not an AUC measurement.
+- **What now does the forward-measurement job (sharper than a blunt 60-day P&L
+  watch):** walk-forward AUC/IC each run **+** the two shadow engines' market-neutral
+  **rank-IC** over ~6–8 weeks, which directly answer beta-vs-alpha and the frame
+  question.
+
+**The tradeoff we accepted:** we gave up a clean forward read on a single frozen
+model in exchange for actively improving it. You cannot do both at once. **If a clean
+"untouched model, 60 forward days" read is wanted, the model must be RE-FROZEN**
+(stop merging changes) — open decision for the user. Current default = the
+improve-and-measure-via-shadows path (recommended).
+
+---
+
 ## ⏰ CHECKPOINT — Monday 2026-06-08 (verify the evidence clock started)
+
+> 🔔 **Automated:** a one-time scheduled task **`qt-monday-evidence-checkpoint`**
+> (file `C:\Users\cornw\.claude\scheduled-tasks\qt-monday-evidence-checkpoint\SKILL.md`)
+> fires **Mon 2026-06-08 1:00 PM ET** and runs the checklist below automatically,
+> reporting PASS/FAIL per item + diagnosing failures. It only runs while the Claude
+> app is open (catches up on next launch). Auto-disables after firing.
 
 After Monday's 9:35 ET morning run completes (~noon ET), confirm the two free
 evidence engines actually persisted output. **Both were no-ops until this weekend's
