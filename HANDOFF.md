@@ -35,6 +35,34 @@
 
 ---
 
+## ⏰ CHECKPOINT — Monday 2026-06-08 (verify the evidence clock started)
+
+After Monday's 9:35 ET morning run completes (~noon ET), confirm the two free
+evidence engines actually persisted output. **Both were no-ops until this weekend's
+fixes** — this is the "did the fixes work" check; if either is still empty, the
+~6–8 week evidence clock never started and it must be fixed immediately.
+
+- [ ] **Cross-sectional shadow persisted** — `data/shadow/cross_sectional_pnl.csv`
+  and `cross_sectional_positions.jsonl` exist on master with a Monday row
+  (fix `6f9491a` added `data/shadow/` to the commit line).
+- [ ] **Stat-arb found pairs** — `data/stat_arb/pairs.json` has **>0 pairs**
+  (was 0/172 every run pre-fix `b28cfb6`); `signals.json` + `pair_history.csv`
+  have content. Check the run log for `Tested N pairs → M cointegrated` with M>0.
+- [ ] **Morning run itself clean** — `MORNING cycle complete`, no `Cell N raised`,
+  kill switch not tripped, dashboard (Radiant Unicorn) refreshed.
+
+**Timeline reminder:** first cross-sectional positions mature at the 5-day horizon
+(~6/15); first *readable* rank-IC ~3–4 weeks out; *decision-grade* read ~6–8 weeks.
+Don't decide on a handful of days. Phase 1 GPU validation (the RUNBOOK below) is
+independent of this clock — run it whenever the runner is ready.
+
+**If a box is unchecked:** the engine isn't recording. Cross-sectional → re-check
+the commit-line `git add data/shadow/`. Stat-arb → re-check the cointegration fix
+and whether `data/stat_arb/` got committed (morning-only step, `|| echo` swallows
+errors — read the step log).
+
+---
+
 ## 🖥️ RUNBOOK: register the self-hosted NVIDIA runner + validate Phase 1
 
 Goal: stand up the local GPU box as a GitHub Actions runner labeled `gpu`, then
