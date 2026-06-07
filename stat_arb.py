@@ -40,8 +40,10 @@ HISTORY_FILE      = STAT_ARB_DIR / "pair_history.csv"
 PRICE_DATA_DIR    = Path("data")
 
 COINT_P_THRESH    = 0.05     # cointegration p-value threshold
-HALF_LIFE_MIN     = 5        # minimum mean-reversion half-life (days)
-HALF_LIFE_MAX     = 40       # maximum mean-reversion half-life (days)
+HALF_LIFE_MIN     = 3        # minimum mean-reversion half-life (days)
+HALF_LIFE_MAX     = 60       # maximum mean-reversion half-life (days; widened
+                             # from 5–40 for the evidence-gathering phase so the
+                             # screen isn't over-tight while we accumulate a track)
 ENTRY_Z           = 2.0      # enter when |z-score| exceeds this
 EXIT_Z            = 0.5      # exit when |z-score| falls below this
 LOOKBACK_DAYS     = 252      # days of price history for cointegration test
@@ -104,10 +106,13 @@ def half_life(spread: np.ndarray) -> float:
     half_life = -ln(2) / λ
     """
     try:
+        # OU half-life via Δs_t = a + λ·s_{t-1}. Demean s_{t-1} so the slope λ is
+        # not biased by a non-zero spread mean (the no-intercept version was).
         s_lag  = spread[:-1]
         s_diff = np.diff(spread)
-        # OLS without intercept
-        lam = float(np.dot(s_lag, s_diff) / max(np.dot(s_lag, s_lag), 1e-10))
+        s_lag_dm = s_lag - s_lag.mean()
+        lam = float(np.dot(s_lag_dm, s_diff - s_diff.mean())
+                    / max(np.dot(s_lag_dm, s_lag_dm), 1e-10))
         if lam >= 0:
             return np.inf
         return float(-np.log(2) / lam)
@@ -118,23 +123,32 @@ def half_life(spread: np.ndarray) -> float:
 # ── Engle-Granger cointegration test ──────────────────────────────────────────
 def engle_granger_pvalue(y: np.ndarray, x: np.ndarray) -> float:
     """
-    Engle-Granger two-step cointegration test p-value.
-    Step 1: OLS regression y ~ x, get residuals.
-    Step 2: ADF test on residuals.
-    Returns p-value (low = cointegrated).
+    Engle-Granger two-step cointegration test p-value (low = cointegrated).
+
+    BUGFIX (2026-06-06): the previous implementation regressed y on x WITHOUT an
+    intercept (beta = x·y / x·x) on log-price *levels*. Log prices have large,
+    non-zero means, so a no-intercept fit leaves a trending/biased residual and
+    the ADF step almost never rejects → 0/172 pairs cointegrated every run. Use
+    statsmodels' `coint` (proper Engle-Granger WITH a constant); fall back to an
+    intercept OLS + ADF, then to a correlation proxy only if statsmodels is absent.
     """
     try:
-        from statsmodels.tsa.stattools import adfuller
-        # Step 1
-        beta_ols = np.dot(x, y) / max(np.dot(x, x), 1e-10)
-        resid    = y - beta_ols * x
-        # Step 2: ADF on residuals
-        adf_result = adfuller(resid, maxlag=5, autolag="AIC", regression="c")
-        return float(adf_result[1])   # p-value
+        from statsmodels.tsa.stattools import coint
+        # coint regresses y on [const, x] then ADF-tests the residual. trend="c"
+        # includes the intercept the old code was missing.
+        _t_stat, p_value, _crit = coint(y, x, trend="c", maxlag=5, autolag="AIC")
+        return float(p_value)
     except ImportError:
-        # Fallback: simple correlation-based heuristic (not a true test)
-        corr = float(np.corrcoef(y, x)[0, 1])
-        return 1.0 - abs(corr) ** 2   # proxy p-value (not statistically rigorous)
+        try:
+            from statsmodels.tsa.stattools import adfuller
+            # Intercept OLS: y = a + b·x  → residual is properly mean-zero.
+            _A = np.vstack([np.ones_like(x), x]).T
+            _coef, *_ = np.linalg.lstsq(_A, y, rcond=None)
+            resid = y - (_coef[0] + _coef[1] * x)
+            return float(adfuller(resid, maxlag=5, autolag="AIC", regression="c")[1])
+        except Exception:
+            corr = float(np.corrcoef(y, x)[0, 1])
+            return 1.0 - abs(corr) ** 2   # proxy (not statistically rigorous)
     except Exception:
         return 1.0
 
