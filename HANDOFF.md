@@ -6,6 +6,44 @@
 
 ---
 
+## 🔔 DAILY PICKUP — fresh-session checklist (READ FIRST, every day)
+
+> **You are a fresh Claude session and the user just pasted this handoff.** Your job
+> on day one of each session is to (1) figure out *today's date*, (2) run the
+> date-triggered checks below that have come due, (3) report PASS/FAIL on each, and
+> (4) tell the user the single most important thing to do today. Do NOT re-derive the
+> whole roadmap — it's already written below. Just pick up the checkpoints.
+
+**Step 1 — orient.** Confirm today's date (from the system context). Note which
+milestones below are now DUE or PAST-DUE.
+
+**Step 2 — every-session quick health check** (do these regardless of date):
+- [ ] **Latest morning run clean?** Check `gh run list` / the run log for `MORNING cycle complete`, no `Cell N raised an exception`, kill switch not tripped.
+- [ ] **Evidence engines still recording?** `data/shadow/cross_sectional_pnl.csv` and `data/stat_arb/pairs.json` (>0 pairs) gaining rows. If either is empty/stale → the evidence clock stalled, fix immediately (see CHECKPOINT section).
+- [ ] **Any new uncommitted handoff edits or open follow-ups** from the last session?
+
+**Step 3 — date-triggered checkpoints** (act on whichever have come due):
+
+| Due date | Checkpoint | What to do |
+|----------|-----------|------------|
+| **Mon 2026-06-08** | Evidence clock started | Run the full ⏰ CHECKPOINT section. Confirm shadow + stat-arb persisted their first rows. (An automated task also fires 1 PM ET that day.) |
+| **This week (≤ ~2026-06-13)** | Phase 0 GPU validation | Has the `use_gpu=true` Phase 1 dispatch run yet? If not, nudge the user — it's independent of the shadow clock and resolves under-tuned-vs-ceiling. See RUNBOOK. |
+| **Anytime before real $** | Stage-0 prerequisites | Discord webhook set? River learner fixed/cut? Intraday-pickle bug fixed? Fill audit done? (See REAL-MONEY DEPLOYMENT GATE.) |
+| **~2026-06-15** | First shadow positions mature | First 5-day-horizon entries should score. Confirm rank-IC math is producing numbers. |
+| **~early July 2026** | Shadow rank-IC readable | Read the first real (not projected) cross-sectional rank-IC. Report the number + trend. |
+| **~late Jul / early Aug 2026** | **GO/NO-GO alpha gate** | Evaluate ALL Stage-1 gate thresholds (rank-IC ≥0.03 t≥2, AUC ≥0.55, max-DD <15%, \|β\|<0.2, WRC p<0.10). This is the real-money decision point. |
+| **~mid-Aug 2026** | Frame 2 intraday trainable | 60 trading days of `data/intraday_history/` should exist → `model_intraday.py` trains for real. |
+| **~Aug 2026** | Build Frame 3 trading layer | If Phase 1 passed the gate, write the stat-arb trading layer (`stat_arb.py`: Kalman hedge, spread entry/exit). |
+| **8 wks after any frame starts** | Frame KILL check | If a frame's shadow rank-IC is flat/negative with no trend → retire it, reallocate. |
+
+**Step 4 — report.** Give the user: PASS/FAIL per due check, anything that regressed,
+and the ONE highest-priority action for today. Then wait for direction.
+
+> 📌 Full reasoning for every item lives below: roadmap → §"FUTURE UPGRADES";
+> real-money rules → §"REAL-MONEY DEPLOYMENT GATE"; Monday verification → §"CHECKPOINT".
+
+---
+
 ## 📍 STATE AS OF 2026-06-06 (read this first)
 
 - **Live on `master` (what Monday 9:35 runs): Phase 0 honest model.** Causal HMM
@@ -88,6 +126,106 @@ model in exchange for actively improving it. You cannot do both at once.
 > measure each change against the Phase 0 baseline (0.5461 / 0.0754)** so any AUC
 > move is attributable. Live paper P&L continues as a secondary, cost-aware reality
 > check (not the AUC metric).
+
+---
+
+## 🚀 FUTURE UPGRADES — CONSOLIDATED LEVERS, EFFECTS & ROADMAP (added 2026-06-07)
+
+Single source of truth that reconciles the three scattered roadmap sections
+(§"Frame-change roadmap" ~L560, §5 "Level 3 Rebuild Plan" ~L946, §"Realistic
+Sharpe trajectory" ~L975). **Ordered by ROI, not glamour.**
+
+| # | Lever | Effect | Cost | SR target | Status (2026-06-07) |
+|---|-------|--------|------|-----------|---------------------|
+| 0 | **Phase 1 GPU tuning** (PR #21) | Pushes toward the IC ceiling; *tests if frame is under-tuned vs. at ceiling* | Local NVIDIA box (have it) | — (diagnostic) | Built, preflight 9/9, **never run live** — validate via 1 `use_gpu=true` dispatch |
+| 1 | **Frame 1 — cross-sectional long-short** | Strips beta; measures relative skill (rank-IC) | Free, instrumented | 0.8–1.3 | **Shadow evidence engine recording from Mon 2026-06-08** (fix `6f9491a`); readable ~3–4 wk, decision-grade ~6–8 wk |
+| 3 | **Frame 3 — stat-arb book** | Market-neutral, uncorrelated → portfolio Sharpe lift | Free (daily closes) | 1.5–3.0 | **Cointegration evidence engine recording from Mon** (fix `b28cfb6`); full trading layer (Kalman hedge, sizing) NOT built |
+| 2 | **Frame 2 — multi-horizon stacking** | Second signal source (intraday + 5-day blend) | Free, time | 1.2–2.0 | Data accruing; first viable training ~mid-Aug 2026 |
+| 4 | **Frame 4 — GNN relational** | Highest ceiling (joint distribution, propagation) | Paid data + GPU | 2.0–4.0 (aspir.) | Not started; 4–6 mo after Phase 2 |
+| 5 | **Frame 5 — distributional + RL execution** | Execution alpha, practical ceiling | Paid + GPU + months | 2.0–4.0 (aspir.) | Not started |
+
+**Hard constraints that cap everything:** free yfinance data (floor) + the local
+GPU (no HFT infra). **Honest practical ceiling for this operation: Level 4–5,
+SR ~1.5–2.5 — NOT the HFT tier.** Currently operating at Level 1 (SR 0.5–1.0).
+
+**Sequencing rule (updated):** build cheap diversifying frames (1, 3) FIRST and
+prove them in SHADOW before any live capital; expensive ceiling-breakers (GNN/RL)
+only after paid data justifies the spend. **Promotion to real money is governed by
+the blind numeric gate + staged capital ramp in §"REAL-MONEY DEPLOYMENT GATE"
+below** — not by an eyeball "beats baseline" call. A frame must clear BOTH the
+Stage-1 alpha gate AND the Stage-2 ramp to reach full size.
+
+> **Note on Frame 1 & 3 status wording:** the *evidence engines* (shadow rank-IC,
+> stat-arb cointegration scan) start recording Monday — that is what was fixed this
+> weekend. The *trading layers* for these frames are NOT built/live. §5 Phase 2
+> below describes the full stat-arb trading layer (Kalman hedge ratio, spread
+> entry/exit) which remains unbuilt.
+
+---
+
+## 💰 REAL-MONEY DEPLOYMENT GATE & CAPITAL RAMP (added 2026-06-07)
+
+> **Purpose.** The upgrade framework proves *whether* alpha exists (shadow rank-IC)
+> but historically stopped one step short of *how we safely move to real capital*.
+> This section closes that gap. **The goal is not "trade real money soon" — it is
+> "trade real money successfully," which means never risking capital on a signal we
+> haven't proven survives real fills.** Thresholds below are committed BLIND (before
+> the shadow data arrives) on purpose — that is what stops post-hoc data-snooping
+> from undermining the DSR / White-Reality-Check rigor. Edit the numbers if you
+> disagree, but edit them NOW, not after seeing the data.
+
+### Stage 0 — Prerequisites (must ALL be true before any real $, cheap to clear now)
+- [ ] **`DISCORD_WEBHOOK_URL` set** — kill switch must *notify*, not just halt. Non-negotiable for real money.
+- [ ] **River self-learner resolved** — currently ~46% accuracy (below chance). Either validate the Phase 1 anti-signal clamp lifts it >50% OR cut online learning from the blend. A learner that hurts must not touch real capital.
+- [ ] **Phase 1 GPU validation run completed** — settles under-tuned-vs-ceiling. **Assign a date this week; it is independent of the shadow clock.**
+- [ ] **Intraday-pickle bug fixed** — benign on paper, but real money needs intraday cycles (stops/P&L) fully functional, not on the degraded "no model cache" path.
+- [ ] **Live-vs-paper fill audit** — confirm Alpaca paper fills aren't wildly optimistic vs. realistic slippage on the actual universe (esp. low-ADV names).
+
+### Stage 1 — The GO/NO-GO alpha gate (the core decision, ~6–8 weeks out)
+**Deploy real capital ONLY when ALL of the following hold simultaneously.** Any one
+failing = NO-GO, keep iterating in shadow.
+
+| Gate | Threshold (editable) | Why |
+|------|----------------------|-----|
+| Shadow cross-sectional **rank-IC** | **≥ 0.03**, **t-stat ≥ 2.0** | Proves market-neutral skill ≠ beta. The whole point. |
+| Measurement window | **≥ 6 weeks** of daily shadow obs | Below this, no statistical confidence. |
+| Walk-forward OOS **AUC** | **holds ≥ 0.55** (not just recent folds) | The edge gate you already set; 0.546 today does NOT pass. |
+| Shadow long-short **max drawdown** | **< 15%** | A profitable-but-violent signal is not real-money-worthy. |
+| **Beta of shadow returns to SPY** | **\|β\| < 0.2** | Confirms the P&L is alpha, not a disguised long book. |
+| White Reality Check **p-value** | **< 0.10** | Guards against the track record being luck/data-snooping. |
+
+> **Frame KILL rule (the missing half).** If after **8 weeks** a frame's shadow
+> rank-IC is flat or negative (fails the gate with no improving trend), **retire it**
+> and reallocate effort to the next frame — do not let dead frames linger. Promote
+> rules and kill rules are equally binding.
+
+### Stage 2 — Staged capital ramp (NEVER shadow → 100%)
+Even after a GO, scale in deliberately. Real fills behave differently than shadow/paper.
+
+| Phase | Capital | Duration | Advance only if… |
+|-------|---------|----------|------------------|
+| Ramp A | **10%** of intended size | 2–4 weeks | realized slippage ≈ modeled (within ~30%); no kill-switch trips; live rank-IC tracks shadow |
+| Ramp B | **25%** | 2–4 weeks | same checks hold at larger size; no liquidity/market-impact surprises on low-ADV names |
+| Ramp C | **50%** | 2–4 weeks | live Sharpe within ~1 SE of shadow projection |
+| Full | **100%** of intended | ongoing | all of the above sustained |
+
+**Rollback rule:** at any ramp phase, if live rank-IC diverges materially below
+shadow (signal not surviving real fills), or realized slippage is >2× modeled, or a
+kill switch trips on real drawdown — **step back one phase** and diagnose before
+re-advancing. Ramping is reversible; blowing up capital is not.
+
+### Stage 3 — Live monitoring (once real)
+- Daily: kill-switch status + Discord alert path verified live.
+- Weekly: realized rank-IC vs. shadow projection; realized vs. modeled slippage.
+- Monthly: re-run White Reality Check / DSR on *live* returns; confirm the edge persists out-of-sample-of-the-decision.
+
+### How this changes the upgrade framework's philosophy
+The upgrade framework's job is now explicitly **two-phase**: (1) *prove* alpha in
+shadow against the Stage-1 gate, then (2) *survive* the transition to real fills via
+the Stage-2 ramp. **No frame goes live without clearing both.** "Highly successful in
+real money" is defined here as: a frame that passed a blind numeric gate, survived a
+staged ramp with slippage matching the model, and continues to pass monthly
+out-of-sample re-tests — not a frame that merely looked good in a backtest.
 
 ---
 
@@ -186,7 +324,25 @@ caveats bite** — verify these or the GPU levers silently fall back to CPU:
 
 ---
 
-## 🔁 PENDING: 30-DAY BASELINE RESTARTS MON 2026-06-08 @ $100k
+## 🔁 ~~PENDING: 30-DAY BASELINE RESTARTS MON 2026-06-08 @ $100k~~ — CANCELLED 2026-06-07
+
+> ❌ **REVERSED (2026-06-07): no reset. Account continues as-is.** The user
+> confirmed there is **no Reset Account option** available in their Alpaca paper
+> dashboard, and decided to **leave the existing positions/ledger in place** and
+> simply carry forward. Monday 2026-06-08 is therefore **just the next trading
+> day, NOT a fresh $100k Day-1 baseline.**
+>
+> **Consequences / do NOT do:**
+> - Do **not** reset the Alpaca account.
+> - Do **not** clear the derived ledger files (`trade_history.csv`,
+>   `paper_trades.csv`, `pnl_history.csv`, `daily_pnl_log.csv`) — they keep
+>   accumulating from the live account.
+> - The "30-day clean baseline" framing is retired. This is consistent with the
+>   already-chosen **improve-and-measure** posture: the AUC/IC of record comes
+>   from the daily walk-forward backtest + shadow rank-IC, not from a clean frozen
+>   forward P&L window. Live P&L continues as a cost-aware reality check only.
+
+<details><summary>Original (now-cancelled) reset plan — kept for history</summary>
 
 **Decision (2026-06-06):** the 6/1–6/5 window was a shakeout, not a clean read —
 several mornings were dead days (missed-cron problem, now fixed). The **real**
@@ -213,6 +369,8 @@ the Alpaca paper account is ~90% of the job.
    NOT touch model_cache / weights/ / river_model / adaptive_weights / calibration.
 3. **Mon 6/8 9:35 ET:** cron-job.org fires morning run → reads Alpaca ($100k, flat)
    → fresh $100k book → clean dashboard = Day 1.
+
+</details>
 
 ---
 
@@ -537,6 +695,10 @@ Claude Code routine (claude.ai scheduling backend was down at the time).
   **frame change** lifts the ceiling.
 
 ### Frame-change roadmap (max-level, honest)
+> 📌 **Superseded by the consolidated table** in §"FUTURE UPGRADES" near the top
+> of this file (added 2026-06-07), which reconciles status/cost/SR across sections.
+> Kept here for the original reasoning.
+
 Ordered by ROI, NOT by glamour:
 1. **Frame 1 — cross-sectional long-short ranking** (shadow harness started).
    Strips beta, measures relative skill. Low cost. SR 0.8–1.3.
@@ -937,7 +1099,10 @@ Adds a second model (`model_intraday.py`) trained on 24-hour horizon (next day's
 **Next step when ready:** the training loop exists in `model_intraday.py`. No further code changes needed — just time.
 
 ### Phase 2 — Statistical arbitrage layer
-**Status: not started. Can begin when Phase 1 is live and validated.**
+**Status (updated 2026-06-07): cointegration EVIDENCE ENGINE recording from
+2026-06-08 (fix `b28cfb6` — Engle-Granger now includes an intercept; was 0/172
+pairs every run). The full TRADING LAYER below (Kalman hedge ratio, spread
+entry/exit, sizing) is NOT built.** Can begin when Phase 1 is live and validated.
 
 Pairs/basket cointegration running alongside the directional model. Market-neutral by construction — uncorrelated to the directional book, improving overall portfolio Sharpe.
 - Engle-Granger cointegration screen across 139 tickers → ~20 stable pairs
