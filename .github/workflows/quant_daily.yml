@@ -196,6 +196,12 @@ jobs:
           fi
 
       - name: Commit updated state files to master
+        # Only persist regenerated state on the live master branch. On a
+        # feature-branch dispatch (e.g. a GPU test run on feat/maximize-model)
+        # this step is skipped so test runs stay fully isolated from master and
+        # never push state files there. The dashboard data push above is branch-
+        # safe and still runs; this guard only governs the master state commit.
+        if: github.ref_name == 'master'
         env:
           GIT_USER_EMAIL: 'quant-bot@github-actions'
           GIT_USER_NAME:  'Quant Terminal Bot'
