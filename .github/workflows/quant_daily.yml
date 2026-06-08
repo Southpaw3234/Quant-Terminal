@@ -208,12 +208,16 @@ jobs:
         run: |
           git config user.email "$GIT_USER_EMAIL"
           git config user.name  "$GIT_USER_NAME"
+          # Rebase FIRST (autostash handles tracked dirt; new untracked state files
+          # don't conflict with a rebase), THEN stage. The previous order staged
+          # files and then `git stash --include-untracked`/`stash pop` moved them
+          # back as UNSTAGED, so `git diff --cached --quiet` always passed and the
+          # commit was silently skipped ("Everything up-to-date") — no state has
+          # persisted to master since 2026-05-14. Staging immediately before the
+          # diff check fixes the no-op.
+          git pull --rebase --autostash origin master || true
           # Stage state files — explicitly exclude docs/data.json (lives on data branch)
           git add data/paper_trades/ data/predictions/ data/weights/ data/intraday_history/ data/models/intraday_model.pkl data/stat_arb/ data/shadow/ data/last_morning_run.txt docs/index.html || true
-          # Stash any remaining unstaged changes to avoid rebase conflict
-          git stash --include-untracked || true
-          git pull --rebase origin master || true
-          git stash pop || true
           git diff --cached --quiet || \
             git commit -m "Auto: ${{ steps.run_type.outputs.type }} cycle $(date -u +'%Y-%m-%d %H:%M UTC')"
           git push origin master || true
