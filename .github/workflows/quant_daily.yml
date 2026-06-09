@@ -216,8 +216,16 @@ jobs:
           # persisted to master since 2026-05-14. Staging immediately before the
           # diff check fixes the no-op.
           git pull --rebase --autostash origin master || true
-          # Stage state files — explicitly exclude docs/data.json (lives on data branch)
-          git add data/paper_trades/ data/predictions/ data/weights/ data/intraday_history/ data/models/intraday_model.pkl data/stat_arb/ data/shadow/ data/last_morning_run.txt docs/index.html || true
+          # Stage state files — explicitly exclude docs/data.json (lives on data branch).
+          # Add each path INDEPENDENTLY: `git add a b c` is atomic and aborts staging
+          # ALL paths if any one pathspec doesn't match (e.g. data/models/intraday_model.pkl
+          # never exists while the intraday model can't train), which silently staged
+          # nothing → commit skipped. Looping isolates missing paths.
+          for p in data/paper_trades/ data/predictions/ data/weights/ \
+                   data/intraday_history/ data/models/intraday_model.pkl \
+                   data/stat_arb/ data/shadow/ data/last_morning_run.txt docs/index.html; do
+            git add "$p" 2>/dev/null || true
+          done
           git diff --cached --quiet || \
             git commit -m "Auto: ${{ steps.run_type.outputs.type }} cycle $(date -u +'%Y-%m-%d %H:%M UTC')"
           git push origin master || true
