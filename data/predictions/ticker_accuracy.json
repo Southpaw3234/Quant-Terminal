@@ -1,0 +1,98 @@
+{
+  "HD": {
+    "correct": 2,
+    "total": 2,
+    "recent": [
+      1,
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "AMAT": {
+    "correct": 2,
+    "total": 5,
+    "recent": [
+      1,
+      1,
+      0,
+      0,
+      0
+    ],
+    "rolling_acc": 0.4
+  },
+  "NVDA": {
+    "correct": 4,
+    "total": 4,
+    "recent": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "INTU": {
+    "correct": 3,
+    "total": 4,
+    "recent": [
+      0,
+      1,
+      1,
+      1
+    ],
+    "rolling_acc": 0.75
+  },
+  "CSCO": {
+    "correct": 4,
+    "total": 4,
+    "recent": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "LOW": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "TJX": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "TGT": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "ADI": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "WDAY": {
+    "correct": 3,
+    "total": 3,
+    "recent": [
+      1,
+      1,
+      1
+    ],
+    "rolling_acc": 1.0
+  }
+}
