@@ -121,6 +121,24 @@ def half_life(spread: np.ndarray) -> float:
 
 
 # ── Engle-Granger cointegration test ──────────────────────────────────────────
+def static_ols_spread(y: np.ndarray, x: np.ndarray) -> tuple[float, np.ndarray]:
+    """
+    Static OLS hedge ratio + spread over the whole window: y = a + b·x.
+    This is the spread the cointegration test (statsmodels `coint`) actually
+    builds internally, so the stationarity/half-life/z-score screen MUST use it
+    too. (The Kalman spread re-estimates β every step to null the innovation, so
+    its residual is near-white-noise with a sub-day half-life — using it for the
+    half-life screen drops cointegrated pairs on an artifact. Kalman β is kept
+    only as the live, time-varying *trading* hedge ratio.)
+    Returns: (hedge_ratio b, spread = y - (a + b·x)).
+    """
+    A = np.vstack([np.ones_like(x), x]).T
+    coef, *_ = np.linalg.lstsq(A, y, rcond=None)
+    a, b = float(coef[0]), float(coef[1])
+    spread = y - (a + b * x)
+    return b, spread
+
+
 def engle_granger_pvalue(y: np.ndarray, x: np.ndarray) -> float:
     """
     Engle-Granger two-step cointegration test p-value (low = cointegrated).
@@ -191,7 +209,9 @@ def scan_pairs(prices: pd.DataFrame) -> list[dict]:
                 candidate_pairs.append((universe_tickers[i], universe_tickers[j], sector))
 
     print(f"  [stat_arb] Testing {len(candidate_pairs)} candidate pairs...")
-    tested = 0
+    tested        = 0   # passed length check (cointegration test actually run)
+    passed_coint  = 0   # p < COINT_P_THRESH
+    passed_hl     = 0   # also within the half-life band → stored
 
     for tk_y, tk_x, sector in candidate_pairs:
         try:
@@ -210,15 +230,21 @@ def scan_pairs(prices: pd.DataFrame) -> list[dict]:
 
             if p > COINT_P_THRESH:
                 continue
+            passed_coint += 1
 
-            # Kalman hedge ratio + spread
-            betas, spread = kalman_hedge_ratio(y, x)
+            # Half-life / z-score screen on the STATIC OLS spread (the residual the
+            # coint test itself uses). Kalman β is computed separately as the live
+            # time-varying hedge ratio to store — NOT for the half-life screen.
+            _ols_b, spread = static_ols_spread(y, x)
             hl = half_life(spread)
 
             if not (HALF_LIFE_MIN <= hl <= HALF_LIFE_MAX):
                 continue
+            passed_hl += 1
 
-            # Spread z-score
+            betas, _kalman_spread = kalman_hedge_ratio(y, x)
+
+            # Spread z-score (on the static spread, consistent with the screen)
             spread_mean = float(spread.mean())
             spread_std  = float(spread.std())
             z_score     = float((spread[-1] - spread_mean) / max(spread_std, 1e-8))
@@ -241,8 +267,9 @@ def scan_pairs(prices: pd.DataFrame) -> list[dict]:
 
     # Sort by half_life (faster mean-reversion = more tradeable)
     valid_pairs.sort(key=lambda p: p["half_life"])
-    print(f"  [stat_arb] Tested {tested} pairs → {len(valid_pairs)} cointegrated "
-          f"(p<{COINT_P_THRESH}, HL={HALF_LIFE_MIN}–{HALF_LIFE_MAX}d)")
+    print(f"  [stat_arb] Tested {tested} pairs → {passed_coint} cointegrated "
+          f"(p<{COINT_P_THRESH}) → {passed_hl} also in HL band "
+          f"({HALF_LIFE_MIN}–{HALF_LIFE_MAX}d) → {len(valid_pairs)} stored")
     return valid_pairs[:SCAN_TOP_N_PAIRS]
 
 
@@ -267,7 +294,10 @@ def generate_signals(pairs: list[dict], prices: pd.DataFrame) -> list[dict]:
             n = min(len(y), len(x))
             if n < 30:
                 continue
-            betas, spread = kalman_hedge_ratio(y[-n:], x[-n:])
+            # z-score on the static OLS spread (same basis the pair was screened
+            # on); Kalman β kept as the live time-varying hedge ratio to trade.
+            betas, _kalman_spread = kalman_hedge_ratio(y[-n:], x[-n:])
+            _ols_b, spread = static_ols_spread(y[-n:], x[-n:])
             hedge_ratio   = float(betas[-1])
             spread_mean   = float(spread.mean())
             spread_std    = float(spread.std())
