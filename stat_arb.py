@@ -341,7 +341,7 @@ def append_history(signals: list[dict]):
               "action": s["action"], "hedge_ratio": s["hedge_ratio"]}
              for s in signals]
     df_new = pd.DataFrame(rows)
-    if HISTORY_FILE.exists():
+    if HISTORY_FILE.exists() and HISTORY_FILE.stat().st_size > 0:
         df_old = pd.read_csv(HISTORY_FILE)
         df_all = pd.concat([df_old, df_new], ignore_index=True)
     else:
