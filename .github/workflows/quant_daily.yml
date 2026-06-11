@@ -51,6 +51,12 @@ jobs:
     timeout-minutes: 350
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    defaults:
+      run:
+        # All run steps are written in bash. On the self-hosted Windows GPU
+        # runner the default shell is PowerShell, which can't parse them —
+        # force Git Bash everywhere (no-op on ubuntu-latest).
+        shell: bash
 
     steps:
       - name: Checkout repo
@@ -74,6 +80,9 @@ jobs:
         run: pip install --no-deps "pandas-ta==0.3.14b0" || true
 
       - name: Install rclone
+        # Linux only: the Windows GPU runner has rclone pre-installed on the
+        # user PATH (no sudo on Windows; install.sh is Linux-specific).
+        if: runner.os == 'Linux'
         run: curl https://rclone.org/install.sh | sudo bash
 
       - name: Determine run type from schedule
