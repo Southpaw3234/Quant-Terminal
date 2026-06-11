@@ -1,7 +1,7 @@
 # Quant Terminal v25 — Session Handoff
-**Date:** 2026-06-06 (updated — Phase 0 merged to master; Phase 1 on a branch)  
+**Date:** 2026-06-11 (updated — GPU runner live; Phase 1 validation auto-dispatches tonight 6:30 PM ET)  
 **Branch:** `master` (live/cron)  
-**Last commit:** `6f9491a` (master) — Phase 0 honesty fixes + shadow-persistence fix  
+**Last commit:** `45f4260` (master) — stat-arb pair_history empty-file guard  
 **Repo:** https://github.com/Southpaw3234/Quant-Terminal
 
 ---
@@ -26,8 +26,8 @@ milestones below are now DUE or PAST-DUE.
 
 | Due date | Checkpoint | What to do |
 |----------|-----------|------------|
-| **Mon 2026-06-08** | Evidence clock started | Run the full ⏰ CHECKPOINT section. Confirm shadow + stat-arb persisted their first rows. (An automated task also fires 1 PM ET that day.) |
-| **This week (≤ ~2026-06-13)** | Phase 0 GPU validation | Has the `use_gpu=true` Phase 1 dispatch run yet? If not, nudge the user — it's independent of the shadow clock and resolves under-tuned-vs-ceiling. See RUNBOOK. |
+| ~~Mon 2026-06-08~~ ✅ | Evidence clock started | **PASS (verified 6/10):** shadow recording (30L/30S books), stat-arb 13/172 pairs. pair_history.csv append bug fixed `45f4260`. |
+| **Thu 2026-06-11+** | **Phase 1 GPU validation — READ THE RESULT** | Runner `QT-GPU` registered + working; scheduled task `QT-GPU-Validation` auto-dispatches **6:30 PM ET 6/11**. Next session: find the run on `feat/maximize-model`, read `[walkforward] mean OOS AUC/IC`, compare vs Phase 0 baseline 0.5461/0.0754, AND read River accuracy (anti-signal clamp test). Lift ⇒ merge PR #21 (rebase on master!); flat ⇒ frame is at ceiling, pivot to frame work. See SESSION LEDGER 2026-06-10/11 for the 6 environment fixes if it failed again. |
 | **Anytime before real $** | Stage-0 prerequisites | Discord webhook set? River learner fixed/cut? Intraday-pickle bug fixed? Fill audit done? (See REAL-MONEY DEPLOYMENT GATE.) |
 | **~2026-06-15** | First shadow positions mature | First 5-day-horizon entries should score. Confirm rank-IC math is producing numbers. |
 | **~early July 2026** | Shadow rank-IC readable | Read the first real (not projected) cross-sectional rank-IC. Report the number + trend. |
@@ -41,6 +41,55 @@ and the ONE highest-priority action for today. Then wait for direction.
 
 > 📌 Full reasoning for every item lives below: roadmap → §"FUTURE UPGRADES";
 > real-money rules → §"REAL-MONEY DEPLOYMENT GATE"; Monday verification → §"CHECKPOINT".
+
+---
+
+## 🗓️ SESSION LEDGER — 2026-06-10/11: checkpoint review, GPU runner stood up, validation queued
+
+**Checkpoint review (6/10 morning run `27280106387`):** clean run, walk-forward
+**mean OOS AUC=0.5608 / IC=0.0877 / last fold 0.6319** — first reading above the
+0.55 gate (baseline 0.5461/0.0754; one day ≠ sustained). Kill switch healthy but
+note **weekly/peak DD −5.04%** (equity $102,522 vs HWM $107,969). Shadow x-sec
+recording (30L/30S, 0 matured — expected until ~6/15). Stat-arb 13/172 pairs
+cointegrated. **River self-learner: 50.2%** (up from 46%; meta already cut
+w_ensemble→0.540) — verdict comes free with the GPU validation (clamp is on the
+branch). Discord webhook **still unset**.
+
+| Commit | Branch | What |
+|--------|--------|------|
+| `45f4260` | master | **pair_history fix** — `append_history` crashed `EmptyDataError` reading the empty CSV every run → guarded `exists() && size>0`. Stat-arb history accumulates from 6/11. |
+| `2172874` | feat/maximize-model | **Workflow runs on Windows runner** — job-wide `shell: bash` (steps are bash; Windows default PowerShell died on `\|\| true`); rclone install gated `runner.os == 'Linux'` |
+| `601bc47` | feat/maximize-model | **GPU timeout 350→2880 min** (conditional on `use_gpu`) — attempt #6 was killed by the workflow's own 350-min ceiling at 5h50m, mid-Optuna in Cell 8 |
+
+**GPU runner `QT-GPU` is LIVE** (this PC, RTX 3060 6GB, CUDA 13.0), labels
+`self-hosted,Windows,X64,gpu`. Six validation attempts failed on environment
+issues, each fixed in turn — the box-side state that now exists and must not be
+lost: **(1)** Python 3.11.9 manually placed in the runner toolcache
+(`C:\actions-runner\_work\_tool\Python\3.11.9\x64` + `x64.complete`) because
+`setup-python`'s Windows installer crashes; **(2)** pip force-reinstalled there so
+`Scripts\pip.exe` exists; **(3)** `C:\Program Files\Git\bin` added to user PATH
+(runner needs `bash.exe`, Git only exposes `Git\cmd`); **(4)** rclone v1.74.3 at
+`%LOCALAPPDATA%\Microsoft\WindowsApps\rclone.exe`. Attempt #7 ran cleanly
+(QT_GPU=True, OPTUNA 300/600s, device=cuda, ~4 min/ticker ⇒ ~10h total) but was
+**deliberately cancelled** to protect the 6/11 9:35 live run (shared concurrency
+group serializes everything — a market-hours GPU run blocks the whole trading day).
+
+**Validation now auto-dispatches: scheduled task `\QuantTerminal\QT-GPU-Validation`,
+one-shot 6:30 PM ET 2026-06-11** via `scripts/trigger_gpu_validation.ps1` (DPAPI
+token pattern) → ~15h overnight runway before the next 9:35. **PC must stay on**
+(sleep OK — WakeToRun; full shutdown kills both task and runner).
+
+**Open items / next session:**
+- [ ] **Read the validation result** (the #1 job — see Step-3 checkpoint table)
+- [ ] **Runner is NOT a service** — dies on reboot. One-time fix in *admin*
+  PowerShell: `cd C:\actions-runner; .\svc.cmd install; .\svc.cmd start`
+  (also restart it manually if offline: `C:\actions-runner\run.cmd`)
+- [ ] **Discord webhook** still unset (Stage-0) — user creates webhook URL, then
+  `gh secret set DISCORD_WEBHOOK_URL`
+- [ ] Delete the one-shot `QT-GPU-Validation` task after it fires (or leave; it
+  won't re-fire)
+- Known cancelled-run debris: attempts #1–#7 show failed/cancelled on the branch
+  Actions page (runs `27313682401`–`27338796572`) — all environment, not model.
 
 ---
 
