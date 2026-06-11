@@ -341,10 +341,11 @@ def append_history(signals: list[dict]):
               "action": s["action"], "hedge_ratio": s["hedge_ratio"]}
              for s in signals]
     df_new = pd.DataFrame(rows)
-    if HISTORY_FILE.exists() and HISTORY_FILE.stat().st_size > 0:
+    try:
         df_old = pd.read_csv(HISTORY_FILE)
         df_all = pd.concat([df_old, df_new], ignore_index=True)
-    else:
+    except (FileNotFoundError, pd.errors.EmptyDataError):
+        # missing, empty, or whitespace-only file — start fresh
         df_all = df_new
     df_all.to_csv(HISTORY_FILE, index=False)
 
