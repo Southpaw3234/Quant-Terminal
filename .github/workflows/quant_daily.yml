@@ -48,7 +48,10 @@ jobs:
     # with use_gpu=true; every scheduled/normal run stays on GitHub-hosted CPU so
     # nothing hangs if the self-hosted runner is offline or not yet registered.
     runs-on: ${{ (github.event.inputs.use_gpu == 'true') && fromJSON('["self-hosted","gpu"]') || 'ubuntu-latest' }}
-    timeout-minutes: 350
+    # GPU dispatches run deep Optuna (300 trials × 600s) and need far more than
+    # the CI ceiling — the first GPU validation was killed mid-train at exactly
+    # 350 min. Self-hosted jobs may run up to 5 days; give GPU runs 48h.
+    timeout-minutes: ${{ (github.event.inputs.use_gpu == 'true') && 2880 || 350 }}
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     defaults:
