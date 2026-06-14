@@ -387,13 +387,21 @@ if _os.environ.get("GH_ACTIONS"):
     # the previous 2/15 overrides were *throttling below* the notebook itself,
     # which likely measured hyperparameter noise rather than the real ceiling.
     _QT_GPU = _os.environ.get("QT_GPU", "0") == "1"
-    _STUDY_TIMEOUT      = 600 if _QT_GPU else 45   # per-study Optuna wall clock
+    # GPU Optuna depth is env-overridable so a validation dispatch can fit a
+    # reliable wall-clock window. The self-hosted runner lost comms on multi-hour
+    # runs (3 failed attempts: 41min / 21h+); on GPU the trial COUNT (not the
+    # per-study timeout) is the binding driver of run length, so the workflow
+    # passes a lighter QT_OPTUNA_TRIALS to keep the run short enough to survive.
+    # Defaults preserve the original deep profile (300 / 600s) if envs are unset.
+    _GPU_TRIALS  = int(_os.environ.get("QT_OPTUNA_TRIALS",  "300"))
+    _GPU_TIMEOUT = int(_os.environ.get("QT_OPTUNA_TIMEOUT", "600"))
+    _STUDY_TIMEOUT      = _GPU_TIMEOUT if _QT_GPU else 45   # per-study Optuna wall clock
     if _QT_GPU:
-        GARCH_PATHS         = 500
-        QUICK_TUNE_TRIALS   = 30
-        FULL_TUNE_TRIALS_XGB = 300
-        FULL_TUNE_TRIALS_LGB = 300
-        FULL_TUNE_TRIALS_CAT = 300
+        GARCH_PATHS         = int(_os.environ.get("QT_GARCH_PATHS", "500"))
+        QUICK_TUNE_TRIALS   = max(5, _GPU_TRIALS // 10)
+        FULL_TUNE_TRIALS_XGB = _GPU_TRIALS
+        FULL_TUNE_TRIALS_LGB = _GPU_TRIALS
+        FULL_TUNE_TRIALS_CAT = _GPU_TRIALS
     else:
         GARCH_PATHS         = 100 if RUN_TYPE_GH == "morning" else 30
         QUICK_TUNE_TRIALS   = 5

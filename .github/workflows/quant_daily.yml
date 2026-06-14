@@ -34,12 +34,26 @@ on:
         required: false
         default: false
         type: boolean
+      optuna_trials:
+        description: 'GPU Optuna trials per study (XGB/LGB/CAT). Lower = shorter, more reliable run. 80 ≈ 3-4h; 300 was the deep profile that ran 21h+ and dropped.'
+        required: false
+        default: '80'
+        type: string
+      optuna_timeout:
+        description: 'GPU Optuna per-study wall-clock cap (seconds). Safety bound; rarely binding on GPU.'
+        required: false
+        default: '300'
+        type: string
 
 permissions:
   contents: write
 
 concurrency:
-  group: quant-terminal
+  # GPU validation dispatches get their OWN group so a long (multi-hour) GPU run
+  # never blocks the live trading crons via the shared group. Scheduled/normal
+  # runs (use_gpu unset) stay in 'quant-terminal'; only a use_gpu=true dispatch
+  # lands in 'quant-terminal-gpu'.
+  group: quant-terminal${{ github.event.inputs.use_gpu == 'true' && '-gpu' || '' }}
   cancel-in-progress: false   # never cancel a live trading run mid-flight
 
 jobs:
@@ -150,6 +164,8 @@ jobs:
         env:
           GH_ACTIONS: 'true'
           QT_GPU:                ${{ github.event.inputs.use_gpu == 'true' && '1' || '0' }}
+          QT_OPTUNA_TRIALS:      ${{ github.event.inputs.optuna_trials || '300' }}
+          QT_OPTUNA_TIMEOUT:     ${{ github.event.inputs.optuna_timeout || '600' }}
           RUN_TYPE:              ${{ steps.run_type.outputs.type }}
           GDRIVE_RCLONE_CONF:    ${{ secrets.GDRIVE_RCLONE_CONF }}
           ALPACA_API_KEY:        ${{ secrets.ALPACA_API_KEY }}
