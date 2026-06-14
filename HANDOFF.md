@@ -1,7 +1,7 @@
 # Quant Terminal v25 — Session Handoff
-**Date:** 2026-06-11 (updated — GPU runner live; Phase 1 validation auto-dispatches tonight 6:30 PM ET)  
+**Date:** 2026-06-14 (updated — **Phase 1 GPU validation COMPLETE: frame at ceiling, tuning gives no AUC lift**)  
 **Branch:** `master` (live/cron)  
-**Last commit:** `45f4260` (master) — stat-arb pair_history empty-file guard  
+**Last commit:** `45f4260` (master, live) · `3193ef8` (feat/maximize-model — lighter+isolated GPU run)  
 **Repo:** https://github.com/Southpaw3234/Quant-Terminal
 
 ---
@@ -27,8 +27,8 @@ milestones below are now DUE or PAST-DUE.
 | Due date | Checkpoint | What to do |
 |----------|-----------|------------|
 | ~~Mon 2026-06-08~~ ✅ | Evidence clock started | **PASS (verified 6/10):** shadow recording (30L/30S books), stat-arb 13/172 pairs. pair_history.csv append bug fixed `45f4260`. |
-| **Thu 2026-06-11+** | **Phase 1 GPU validation — READ THE RESULT** | Runner `QT-GPU` registered + working; scheduled task `QT-GPU-Validation` auto-dispatches **6:30 PM ET 6/11**. Next session: find the run on `feat/maximize-model`, read `[walkforward] mean OOS AUC/IC`, compare vs Phase 0 baseline 0.5461/0.0754, AND read River accuracy (anti-signal clamp test). Lift ⇒ merge PR #21 (rebase on master!); flat ⇒ frame is at ceiling, pivot to frame work. See SESSION LEDGER 2026-06-10/11 for the 6 environment fixes if it failed again. |
-| **Anytime before real $** | Stage-0 prerequisites | Discord webhook set? River learner fixed/cut? Intraday-pickle bug fixed? Fill audit done? (See REAL-MONEY DEPLOYMENT GATE.) |
+| ~~Thu 2026-06-11+~~ ✅ | **Phase 1 GPU validation — DONE 2026-06-14** | **RESULT: FLAT — frame at ceiling.** Run `27484667746` (feat/maximize-model, QT_GPU=True, 80-trial light profile, device=cuda): walk-forward **mean OOS AUC=0.5500 / IC=0.0805** vs baseline 0.5461/0.0754 → Δ noise, "weak/no edge". **Verdict: tuning is NOT the lever; do NOT merge PR #21 for AUC; pivot to frame changes (Frame 1/3).** River clamp FAILED its test (still 46%). See SESSION LEDGER 2026-06-12/14. |
+| **Anytime before real $** | Stage-0 prerequisites | Discord webhook set? **River: clamp tested 6/14 → still 46%, must CUT or fix.** Intraday-pickle bug fixed? Fill audit done? (See REAL-MONEY DEPLOYMENT GATE.) |
 | **~2026-06-15** | First shadow positions mature | First 5-day-horizon entries should score. Confirm rank-IC math is producing numbers. |
 | **~early July 2026** | Shadow rank-IC readable | Read the first real (not projected) cross-sectional rank-IC. Report the number + trend. |
 | **~late Jul / early Aug 2026** | **GO/NO-GO alpha gate** | Evaluate ALL Stage-1 gate thresholds (rank-IC ≥0.03 t≥2, AUC ≥0.55, max-DD <15%, \|β\|<0.2, WRC p<0.10). This is the real-money decision point. |
@@ -41,6 +41,51 @@ and the ONE highest-priority action for today. Then wait for direction.
 
 > 📌 Full reasoning for every item lives below: roadmap → §"FUTURE UPGRADES";
 > real-money rules → §"REAL-MONEY DEPLOYMENT GATE"; Monday verification → §"CHECKPOINT".
+
+---
+
+## 🗓️ SESSION LEDGER — 2026-06-12/14: Phase 1 GPU validation COMPLETE — frame at ceiling
+
+**THE HEADLINE: deep GPU tuning does NOT lift the model. The frame is at its ceiling.**
+After 3 failed attempts (all "runner lost communication": 41min, then 21h+, then 21h15m —
+environment/network, never the model), the 4th run **completed**: run
+`27484667746` on `feat/maximize-model`, `QT_GPU=True OPTUNA(full=80,quick=8,timeout=300s)`,
+`device=cuda`, GARCH 500.
+
+| Metric | Phase 0 baseline (CPU) | GPU validation (6/14) | Δ |
+|--------|------------------------|------------------------|---|
+| mean OOS AUC | 0.5461 | **0.5500** | +0.0039 (noise) |
+| mean IC | 0.0754 | **0.0805** | +0.0051 (noise) |
+
+Walk-forward self-labeled **"weak/no edge"** (last fold AUC=0.6009). **Verdict per the blind
+decision rule: FLAT ⇒ 0.55 is the real frame ceiling ⇒ redirect to frame changes, NOT more
+tuning/compute. Do NOT merge PR #21 for an AUC lift — it doesn't deliver one.** Caveat: ran
+80 trials not 300, but 80 already matches baseline and agrees with the notebook's ~0.12–0.14
+IC ceiling analysis — finding is solid, not absolute.
+
+**River self-learner: still 46.0% (1371 samples) — the Phase 1 anti-signal clamp FAILED its
+test.** Per the Stage-0 gate, River must be **cut from the blend or fixed** before real capital.
+
+**Operational findings:**
+- **Runtime driver = per-ticker Optuna tuning across the universe** (~01:27→18:57 UTC ≈ 17.5h).
+  The walk-forward itself is instant; the trial count is NOT the bottleneck (cutting 300→80
+  didn't shorten it). Real run-time lever would be universe size / parallelism, not trials.
+- **FinBERT runs on CPU** (`device=cpu`) — torch is pinned to the CPU wheel, as predicted.
+- **Runner stability SOLVED:** disabling NIC power-management + sleep let the box run 18h with
+  zero comms loss (vs 3 prior drops). `svc.cmd install` from the old handoff is WRONG — Windows
+  runners configured interactively have no `svc.cmd`; proper service install needs a reconfigure
+  (`config.cmd remove` + re-add `--runasservice` with a token). Deferred — short runs + NIC fix
+  were enough.
+- **Exit-127 bug (open, minor):** a shell-out after Stage 6 "local->Drive OK" isn't on the
+  Windows runner PATH → GPU runs always mark FAILED and skip the commit/cache-save steps, even
+  though all model work completes. One-line fix needed before relying on GPU-run state commits.
+
+| Commit | Branch | What |
+|--------|--------|------|
+| `3193ef8` | feat/maximize-model | **Lighter + isolated GPU run:** env-overridable `QT_OPTUNA_TRIALS`/`QT_OPTUNA_TIMEOUT`/`QT_GARCH_PATHS` (defaults preserve old 300/600 deep profile); workflow dispatch defaults to 80 trials/300s; GPU dispatches moved to their OWN `quant-terminal-gpu` concurrency group so a long GPU run never blocks live trading again. |
+
+**Live system unaffected:** all changes are on `feat/maximize-model`; `master` (the 9:35 ET live
+run) is untouched, runs Phase 0 on ubuntu-latest CPU. The frozen Phase 0 model is what trades.
 
 ---
 
