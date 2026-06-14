@@ -4795,6 +4795,17 @@ _SRC_REPLACE = [
      "            print('  [hmm] filtered labels degenerate (single state) — kept smoothed')\n"
      "    except Exception as _hmm_e:\n"
      "        print('  [hmm] causal filter failed, kept smoothed: {}'.format(_hmm_e))"),
+    # River cut (2026-06-14): the online self-learner is stuck at ~46% (below
+    # chance) and the 6/14 GPU validation confirmed its anti-signal clamp does
+    # NOT fix it. A sub-chance learner must not steer the ensemble weights. Gate
+    # BOTH River-driven ADAPTIVE_WEIGHTS nudges (w_ensemble via _delta, and the
+    # w_garch boost) on River actually beating chance (>52%). River keeps
+    # training/reporting; it just stops touching the weights while broken. Self-
+    # heals: if River ever climbs above 52%, the nudges resume automatically.
+    ("if abs(_delta) > 0.03:",
+     "if _river_acc > 0.52 and abs(_delta) > 0.03:"),
+    ("if _garch_acc > _river_acc + 0.08:",
+     "if _river_acc > 0.52 and _garch_acc > _river_acc + 0.08:"),
 ]
 
 failed_cells = []
