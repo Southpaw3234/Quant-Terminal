@@ -125,10 +125,16 @@ token pattern) → ~15h overnight runway before the next 9:35. **PC must stay on
 (sleep OK — WakeToRun; full shutdown kills both task and runner).
 
 **Open items / next session:**
-- [ ] **Read the validation result** (the #1 job — see Step-3 checkpoint table)
-- [ ] **Runner is NOT a service** — dies on reboot. One-time fix in *admin*
-  PowerShell: `cd C:\actions-runner; .\svc.cmd install; .\svc.cmd start`
-  (also restart it manually if offline: `C:\actions-runner\run.cmd`)
+- [x] **Read the validation result** — DONE 2026-06-14, see ledger above (frame at ceiling).
+- [ ] ~~**Runner is NOT a service** — `svc.cmd install`~~ **← WRONG, do not follow.**
+  This Windows runner has NO `svc.cmd`/`svc.sh` (those are the Linux pattern); it
+  was configured interactively (`run.cmd`). It still dies on reboot. Proper service
+  install needs a reconfigure: stop run.cmd, `config.cmd remove --token <removal-token>`,
+  then re-add with `config.cmd --url ... --token <reg-token> --runasservice` (tokens
+  via `gh api .../actions/runners/{registration,remove}-token`). Deferred 2026-06-14 —
+  the real stability fixes that WORKED were **disabling NIC power-management + sleep**
+  (box ran 18h with zero comms loss vs 3 prior drops). To restart the runner if
+  offline: `C:\actions-runner\run.cmd`.
 - [ ] **Discord webhook** still unset (Stage-0) — user creates webhook URL, then
   `gh secret set DISCORD_WEBHOOK_URL`
 - [ ] Delete the one-shot `QT-GPU-Validation` task after it fires (or leave; it
@@ -371,9 +377,12 @@ the runner is offline.
    one-time token. Run them on the GPU box.
 3. **When `config` asks for labels, add `gpu`** (it auto-adds `self-hosted`). Final
    labels must include both — the workflow targets `["self-hosted","gpu"]`.
-4. Run it as a service so it survives reboots: `./svc.sh install && ./svc.sh start`
-   (Linux) or "Install service" (Windows config prompt). Confirm it shows **Idle**
-   in Settings → Actions → Runners.
+4. Run it as a service so it survives reboots. **On Windows** answer **Y** to the
+   `config.cmd` "Run as service?" prompt (there is NO `svc.cmd`/`svc.sh` — that's the
+   Linux pattern; an interactively-configured Windows runner can only become a service
+   by re-running `config.cmd` with `--runasservice`). The current QT-GPU box runs
+   interactively via `run.cmd` — stability is instead held by disabling NIC power-
+   management + sleep (see 2026-06-12/14 ledger). Confirm **Idle** in Settings → Actions → Runners.
 
 ### Step 2 — prerequisites on the box (the gotchas)
 The workflow runs `pip install -r requirements.txt`, and **that's where the GPU
