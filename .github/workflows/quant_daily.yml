@@ -208,14 +208,14 @@ jobs:
         run: |
           git config user.email "$GIT_USER_EMAIL"
           git config user.name  "$GIT_USER_NAME"
-          # Rebase FIRST (autostash handles tracked dirt; new untracked state files
-          # don't conflict with a rebase), THEN stage. The previous order staged
-          # files and then `git stash --include-untracked`/`stash pop` moved them
-          # back as UNSTAGED, so `git diff --cached --quiet` always passed and the
-          # commit was silently skipped ("Everything up-to-date") — no state has
-          # persisted to master since 2026-05-14. Staging immediately before the
-          # diff check fixes the no-op.
-          git pull --rebase --autostash origin master || true
+          # COMMIT FIRST, then rebase, then push. Do NOT pull --rebase before staging:
+          # --autostash stashes the *tracked* state modifications (shadow/, stat_arb/,
+          # paper_trades/, predictions/, weights/) and the pop silently drops them
+          # (swallowed by `|| true`), while *untracked* new files (intraday_history/)
+          # are never stashed and survive — so commits carried ONLY intraday_history and
+          # the shadow/stat-arb evidence clock stopped persisting after 2026-06-09.
+          # Committing first puts every change in a real commit that the subsequent
+          # rebase replays cleanly — there is no stash to drop.
           # Stage state files — explicitly exclude docs/data.json (lives on data branch).
           # Add each path INDEPENDENTLY: `git add a b c` is atomic and aborts staging
           # ALL paths if any one pathspec doesn't match (e.g. data/models/intraday_model.pkl
@@ -226,9 +226,16 @@ jobs:
                    data/stat_arb/ data/shadow/ data/last_morning_run.txt docs/index.html; do
             git add "$p" 2>/dev/null || true
           done
-          git diff --cached --quiet || \
+          if git diff --cached --quiet; then
+            echo "No state changes to commit."
+          else
             git commit -m "Auto: ${{ steps.run_type.outputs.type }} cycle $(date -u +'%Y-%m-%d %H:%M UTC')"
-          git push origin master || true
+            # Working tree is clean now (all changes are in the commit) → the autostash
+            # has nothing tracked to stash, so the earlier drop hazard cannot recur.
+            # The rebase replays our commit on top of any new origin commits.
+            git pull --rebase --autostash origin master || git rebase --abort || true
+            git push origin master || true
+          fi
 
       - name: Upload cycle log
         if: always()
