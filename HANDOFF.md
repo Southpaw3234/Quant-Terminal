@@ -1,7 +1,7 @@
 # Quant Terminal v25 — Session Handoff
 **Date:** 2026-06-14 (updated — **Phase 1 GPU validation COMPLETE: frame at ceiling, tuning gives no AUC lift**)  
 **Branch:** `master` (live/cron)  
-**Last commit:** `45f4260` (master, live) · `3193ef8` (feat/maximize-model — lighter+isolated GPU run)  
+**Last commit:** `993227b` (master, live — handoff) · `f718f51` (master — River cut) · `3193ef8` (feat/maximize-model — lighter+isolated GPU run)  
 **Repo:** https://github.com/Southpaw3234/Quant-Terminal
 
 ---
