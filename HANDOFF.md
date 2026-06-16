@@ -1,7 +1,7 @@
 # Quant Terminal v25 — Session Handoff
-**Date:** 2026-06-14 (updated — **Phase 1 GPU validation COMPLETE: frame at ceiling, tuning gives no AUC lift**)  
+**Date:** 2026-06-15 (updated — **evidence-clock persistence REGRESSED & re-fixed; model still at ceiling**)  
 **Branch:** `master` (live/cron)  
-**Last commit:** `993227b` (master, live — handoff) · `f718f51` (master — River cut) · `3193ef8` (feat/maximize-model — lighter+isolated GPU run)  
+**Last commit:** `3009db4` (master, live — persistence re-fix) · `f718f51` (master — River cut) · `3193ef8` (feat/maximize-model — lighter+isolated GPU run)  
 **Repo:** https://github.com/Southpaw3234/Quant-Terminal
 
 ---
@@ -29,7 +29,7 @@ milestones below are now DUE or PAST-DUE.
 | ~~Mon 2026-06-08~~ ✅ | Evidence clock started | **PASS (verified 6/10):** shadow recording (30L/30S books), stat-arb 13/172 pairs. pair_history.csv append bug fixed `45f4260`. |
 | ~~Thu 2026-06-11+~~ ✅ | **Phase 1 GPU validation — DONE 2026-06-14** | **RESULT: FLAT — frame at ceiling.** Run `27484667746` (feat/maximize-model, QT_GPU=True, 80-trial light profile, device=cuda): walk-forward **mean OOS AUC=0.5500 / IC=0.0805** vs baseline 0.5461/0.0754 → Δ noise, "weak/no edge". **Verdict: tuning is NOT the lever; do NOT merge PR #21 for AUC; pivot to frame changes (Frame 1/3).** River clamp FAILED its test (still 46%). See SESSION LEDGER 2026-06-12/14. |
 | **Anytime before real $** | Stage-0 prerequisites | Discord webhook set? **River: clamp tested 6/14 → still 46%, must CUT or fix.** Intraday-pickle bug fixed? Fill audit done? (See REAL-MONEY DEPLOYMENT GATE.) |
-| **~2026-06-15** | First shadow positions mature | First 5-day-horizon entries should score. Confirm rank-IC math is producing numbers. |
+| ~~**~2026-06-15**~~ ⚠️ | First shadow positions mature | **BLOCKED (6/15):** evidence clock stopped persisting after 6/09 (autostash-drop) → shadow scored 0 matured. Re-fixed `3009db4`; clock restarts from 6/16. Maturation slips ~1 wk. |
 | **~early July 2026** | Shadow rank-IC readable | Read the first real (not projected) cross-sectional rank-IC. Report the number + trend. |
 | **~late Jul / early Aug 2026** | **GO/NO-GO alpha gate** | Evaluate ALL Stage-1 gate thresholds (rank-IC ≥0.03 t≥2, AUC ≥0.55, max-DD <15%, \|β\|<0.2, WRC p<0.10). This is the real-money decision point. |
 | **~mid-Aug 2026** | Frame 2 intraday trainable | 60 trading days of `data/intraday_history/` should exist → `model_intraday.py` trains for real. |
@@ -41,6 +41,43 @@ and the ONE highest-priority action for today. Then wait for direction.
 
 > 📌 Full reasoning for every item lives below: roadmap → §"FUTURE UPGRADES";
 > real-money rules → §"REAL-MONEY DEPLOYMENT GATE"; Monday verification → §"CHECKPOINT".
+
+---
+
+## 🗓️ SESSION LEDGER — 2026-06-15: evidence-clock persistence REGRESSED, re-fixed; model at ceiling
+
+**THE HEADLINE: the shadow/stat-arb evidence clock silently STOPPED persisting after 2026-06-09. Re-fixed `3009db4`; auto-verifies on the 6/16 run.**
+
+Today's 9:35 ET morning run (`27550036521`, cron-job.org dispatch) was **clean** —
+walk-forward **mean OOS AUC=0.5475 / IC=0.0763 / last 0.6061 ("weak/no edge")**, in
+line with the 0.5461 baseline. Frame still at its ceiling; nothing changed that read.
+Kill switch healthy (equity ~$108k at open, no trip, new HWM). 8 new BUYs filled
+(BAX/MGM/APTV/FSLR/SWKS/GE/UPS/AMT, mid-conf ~0.65–0.70); a later cycle whipsaw-closed
+APTV at −8.7%. Account ~$113.7k, +2.06% on the day, total P&L +$13.5k — **beta on a
+long book in an up tape, not alpha** (60-day avg return −0.38%, accuracy 57.7% flattered).
+
+**The real finding — persistence regressed AGAIN.** `data/shadow/` + `data/stat_arb/`
+were last committed `1372fba` (6/09). Every `Auto:` commit since carried ONLY
+`data/intraday_history/`; `pairs.json` reverted to `[]`, `positions.jsonl` froze at 6/9,
+shadow "scored 0 matured" every run. **Root cause:** the `df50244` "rebase-first"
+ordering has its own drop — `git pull --rebase --autostash` (run BEFORE staging)
+stashes the *tracked* state mods and the pop silently drops them (`|| true`), while
+*untracked* new files (intraday_history) survive. **Re-fix `697eda4`/`3009db4`:**
+reorder to **stage → commit → rebase → push** (commit first ⇒ clean tree ⇒ autostash
+has nothing to drop). This stalls the Stage-1 alpha-gate rank-IC window, so it was the
+day's priority, not the model.
+
+| Commit | Branch | What |
+|--------|--------|------|
+| `3009db4` (`697eda4`) | master | **Persistence re-fix** — commit state BEFORE rebase so the autostash pop can't drop shadow/stat_arb. Was dropping all tracked state since 6/09. |
+
+**Open / next:**
+- [ ] **VERIFY 6/16 run persisted shadow+stat_arb** — automated via one-time scheduled
+  task `verify-evidence-clock-persistence-616` (fires 6/16 12:15 PM ET): PASS = the
+  6/16 `Auto:` commit `--stat` lists `data/shadow/`+`data/stat_arb/` AND
+  `positions.jsonl` gains a 6/16 row. If still only intraday → drop is upstream of the
+  commit step (model regenerating from master's stale copy); investigate, no blind re-fix.
+- [ ] **`DISCORD_WEBHOOK_URL`** still unset — last cheap Stage-0 prerequisite.
 
 ---
 
