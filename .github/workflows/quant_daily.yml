@@ -166,6 +166,51 @@ jobs:
           path: data/models/
           key: model-cache-${{ github.run_id }}
 
+      - name: Commit updated state files to master
+        # MUST run BEFORE the orphan-data-branch step below. That step does
+        # `git checkout -f "$GITHUB_REF_NAME"`, and `git checkout -f` force-resets
+        # the working tree to master's HEAD — DISCARDING every uncommitted tracked
+        # modification (shadow/, stat_arb/, paper_trades/, predictions/, weights/)
+        # while leaving untracked new files (intraday_history/) alone. That is why,
+        # from 2026-06-09 to 2026-06-16, every `Auto:` commit carried ONLY
+        # intraday_history and the shadow/stat-arb evidence clock froze: the engines
+        # wrote their files fine, but the data-branch dance wiped the tracked ones
+        # before this commit step ever saw them. Committing here first puts those
+        # changes safely in a real commit, so the later `checkout -f` is harmless.
+        #
+        # Only persist regenerated state on the live master branch. On a
+        # feature-branch dispatch (e.g. a GPU test run on feat/maximize-model)
+        # this step is skipped so test runs stay fully isolated from master and
+        # never push state files there.
+        if: github.ref_name == 'master'
+        env:
+          GIT_USER_EMAIL: 'quant-bot@github-actions'
+          GIT_USER_NAME:  'Quant Terminal Bot'
+        run: |
+          git config user.email "$GIT_USER_EMAIL"
+          git config user.name  "$GIT_USER_NAME"
+          # COMMIT FIRST, then rebase, then push. Do NOT pull --rebase before staging:
+          # --autostash stashes the *tracked* state modifications and the pop can
+          # silently drop them (swallowed by `|| true`). Committing first puts every
+          # change in a real commit that the subsequent rebase replays cleanly.
+          # Stage state files — explicitly exclude docs/data.json (lives on data branch).
+          # Add each path INDEPENDENTLY: `git add a b c` is atomic and aborts staging
+          # ALL paths if any one pathspec doesn't match (e.g. data/models/intraday_model.pkl
+          # never exists while the intraday model can't train), which silently staged
+          # nothing → commit skipped. Looping isolates missing paths.
+          for p in data/paper_trades/ data/predictions/ data/weights/ \
+                   data/intraday_history/ data/models/intraday_model.pkl \
+                   data/stat_arb/ data/shadow/ data/last_morning_run.txt docs/index.html; do
+            git add "$p" 2>/dev/null || true
+          done
+          if git diff --cached --quiet; then
+            echo "No state changes to commit."
+          else
+            git commit -m "Auto: ${{ steps.run_type.outputs.type }} cycle $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git pull --rebase --autostash origin master || git rebase --abort || true
+            git push origin master || true
+          fi
+
       - name: Push dashboard data to orphan data branch
         env:
           GIT_USER_EMAIL: 'quant-bot@github-actions'
@@ -193,48 +238,6 @@ jobs:
             echo "data.json pushed to data branch OK"
           else
             echo "docs/data.json not found — skipping data branch push"
-          fi
-
-      - name: Commit updated state files to master
-        # Only persist regenerated state on the live master branch. On a
-        # feature-branch dispatch (e.g. a GPU test run on feat/maximize-model)
-        # this step is skipped so test runs stay fully isolated from master and
-        # never push state files there. The dashboard data push above is branch-
-        # safe and still runs; this guard only governs the master state commit.
-        if: github.ref_name == 'master'
-        env:
-          GIT_USER_EMAIL: 'quant-bot@github-actions'
-          GIT_USER_NAME:  'Quant Terminal Bot'
-        run: |
-          git config user.email "$GIT_USER_EMAIL"
-          git config user.name  "$GIT_USER_NAME"
-          # COMMIT FIRST, then rebase, then push. Do NOT pull --rebase before staging:
-          # --autostash stashes the *tracked* state modifications (shadow/, stat_arb/,
-          # paper_trades/, predictions/, weights/) and the pop silently drops them
-          # (swallowed by `|| true`), while *untracked* new files (intraday_history/)
-          # are never stashed and survive — so commits carried ONLY intraday_history and
-          # the shadow/stat-arb evidence clock stopped persisting after 2026-06-09.
-          # Committing first puts every change in a real commit that the subsequent
-          # rebase replays cleanly — there is no stash to drop.
-          # Stage state files — explicitly exclude docs/data.json (lives on data branch).
-          # Add each path INDEPENDENTLY: `git add a b c` is atomic and aborts staging
-          # ALL paths if any one pathspec doesn't match (e.g. data/models/intraday_model.pkl
-          # never exists while the intraday model can't train), which silently staged
-          # nothing → commit skipped. Looping isolates missing paths.
-          for p in data/paper_trades/ data/predictions/ data/weights/ \
-                   data/intraday_history/ data/models/intraday_model.pkl \
-                   data/stat_arb/ data/shadow/ data/last_morning_run.txt docs/index.html; do
-            git add "$p" 2>/dev/null || true
-          done
-          if git diff --cached --quiet; then
-            echo "No state changes to commit."
-          else
-            git commit -m "Auto: ${{ steps.run_type.outputs.type }} cycle $(date -u +'%Y-%m-%d %H:%M UTC')"
-            # Working tree is clean now (all changes are in the commit) → the autostash
-            # has nothing tracked to stash, so the earlier drop hazard cannot recur.
-            # The rebase replays our commit on top of any new origin commits.
-            git pull --rebase --autostash origin master || git rebase --abort || true
-            git push origin master || true
           fi
 
       - name: Upload cycle log
