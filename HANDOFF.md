@@ -1,7 +1,7 @@
 # Quant Terminal v25 — Session Handoff
-**Date:** 2026-06-15 (updated — **evidence-clock persistence REGRESSED & re-fixed; model still at ceiling**)  
+**Date:** 2026-06-16 (updated — **TRUE root cause of the persistence stall found & fixed: orphan-branch `checkout -f`**)  
 **Branch:** `master` (live/cron)  
-**Last commit:** `3009db4` (master, live — persistence re-fix) · `f718f51` (master — River cut) · `3193ef8` (feat/maximize-model — lighter+isolated GPU run)  
+**Last commit:** `a0231ca` (master, live — orphan-checkout persistence fix) · `f718f51` (master — River cut) · `3193ef8` (feat/maximize-model — lighter+isolated GPU run)  
 **Repo:** https://github.com/Southpaw3234/Quant-Terminal
 
 ---
@@ -41,6 +41,43 @@ and the ONE highest-priority action for today. Then wait for direction.
 
 > 📌 Full reasoning for every item lives below: roadmap → §"FUTURE UPGRADES";
 > real-money rules → §"REAL-MONEY DEPLOYMENT GATE"; Monday verification → §"CHECKPOINT".
+
+---
+
+## 🗓️ SESSION LEDGER — 2026-06-16: TRUE root cause of the persistence stall — orphan-branch `checkout -f`
+
+**THE HEADLINE: the 6/15 re-fix FAILED verification on 6/16; found and fixed the REAL bug (`a0231ca`).**
+
+The 6/16 auto-verification (`verify-evidence-clock-persistence-616`) checked the 6/16
+`Auto:` commit (`7f2b335`) and found it STILL carried only `data/intraday_history/` —
+no shadow, no stat_arb. The 6/15 commit-ordering fix (`3009db4`) had targeted the wrong
+layer. Root-caused properly:
+
+**The "Push dashboard data to orphan data branch" step ends with `git checkout -f
+"$GITHUB_REF_NAME"`.** `git checkout -f` force-resets the working tree to master's HEAD,
+**discarding every uncommitted *tracked* modification** (shadow/, stat_arb/,
+paper_trades/, predictions/, weights/) while leaving *untracked* new files
+(intraday_history/) untouched — the exact untracked-survives/tracked-dies signature.
+And this step ran BEFORE the state-commit step, so the engines' fresh writes were nuked
+before they could ever be staged. (The model was writing them fine all along — logs show
+`[shadow X-sec] recorded 30L/30S` + `[stat_arb] … N stored` every morning.) Two prior
+fixes (df50244 stash-reorder, 3009db4 commit-before-rebase) were both downstream of this
+and never had a chance.
+
+**Fix `a0231ca` (`7235b2f`):** moved the "Commit updated state files to master" step to
+run BEFORE the orphan-data-branch step, so tracked state is safely committed before the
+`checkout -f`. Verification re-armed for the 6/17 run.
+
+| Commit | Branch | What |
+|--------|--------|------|
+| `a0231ca` (`7235b2f`) | master | **Persistence TRUE fix** — commit state to master BEFORE the orphan-data-branch `git checkout -f` that was wiping all tracked working-tree state. |
+
+**Open / next:**
+- [ ] **VERIFY 6/17 run** — task `verify-evidence-clock-persistence-616` re-armed (6/17
+  12:15 PM ET): PASS = 6/17 `Auto:` commit lists shadow/+stat_arb/ AND positions.jsonl
+  gains a 6/17 row. If STILL only intraday → checkout -f wasn't the only cause; instrument
+  `git status` right before the commit step and hunt other checkout/reset/clean calls.
+- [ ] **`DISCORD_WEBHOOK_URL`** still unset — last cheap Stage-0 prerequisite.
 
 ---
 
