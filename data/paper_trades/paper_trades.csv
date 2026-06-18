@@ -37,3 +37,10 @@ ts,ticker,action,price,qty,dollars,confidence,regime,vix,portfolio_value,notes,o
 2026-06-17T21:37:54.397668,APTV,BUY,72.92,16,,0.5,2,,,,"alpaca_error:{""buying_power"":""0"",""code"":40310000,""cos",error,2026-06-17,NORMAL,1.0,2916.8
 2026-06-17T21:38:06.370277,MRVL,BUY,316.43,3,,0.5,2,,,,"alpaca_error:{""buying_power"":""0"",""code"":40310000,""cos",error,2026-06-17,NORMAL,1.0,2531.44
 2026-06-17T21:38:22.823152,EXPD,BUY,166.34,8,,0.6974,1,,,,"alpaca_error:{""buying_power"":""0"",""code"":40310000,""cos",error,2026-06-17,NORMAL,1.0,3659.48
+2026-06-18T00:45:44.509605,DXCM,SELL,71.23,5,,0.5,1,,,,5b186831-a500-4c35-bf31-db3f8a19835b,filled,2026-06-18,NORMAL,1.0,997.22
+2026-06-18T00:45:44.880402,MGM,SELL,46.94,7,,0.5,1,,,,"alpaca_error:{""available"":""16"",""code"":40310000,""exist",error,2026-06-18,NORMAL,1.0,891.86
+2026-06-18T00:45:45.154759,APTV,SELL,62.87,6,,0.5,1,,,,e49650c0-a588-4fd1-91e7-2d89d37f39be,filled,2026-06-18,NORMAL,1.0,1005.92
+2026-06-18T00:45:45.391331,MRVL,SELL,289.54,1,,0.5,1,,,,"alpaca_error:{""available"":""1"",""code"":40310000,""existi",error,2026-06-18,NORMAL,1.0,868.62
+2026-06-18T00:46:16.806023,ZBH,BUY,84.98,14,,0.5,2,,,,"alpaca_error:{""buying_power"":""0"",""code"":40310000,""cos",error,2026-06-18,NORMAL,1.0,2974.3
+2026-06-18T00:46:45.857675,GE,BUY,330.44,4,,0.6813,1,,,,"alpaca_error:{""buying_power"":""0"",""code"":40310000,""cos",error,2026-06-18,NORMAL,1.0,3634.84
+2026-06-18T00:46:50.768190,EXPD,BUY,166.34,8,,0.7073,1,,,,"alpaca_error:{""buying_power"":""0"",""code"":40310000,""cos",error,2026-06-18,NORMAL,1.0,3493.14
