@@ -13,3 +13,8 @@ ts,ticker,action,price,qty,dollars,confidence,regime,vix,portfolio_value,notes,o
 2026-06-22T15:31:40.396291,CTAS,BUY,181.88,20,,0.6388,1,,,,"alpaca_error:{""buying_power"":""6031.26"",""code"":4031000",error,2026-06-22,NORMAL,1.0,9457.76
 2026-06-22T15:31:57.652812,SPG,BUY,214.86,17,,0.6666,1,,,,"alpaca_error:{""buying_power"":""6105.25"",""code"":4031000",error,2026-06-22,NORMAL,1.0,9453.84
 2026-06-22T15:32:25.659194,SOXX,BUY,586.6514,3,,0.5,0,,,,f386cc4e-0142-405b-b39d-bbfa45d39a2e,filled,2026-06-22,NORMAL,1.0,5279.86
+2026-06-22T18:13:11.511010,WAT,SELL,357.57,9,,0.5,1,,,,1c6a488d-faf9-4428-b1a9-5a0212f9220f,filled,2026-06-22,NORMAL,1.0,3218.13
+2026-06-22T18:13:12.353306,DXCM,SELL,68.92,40,,0.5,1,,,,71d6e621-4ec5-4128-a249-7c15d52bc79e,filled,2026-06-22,NORMAL,1.0,2756.8
+2026-06-22T18:13:13.407682,MGM,SELL,46.62,75,,0.5,1,,,,"alpaca_error:{""available"":""12"",""code"":40310000,""exist",error,2026-06-22,NORMAL,1.0,3496.5
+2026-06-22T18:13:14.022474,APTV,SELL,64.22,54,,0.5,1,,,,"alpaca_error:{""available"":""3"",""code"":40310000,""existi",error,2026-06-22,NORMAL,1.0,3467.88
+2026-06-22T18:13:15.635827,CTAS,SELL,169.87,20,,0.5,1,,,,adca9619-25e5-4e2f-8ecc-152a1912cdd3,filled,2026-06-22,NORMAL,1.0,3397.4
