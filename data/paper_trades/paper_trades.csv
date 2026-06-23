@@ -26,3 +26,7 @@ ts,ticker,action,price,qty,dollars,confidence,regime,vix,portfolio_value,notes,o
 2026-06-23T15:32:37.585569,SPG,BUY,219.04,4,,0.6489,2,,,,"alpaca_error:{""buying_power"":""0"",""code"":40310000,""cos",error,2026-06-23,NORMAL,1.0,2628.48
 2026-06-23T15:32:53.214192,OMC,BUY,76.68,18,,0.5,1,,,,"alpaca_error:{""buying_power"":""0"",""code"":40310000,""cos",error,2026-06-23,NORMAL,1.0,3527.28
 2026-06-23T15:33:03.521579,SOXX,BUY,595.967,1,,0.5,0,,,,"alpaca_error:{""buying_power"":""0"",""code"":40310000,""cos",error,2026-06-23,NORMAL,1.0,1191.93
+2026-06-23T16:19:11.272513,EL,SELL,84.058,11,,0.5,1,,,,"alpaca_error:{""available"":""5"",""code"":40310000,""existi",error,2026-06-23,NORMAL,1.0,924.64
+2026-06-23T16:19:13.395719,OMC,SELL,72.4,18,,0.5,1,,,,"alpaca_error:{""buying_power"":""0"",""code"":40310000,""cos",error,2026-06-23,NORMAL,1.0,1303.2
+2026-06-23T16:19:14.417250,LLY,SELL,1098.35,1,,0.5,1,,,,3582febb-b2f8-4091-b91e-fa15c0d5d013,filled,2026-06-23,NORMAL,1.0,1098.35
+2026-06-23T16:19:15.290732,DXCM,SELL,69.5,14,,0.5,1,,,,416aa0a1-5ef4-4983-ab0b-bcdf30040369,filled,2026-06-23,NORMAL,1.0,973.0
