@@ -50,3 +50,16 @@ ts,ticker,action,price,qty,dollars,confidence,regime,vix,portfolio_value,notes,o
 2026-06-22T22:24:44.644188,DXCM,SELL,69.07,15,,0.5,1,,,,a62434c8-f123-44fe-96d2-f2ad64f271f4,filled,2026-06-22,NORMAL,1.0,1036.05
 2026-06-22T22:24:45.307182,MGM,SELL,46.57,21,,0.5,1,,,,"alpaca_error:{""available"":""12"",""code"":40310000,""exist",error,2026-06-22,NORMAL,1.0,977.97
 2026-06-22T22:24:45.886085,APTV,SELL,63.57,21,,0.5,1,,,,"alpaca_error:{""available"":""3"",""code"":40310000,""existi",error,2026-06-22,NORMAL,1.0,1334.97
+2026-06-23T00:51:30.109196,WAT,BUY,376.47,3,,0.5,1,,,,"alpaca_error:{""buying_power"":""0"",""code"":40310000,""cos",error,2026-06-23,NORMAL,1.0,3388.23
+2026-06-23T00:51:31.268347,ZBH,BUY,84.98,12,,0.6799,2,,,,"alpaca_error:{""buying_power"":""0"",""code"":40310000,""cos",error,2026-06-23,NORMAL,1.0,2719.36
+2026-06-23T00:51:34.369559,DXCM,BUY,74.77,14,,0.7068,2,,,,"alpaca_error:{""code"":40310000,""existing_order_id"":""62",error,2026-06-23,NORMAL,1.0,2766.49
+2026-06-23T00:51:36.820052,BAX,BUY,20.31,32,,0.5,0,,,,"alpaca_error:{""buying_power"":""0"",""code"":40310000,""cos",error,2026-06-23,NORMAL,1.0,1645.11
+2026-06-23T00:51:45.601099,MGM,BUY,50.69,22,,0.7386,1,,,,"alpaca_error:{""buying_power"":""0"",""code"":40310000,""cos",error,2026-06-23,NORMAL,1.0,2787.95
+2026-06-23T00:51:49.453702,NCLH,BUY,19.06,58,,0.5,2,,,,"alpaca_error:{""buying_power"":""0"",""code"":40310000,""cos",error,2026-06-23,NORMAL,1.0,2782.76
+2026-06-23T00:51:53.258447,EL,BUY,84.64,14,,0.5,1,,,,"alpaca_error:{""buying_power"":""0"",""code"":40310000,""cos",error,2026-06-23,NORMAL,1.0,3131.68
+2026-06-23T00:52:04.185630,TER,BUY,381.4,2,,0.5,0,,,,"alpaca_error:{""buying_power"":""0"",""code"":40310000,""cos",error,2026-06-23,NORMAL,1.0,1907.0
+2026-06-23T00:52:14.577140,GE,BUY,332.76,3,,0.7902,1,,,,"alpaca_error:{""buying_power"":""0"",""code"":40310000,""cos",error,2026-06-23,NORMAL,1.0,2329.32
+2026-06-23T00:52:16.652695,UPS,BUY,108.65,13,,0.6832,1,,,,"alpaca_error:{""buying_power"":""0"",""code"":40310000,""cos",error,2026-06-23,NORMAL,1.0,3368.15
+2026-06-23T00:52:21.542112,EXPD,BUY,166.44,8,,0.7444,1,,,,"alpaca_error:{""buying_power"":""0"",""code"":40310000,""cos",error,2026-06-23,NORMAL,1.0,3328.8
+2026-06-23T00:52:34.599321,SPG,BUY,214.86,4,,0.6753,1,,,,"alpaca_error:{""buying_power"":""0"",""code"":40310000,""cos",error,2026-06-23,NORMAL,1.0,2148.6
+2026-06-23T00:52:49.938665,OMC,BUY,75.59,18,,0.5,1,,,,"alpaca_error:{""buying_power"":""0"",""code"":40310000,""cos",error,2026-06-23,NORMAL,1.0,3477.14

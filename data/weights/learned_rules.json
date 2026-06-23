@@ -4,7 +4,7 @@
     "count": 4,
     "accuracy": 0.333,
     "description": "BUY with RSI>68 in Bear regime \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 33% accurate (4 samples)",
-    "created_date": "2026-06-22",
+    "created_date": "2026-06-23",
     "created_regime": 1
   },
   "_boosts": {
@@ -14,7 +14,7 @@
       "accuracy": 0.8,
       "description": "BUY with RSI 55-68 in Bull \u00e2\u20ac\u201d 80% accurate (13 samples)"
     },
-    "created_date": "2026-06-22",
+    "created_date": "2026-06-23",
     "created_regime": 1
   },
   "_regime_bull": {
@@ -23,10 +23,10 @@
       "count": 4,
       "accuracy": 0.333,
       "description": "BUY with RSI>68 in Bear regime \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 33% accurate (4 samples)",
-      "created_date": "2026-06-22",
+      "created_date": "2026-06-23",
       "created_regime": 1
     },
-    "created_date": "2026-06-22",
+    "created_date": "2026-06-23",
     "created_regime": 1
   }
 }
