@@ -144,3 +144,6 @@ ts,ticker,action,price,qty,dollars,confidence,regime,vix,portfolio_value,notes,o
 2026-06-24T22:16:29.082482,OMC,BUY,76.51,22,,0.5,1,,,,"alpaca_error:{""buying_power"":""1320.7"",""code"":40310000",error,2026-06-24,NORMAL,1.0,4361.07
 2026-06-24T22:16:41.286921,SMH,BUY,647.1,1,,0.7075,0,,,,"alpaca_error:{""buying_power"":""1339.84"",""code"":4031000",error,2026-06-24,NORMAL,1.0,1941.3
 2026-06-24T22:16:45.921294,SOXX,BUY,628.45,1,,0.5,0,,,,"alpaca_error:{""buying_power"":""1340.03"",""code"":4031000",error,2026-06-24,NORMAL,1.0,1885.35
+2026-06-24T22:50:25.453327,MRVL,SELL,276.7,5,,0.5,1,,,,"alpaca_error:{""available"":""1"",""code"":40310000,""existi",error,2026-06-24,NORMAL,1.0,1383.5
+2026-06-24T22:50:26.941152,SWKS,SELL,71.4,12,,0.5,1,,,,"alpaca_error:{""available"":""6"",""code"":40310000,""existi",error,2026-06-24,NORMAL,1.0,856.8
+2026-06-24T22:50:27.917851,MPWR,SELL,1434.95,1,,0.5,1,,,,"alpaca_error:{""buying_power"":""0"",""code"":40310000,""cos",error,2026-06-24,NORMAL,1.0,1434.95
