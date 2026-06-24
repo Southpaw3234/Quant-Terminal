@@ -166,6 +166,16 @@ jobs:
           path: data/models/
           key: model-cache-${{ github.run_id }}
 
+      - name: Compute cross-sectional rank-IC (morning, measurement-only)
+        # Reads the model's per-name predicted confidence from predictions.csv and
+        # recomputes forward returns from price history to produce the Stage-1 gate's
+        # rank-IC series → data/shadow/rank_ic.csv (committed by the step below via
+        # the data/shadow/ pathspec). Pure measurement: changes nothing the model
+        # trades, does not depend on the broken predictions.csv scorer. Non-fatal so
+        # a yfinance hiccup never blocks the trading commit.
+        if: steps.run_type.outputs.type == 'morning'
+        run: python analyze_rank_ic.py || echo "rank-IC analysis non-fatal error — continuing"
+
       - name: Commit updated state files to master
         # MUST run BEFORE the orphan-data-branch step below. That step does
         # `git checkout -f "$GITHUB_REF_NAME"`, and `git checkout -f` force-resets
@@ -238,6 +248,39 @@ jobs:
             echo "data.json pushed to data branch OK"
           else
             echo "docs/data.json not found — skipping data branch push"
+          fi
+
+      - name: Verify evidence-clock persistence (alarm only)
+        # Belt-and-suspenders guard for the regression that froze the evidence clock
+        # from 2026-06-09 to 2026-06-16: an `Auto:` morning commit must carry the
+        # evidence/state files, not just intraday_history. This does NOT block the
+        # run (continue-on-error) — it only surfaces a loud ::warning:: (and pings
+        # Discord if configured) so a future persistence regression is caught the
+        # same day instead of weeks later. Only meaningful on master morning commits.
+        if: github.ref_name == 'master' && steps.run_type.outputs.type == 'morning'
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          msg=""
+          if git log -1 --pretty=%s | grep -q '^Auto:'; then
+            stat="$(git show --stat --name-only --pretty=format: HEAD)"
+            for want in data/shadow/ data/stat_arb/ data/predictions/; do
+              echo "$stat" | grep -q "$want" || msg="${msg} ${want}"
+            done
+          else
+            echo "HEAD is not an Auto commit (no state changes this run) — skipping guard."
+            exit 0
+          fi
+          if [ -n "$msg" ]; then
+            echo "::warning::Evidence clock may have stalled — latest Auto commit is missing:${msg}"
+            if [ -n "$DISCORD_WEBHOOK_URL" ]; then
+              curl -s -H 'Content-Type: application/json' \
+                -d "{\"content\":\"⚠️ Quant-Terminal: latest Auto commit missing evidence files:${msg}\"}" \
+                "$DISCORD_WEBHOOK_URL" >/dev/null || true
+            fi
+          else
+            echo "✅ Evidence files present in latest Auto commit (shadow/stat_arb/predictions)."
           fi
 
       - name: Upload cycle log

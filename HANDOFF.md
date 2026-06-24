@@ -1,5 +1,5 @@
 # Quant Terminal v25 — Session Handoff
-**Date:** 2026-06-16 (updated — **TRUE root cause of the persistence stall found & fixed: orphan-branch `checkout -f`**)  
+**Date:** 2026-06-24 (updated — **persistence fix VERIFIED: shadow/stat-arb evidence clock confirmed alive & maturing**)  
 **Branch:** `master` (live/cron)  
 **Last commit:** `a0231ca` (master, live — orphan-checkout persistence fix) · `f718f51` (master — River cut) · `3193ef8` (feat/maximize-model — lighter+isolated GPU run)  
 **Repo:** https://github.com/Southpaw3234/Quant-Terminal
@@ -29,7 +29,7 @@ milestones below are now DUE or PAST-DUE.
 | ~~Mon 2026-06-08~~ ✅ | Evidence clock started | **PASS (verified 6/10):** shadow recording (30L/30S books), stat-arb 13/172 pairs. pair_history.csv append bug fixed `45f4260`. |
 | ~~Thu 2026-06-11+~~ ✅ | **Phase 1 GPU validation — DONE 2026-06-14** | **RESULT: FLAT — frame at ceiling.** Run `27484667746` (feat/maximize-model, QT_GPU=True, 80-trial light profile, device=cuda): walk-forward **mean OOS AUC=0.5500 / IC=0.0805** vs baseline 0.5461/0.0754 → Δ noise, "weak/no edge". **Verdict: tuning is NOT the lever; do NOT merge PR #21 for AUC; pivot to frame changes (Frame 1/3).** River clamp FAILED its test (still 46%). See SESSION LEDGER 2026-06-12/14. |
 | **Anytime before real $** | Stage-0 prerequisites | Discord webhook set? **River: clamp tested 6/14 → still 46%, must CUT or fix.** Intraday-pickle bug fixed? Fill audit done? (See REAL-MONEY DEPLOYMENT GATE.) |
-| ~~**~2026-06-15**~~ ⚠️ | First shadow positions mature | **BLOCKED (6/15):** evidence clock stopped persisting after 6/09 (autostash-drop) → shadow scored 0 matured. Re-fixed `3009db4`; clock restarts from 6/16. Maturation slips ~1 wk. |
+| ~~**~2026-06-15**~~ ✅ | First shadow positions mature | **PASS (verified 6/24):** persistence fix `a0231ca` held — shadow now matures+scores real 5-day books (6/23 scored 2 matured; pnl.csv has scored rows), stat-arb persists 20 pairs/day. Clock is alive; first readable rank-IC ~early July. |
 | **~early July 2026** | Shadow rank-IC readable | Read the first real (not projected) cross-sectional rank-IC. Report the number + trend. |
 | **~late Jul / early Aug 2026** | **GO/NO-GO alpha gate** | Evaluate ALL Stage-1 gate thresholds (rank-IC ≥0.03 t≥2, AUC ≥0.55, max-DD <15%, \|β\|<0.2, WRC p<0.10). This is the real-money decision point. |
 | **~mid-Aug 2026** | Frame 2 intraday trainable | 60 trading days of `data/intraday_history/` should exist → `model_intraday.py` trains for real. |
@@ -41,6 +41,81 @@ and the ONE highest-priority action for today. Then wait for direction.
 
 > 📌 Full reasoning for every item lives below: roadmap → §"FUTURE UPGRADES";
 > real-money rules → §"REAL-MONEY DEPLOYMENT GATE"; Monday verification → §"CHECKPOINT".
+
+---
+
+## 🗓️ SESSION LEDGER — 2026-06-24: persistence fix VERIFIED — evidence clock is alive
+
+**THE HEADLINE: the 6/16 orphan-checkout fix (`a0231ca`) HELD. The #1 open item — "did
+the persistence fix work?" — is PASS. The shadow/stat-arb evidence clock is finally
+counting toward the late-Jul GO/NO-GO gate.**
+
+Reviewed the last two morning runs (the 9:35 ET / 13:35 UTC cron-job.org dispatches):
+
+| | **Mon 6/23** (`28030210247`) | **Tue 6/24** (`28102455074`) |
+|---|---|---|
+| Walk-forward | AUC **0.5459** / IC **0.0747** / last 0.5987 | AUC **0.5447** / IC **0.0710** / last 0.6103 |
+| Self-label | weak/no edge | weak/no edge |
+| Signals | 307 → 8 BUYs | 307 → 7 BUYs |
+| Kill switch | equity $111,625, wk −1.52%, no trip | equity $106,840, wk −5.74%, no trip |
+| Cycle | `MORNING cycle complete`, no exceptions | `MORNING cycle complete`, no exceptions |
+
+**Findings:**
+- **Model flat at the frozen ceiling.** 0.546 / 0.075 both days = identical to the
+  Phase-0 baseline and the 6/14 GPU verdict. Tuning still isn't the lever; nothing moved.
+- **Real overnight drawdown, absorbed cleanly.** ~$4,800 dropped into the 6/24 open
+  (HWM $113,344 → $106,840, peak_dd −5.74%) — kill switch did NOT trip (limits −10/−20/−15)
+  and the book recovered to $110,907 (+$10.9k total, 56 open) by 15:14 UTC. Long-book beta
+  in a choppy tape, not alpha, not a malfunction. Safety net behaved correctly.
+- **✅ Evidence clock VERIFIED persisting.** Shadow now *matures and scores* real 5-day
+  books (6/23 logged `scored 2 matured entries`; `cross_sectional_pnl.csv` carries real
+  scored rows for entries 6/01→6/04, scored 6/18/6/23). Stat-arb persists **20 cointegrated
+  pairs/day** consistently. Every recent `Auto:` morning commit touches `data/shadow/` +
+  `data/stat_arb/` — no more intraday-only commits. The stall that ran from 6/09 is over.
+- Early shadow long-short prints are tiny-sample/mixed (−1.8%, −5.1%, −2.2%, +4.5% = 4
+  matured books) — far too few to read. First *readable* rank-IC ~early July; decision-grade
+  ~late Jul / early Aug (the GO/NO-GO alpha gate).
+
+**Shipped this session (rank-IC measurement + persistence guard):**
+- **`analyze_rank_ic.py` (NEW) + workflow step** — computes the Stage-1 gate's
+  **cross-sectional rank-IC** properly. It reads the model's per-name predicted
+  `confidence` from `predictions.csv` (full universe, logged daily, current) and
+  **recomputes forward returns itself from price history** (yfinance, close-to-close
+  over `horizon_days`, mirrors the shadow harness `_fwd_ret_sh`), then writes daily
+  rank-IC + t-stat → `data/shadow/rank_ic.csv`. **Measurement-only: touches NO trading
+  logic, edits NOTHING in the frozen `quant_runner.py`, and does not depend on the
+  broken scorer (below).** Key property: because returns are recomputed from public
+  prices, it **backfills the entire window (5/15→now)** rather than starting today — so
+  the first real rank-IC number is available on the next morning run, over ~6 weeks of
+  data, not after a fresh 1-week wait. Runs as a non-fatal morning step before the
+  state-commit (output committed via the `data/shadow/` pathspec).
+- **Persistence guard workflow step (alarm-only)** — after the data-branch push, a
+  `continue-on-error` step asserts the latest `Auto:` morning commit carries
+  `data/shadow/` + `data/stat_arb/` + `data/predictions/`; if any is missing it emits a
+  `::warning::` and (if `DISCORD_WEBHOOK_URL` set) pings Discord. Converts the 6/09–6/16
+  silent-stall class of bug into a same-day alarm. Non-blocking by design (never skips
+  the trading commit — avoids the exit-127 footgun).
+
+**⚠️ NEW FINDING — prediction-outcome scorer DEAD since 2026-05-14 (investigate, do NOT blind-fix).**
+While building the rank-IC analyzer: `predictions.csv` logs per-name `confidence` for the
+full universe every day (current, 307–1228 names/day), BUT its realized-outcome columns
+(`scored`/`actual_return`/`was_correct`) **stop at 2026-05-14** — only 1,371 of 28,619 rows
+are scored, none after 5/14 (same mid-May era as the persistence bug). This is NOT just lost
+analytics: those columns feed the model's **online per-ticker calibration and rule-learning**,
+so the live model has been learning from ZERO outcome feedback for ~6 weeks. The rank-IC
+analyzer sidesteps it (recomputes returns), so the gate is unblocked — but the scorer death
+is a real behavioral degradation. **It's frozen-code (touches decision logic), so root-cause
+it before patching; don't blind-fix.** Likely the same persistence/checkout family.
+
+**Open / next:**
+- [ ] **READ the first rank-IC number** — after the next morning run (or a `morning`
+  dispatch), read `data/shadow/rank_ic.csv` + the run-log `=== cross-sectional rank-IC ===`
+  summary (mean, t-stat vs the 0.03 / 2.0 gate). This is now the headline metric.
+- [ ] **`DISCORD_WEBHOOK_URL`** still unset — the last cheap Stage-0 prerequisite (kill
+  switch halts but can't notify; also wires the new persistence-guard alarm). User creates
+  webhook → `gh secret set DISCORD_WEBHOOK_URL`.
+- [ ] **Investigate the 5/14 scorer death** (above) — restores the model's outcome-feedback
+  learning loop. Frozen-code; diagnose first.
 
 ---
 
