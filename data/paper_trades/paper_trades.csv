@@ -37,3 +37,4 @@ ts,ticker,action,price,qty,dollars,confidence,regime,vix,portfolio_value,notes,o
 2026-06-25T15:30:23.900169,PPG,BUY,121.53,14,,0.7148,1,,,,"alpaca_error:{""buying_power"":""0"",""code"":40310000,""cos",error,2026-06-25,NORMAL,1.0,4253.55
 2026-06-25T15:30:48.019890,LYV,BUY,175.85,9,,0.5,1,,,,"alpaca_error:{""buying_power"":""0"",""code"":40310000,""cos",error,2026-06-25,NORMAL,1.0,4220.4
 2026-06-25T15:31:04.217776,SOXX,BUY,628.45,1,,0.5,0,,,,"alpaca_error:{""buying_power"":""0"",""code"":40310000,""cos",error,2026-06-25,NORMAL,1.0,1256.9
+2026-06-25T16:12:31.251979,DPZ,SELL,287.3,4,,0.5,1,,,,84f85ee5-b711-4ac3-b493-4ef71fe712bd,filled,2026-06-25,NORMAL,1.0,1149.2
