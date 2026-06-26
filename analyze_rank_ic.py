@@ -148,27 +148,49 @@ def main() -> None:
     OUT_CSV.parent.mkdir(parents=True, exist_ok=True)
     res.to_csv(OUT_CSV, index=False)
 
-    ics = res["rank_ic"]
-    n = len(ics)
-    mean = ics.mean()
-    sd = ics.std(ddof=1) if n > 1 else float("nan")
-    tstat = mean / (sd / (n ** 0.5)) if n > 1 and sd > 0 else float("nan")
-    pos = 100.0 * (ics > 0).mean()
+    def _stats(ic_series: pd.Series) -> dict:
+        s = ic_series.dropna()
+        m = len(s)
+        mean = s.mean() if m else float("nan")
+        sd = s.std(ddof=1) if m > 1 else float("nan")
+        tstat = mean / (sd / (m ** 0.5)) if m > 1 and sd > 0 else float("nan")
+        pos = 100.0 * (s > 0).mean() if m else float("nan")
+        return {"n": m, "mean": mean, "sd": sd, "tstat": tstat, "pos": pos}
+
+    full = _stats(res["rank_ic"])
     weeks = (pd.Timestamp(res["date"].iloc[-1]) - pd.Timestamp(res["date"].iloc[0])).days / 7.0
+
+    # Trailing window: the recent regime, so a slow stalled-era tail can't mask a
+    # turn (or vice-versa). 20 obs ≈ 4 trading weeks.
+    TRAIL = 20
+    trail = _stats(res["rank_ic"].tail(TRAIL))
 
     print("\n=== cross-sectional rank-IC ===")
     print(res.tail(12).to_string(index=False))
-    print("\n--- summary ---")
-    print(f"days (N)      : {n}")
+    print("\n--- summary (FULL window) ---")
+    print(f"days (N)      : {full['n']}")
     print(f"window        : {res['date'].iloc[0]} -> {res['date'].iloc[-1]}  (~{weeks:.1f} weeks)")
-    print(f"mean rank-IC  : {mean:.4f}   [gate: >= 0.03]")
-    print(f"std daily IC  : {sd:.4f}")
-    print(f"t-stat        : {tstat:.2f}     [gate: >= 2.0]")
-    print(f"% days IC > 0 : {pos:.0f}%")
+    print(f"mean rank-IC  : {full['mean']:.4f}   [gate: >= 0.03]")
+    print(f"std daily IC  : {full['sd']:.4f}")
+    print(f"t-stat        : {full['tstat']:.2f}     [gate: >= 2.0]")
+    print(f"% days IC > 0 : {full['pos']:.0f}%")
     if ls_rows:
         print(f"decile L/S    : mean {sum(ls_rows)/len(ls_rows):+.4f} over {len(ls_rows)} days (cross-check)")
-    gate = "PASS" if (mean >= 0.03 and (tstat == tstat) and tstat >= 2.0) else "NOT YET"
-    print(f"Stage-1 IC gate: {gate}")
+
+    print(f"\n--- summary (TRAILING {TRAIL} days) ---")
+    print(f"days (N)      : {trail['n']}  ({res['date'].iloc[-trail['n']]} -> {res['date'].iloc[-1]})")
+    print(f"mean rank-IC  : {trail['mean']:.4f}   [gate: >= 0.03]")
+    print(f"t-stat        : {trail['tstat']:.2f}     [gate: >= 2.0]")
+    print(f"% days IC > 0 : {trail['pos']:.0f}%")
+    _delta = trail["mean"] - full["mean"]
+    print(f"trend         : trailing vs full {_delta:+.4f} "
+          f"({'improving' if _delta > 0.005 else 'deteriorating' if _delta < -0.005 else 'flat'})")
+
+    def _gate(st: dict) -> bool:
+        return (st["mean"] >= 0.03 and st["tstat"] == st["tstat"] and st["tstat"] >= 2.0)
+
+    print(f"\nStage-1 IC gate (full)     : {'PASS' if _gate(full) else 'NOT YET'}")
+    print(f"Stage-1 IC gate (trailing) : {'PASS' if _gate(trail) else 'NOT YET'}")
     print(f"\n[rank-ic] wrote {OUT_CSV}")
 
 
