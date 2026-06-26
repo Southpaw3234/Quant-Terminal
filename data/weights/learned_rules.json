@@ -1,32 +1,326 @@
 {
   "high_rsi_bear": {
-    "dampen": 0.17,
-    "count": 4,
+    "dampen": 0.1,
+    "count": 76,
+    "accuracy": 0.397,
+    "description": "BUY with RSI>68 in Bear regime \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 40% accurate (76 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_GOOGL": {
+    "dampen": 0.2,
+    "count": 23,
+    "accuracy": 0.16,
+    "description": "GOOGL systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 16% accurate (23 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_C": {
+    "dampen": 0.2,
+    "count": 5,
+    "accuracy": 0.143,
+    "description": "C systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 14% accurate (5 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_UNH": {
+    "dampen": 0.12,
+    "count": 10,
     "accuracy": 0.333,
-    "description": "BUY with RSI>68 in Bear regime \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 33% accurate (4 samples)",
-    "created_date": "2026-06-25",
+    "description": "UNH systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 33% accurate (10 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_SYK": {
+    "dampen": 0.2,
+    "count": 13,
+    "accuracy": 0.2,
+    "description": "SYK systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 20% accurate (13 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_INTC": {
+    "dampen": 0.2,
+    "count": 7,
+    "accuracy": 0.222,
+    "description": "INTC systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 22% accurate (7 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_ADI": {
+    "dampen": 0.12,
+    "count": 16,
+    "accuracy": 0.333,
+    "description": "ADI systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 33% accurate (16 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_XOM": {
+    "dampen": 0.2,
+    "count": 5,
+    "accuracy": 0.143,
+    "description": "XOM systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 14% accurate (5 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_COP": {
+    "dampen": 0.2,
+    "count": 5,
+    "accuracy": 0.143,
+    "description": "COP systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 14% accurate (5 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_EOG": {
+    "dampen": 0.16,
+    "count": 5,
+    "accuracy": 0.286,
+    "description": "EOG systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 29% accurate (5 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_CAT": {
+    "dampen": 0.16,
+    "count": 5,
+    "accuracy": 0.286,
+    "description": "CAT systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 29% accurate (5 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_AMT": {
+    "dampen": 0.2,
+    "count": 11,
+    "accuracy": 0.231,
+    "description": "AMT systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 23% accurate (11 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_IWM": {
+    "dampen": 0.2,
+    "count": 5,
+    "accuracy": 0.143,
+    "description": "IWM systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 14% accurate (5 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_ETH-USD": {
+    "dampen": 0.2,
+    "count": 18,
+    "accuracy": 0.05,
+    "description": "ETH-USD systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 5% accurate (18 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_SOL-USD": {
+    "dampen": 0.2,
+    "count": 7,
+    "accuracy": 0.111,
+    "description": "SOL-USD systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 11% accurate (7 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_CDNS": {
+    "dampen": 0.2,
+    "count": 8,
+    "accuracy": 0.2,
+    "description": "CDNS systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 20% accurate (8 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_ALL": {
+    "dampen": 0.2,
+    "count": 8,
+    "accuracy": 0.1,
+    "description": "ALL systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 10% accurate (8 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_GM": {
+    "dampen": 0.2,
+    "count": 7,
+    "accuracy": 0.111,
+    "description": "GM systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 11% accurate (7 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_F": {
+    "dampen": 0.2,
+    "count": 13,
+    "accuracy": 0.2,
+    "description": "F systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 20% accurate (13 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_MGM": {
+    "dampen": 0.2,
+    "count": 36,
+    "accuracy": 0.184,
+    "description": "MGM systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 18% accurate (36 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_APTV": {
+    "dampen": 0.2,
+    "count": 19,
+    "accuracy": 0.19,
+    "description": "APTV systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 19% accurate (19 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_NCLH": {
+    "dampen": 0.2,
+    "count": 6,
+    "accuracy": 0.25,
+    "description": "NCLH systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 25% accurate (6 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_PM": {
+    "dampen": 0.2,
+    "count": 7,
+    "accuracy": 0.111,
+    "description": "PM systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 11% accurate (7 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_SWKS": {
+    "dampen": 0.2,
+    "count": 44,
+    "accuracy": 0.239,
+    "description": "SWKS systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 24% accurate (44 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_DVN": {
+    "dampen": 0.2,
+    "count": 5,
+    "accuracy": 0.143,
+    "description": "DVN systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 14% accurate (5 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_FANG": {
+    "dampen": 0.2,
+    "count": 5,
+    "accuracy": 0.143,
+    "description": "FANG systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 14% accurate (5 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_CMI": {
+    "dampen": 0.2,
+    "count": 11,
+    "accuracy": 0.077,
+    "description": "CMI systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 8% accurate (11 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_PCAR": {
+    "dampen": 0.2,
+    "count": 5,
+    "accuracy": 0.143,
+    "description": "PCAR systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 14% accurate (5 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_TDG": {
+    "dampen": 0.14,
+    "count": 11,
+    "accuracy": 0.308,
+    "description": "TDG systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 31% accurate (11 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_CMS": {
+    "dampen": 0.2,
+    "count": 6,
+    "accuracy": 0.25,
+    "description": "CMS systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 25% accurate (6 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_T": {
+    "dampen": 0.16,
+    "count": 5,
+    "accuracy": 0.286,
+    "description": "T systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 29% accurate (5 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_TTWO": {
+    "dampen": 0.2,
+    "count": 26,
+    "accuracy": 0.036,
+    "description": "TTWO systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 4% accurate (26 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_OMC": {
+    "dampen": 0.2,
+    "count": 6,
+    "accuracy": 0.25,
+    "description": "OMC systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 25% accurate (6 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_XLP": {
+    "dampen": 0.2,
+    "count": 5,
+    "accuracy": 0.143,
+    "description": "XLP systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 14% accurate (5 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_XLRE": {
+    "dampen": 0.2,
+    "count": 5,
+    "accuracy": 0.143,
+    "description": "XLRE systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 14% accurate (5 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_SLV": {
+    "dampen": 0.2,
+    "count": 14,
+    "accuracy": 0.062,
+    "description": "SLV systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 6% accurate (14 samples)",
+    "created_date": "2026-06-26",
+    "created_regime": 1
+  },
+  "ticker_VNQ": {
+    "dampen": 0.2,
+    "count": 6,
+    "accuracy": 0.25,
+    "description": "VNQ systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 25% accurate (6 samples)",
+    "created_date": "2026-06-26",
     "created_regime": 1
   },
   "_boosts": {
-    "momentum_bull": {
-      "boost": 0.1,
-      "count": 13,
-      "accuracy": 0.8,
-      "description": "BUY with RSI 55-68 in Bull \u00e2\u20ac\u201d 80% accurate (13 samples)"
+    "low_rsi_bull": {
+      "boost": 0.15,
+      "count": 16,
+      "accuracy": 0.833,
+      "description": "BUY with RSI<35 in Bull regime \u00e2\u20ac\u201d 83% accurate (16 samples)"
     },
-    "created_date": "2026-06-25",
+    "momentum_bull": {
+      "boost": 0.09,
+      "count": 288,
+      "accuracy": 0.686,
+      "description": "BUY with RSI 55-68 in Bull \u00e2\u20ac\u201d 69% accurate (288 samples)"
+    },
+    "created_date": "2026-06-26",
     "created_regime": 1
   },
   "_regime_bull": {
     "high_rsi_bear": {
-      "dampen": 0.17,
-      "count": 4,
-      "accuracy": 0.333,
-      "description": "BUY with RSI>68 in Bear regime \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 33% accurate (4 samples)",
-      "created_date": "2026-06-25",
+      "dampen": 0.1,
+      "count": 76,
+      "accuracy": 0.397,
+      "description": "BUY with RSI>68 in Bear regime \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 40% accurate (76 samples)",
+      "created_date": "2026-06-26",
       "created_regime": 1
     },
-    "created_date": "2026-06-25",
+    "created_date": "2026-06-26",
     "created_regime": 1
   }
 }
