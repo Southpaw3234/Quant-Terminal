@@ -534,7 +534,7 @@ tr:hover td{background:rgba(88,166,255,.04)}
         </div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>Ticker</th><th>Qty</th><th>Entry</th><th>Notional</th><th>Confidence</th><th>Regime</th><th>Date</th></tr></thead>
+            <thead><tr><th>Ticker</th><th>Qty</th><th>Entry</th><th>Last</th><th>Value</th><th>P&amp;L $</th><th>P&amp;L %</th></tr></thead>
             <tbody id="pos-tbody"></tbody>
           </table>
         </div>
@@ -1243,11 +1243,43 @@ function getOpenPositions(trades) {
   return Object.values(pos).filter(p=>p.qty>0).map(p=>({...p, avg: p.qty>0?p.cost/p.qty:0}));
 }
 
-function renderPositions(trades) {
+function renderPositions(trades, livePos) {
+  const tbody = document.getElementById('pos-tbody');
+  livePos = Array.isArray(livePos) ? livePos : [];
+
+  // Prefer broker-authoritative positions (real current price + unrealized P&L
+  // on the stocks actually held). Fall back to the trades-derived view (entry
+  // only, no live P&L) when the broker snapshot is unavailable.
+  if (livePos.length) {
+    document.getElementById('pos-count').textContent = livePos.length + ' open';
+    document.getElementById('c-pos').textContent = livePos.length;
+    const totPL = livePos.reduce((s,p)=>s+(parseFloat(p.unrealized_pl)||0), 0);
+    const totVal = livePos.reduce((s,p)=>s+(parseFloat(p.market_value)||0), 0);
+    const sub = document.getElementById('c-pos-s');
+    sub.innerHTML = `${fN(totVal)} value · <span style="color:${totPL>=0?'var(--gr)':'var(--rd)'}">`
+                  + `${totPL>=0?'+':'-'}$${Math.abs(totPL).toLocaleString(undefined,{maximumFractionDigits:0})} unreal.</span>`;
+    tbody.innerHTML = livePos.map(p => {
+      const pl  = parseFloat(p.unrealized_pl)  || 0;
+      const plc = parseFloat(p.unrealized_plpc); // already a % from the backend
+      const col = pl>=0 ? 'var(--gr)' : 'var(--rd)';
+      const arrow = pl>=0 ? '▲' : '▼';
+      return `<tr>
+        <td><strong>${p.ticker}</strong></td>
+        <td>${(parseFloat(p.qty)||0).toLocaleString()}</td>
+        <td>${f$(p.avg_entry)}</td>
+        <td>${f$(p.current_price)}</td>
+        <td style="color:var(--mu)">${fN(p.market_value)}</td>
+        <td style="color:${col};font-weight:600">${pl>=0?'+':'-'}$${Math.abs(pl).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+        <td style="color:${col}">${arrow} ${fPn(plc)}</td>
+      </tr>`;
+    }).join('');
+    return;
+  }
+
+  // ── fallback: trades-derived (no live price) ──
   const pos = getOpenPositions(trades);
   document.getElementById('pos-count').textContent = pos.length + ' open';
   document.getElementById('c-pos').textContent = pos.length;
-  const tbody = document.getElementById('pos-tbody');
 
   if (!pos.length) {
     tbody.innerHTML = `<tr><td colspan="7"><div class="empty"><div class="empty-icon">📭</div><div class="empty-msg">No open positions</div></div></td></tr>`;
@@ -1258,8 +1290,8 @@ function renderPositions(trades) {
   document.getElementById('c-pos-s').textContent = fN(tn) + ' notional';
   tbody.innerHTML = pos.map(p => `<tr>
     <td><strong>${p.ticker}</strong></td><td>${p.qty}</td><td>${f$(p.avg)}</td>
-    <td style="color:var(--mu)">${fN(p.qty*p.avg)}</td><td>${confBar(p.conf)}</td>
-    <td>${regime(p.regime)}</td><td style="color:var(--mu);font-size:10px">${fd(p.ts)}</td>
+    <td style="color:var(--mu)">${f$(p.avg)}</td><td style="color:var(--mu)">${fN(p.qty*p.avg)}</td>
+    <td style="color:var(--mu)">—</td><td style="color:var(--mu)">—</td>
   </tr>`).join('');
 }
 
@@ -3232,7 +3264,7 @@ async function loadAll() {
   const pnlLog  = d.pnl_log      || [];
   const pnlHist = d.pnl_history  || [];
 
-  renderPositions(trades);
+  renderPositions(trades, d.positions || []);
   renderTrades(trades);
   renderPredictions(preds);
   renderPnLChart(pnlHist);

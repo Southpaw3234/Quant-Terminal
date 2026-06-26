@@ -5194,6 +5194,31 @@ if RUN_TYPE in ("morning", "intraday") and _AK and _SK:
         _unrealized = round(sum(float(p.get("unrealized_pl", 0) or 0) for p in _positions), 2)
         _n_open = len(_positions)
 
+        # Persist a compact per-position table for the dashboard "Open Positions"
+        # up/down view — broker-authoritative current price + unrealized P&L on
+        # the stocks actually held. Sorted by P&L (winners first).
+        try:
+            _pos_compact = []
+            for _p in _positions:
+                try:
+                    _pos_compact.append({
+                        "ticker":          _p.get("symbol"),
+                        "qty":             float(_p.get("qty", 0) or 0),
+                        "avg_entry":       round(float(_p.get("avg_entry_price", 0) or 0), 4),
+                        "current_price":   round(float(_p.get("current_price", 0) or 0), 4),
+                        "market_value":    round(float(_p.get("market_value", 0) or 0), 2),
+                        "unrealized_pl":   round(float(_p.get("unrealized_pl", 0) or 0), 2),
+                        "unrealized_plpc": round(float(_p.get("unrealized_plpc", 0) or 0) * 100, 2),
+                        "side":            _p.get("side", "long"),
+                    })
+                except Exception:
+                    continue
+            _pos_compact.sort(key=lambda x: x["unrealized_pl"], reverse=True)
+            Path("data/predictions/open_positions.json").write_text(
+                json.dumps(_pos_compact, indent=2), encoding="utf-8")
+        except Exception:
+            pass
+
         # --- portfolio history: full daily equity curve (#2) ---
         _ph = _rq_ap.get(f"{_ap_base}/v2/account/portfolio/history",
                          headers=_ap_hdr,
@@ -6225,6 +6250,7 @@ try:
         "walkforward":    _read_json("data/predictions/walkforward.json"),
         "shadow_xsec":    _read_csv("data/shadow/cross_sectional_pnl.csv"),
         "pnl_history":    _read_csv("data/predictions/pnl_history.csv"),
+        "positions":      _read_json("data/predictions/open_positions.json"),
     }
 
     Path("docs").mkdir(exist_ok=True)
