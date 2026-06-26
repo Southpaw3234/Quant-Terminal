@@ -555,6 +555,23 @@ tr:hover td{background:rgba(88,166,255,.04)}
       </div>
     </div>
 
+    <!-- ── HOLDINGS — UNREALIZED P&L (visual) ─────────────────── -->
+    <div class="panel" style="margin-bottom:20px" id="holdings-pnl-panel">
+      <div class="panel-hdr">
+        <span class="panel-title">💰 Holdings — Unrealized Gain / Loss</span>
+        <span style="color:var(--mu);font-size:10px" id="holdings-pnl-sum">—</span>
+      </div>
+      <div style="font-size:10px;color:var(--mu);padding:6px 14px 2px">
+        Every stock currently held, with live unrealized P&amp;L per position (winners first). Green = up since entry, red = down. Bar length shows P&amp;L size relative to the largest mover.
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Ticker</th><th>Qty</th><th>Entry</th><th>Last</th><th>Value</th><th>Unrealized $</th><th>%</th><th style="width:120px">Performance</th></tr></thead>
+          <tbody id="holdings-pnl-tbody"><tr><td colspan="8"><div class="empty"><div class="empty-msg">Populates on the next cycle</div></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- ── HONEST OUT-OF-SAMPLE EDGE (walk-forward) ───────────── -->
     <div class="panel" style="margin-bottom:20px" id="wf-panel">
       <div class="panel-hdr">
@@ -1293,6 +1310,82 @@ function renderPositions(trades, livePos) {
     <td style="color:var(--mu)">${f$(p.avg)}</td><td style="color:var(--mu)">${fN(p.qty*p.avg)}</td>
     <td style="color:var(--mu)">—</td><td style="color:var(--mu)">—</td>
   </tr>`).join('');
+}
+
+// ── Holdings — Unrealized P&L (dedicated visual table) ─────────────────────
+async function renderHoldingsPnL(trades, livePos) {
+  const tbody = document.getElementById('holdings-pnl-tbody');
+  const sumEl = document.getElementById('holdings-pnl-sum');
+  if (!tbody) return;
+  livePos = Array.isArray(livePos) ? livePos : [];
+
+  let rows = [];
+  if (livePos.length) {
+    // Authoritative broker snapshot.
+    rows = livePos.map(p => ({
+      ticker: p.ticker, qty: parseFloat(p.qty)||0, avg: parseFloat(p.avg_entry)||0,
+      last: parseFloat(p.current_price)||0, val: parseFloat(p.market_value)||0,
+      pl: parseFloat(p.unrealized_pl)||0, plc: parseFloat(p.unrealized_plpc),
+    }));
+  } else {
+    // Fallback: derive holdings from filled trades + fetch live prices client-side
+    // (capped) so the table works even before the next backend cycle writes positions.
+    const pos = getOpenPositions(trades);
+    if (!pos.length) {
+      tbody.innerHTML = `<tr><td colspan="8"><div class="empty"><div class="empty-icon">📭</div><div class="empty-msg">No open positions</div></div></td></tr>`;
+      sumEl.textContent = 'No holdings'; return;
+    }
+    sumEl.textContent = `fetching live prices for ${pos.length} holdings…`;
+    const CONC = 6;
+    for (let i = 0; i < pos.length; i += CONC) {
+      const batch = pos.slice(i, i + CONC);
+      const quotes = await Promise.all(batch.map(p =>
+        richQuoteFetch(p.ticker).catch(() => null)));
+      batch.forEach((p, j) => {
+        const last = quotes[j]?.price;
+        if (last == null) return;
+        const val = p.qty * last, pl = (last - p.avg) * p.qty;
+        rows.push({ ticker: p.ticker, qty: p.qty, avg: p.avg, last,
+          val, pl, plc: p.avg ? (last / p.avg - 1) * 100 : NaN });
+      });
+    }
+  }
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty"><div class="empty-msg">No live prices available — retry next cycle</div></div></td></tr>`;
+    sumEl.textContent = '—'; return;
+  }
+
+  rows.sort((a, b) => b.pl - a.pl);
+  const totPL = rows.reduce((s, r) => s + r.pl, 0);
+  const totVal = rows.reduce((s, r) => s + r.val, 0);
+  const wins = rows.filter(r => r.pl > 0).length, losers = rows.filter(r => r.pl < 0).length;
+  const maxAbs = Math.max(...rows.map(r => Math.abs(r.pl)), 1);
+
+  sumEl.innerHTML = `${rows.length} held · ${fN(totVal)} value · `
+    + `<span style="color:${totPL>=0?'var(--gr)':'var(--rd)'}">${totPL>=0?'+':'-'}$`
+    + `${Math.abs(totPL).toLocaleString(undefined,{maximumFractionDigits:0})} unreal.</span> · `
+    + `<span style="color:var(--gr)">${wins}▲</span> / <span style="color:var(--rd)">${losers}▼</span>`;
+
+  tbody.innerHTML = rows.map(r => {
+    const up = r.pl >= 0, col = up ? 'var(--gr)' : 'var(--rd)';
+    const w = Math.round(Math.abs(r.pl) / maxAbs * 100);
+    // Diverging bar: red grows left of centre, green grows right.
+    const bar = `<div style="position:relative;height:10px;background:var(--bg2,#161b22);border-radius:3px;overflow:hidden">
+        <div style="position:absolute;top:0;bottom:0;${up?'left':'right'}:50%;width:${w/2}%;background:${col};opacity:.85"></div>
+        <div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--mu);opacity:.4"></div>
+      </div>`;
+    return `<tr>
+      <td><strong>${r.ticker}</strong></td>
+      <td>${r.qty.toLocaleString()}</td>
+      <td>${f$(r.avg)}</td>
+      <td>${f$(r.last)}</td>
+      <td style="color:var(--mu)">${fN(r.val)}</td>
+      <td style="color:${col};font-weight:600">${up?'+':'-'}$${Math.abs(r.pl).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td style="color:${col}">${up?'▲':'▼'} ${isNaN(r.plc)?'—':(up?'+':'')+r.plc.toFixed(2)+'%'}</td>
+      <td>${bar}</td>
+    </tr>`;
+  }).join('');
 }
 
 // ── P&L Chart ─────────────────────────────────────────────────────────────
@@ -3265,6 +3358,7 @@ async function loadAll() {
   const pnlHist = d.pnl_history  || [];
 
   renderPositions(trades, d.positions || []);
+  renderHoldingsPnL(trades, d.positions || []);
   renderTrades(trades);
   renderPredictions(preds);
   renderPnLChart(pnlHist);
