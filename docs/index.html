@@ -563,6 +563,7 @@ tr:hover td{background:rgba(88,166,255,.04)}
       </div>
       <div style="font-size:10px;color:var(--mu);padding:6px 14px 2px">
         Every stock currently held, with live unrealized P&amp;L per position (winners first). Green = up since entry, red = down. Bar length shows P&amp;L size relative to the largest mover.
+        <span id="holdings-pnl-src" style="margin-left:6px"></span>
       </div>
       <div class="tbl-wrap">
         <table>
@@ -1316,11 +1317,16 @@ function renderPositions(trades, livePos) {
 async function renderHoldingsPnL(trades, livePos) {
   const tbody = document.getElementById('holdings-pnl-tbody');
   const sumEl = document.getElementById('holdings-pnl-sum');
+  const srcEl = document.getElementById('holdings-pnl-src');
   if (!tbody) return;
   livePos = Array.isArray(livePos) ? livePos : [];
+  const _now = () => new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  const setSrc = (label, col) => { if (srcEl) srcEl.innerHTML =
+    `<span style="color:${col}">●</span> source: ${label} · as of ${_now()}`; };
 
   let rows = [];
   if (livePos.length) {
+    setSrc('broker (Alpaca)', 'var(--gr)');
     // Authoritative broker snapshot.
     rows = livePos.map(p => ({
       ticker: p.ticker, qty: parseFloat(p.qty)||0, avg: parseFloat(p.avg_entry)||0,
@@ -1336,6 +1342,7 @@ async function renderHoldingsPnL(trades, livePos) {
       sumEl.textContent = 'No holdings'; return;
     }
     sumEl.textContent = `fetching live prices for ${pos.length} holdings…`;
+    setSrc('live quotes (Yahoo)', 'var(--bl)');
     const CONC = 6;
     for (let i = 0; i < pos.length; i += CONC) {
       const batch = pos.slice(i, i + CONC);
