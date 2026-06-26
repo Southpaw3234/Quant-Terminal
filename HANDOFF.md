@@ -1,7 +1,7 @@
 # Quant Terminal v25 — Session Handoff
-**Date:** 2026-06-24 (updated — **persistence fix VERIFIED: shadow/stat-arb evidence clock confirmed alive & maturing**)  
+**Date:** 2026-06-25 (updated — **scorer death FIXED + first rank-IC read (NO-GO, recent regime flat)**)  
 **Branch:** `master` (live/cron)  
-**Last commit:** `a0231ca` (master, live — orphan-checkout persistence fix) · `f718f51` (master — River cut) · `3193ef8` (feat/maximize-model — lighter+isolated GPU run)  
+**Last commit:** `afa326d` (master, live — trailing-20d rank-IC) · `095ff07` (master, live — scorer pred_ts format fix) · `a0231ca` (persistence fix)  
 **Repo:** https://github.com/Southpaw3234/Quant-Terminal
 
 ---
@@ -30,7 +30,7 @@ milestones below are now DUE or PAST-DUE.
 | ~~Thu 2026-06-11+~~ ✅ | **Phase 1 GPU validation — DONE 2026-06-14** | **RESULT: FLAT — frame at ceiling.** Run `27484667746` (feat/maximize-model, QT_GPU=True, 80-trial light profile, device=cuda): walk-forward **mean OOS AUC=0.5500 / IC=0.0805** vs baseline 0.5461/0.0754 → Δ noise, "weak/no edge". **Verdict: tuning is NOT the lever; do NOT merge PR #21 for AUC; pivot to frame changes (Frame 1/3).** River clamp FAILED its test (still 46%). See SESSION LEDGER 2026-06-12/14. |
 | **Anytime before real $** | Stage-0 prerequisites | Discord webhook set? **River: clamp tested 6/14 → still 46%, must CUT or fix.** Intraday-pickle bug fixed? Fill audit done? (See REAL-MONEY DEPLOYMENT GATE.) |
 | ~~**~2026-06-15**~~ ✅ | First shadow positions mature | **PASS (verified 6/24):** persistence fix `a0231ca` held — shadow now matures+scores real 5-day books (6/23 scored 2 matured; pnl.csv has scored rows), stat-arb persists 20 pairs/day. Clock is alive; first readable rank-IC ~early July. |
-| **~early July 2026** | Shadow rank-IC readable | Read the first real (not projected) cross-sectional rank-IC. Report the number + trend. |
+| ~~**~early July 2026**~~ ✅ | Shadow rank-IC readable | **READ EARLY 6/25:** first real rank-IC = full −0.044 (t−2.26) / trailing-20d −0.013 (t−1.02). **NO-GO** (gate +0.03/t≥2) — beta, not alpha — but recent regime flat not anti-predictive, turning positive. Now track the trailing trend. |
 | **~late Jul / early Aug 2026** | **GO/NO-GO alpha gate** | Evaluate ALL Stage-1 gate thresholds (rank-IC ≥0.03 t≥2, AUC ≥0.55, max-DD <15%, \|β\|<0.2, WRC p<0.10). This is the real-money decision point. |
 | **~mid-Aug 2026** | Frame 2 intraday trainable | 60 trading days of `data/intraday_history/` should exist → `model_intraday.py` trains for real. |
 | **~Aug 2026** | Build Frame 3 trading layer | If Phase 1 passed the gate, write the stat-arb trading layer (`stat_arb.py`: Kalman hedge, spread entry/exit). |
@@ -41,6 +41,59 @@ and the ONE highest-priority action for today. Then wait for direction.
 
 > 📌 Full reasoning for every item lives below: roadmap → §"FUTURE UPGRADES";
 > real-money rules → §"REAL-MONEY DEPLOYMENT GATE"; Monday verification → §"CHECKPOINT".
+
+---
+
+## 🗓️ SESSION LEDGER — 2026-06-25: scorer death root-caused & FIXED + first rank-IC read
+
+**THE HEADLINE: the 5/14 scorer death was a `pred_ts` datetime-format collision (NOT the
+persistence family) — diagnosed, fixed, merged live (`095ff07`). And the first real
+cross-sectional rank-IC came in: NO-GO, but the recent regime is flat, not anti-predictive.**
+
+**Today's morning run (`28174050510`, 9:35 ET dispatch) — clean.** `MORNING cycle complete`,
+no exceptions. Walk-forward **AUC 0.5467 / IC 0.0757 / last 0.6011 ("weak/no edge")** — pinned
+at the frozen ceiling (≡ 6/23 0.5459, 6/24 0.5447, 6/14 GPU 0.55). Kill switch healthy (open
+$111.6k, peak_dd −1.55%, no trip); book recovered to **$117.9k (+$17.9k total, 61 open)** by
+15:31 UTC — long-book beta, not alpha. 307 signals → 12 BUYs filled. Stat-arb 7 signals.
+
+**① First real rank-IC (the late-Jul gate's headline metric, arriving early):**
+| Window | mean | t-stat | gate |
+|---|---|---|---|
+| Full (~5 wks, 5/12→6/17) | **−0.044** | −2.26 | NOT YET |
+| **Trailing 20d** | **−0.013** | **−1.02** | NOT YET |
+
+Read: **NO-GO** (negative, gate needs +0.03/t≥2) — confirms in hard numbers that the live P&L
+is **beta, not alpha**. BUT the full-window mean is dragged by the 5/12–5/21 stalled-pipeline
+tail (−0.23..−0.30); the **trailing window is NOT significantly negative** (t=−1.02 ≈ zero) and
+recent prints turned positive (6/14 +0.066, 6/15 +0.076, 6/17 +0.068). Recent regime is
+flat/neutral, not anti-predictive. Too young to kill Frame 1 — **track the trend**.
+
+**② Scorer death — RESOLVED (was the #1 open investigate item).** Root cause was a pure parse
+bug, NOT persistence/checkout (the earlier guess). `predictions.csv` `pred_ts` accumulated two
+formats — old tz-aware `… +00:00` (space sep) and new tz-naive `…T…` from Cell 13's
+`isoformat()`. `pd.to_datetime(col, utc=True)` infers ONE format and coerces all 26.6k
+non-matching rows to `NaT`, so the maturity filter `(pred_ts < cutoff)` matched ZERO mature
+rows → scored nothing after 5/14 → model's per-ticker calibration + rule-learning ran on zero
+feedback ~6 weeks. Live log confirmed: `No mature unscored predictions` while 22.6k sat
+unscored. **Fix `095ff07` (`CELL_14_PREPATCH`, scoring-only, no trading change):** normalize
+`pred_ts` via `format='mixed'`; backfill matured rows at each row's OWN horizon price (reuse
+`_PRICE_CACHE`, yfinance-capped) with action-based correctness (avoids the frozen scorer's stale
+SPY benchmark), mark `scored=True`; + staleness `::warning::` guard. Dry-run on a copy: NaT
+27248→614, mature-unscored 0→23564, scored max date 5/14→6/20, labels validated. Merged to
+master + pushed; applies on the next morning cron (no paper orders — only rewrites outcomes).
+
+**③ Trailing rank-IC (`afa326d`).** `analyze_rank_ic.py` now reports a trailing-20d window +
+trend beside the full-window gate, so the stalled-era tail can't mask a turn. Measurement-only.
+
+**Open / next:**
+- [ ] **VERIFY scorer fix on next morning run** — `scored` max date passes 5/14;
+  `data/predictions/ticker_accuracy.json` mtime advances past 6/9; new
+  `--- summary (TRAILING 20 days) ---` block appears in the rank-IC log step.
+- [ ] **TRACK rank-IC trend** toward the +0.03 / t≥2 gate — trailing window is the live read.
+- [ ] **`DISCORD_WEBHOOK_URL`** still unset — the wire that turns the persistence guard AND the
+  new scorer staleness guard from log-only warnings into real alerts. Last cheap Stage-0 item.
+- Memory written: `scorer-pred-ts-format-fix.md` (records the parse-bug root cause so a future
+  session doesn't re-chase the persistence family).
 
 ---
 
