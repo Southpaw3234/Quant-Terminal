@@ -96,16 +96,28 @@ Reviewed the last two morning runs (the 9:35 ET / 13:35 UTC cron-job.org dispatc
   silent-stall class of bug into a same-day alarm. Non-blocking by design (never skips
   the trading commit — avoids the exit-127 footgun).
 
-**⚠️ NEW FINDING — prediction-outcome scorer DEAD since 2026-05-14 (investigate, do NOT blind-fix).**
-While building the rank-IC analyzer: `predictions.csv` logs per-name `confidence` for the
-full universe every day (current, 307–1228 names/day), BUT its realized-outcome columns
-(`scored`/`actual_return`/`was_correct`) **stop at 2026-05-14** — only 1,371 of 28,619 rows
-are scored, none after 5/14 (same mid-May era as the persistence bug). This is NOT just lost
-analytics: those columns feed the model's **online per-ticker calibration and rule-learning**,
-so the live model has been learning from ZERO outcome feedback for ~6 weeks. The rank-IC
-analyzer sidesteps it (recomputes returns), so the gate is unblocked — but the scorer death
-is a real behavioral degradation. **It's frozen-code (touches decision logic), so root-cause
-it before patching; don't blind-fix.** Likely the same persistence/checkout family.
+**✅ RESOLVED 2026-06-25 — scorer death root-caused & fixed (branch `fix/scorer-pred-ts-format`, `ec1b3b3`).**
+The prediction-outcome scorer silently scored ZERO rows after 2026-05-14 (only 1,371 of
+28,619 rows scored). **Root cause was NOT the persistence/checkout family** (the earlier
+guess) — the data persisted fine. It's a pure **`pred_ts` datetime-format collision**:
+old rows are tz-aware `YYYY-MM-DD HH:MM:SS.ffffff+00:00` (space sep); new rows (from ~5/21,
+written by Cell 13's `datetime.isoformat()`) are tz-naive `...T...`. Cell 14's
+`pd.to_datetime(pred_ts, utc=True)` infers ONE format from the column and **coerces every
+non-matching row to `NaT`**, so the maturity filter `(pred_ts < cutoff)` matched 0 of the
+26.6k unscored rows → they were invisible forever. Today's live log confirmed it:
+`No mature unscored predictions (need 5+ days old)` while 22.6k mature rows sat unscored.
+Those columns feed per-ticker calibration + rule-learning, so the live model learned from
+ZERO outcome feedback for ~6 weeks (walk-forward AUC unaffected — it recomputes returns
+itself, which is why nothing visibly broke).
+
+**Fix** (`CELL_14_PREPATCH`, scoring/measurement only — touches NO trading logic):
+(1) normalize `pred_ts` via `format='mixed'` → one canonical form; (2) backfill matured
+unscored rows against each row's OWN horizon price (reuses `_PRICE_CACHE`, yfinance-capped)
+with action-based correctness — deliberately avoids the frozen scorer's single stale SPY
+benchmark that would mislabel weeks-old rows — and marks `scored=True` so Cell 14 only
+handles fresh rows; (3) preserves the zero-price guard; (4) adds a staleness `::warning::`
+guard. Dry-run on a copy: NaT 27248→614, mature-unscored 0→23564, scored max date 5/14→6/20.
+**Not yet merged to master / not yet run live — see Open.**
 
 **Open / next:**
 - [ ] **READ the first rank-IC number** — after the next morning run (or a `morning`
@@ -114,8 +126,11 @@ it before patching; don't blind-fix.** Likely the same persistence/checkout fami
 - [ ] **`DISCORD_WEBHOOK_URL`** still unset — the last cheap Stage-0 prerequisite (kill
   switch halts but can't notify; also wires the new persistence-guard alarm). User creates
   webhook → `gh secret set DISCORD_WEBHOOK_URL`.
-- [ ] **Investigate the 5/14 scorer death** (above) — restores the model's outcome-feedback
-  learning loop. Frozen-code; diagnose first.
+- [ ] **Merge + verify the scorer fix** — branch `fix/scorer-pred-ts-format` (`ec1b3b3`) is
+  diagnosed, implemented, dry-run-validated but **NOT merged**. Decision: merge to master so
+  the next morning cron applies it (no live paper orders), vs branch dispatch (places orders).
+  On first live run, reuses `_PRICE_CACHE` → scores most of the 23.5k backlog in one pass;
+  verify `scored` max date passes 5/14 and `ticker_accuracy.json` mtime advances past 6/9.
 
 ---
 
