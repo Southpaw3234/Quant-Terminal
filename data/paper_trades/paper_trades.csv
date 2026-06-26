@@ -45,3 +45,5 @@ ts,ticker,action,price,qty,dollars,confidence,regime,vix,portfolio_value,notes,o
 2026-06-26T17:48:20.688376,SCHW,SELL,89.76,16,,0.5,1,,,,"alpaca_error:{""buying_power"":""976.58"",""code"":40310000",error,2026-06-26,NORMAL,1.0,1436.16
 2026-06-26T17:48:21.274509,DPZ,SELL,294.13,5,,0.5,1,,,,"alpaca_error:{""buying_power"":""973.97"",""code"":40310000",error,2026-06-26,NORMAL,1.0,1470.65
 2026-06-26T17:48:21.646348,SWKS,SELL,68.16,12,,0.5,1,,,,"alpaca_error:{""available"":""6"",""code"":40310000,""existi",error,2026-06-26,NORMAL,1.0,817.92
+2026-06-26T17:58:19.104428,AMD,SELL,519.46,2,,0.5,1,,,,"alpaca_error:{""available"":""1"",""code"":40310000,""existi",error,2026-06-26,NORMAL,1.0,1038.92
+2026-06-26T17:58:21.295926,SOXX,SELL,596.25,1,,0.5,1,,,,fae03119-72ac-4f29-8dc9-bbe64afae7c9,filled,2026-06-26,NORMAL,1.0,596.25
