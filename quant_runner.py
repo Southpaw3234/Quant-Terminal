@@ -4443,12 +4443,31 @@ if "regimes" in dir() and regimes is not None and len(regimes) > 0:
         pass
 """
 
-# ── CELL 14 PREPATCH: Guard price_at_pred=0 → prevents float division by zero ─
-# Cell 14 computes ret = (price_now - price_at_pred) / price_at_pred for each
-# scored prediction row. When price_at_pred is 0 or null (Alpaca fill not written
-# back), this throws ZeroDivisionError and silently drops those predictions from
-# the win-rate calculation, inflating or deflating accuracy statistics.
-# Fix: backfill zero-price rows from yfinance, then drop any remaining zeros.
+# ── CELL 14 PREPATCH: pred_ts format normalization + outcome backfill + zero-price guard ─
+# Three guards on predictions.csv, applied before the frozen Cell 14 scorer runs:
+#
+# (1) pred_ts FORMAT NORMALIZATION — root-cause fix for the 2026-05-14 scorer death.
+#     The column accumulated TWO datetime formats: old tz-aware
+#     'YYYY-MM-DD HH:MM:SS.ffffff+00:00' (space sep) and new tz-naive '...T...'
+#     emitted by datetime.isoformat() (Cell 13). A whole-column
+#     pd.to_datetime(utc=True) infers ONE format and coerces every non-matching
+#     row to NaT, so the scorer's (pred_ts < cutoff) filter silently matched ZERO
+#     mature rows after 5/14 — 26.6k unscored predictions went invisible and the
+#     model's per-ticker calibration + rule-learning feedback loop went dead for
+#     ~6 weeks. We reparse per-element with format='mixed' and rewrite the column
+#     in one canonical form so Cell 14 (and every downstream reader) parses cleanly.
+#
+# (2) OUTCOME BACKFILL — score the recovered backlog correctly. Each matured
+#     (>= FORECAST_DAYS old) unscored row is scored against the price at its OWN
+#     horizon date (reusing _PRICE_CACHE when present, else yfinance) with
+#     action-based correctness — NOT the frozen scorer's single stale SPY
+#     benchmark, which would mislabel weeks-old rows. We mark scored=True here so
+#     the frozen Cell 14 only ever handles genuinely fresh rows (horizon ≈ now,
+#     where its benchmark is valid). yfinance fallbacks are capped per run so the
+#     catch-up converges over a couple runs without risking a CI hang.
+#
+# (3) ZERO-PRICE GUARD (original) — backfill price_at_pred=0/null rows from
+#     yfinance, drop any unfixable, so Cell 14's return division can't blow up.
 CELL_14_PREPATCH = """
 try:
     import pandas as _pd14fix
@@ -4456,6 +4475,91 @@ try:
     _preds14 = _P14fix("data/predictions/predictions.csv")
     if _preds14.exists():
         _df14 = _pd14fix.read_csv(_preds14)
+        _dirty14 = False
+
+        # ── (1) pred_ts format normalization ──────────────────────────────
+        if "pred_ts" in _df14.columns:
+            try:
+                _pt14 = _pd14fix.to_datetime(_df14["pred_ts"], errors="coerce",
+                                             utc=True, format="mixed")
+                _n_nat14 = int(_pt14.isna().sum())
+                _canon14 = _pt14.dt.strftime("%Y-%m-%d %H:%M:%S.%f%z")
+                # only rewrite where parse succeeded (preserve truly-empty as-is)
+                _df14.loc[_pt14.notna(), "pred_ts"] = _canon14[_pt14.notna()]
+                _dirty14 = True
+                print(f"  [patch] Cell14: pred_ts normalized via format='mixed' "
+                      f"({_n_nat14} unparseable/empty rows left untouched)")
+            except Exception as _ne14:
+                print(f"  [patch] Cell14 pred_ts normalize (non-fatal): {_ne14}")
+
+        # ── (2) outcome backfill for matured unscored rows ────────────────
+        if "scored" in _df14.columns and "pred_ts" in _df14.columns \
+                and "price_at_pred" in _df14.columns:
+            try:
+                _fd14 = int(globals().get("FORECAST_DAYS", 5) or 5)
+                _pt14b = _pd14fix.to_datetime(_df14["pred_ts"], errors="coerce", utc=True)
+                _today14 = _pd14fix.Timestamp.now(tz="UTC").normalize()
+                _ppred = _pd14fix.to_numeric(_df14["price_at_pred"], errors="coerce")
+                _mask14 = (_df14["scored"].astype(str) == "False") & _pt14b.notna() \
+                    & (_ppred > 0) & (_pt14b < _today14 - _pd14fix.Timedelta(days=_fd14))
+                _idxs14 = list(_df14[_mask14].index)
+                if _idxs14:
+                    import yfinance as _yf14b
+                    _cache14 = globals().get("_PRICE_CACHE", {}) or {}
+                    _px14, _dl_used, _DL_CAP = {}, [0], 60
+                    def _hist14(_tk):
+                        if _tk in _px14: return _px14[_tk]
+                        _h = None
+                        _c = _cache14.get(_tk)
+                        if _c is not None and hasattr(_c, "empty") and not _c.empty:
+                            _h = _c.copy()
+                        elif _dl_used[0] < _DL_CAP:
+                            try:
+                                _h = _yf14b.Ticker(_tk).history(period="120d", auto_adjust=True)
+                                _dl_used[0] += 1
+                            except Exception:
+                                _h = None
+                        if _h is not None and not _h.empty:
+                            try: _h.index = _pd14fix.to_datetime(_h.index, utc=True)
+                            except Exception: _h = None
+                        _px14[_tk] = _h
+                        return _h
+                    _n_bf14 = 0
+                    for _i14 in _idxs14:
+                        try:
+                            _tk = str(_df14.at[_i14, "ticker"]).strip()
+                            if not _tk: continue
+                            _entry = float(_ppred[_i14])
+                            _h = _hist14(_tk)
+                            if _h is None or _h.empty: continue
+                            _od = (_pt14b[_i14] + _pd14fix.Timedelta(days=_fd14)).normalize()
+                            _fut = _h[_h.index >= _od]
+                            if _fut.empty: continue
+                            _exit = float(_fut["Close"].iloc[0])
+                            _ret = (_exit - _entry) / _entry
+                            _act = str(_df14.at[_i14, "action"])
+                            if _act == "BUY":    _ok = _ret > 0.01
+                            elif _act == "SELL": _ok = _ret < -0.01
+                            else:                _ok = abs(_ret) <= 0.04
+                            _cf = _df14.at[_i14, "confidence"]
+                            _cf = float(_cf) if _pd14fix.notna(_cf) else 0.5
+                            _df14.at[_i14, "price_at_outcome"] = round(_exit, 4)
+                            _df14.at[_i14, "actual_return"]    = round(_ret, 4)
+                            _df14.at[_i14, "was_correct"]      = bool(_ok)
+                            _df14.at[_i14, "magnitude_error"]  = round(abs(_ret - (_cf - 0.5)), 4)
+                            _df14.at[_i14, "outcome_ts"]       = _today14.isoformat()
+                            _df14.at[_i14, "scored"]           = True
+                            _n_bf14 += 1
+                        except Exception:
+                            continue
+                    if _n_bf14 > 0:
+                        _dirty14 = True
+                        print(f"  [patch] Cell14: backfilled {_n_bf14}/{len(_idxs14)} matured "
+                              f"outcomes (per-row horizon, action-based; scorer revived)")
+            except Exception as _bf14e:
+                print(f"  [patch] Cell14 outcome backfill (non-fatal): {_bf14e}")
+
+        # ── (3) zero-price guard (original) ───────────────────────────────
         if "price_at_pred" in _df14.columns:
             _df14["price_at_pred"] = _pd14fix.to_numeric(_df14["price_at_pred"], errors="coerce")
             _bad14 = _df14["price_at_pred"].isna() | (_df14["price_at_pred"] <= 0)
@@ -4477,11 +4581,29 @@ try:
                 _still_bad = int((_df14["price_at_pred"].isna() | (_df14["price_at_pred"] <= 0)).sum())
                 if _still_bad > 0:
                     _df14 = _df14[(_df14["price_at_pred"].notna()) & (_df14["price_at_pred"] > 0)]
-                _df14.to_csv(_preds14, index=False)
+                _dirty14 = True
                 print(f"  [patch] Cell14: fixed {_fixed14}/{_n_bad} zero-price preds "
                       f"via yfinance; dropped {_still_bad} unfixable")
+
+        if _dirty14:
+            _df14.to_csv(_preds14, index=False)
+
+        # ── (4) staleness guard — alarm if scoring silently dies again ────
+        # Mirrors the 6/24 persistence guard: turns a silent multi-week scorer
+        # stall (the 5/14 failure mode) into a same-day, visible warning.
+        try:
+            if "scored" in _df14.columns:
+                _scm = _df14[_df14["scored"].astype(str).isin(["True", "true"])]
+                _spt = _pd14fix.to_datetime(_scm["pred_ts"], errors="coerce", utc=True)
+                _age = (_pd14fix.Timestamp.now(tz="UTC") - _spt.max()).days \
+                    if _spt.notna().any() else 999
+                if _age > 8:
+                    print(f"  ::warning:: [scorer-guard] newest SCORED prediction is "
+                          f"{_age}d old (>8) — outcome scoring may be stalled again")
+        except Exception:
+            pass
 except Exception as _e14fix:
-    print(f"  [patch] Cell14 price guard (non-fatal): {_e14fix}")
+    print(f"  [patch] Cell14 prepatch (non-fatal): {_e14fix}")
 """
 
 _CELL_PREPATCH = {
