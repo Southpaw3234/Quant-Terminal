@@ -42,13 +42,31 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 PRED_CSV = Path("data/predictions/predictions.csv")
 OUT_CSV = Path("data/shadow/rank_ic.csv")
+LS_CSV = Path("data/shadow/cross_sectional_ls.csv")  # clean, equity-only long-short series
 HORIZON_DEFAULT = 5      # trading steps; predictions.csv `horizon_days` overrides per row
 MIN_NAMES = 10           # need a real cross-section before an IC is meaningful
 DECILE = 30              # for the long-short cross-check (mirrors shadow harness)
+
+# The cross-section is meant to measure single-name EQUITY selection skill.
+# Crypto (-USD) and ETFs are excluded so one DOGE candle or a sector-ETF move
+# can't masquerade as stock-picking alpha — these contaminated the legacy
+# in-notebook shadow book (which also under-sampled each leg). SPY is fetched
+# separately for the long-short beta but is never part of the cross-section.
+_ETF_TICKERS = {
+    'ARKK', 'DIA', 'GLD', 'HYG', 'IWM', 'LQD', 'QQQ', 'SLV', 'SMH', 'SOXX',
+    'SPY', 'TLT', 'VNQ', 'XLB', 'XLC', 'XLE', 'XLF', 'XLI', 'XLK', 'XLP',
+    'XLRE', 'XLU', 'XLV', 'XLY',
+}
+
+
+def _is_equity(tk) -> bool:
+    tk = str(tk)
+    return not tk.endswith('-USD') and tk not in _ETF_TICKERS
 
 
 def _load_predictions() -> pd.DataFrame:
@@ -106,18 +124,21 @@ def _fwd_ret(prices: dict[str, pd.Series], tk: str, entry_iso: str, h: int):
 
 
 def main() -> None:
-    df = _load_predictions()
+    df_all = _load_predictions()
+    df = df_all[df_all["ticker"].map(_is_equity)].copy()
+    n_excl = df_all["ticker"].nunique() - df["ticker"].nunique()
     tickers = sorted(df["ticker"].unique().tolist())
     first_date = df["date"].min()
-    print(f"[rank-ic] {len(df)} unique (date,ticker) preds | "
-          f"{len(tickers)} tickers | from {first_date}")
+    print(f"[rank-ic] {len(df)} equity (date,ticker) preds | "
+          f"{len(tickers)} equity tickers (excluded {n_excl} crypto/ETF) | from {first_date}")
 
-    prices = _download_prices(tickers, first_date)
+    # SPY is fetched for the long-short beta only; it is not in the cross-section.
+    prices = _download_prices(sorted(set(tickers) | {"SPY"}), first_date)
     if not prices:
         print("[rank-ic] no price data — cannot compute. Exiting 0.")
         sys.exit(0)
 
-    rows, ls_rows = [], []
+    rows, ls_rows, ls_recs = [], [], []
     for date, g in df.groupby("date"):
         h = HORIZON_DEFAULT
         if "horizon_days" in g.columns and g["horizon_days"].notna().any():
@@ -134,11 +155,17 @@ def main() -> None:
         if pd.isna(ic):
             continue
         rows.append({"date": date, "n": len(pdf), "rank_ic": round(float(ic), 4)})
-        # Decile long-short cross-check (top vs bottom DECILE by confidence).
+        # Balanced decile long-short (top vs bottom DECILE by confidence). Both
+        # legs are exactly DECILE names drawn from the SAME matured-equity set,
+        # so the spread is count-balanced by construction (no leg under-sampling).
         if len(pdf) >= 2 * DECILE:
             srt = pdf.sort_values("conf", ascending=False)
-            ls = srt.head(DECILE)["ret"].mean() - srt.tail(DECILE)["ret"].mean()
-            ls_rows.append(float(ls))
+            lr = float(srt.head(DECILE)["ret"].mean())
+            sr = float(srt.tail(DECILE)["ret"].mean())
+            ls_rows.append(lr - sr)
+            ls_recs.append({"date": date, "h": int(h), "n_long": DECILE,
+                            "n_short": DECILE, "long_ret": round(lr, 5),
+                            "short_ret": round(sr, 5), "long_short": round(lr - sr, 5)})
 
     if not rows:
         print("[rank-ic] no matured days with enough names yet. Exiting 0.")
@@ -185,6 +212,41 @@ def main() -> None:
     _delta = trail["mean"] - full["mean"]
     print(f"trend         : trailing vs full {_delta:+.4f} "
           f"({'improving' if _delta > 0.005 else 'deteriorating' if _delta < -0.005 else 'flat'})")
+
+    # ── Clean equity-only long-short: write series + beta/drawdown gate inputs ──
+    # Supersedes the contaminated in-notebook data/shadow/cross_sectional_pnl.csv
+    # (which under-sampled each leg to ~5-10 of 30 names via `featured` dropout
+    # and mixed crypto/ETFs across legs). Here both legs are a full balanced
+    # DECILE of matured equities, recomputed from public prices over the whole
+    # window — so beta and drawdown are decision-grade, not 5-name noise.
+    if ls_recs:
+        lsdf = pd.DataFrame(ls_recs).sort_values("date").reset_index(drop=True)
+        lsdf["spy_fwd"] = [_fwd_ret(prices, "SPY", d, int(h))
+                           for d, h in zip(lsdf["date"], lsdf["h"])]
+        LS_CSV.parent.mkdir(parents=True, exist_ok=True)
+        lsdf.to_csv(LS_CSV, index=False)
+
+        ls = lsdf["long_short"].astype(float)
+        eq = (1.0 + ls).cumprod()
+        maxdd = float((eq / eq.cummax() - 1.0).min())
+        mfit = lsdf.dropna(subset=["spy_fwd"])
+        beta = corr = float("nan")
+        if len(mfit) >= 3 and float(mfit["spy_fwd"].std()) > 0:
+            beta = float(np.polyfit(mfit["spy_fwd"].astype(float).values,
+                                    mfit["long_short"].astype(float).values, 1)[0])
+            corr = float(mfit["long_short"].corr(mfit["spy_fwd"]))
+
+        print(f"\n--- clean equity-only long-short ({DECILE}L/{DECILE}S, gate inputs) ---")
+        print(f"days (N)      : {len(lsdf)}  (crypto + ETFs excluded, legs balanced)")
+        print(f"mean L/S ret  : {ls.mean():+.4f}   cumulative {(eq.iloc[-1] - 1) * 100:+.1f}%")
+        print(f"max drawdown  : {maxdd * 100:.1f}%      [gate: > -15%  -> "
+              f"{'OK' if maxdd > -0.15 else 'FAIL'}]")
+        if beta == beta:  # not NaN
+            print(f"beta vs SPY   : {beta:+.2f}   (corr {corr:+.2f}, n={len(mfit)})   "
+                  f"[gate: |beta| < 0.2  -> {'OK' if abs(beta) < 0.2 else 'FAIL'}]")
+        else:
+            print(f"beta vs SPY   : n/a (need >=3 matured days with SPY)")
+        print(f"[rank-ic] wrote {LS_CSV}")
 
     def _gate(st: dict) -> bool:
         return (st["mean"] >= 0.03 and st["tstat"] == st["tstat"] and st["tstat"] >= 2.0)

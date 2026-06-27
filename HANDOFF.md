@@ -1,5 +1,5 @@
 # Quant Terminal v25 — Session Handoff
-**Date:** 2026-06-25 (updated — **scorer death FIXED + first rank-IC read (NO-GO, recent regime flat)**)  
+**Date:** 2026-06-26 (updated — **scorer fix VERIFIED PASS live; rank-IC trend still improving, NO-GO**)  
 **Branch:** `master` (live/cron)  
 **Last commit:** `afa326d` (master, live — trailing-20d rank-IC) · `095ff07` (master, live — scorer pred_ts format fix) · `a0231ca` (persistence fix)  
 **Repo:** https://github.com/Southpaw3234/Quant-Terminal
@@ -30,7 +30,7 @@ milestones below are now DUE or PAST-DUE.
 | ~~Thu 2026-06-11+~~ ✅ | **Phase 1 GPU validation — DONE 2026-06-14** | **RESULT: FLAT — frame at ceiling.** Run `27484667746` (feat/maximize-model, QT_GPU=True, 80-trial light profile, device=cuda): walk-forward **mean OOS AUC=0.5500 / IC=0.0805** vs baseline 0.5461/0.0754 → Δ noise, "weak/no edge". **Verdict: tuning is NOT the lever; do NOT merge PR #21 for AUC; pivot to frame changes (Frame 1/3).** River clamp FAILED its test (still 46%). See SESSION LEDGER 2026-06-12/14. |
 | **Anytime before real $** | Stage-0 prerequisites | Discord webhook set? **River: clamp tested 6/14 → still 46%, must CUT or fix.** Intraday-pickle bug fixed? Fill audit done? (See REAL-MONEY DEPLOYMENT GATE.) |
 | ~~**~2026-06-15**~~ ✅ | First shadow positions mature | **PASS (verified 6/24):** persistence fix `a0231ca` held — shadow now matures+scores real 5-day books (6/23 scored 2 matured; pnl.csv has scored rows), stat-arb persists 20 pairs/day. Clock is alive; first readable rank-IC ~early July. |
-| ~~**~early July 2026**~~ ✅ | Shadow rank-IC readable | **READ EARLY 6/25:** first real rank-IC = full −0.044 (t−2.26) / trailing-20d −0.013 (t−1.02). **NO-GO** (gate +0.03/t≥2) — beta, not alpha — but recent regime flat not anti-predictive, turning positive. Now track the trailing trend. |
+| ~~**~early July 2026**~~ ✅ | Shadow rank-IC readable | **READ EARLY 6/25; re-read 6/26:** full −0.0396 / trailing-20d −0.0097 (trend +0.0299 *improving*). **NO-GO** (gate +0.03/t≥2) — beta, not alpha — but recent regime flat not anti-predictive, trailing creeping toward zero/positive. Track the trailing trend. |
 | **~late Jul / early Aug 2026** | **GO/NO-GO alpha gate** | Evaluate ALL Stage-1 gate thresholds (rank-IC ≥0.03 t≥2, AUC ≥0.55, max-DD <15%, \|β\|<0.2, WRC p<0.10). This is the real-money decision point. |
 | **~mid-Aug 2026** | Frame 2 intraday trainable | 60 trading days of `data/intraday_history/` should exist → `model_intraday.py` trains for real. |
 | **~Aug 2026** | Build Frame 3 trading layer | If Phase 1 passed the gate, write the stat-arb trading layer (`stat_arb.py`: Kalman hedge, spread entry/exit). |
@@ -41,6 +41,92 @@ and the ONE highest-priority action for today. Then wait for direction.
 
 > 📌 Full reasoning for every item lives below: roadmap → §"FUTURE UPGRADES";
 > real-money rules → §"REAL-MONEY DEPLOYMENT GATE"; Monday verification → §"CHECKPOINT".
+
+---
+
+## 🗓️ SESSION LEDGER — 2026-06-26: scorer fix VERIFIED PASS live + rank-IC re-read
+
+**THE HEADLINE: yesterday's scorer fix (`095ff07`) is CONFIRMED working on today's morning run.
+The #1 open item — "verify the scorer fix" — is PASS on every sub-check. Nothing else regressed;
+the model is unchanged (at its ceiling, by design).**
+
+**Today's morning run (`28248595218`, cron-job.org 9:35 ET dispatch) — clean.** `MORNING cycle
+complete -- 2026-06-26 17:38 UTC`, no `Cell N raised`. Walk-forward **AUC 0.5461 / IC 0.0737 /
+last 0.6062 ("weak/no edge")** — identical to baseline, frame still pinned at its ceiling.
+Kill switch healthy: equity **$117,422**, new HWM, peak_dd +0.00%, no trip. ~13 BUYs filled
+(financials-heavy: HOOD/GS/C/SCHW/PNC/PRU + AMD/KLAC/SWKS, conf ~0.65–0.69) — long-book beta in
+an up tape. Stat-arb 15/172 pairs stored; shadow + rank_ic persisting.
+
+**① Scorer fix — VERIFIED PASS (closes the #1 open item):**
+| Check | Before | After (6/26) | Verdict |
+|---|---|---|---|
+| `scored=True` rows in predictions.csv | ~1,371 | **24,935** | ✅ backfill ran |
+| scored max `pred_ts` | stuck 5/14 | **2026-06-20** | ✅ passes 5/14 |
+| `ticker_accuracy.json` advanced | 6/09 | **updated today** | ✅ (see note) |
+| TRAILING-20d rank-IC block in log | absent | **present** | ✅ |
+
+Also `ticker_calibration.json` (526 lines) + `learned_rules.json` (324 lines) moved — the
+per-ticker calibration + rule-learning that ran on zero feedback for ~6 weeks are getting real
+outcomes again. The remaining 6,447 unscored rows are simply <5 days old (correct steady state).
+
+> ⚠️ **Two things not to misread.** (a) The log STILL prints `No mature unscored predictions` —
+> this is now **benign/expected**: `CELL_14_PREPATCH` backfills + marks `scored=True` *before* the
+> old Cell 14 runs, so Cell 14 correctly finds nothing. The 24,935 count is the proof it worked.
+> (b) The 6/25 verification item cited `data/predictions/ticker_accuracy.json`; the real file is
+> **`data/weights/ticker_accuracy.json`** — that's the one that updated. The path in the 6/25
+> ledger was wrong.
+
+**② rank-IC re-read.** Full −0.0396, trailing-20d −0.0097 (vs −0.013 on 6/25), trend +0.0299
+**improving**, Stage-1 gate **NOT YET**. Recent regime flat/neutral, not anti-predictive; trailing
+creeping toward zero. Too young to kill Frame 1 — keep tracking.
+
+**③ Minor.** A transient `walkforward.json` merge conflict surfaced during the state-commit rebase
+but **resolved cleanly** (master HEAD has 0 conflict markers; commit `45e9ced` landed). Watch if
+it recurs.
+
+**④ Shadow long-short CLEANED — decision-grade gate numbers (this is the substantive ship).**
+Investigated the Frame-1 shadow harness to compute the two missing GO/NO-GO gates (β to SPY,
+max-DD). Found the in-notebook harness (`_CELL_11_SHADOW_XSEC`, `quant_runner.py:3982`) records a
+balanced 30L/30S book but **scores only ~5–15 of 30 names per leg** — `_fwd_ret_sh` reads
+`featured[tk]`, which drops most names → each leg return is a tiny availability-biased subsample
+(and scoring re-stalled after 6/06: 6/07–6/19 mature but unscored). Crypto/ETFs also sit in the
+universe (now mostly shorted), mismatching the 5-trading-day horizon. So the first β/DD estimate
+(from 6 contaminated books: β +2.3, DD −7%) was noise.
+
+**Fix (`analyze_rank_ic.py`, measurement-only — no live/notebook change):** filter to the 279
+equities (exclude 5 crypto + 24 ETFs), write a clean balanced-leg long-short series to
+`data/shadow/cross_sectional_ls.csv` recomputed from public prices over the whole window (no
+dropout), and report SPY beta + max-DD each run. Validated locally on the live predictions.csv.
+
+**Corrected, decision-grade gate scorecard (29 equity-only days, balanced 30/30):**
+| Gate | Threshold | Clean value | Status |
+|---|---|---|---|
+| rank-IC (full) | ≥0.03, t≥2 | −0.0345 (t−1.99) | ❌ |
+| rank-IC (trailing-20d) | ≥0.03, t≥2 | −0.0117 (t−0.82, improving) | ❌ |
+| **β to SPY** | \|β\|<0.2 | **−1.18** (corr −0.58) | 🔴 FAIL |
+| **Max drawdown** | <15% | **−26.1%** | 🔴 FAIL |
+
+**Read:** the book is **net-SHORT beta (−1.18)**, not net-long — high-conf longs tilt defensive
+(`low_beta_def` rules), bottom-decile shorts are high-beta, so the spread *loses* in up tapes and
+the live P&L is carried by the defensive long leg. Clean rank-IC (−0.0345) ≈ contaminated (−0.0396)
+→ crypto/ETF was distorting the *risk* metrics, not the selection metric. Even setting rank-IC
+aside, the frame fails both risk gates as built — no alpha, and "market-neutral" isn't neutral.
+
+**Dashboard note (Radiant Unicorn).** The "💰 Holdings — Unrealized Gain / Loss" panel + per-stock
+unrealized P&L in the Open Positions table **already exist and work** (commits `e51a222`/`85f20cc`/
+`16a7c1d`). Live `data.json` carries 62 Alpaca positions each with `unrealized_pl`/`unrealized_plpc`;
+the panel sorts winners-first with diverging bars. No build needed — feature is live.
+
+**Open / next:**
+- [ ] **`DISCORD_WEBHOOK_URL`** still unset — the last cheap Stage-0 prerequisite (kill switch +
+  persistence/scorer staleness guards halt/log but can't notify). User creates webhook →
+  `gh secret set DISCORD_WEBHOOK_URL`.
+- [ ] **TRACK rank-IC trend** toward +0.03 / t≥2 — trailing window is the live read; the clean
+  `cross_sectional_ls.csv` β/DD are now the risk reads.
+- [ ] **Separate task:** retire the contaminated in-notebook `cross_sectional_pnl.csv` / point the
+  dashboard `shadow_xsec` panel at the clean `cross_sectional_ls.csv` (and optionally fix the
+  in-notebook `_fwd_ret_sh` dropout). Deferred by user 2026-06-26.
+- Memory updated: `scorer-pred-ts-format-fix.md` flipped to ✅ VERIFIED PASS 2026-06-26.
 
 ---
 
