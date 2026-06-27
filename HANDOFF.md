@@ -31,7 +31,7 @@ milestones below are now DUE or PAST-DUE.
 | **Anytime before real $** | Stage-0 prerequisites | Discord webhook set? **River: clamp tested 6/14 → still 46%, must CUT or fix.** Intraday-pickle bug fixed? Fill audit done? (See REAL-MONEY DEPLOYMENT GATE.) |
 | ~~**~2026-06-15**~~ ✅ | First shadow positions mature | **PASS (verified 6/24):** persistence fix `a0231ca` held — shadow now matures+scores real 5-day books (6/23 scored 2 matured; pnl.csv has scored rows), stat-arb persists 20 pairs/day. Clock is alive; first readable rank-IC ~early July. |
 | ~~**~early July 2026**~~ ✅ | Shadow rank-IC readable | **READ EARLY 6/25; re-read 6/26:** full −0.0396 / trailing-20d −0.0097 (trend +0.0299 *improving*). **NO-GO** (gate +0.03/t≥2) — beta, not alpha — but recent regime flat not anti-predictive, trailing creeping toward zero/positive. Track the trailing trend. |
-| **~late Jul / early Aug 2026** | **GO/NO-GO alpha gate** | Evaluate ALL Stage-1 gate thresholds (rank-IC ≥0.03 t≥2, AUC ≥0.55, max-DD <15%, \|β\|<0.2, WRC p<0.10). This is the real-money decision point. |
+| **~late Jul / early Aug 2026** | **GO/NO-GO alpha gate** | Evaluate ALL Stage-1 gate thresholds. **As of 6/26 (clean equity-only): NO-GO on every measurable gate** — rank-IC −0.0345/t−1.99, AUC 0.5461, max-DD −26.1%, β −1.18. Read from `data/shadow/rank_ic.csv` + `cross_sectional_ls.csv` (NOT the legacy `cross_sectional_pnl.csv`). See REAL-MONEY GATE table + ledger §④. |
 | **~mid-Aug 2026** | Frame 2 intraday trainable | 60 trading days of `data/intraday_history/` should exist → `model_intraday.py` trains for real. |
 | **~Aug 2026** | Build Frame 3 trading layer | If Phase 1 passed the gate, write the stat-arb trading layer (`stat_arb.py`: Kalman hedge, spread entry/exit). |
 | **8 wks after any frame starts** | Frame KILL check | If a frame's shadow rank-IC is flat/negative with no trend → retire it, reallocate. |
@@ -588,14 +588,22 @@ Stage-1 alpha gate AND the Stage-2 ramp to reach full size.
 **Deploy real capital ONLY when ALL of the following hold simultaneously.** Any one
 failing = NO-GO, keep iterating in shadow.
 
-| Gate | Threshold (editable) | Why |
-|------|----------------------|-----|
-| Shadow cross-sectional **rank-IC** | **≥ 0.03**, **t-stat ≥ 2.0** | Proves market-neutral skill ≠ beta. The whole point. |
-| Measurement window | **≥ 6 weeks** of daily shadow obs | Below this, no statistical confidence. |
-| Walk-forward OOS **AUC** | **holds ≥ 0.55** (not just recent folds) | The edge gate you already set; 0.546 today does NOT pass. |
-| Shadow long-short **max drawdown** | **< 15%** | A profitable-but-violent signal is not real-money-worthy. |
-| **Beta of shadow returns to SPY** | **\|β\| < 0.2** | Confirms the P&L is alpha, not a disguised long book. |
-| White Reality Check **p-value** | **< 0.10** | Guards against the track record being luck/data-snooping. |
+| Gate | Threshold (editable) | Reading (2026-06-26, clean equity-only) | Why |
+|------|----------------------|------------------------------------------|-----|
+| Shadow cross-sectional **rank-IC** | **≥ 0.03**, **t-stat ≥ 2.0** | ❌ −0.0345 (t −1.99); trailing-20d −0.0117 (improving) | Proves market-neutral skill ≠ beta. The whole point. |
+| Measurement window | **≥ 6 weeks** of daily shadow obs | 🟡 ~5.3 wks (29 obs, ~3 clean) | Below this, no statistical confidence. |
+| Walk-forward OOS **AUC** | **holds ≥ 0.55** (not just recent folds) | ❌ 0.5461 (frozen at ceiling) | The edge gate you already set; 0.546 today does NOT pass. |
+| Shadow long-short **max drawdown** | **< 15%** | 🔴 **−26.1%** | A profitable-but-violent signal is not real-money-worthy. |
+| **Beta of shadow returns to SPY** | **\|β\| < 0.2** | 🔴 **−1.18** (corr −0.58; net-SHORT beta, defensive longs) | Confirms the P&L is alpha, not a disguised long book. |
+| White Reality Check **p-value** | **< 0.10** | ⏳ not yet run | Guards against the track record being luck/data-snooping. |
+
+> **Where to read these (added 2026-06-26):** rank-IC + the clean β/max-DD come from
+> `analyze_rank_ic.py` (runs each morning) → `data/shadow/rank_ic.csv` and
+> `data/shadow/cross_sectional_ls.csv` (equity-only, balanced 30/30 legs, crypto+ETFs
+> excluded). The run-log step `=== cross-sectional rank-IC ===` prints all of them with
+> PASS/NOT-YET. **Do NOT use the legacy `data/shadow/cross_sectional_pnl.csv`** — it
+> under-samples each leg (~5–15 of 30) and mixes crypto/ETFs; its β/DD are noise. Full
+> reasoning in the 2026-06-26 session ledger §④.
 
 > **Frame KILL rule (the missing half).** If after **8 weeks** a frame's shadow
 > rank-IC is flat or negative (fails the gate with no improving trend), **retire it**
