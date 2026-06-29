@@ -44,6 +44,92 @@ and the ONE highest-priority action for today. Then wait for direction.
 
 ---
 
+## 🗓️ SESSION LEDGER — 2026-06-29: clean run; Frame 3 (stat-arb) trading layer SCOPED
+
+**Today's morning run (`28376004106`, 9:35 ET dispatch) — clean.** `MORNING cycle
+complete -- 2026-06-29 15:33 UTC`, no `Cell N raised`. Walk-forward **AUC 0.5471 / IC
+0.0765 / last 0.5897 ("weak/no edge")** — pinned at the frozen ceiling. Kill switch
+healthy: equity **$118,699**, new HWM, peak_dd +0.00%, no trip. 307 signals → 16 BUYs
+filled (C/PRU financials, AMAT/TXN/ADI/SMH/SOXX semis, GE/RTX/EXPD industrials) —
+long-book beta. Scorer healthy (Cell14 backfilled 35/2149; pred_ts normalized via
+`format='mixed'`). Shadow 30L/30S recorded, scored 2 matured. Stat-arb 11/159 pairs stored.
+
+**rank-IC re-read (3rd consecutive):** full −0.0276 (t−1.70), trailing-20d −0.0064
+(t−0.43), max-DD −18.5% (FAIL), β to SPY **+0.38** (FAIL; flipped sign from −1.18 on 6/26
+— small-sample instability, n=32, corr +0.24). **Stage-1 gate: NOT YET on every metric.**
+
+**⚠️ Honest read on "improving" (corrected this session):** the three weekly reads are
+each less-negative, BUT (a) the full-window rise is largely *mechanical* — a fixed bad
+early-June tail diluted by a growing denominator; (b) the trailing window is converging to
+~zero (t−0.43 = indistinguishable from zero), i.e. "no longer anti-predictive," NOT emerging
+alpha; (c) three points with sub-1 t-stats is not a statistical trend. **No evidence of
+improving alpha. Still a clear NO-GO.**
+
+**⏱️ The clean clock is younger than it looks.** Persistence was broken 6/09→6/16; scorer
+dead 5/14→6/25. The genuinely trustworthy measurement window is only ~2 weeks old.
+**Realistic decision-grade GO/NO-GO slips to early-to-mid August** (6 clean weeks from
+~6/25), NOT late July.
+
+**DECISION (2026-06-29): keep live model frozen-by-default + build Frame 3 in parallel.**
+Don't touch the live model (nothing validated to ship — tuning was a dead end 6/14; reacting
+to noisy partial reads = the data-snooping the blind gate exists to prevent). Don't kill
+Frame 1 (blind kill-rule is 8 wks flat/negative; we're flat-not-negative). Use the wait
+productively: build the **Frame 3 stat-arb trading layer** in shadow so a *second* evidence
+clock accumulates in parallel.
+
+### Frame 3 trading-layer scope (NEW work — all SHADOW, NO Alpaca, NO live-model change)
+**Gap:** `stat_arb.py` is a *scanner* — selects cointegrated pairs (`pairs.json`), labels
+ENTER/EXIT/HOLD (`signals.json`), logs z (`pair_history.csv`). It has NO position state,
+sizing, costs, mark-to-market, or P&L series — so it can't answer "does trading these signals
+make market-neutral return?" That's the gate question.
+
+**Plan:** new `shadow_stat_arb.py`, **forward-only** (NOT backfilled — `generate_signals`
+z-scores against full-window mean/std = look-ahead; `pairs.json` is today's survivors =
+survivorship). Mirrors Frame 1's shadow harness:
+- State `data/stat_arb/shadow_positions.json` (per-pair entry_date/entry_z/side/hedge/notional)
+- Daily: mark-to-market → exits (reversion / z-blowout stop / time stop / de-cointegration)
+  → entries (capped) → dollar-neutral sizing via Kalman β → costs → append daily net return
+  to `data/stat_arb/stat_arb_ls.csv`
+- Gate scorecard: β-to-SPY (≈0 by construction is the test), max-DD, Sharpe, %win → morning
+  log + workflow step, committed via the existing `data/stat_arb/` pathspec
+- Decision-grade ~mid-to-late Aug (starts from zero today, in step with Frame 1)
+
+**Build phases:** P0 paper book + returns series (~½ day, starts the clock) → P1 risk
+controls (stops/cap/costs) → P2 gate scorecard + log/workflow wiring.
+
+**LOCKED DEFAULTS (user-confirmed 2026-06-29):**
+| Knob | Value |
+|---|---|
+| Sizing | **$10k notional/leg, max 8 concurrent pairs** |
+| Cost | **5 bps/leg** (charged per leg on open AND close) |
+| Entry/exit z | **2.0 / 0.5** (as scanner) |
+| Stops | **z-blowout 3.5 + time stop 3× half-life** (also exit on de-cointegration) |
+| Backtest posture | **forward-only** (settled — backfill has look-ahead) |
+
+**STATUS 2026-06-29 — P0 BUILT + WIRED (user confirmed defaults → proceed):**
+- ✅ **`shadow_stat_arb.py`** created — forward-only paper book: consumes `signals.json`/`pairs.json`,
+  marks dollar-neutral pairs to market, applies exits (reversion / z>3.5 blowout / 3× half-life time
+  stop / de-cointegration), charges 5 bps/leg, appends daily net return → `data/stat_arb/stat_arb_ls.csv`
+  (+ `shadow_positions.json` state, `shadow_trades.csv` audit). Idempotent per date. Dry-run verified
+  (4 entries, $40 cost, −0.05% book return); `py_compile`+AST pass; ASCII-safe prints for the Win runner.
+- ✅ **Wired into `quant_daily.yml`** — new non-fatal morning step "Run stat-arb SHADOW book" right after
+  the scanner (`stat_arb.py`), before the state commit. Outputs auto-committed via the existing
+  `data/stat_arb/` pathspec (no commit-line change). `|| echo` ⇒ can never block the trading commit.
+- ✅ **Guarded in `preflight.yml`** — added to Step 1 py_compile + Step 2 AST list.
+- ⏳ **NOT yet committed/pushed** — changes sit in the working tree (shadow_stat_arb.py, quant_daily.yml,
+  preflight.yml, HANDOFF.md). The book's evidence clock starts on the **first morning cron after these
+  land on master**; decision-grade ~mid-to-late Aug (in step with Frame 1).
+
+**Open / next:**
+- [ ] **Commit + push** P0 to master so the next morning cron initializes the book (no Alpaca orders).
+- [ ] **P2 gate scorecard (measurement-only, follows once `stat_arb_ls.csv` has rows)** — β-to-SPY
+  (≈0 by construction is the test), max-DD, Sharpe, %win printed in the morning log w/ PASS/NOT-YET,
+  analog of the rank-IC scorecard.
+- [ ] **`DISCORD_WEBHOOK_URL`** still unset — last cheap Stage-0 prerequisite.
+- [ ] **TRACK rank-IC trend** toward +0.03/t≥2 — trailing window is the live read.
+
+---
+
 ## 🗓️ SESSION LEDGER — 2026-06-26: scorer fix VERIFIED PASS live + rank-IC re-read
 
 **THE HEADLINE: yesterday's scorer fix (`095ff07`) is CONFIRMED working on today's morning run.

@@ -152,6 +152,18 @@ jobs:
         if: steps.run_type.outputs.type == 'morning'
         run: python stat_arb.py || echo "Stat-arb non-fatal error — continuing"
 
+      - name: Run stat-arb SHADOW book (morning, Frame 3 measurement-only)
+        # Consumes the scanner's data/stat_arb/signals.json + pairs.json (written by
+        # the step above) and advances a forward-only PAPER book → marks to market,
+        # applies entries/exits (reversion / z>3.5 blowout / 3x-half-life time stop /
+        # de-cointegration), charges 5 bps/leg, appends the book's daily net return to
+        # data/stat_arb/stat_arb_ls.csv (committed below via the data/stat_arb/
+        # pathspec). SHADOW ONLY — places NO Alpaca orders, touches NO live-model
+        # state; the Frame-3 analog of analyze_rank_ic.py. Non-fatal so a yfinance
+        # hiccup never blocks the trading commit. Idempotent per date.
+        if: steps.run_type.outputs.type == 'morning'
+        run: python shadow_stat_arb.py || echo "shadow stat-arb non-fatal error — continuing"
+
       - name: Run intraday model
         if: steps.run_type.outputs.type != 'evening'
         env:
