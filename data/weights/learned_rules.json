@@ -32,10 +32,10 @@
     "created_regime": 1
   },
   "ticker_INTC": {
-    "dampen": 0.2,
-    "count": 7,
-    "accuracy": 0.222,
-    "description": "INTC systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 22% accurate (7 samples)",
+    "dampen": 0.15,
+    "count": 8,
+    "accuracy": 0.3,
+    "description": "INTC systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 30% accurate (8 samples)",
     "created_date": "2026-06-29",
     "created_regime": 1
   },
@@ -129,9 +129,9 @@
   },
   "ticker_GM": {
     "dampen": 0.2,
-    "count": 7,
-    "accuracy": 0.111,
-    "description": "GM systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 11% accurate (7 samples)",
+    "count": 8,
+    "accuracy": 0.1,
+    "description": "GM systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 10% accurate (8 samples)",
     "created_date": "2026-06-29",
     "created_regime": 1
   },
@@ -164,6 +164,14 @@
     "count": 7,
     "accuracy": 0.111,
     "description": "PM systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 11% accurate (7 samples)",
+    "created_date": "2026-06-29",
+    "created_regime": 1
+  },
+  "ticker_EL": {
+    "dampen": 0.12,
+    "count": 13,
+    "accuracy": 0.333,
+    "description": "EL systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 33% accurate (13 samples)",
     "created_date": "2026-06-29",
     "created_regime": 1
   },
@@ -241,9 +249,9 @@
   },
   "ticker_OMC": {
     "dampen": 0.2,
-    "count": 10,
-    "accuracy": 0.167,
-    "description": "OMC systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 17% accurate (10 samples)",
+    "count": 11,
+    "accuracy": 0.154,
+    "description": "OMC systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 15% accurate (11 samples)",
     "created_date": "2026-06-29",
     "created_regime": 1
   },
@@ -287,10 +295,10 @@
       "description": "BUY with RSI<35 in Bull regime \u00e2\u20ac\u201d 83% accurate (16 samples)"
     },
     "momentum_bull": {
-      "boost": 0.09,
-      "count": 304,
-      "accuracy": 0.686,
-      "description": "BUY with RSI 55-68 in Bull \u00e2\u20ac\u201d 69% accurate (304 samples)"
+      "boost": 0.08,
+      "count": 308,
+      "accuracy": 0.684,
+      "description": "BUY with RSI 55-68 in Bull \u00e2\u20ac\u201d 68% accurate (308 samples)"
     },
     "created_date": "2026-06-29",
     "created_regime": 1
