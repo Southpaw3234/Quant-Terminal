@@ -1,7 +1,7 @@
 # Quant Terminal v25 — Session Handoff
-**Date:** 2026-06-26 (updated — **scorer fix VERIFIED PASS live; rank-IC trend still improving, NO-GO**)  
+**Date:** 2026-06-29 (updated — **clean run; Frame 3 stat-arb SHADOW book built + merged; rank-IC drifting to ~zero, still NO-GO**)  
 **Branch:** `master` (live/cron)  
-**Last commit:** `afa326d` (master, live — trailing-20d rank-IC) · `095ff07` (master, live — scorer pred_ts format fix) · `a0231ca` (persistence fix)  
+**Last commit:** `e46315b` (master — Frame 3 shadow stat-arb trading layer P0 + workflow wiring) · `afa326d` (trailing-20d rank-IC) · `095ff07` (scorer pred_ts format fix)  
 **Repo:** https://github.com/Southpaw3234/Quant-Terminal
 
 ---
@@ -106,25 +106,40 @@ controls (stops/cap/costs) → P2 gate scorecard + log/workflow wiring.
 | Stops | **z-blowout 3.5 + time stop 3× half-life** (also exit on de-cointegration) |
 | Backtest posture | **forward-only** (settled — backfill has look-ahead) |
 
-**STATUS 2026-06-29 — P0 BUILT + WIRED (user confirmed defaults → proceed):**
+**STATUS 2026-06-29 — P0 BUILT, VALIDATED, MERGED TO MASTER ✅ (commit `e46315b`):**
 - ✅ **`shadow_stat_arb.py`** created — forward-only paper book: consumes `signals.json`/`pairs.json`,
   marks dollar-neutral pairs to market, applies exits (reversion / z>3.5 blowout / 3× half-life time
   stop / de-cointegration), charges 5 bps/leg, appends daily net return → `data/stat_arb/stat_arb_ls.csv`
-  (+ `shadow_positions.json` state, `shadow_trades.csv` audit). Idempotent per date. Dry-run verified
-  (4 entries, $40 cost, −0.05% book return); `py_compile`+AST pass; ASCII-safe prints for the Win runner.
-- ✅ **Wired into `quant_daily.yml`** — new non-fatal morning step "Run stat-arb SHADOW book" right after
-  the scanner (`stat_arb.py`), before the state commit. Outputs auto-committed via the existing
-  `data/stat_arb/` pathspec (no commit-line change). `|| echo` ⇒ can never block the trading commit.
+  (+ `shadow_positions.json` state, `shadow_trades.csv` audit). Idempotent per date. ASCII-safe prints
+  for the Win runner (the existing `stat_arb.py` still has the `→` cp1252 print crash locally — benign,
+  CI stdout is UTF-8; ours avoids it).
+- ✅ **Wired into `quant_daily.yml`** — new **non-fatal** morning step "Run stat-arb SHADOW book" right
+  after the scanner (`stat_arb.py`), before the state commit. Outputs auto-committed via the existing
+  `data/stat_arb/` git-add loop (`quant_daily.yml:225`, no commit-line change). `|| echo` ⇒ can NEVER
+  block the trading commit. SHADOW-ONLY: no Alpaca orders, no live-model state touched.
 - ✅ **Guarded in `preflight.yml`** — added to Step 1 py_compile + Step 2 AST list.
-- ⏳ **NOT yet committed/pushed** — changes sit in the working tree (shadow_stat_arb.py, quant_daily.yml,
-  preflight.yml, HANDOFF.md). The book's evidence clock starts on the **first morning cron after these
-  land on master**; decision-grade ~mid-to-late Aug (in step with Frame 1).
+- ✅ **Validated before merge** (sandbox, runner Python 3.11.9): real `stat_arb.py`→`shadow_stat_arb.py`
+  pipeline initialized a 4-entry book; MTM math (+$300 on +2%/−1% legs) and ALL exit branches
+  (reversion / blowout / time-stop / de-coint) + capacity cap + missing-price skip + idempotency guard
+  all unit-tested PASS; both workflow YAMLs parse; graceful exit when the scanner yields nothing.
+- ✅ **Preflight green on the exact merged tree** — dispatched run `28406394743` → **9/9 PASS**. Shipped
+  via branch `feat/frame3-shadow-book` → rebased onto latest master (cron had pushed 5 `Auto:` commits,
+  none touching my files) → ff-merged → branch deleted. Unrelated `.gitignore`/untracked items left alone.
+- ⏳ **Evidence clock starts on the next morning cron (Tue 6/30 13:35 UTC).** First `stat_arb_ls.csv`
+  row appears in that run's `Auto:` commit. Decision-grade ~mid-to-late Aug, in step with Frame 1.
+
+**🔔 AUTO-VERIFY ARMED:** one-time scheduled task **`qt-frame3-shadow-book-verify`** fires **Tue 6/30
+12:30 PM ET** (after the morning run completes) — checks the run is clean, the `SHADOW STAT-ARB BOOK`
+step ran with no traceback, the new `data/stat_arb/stat_arb_ls.csv` + `shadow_positions.json` landed in
+the `Auto:` commit, and reports the first book row + routine morning health. Auto-disables after firing;
+runs only while the Claude app is open (catches up on next launch).
 
 **Open / next:**
-- [ ] **Commit + push** P0 to master so the next morning cron initializes the book (no Alpaca orders).
-- [ ] **P2 gate scorecard (measurement-only, follows once `stat_arb_ls.csv` has rows)** — β-to-SPY
+- [ ] **VERIFY the 6/30 run** — handled by the armed task above; if it didn't fire (app closed), do the
+  checks manually (run-log `SHADOW STAT-ARB BOOK`, new `stat_arb_ls.csv` in the `Auto:` commit).
+- [ ] **P2 gate scorecard (measurement-only, follows once `stat_arb_ls.csv` has ~rows)** — β-to-SPY
   (≈0 by construction is the test), max-DD, Sharpe, %win printed in the morning log w/ PASS/NOT-YET,
-  analog of the rank-IC scorecard.
+  analog of the rank-IC scorecard. (NOT built — P0 ships only the returns series.)
 - [ ] **`DISCORD_WEBHOOK_URL`** still unset — last cheap Stage-0 prerequisite.
 - [ ] **TRACK rank-IC trend** toward +0.03/t≥2 — trailing window is the live read.
 
