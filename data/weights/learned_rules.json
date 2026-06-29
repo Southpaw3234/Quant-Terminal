@@ -145,9 +145,9 @@
   },
   "ticker_APTV": {
     "dampen": 0.2,
-    "count": 23,
-    "accuracy": 0.16,
-    "description": "APTV systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 16% accurate (23 samples)",
+    "count": 24,
+    "accuracy": 0.154,
+    "description": "APTV systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 15% accurate (24 samples)",
     "created_date": "2026-06-29",
     "created_regime": 1
   },
@@ -160,18 +160,18 @@
     "created_regime": 1
   },
   "ticker_EL": {
-    "dampen": 0.14,
-    "count": 14,
-    "accuracy": 0.312,
-    "description": "EL systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 31% accurate (14 samples)",
+    "dampen": 0.16,
+    "count": 15,
+    "accuracy": 0.294,
+    "description": "EL systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 29% accurate (15 samples)",
     "created_date": "2026-06-29",
     "created_regime": 1
   },
   "ticker_SWKS": {
     "dampen": 0.2,
-    "count": 44,
-    "accuracy": 0.239,
-    "description": "SWKS systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 24% accurate (44 samples)",
+    "count": 45,
+    "accuracy": 0.234,
+    "description": "SWKS systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 23% accurate (45 samples)",
     "created_date": "2026-06-29",
     "created_regime": 1
   },
@@ -241,9 +241,9 @@
   },
   "ticker_OMC": {
     "dampen": 0.2,
-    "count": 12,
-    "accuracy": 0.143,
-    "description": "OMC systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 14% accurate (12 samples)",
+    "count": 13,
+    "accuracy": 0.133,
+    "description": "OMC systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 13% accurate (13 samples)",
     "created_date": "2026-06-29",
     "created_regime": 1
   },
@@ -287,10 +287,10 @@
       "description": "BUY with RSI<35 in Bull regime \u00e2\u20ac\u201d 83% accurate (16 samples)"
     },
     "momentum_bull": {
-      "boost": 0.08,
-      "count": 314,
-      "accuracy": 0.684,
-      "description": "BUY with RSI 55-68 in Bull \u00e2\u20ac\u201d 68% accurate (314 samples)"
+      "boost": 0.09,
+      "count": 319,
+      "accuracy": 0.685,
+      "description": "BUY with RSI 55-68 in Bull \u00e2\u20ac\u201d 69% accurate (319 samples)"
     },
     "created_date": "2026-06-29",
     "created_regime": 1
