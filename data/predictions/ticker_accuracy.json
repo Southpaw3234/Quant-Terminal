@@ -1032,12 +1032,12 @@
     "rolling_acc": 0.0
   },
   "NCLH": {
-    "correct": 0,
+    "correct": 1,
     "total": 1,
     "recent": [
-      0
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "WMT": {
     "correct": 0,
@@ -1152,12 +1152,12 @@
     "rolling_acc": 1.0
   },
   "SJM": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "HRL": {
     "correct": 0,
@@ -1632,12 +1632,12 @@
     "rolling_acc": 1.0
   },
   "EXPD": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "NSC": {
     "correct": 1,
@@ -2400,19 +2400,19 @@
     "rolling_acc": 1.0
   },
   "SMH": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "SOXX": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   }
 }
