@@ -1,7 +1,7 @@
 # Quant Terminal v25 — Session Handoff
 **Date:** 2026-06-30 (updated — **Frame 3 evidence clock STARTED (first stat_arb_ls row); diagnosed + fixed a spurious crypto-driven kill-switch halt**)  
 **Branch:** `master` (live/cron)  
-**Last commit:** `e46315b` (master — Frame 3 shadow stat-arb P0) · `f8e643a` (branch `fix/killswitch-crypto-hold-streak` — consecutive-loss kill-switch fix, pending merge) · `095ff07` (scorer pred_ts format fix)  
+**Last commit:** `7758ff8` (master — consecutive-loss kill-switch fix, MERGED) · `e46315b` (Frame 3 shadow stat-arb P0) · `095ff07` (scorer pred_ts format fix)  
 **Repo:** https://github.com/Southpaw3234/Quant-Terminal
 
 ---
@@ -86,8 +86,10 @@ The run logged `🚨 KILL SWITCH: 5 consecutive losses — halting new entries` 
   halted** under the fix. Same crypto/ETF contamination flagged 6/26 (poisoned shadow β/DD).
 
 **Open / next:**
-- [ ] **Preflight + merge `f8e643a`** — preflight dispatched on the branch (run `28469717330`);
-  if green, rebase onto master + ff-merge so the next morning cron applies it (no paper orders).
+- [x] **Kill-switch fix MERGED** — `7758ff8` rebased onto master + ff-merged (branch deleted);
+  preflight 9/9 PASS on the rebased tip (runs `28469717330`/`28469911482`). Applies on the next
+  morning cron (no paper orders — entry-gate predicate only). **VERIFY 7/1 run:** no spurious
+  `5 consecutive losses` halt when the equity BUY/SELL tail isn't a true 5-loss streak.
 - [ ] **`DISCORD_WEBHOOK_URL`** still unset — would have turned today's halt + guard warnings into
   a real-time ping instead of log-only.
 - [ ] **TRACK rank-IC trend** toward +0.03/t≥2 — trailing window is the live read.
