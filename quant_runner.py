@@ -4928,6 +4928,21 @@ _SRC_REPLACE = [
      "if _river_acc > 0.52 and abs(_delta) > 0.03:"),
     ("if _garch_acc > _river_acc + 0.08:",
      "if _river_acc > 0.52 and _garch_acc > _river_acc + 0.08:"),
+    # Kill-switch consecutive-loss fix (2026-06-30): check_kill_switch counted the
+    # raw tail(5) of ALL scored prediction rows. The crypto sleeve (BTC/ETH/SOL/
+    # XRP/DOGE) is written LAST in every batch, so tail(5) was structurally those 5
+    # names, and their HOLD rows fail the +/-4% "was_correct" band ~78% of the time
+    # on normal crypto vol (median 5d move 9.2%). Net effect: a "did crypto move
+    # >4% this week" detector that spuriously halted equity entries (e.g. 6/30
+    # blocked 10 BUYs during a crypto sell-off while the equity book was +$15k).
+    # Fix: count only REAL directional trades (BUY/SELL) and exclude crypto, so the
+    # streak reflects the equity strategy this switch is meant to protect.
+    ('        scored = plog[plog["scored"].astype(str) == "True"].tail(KILL_CONSECUTIVE_LOSSES)',
+     '        _ks_sc = plog[plog["scored"].astype(str).isin(["True", "true"])].copy()\n'
+     '        _ks_sc = _ks_sc[_ks_sc["action"].astype(str).str.upper().isin(["BUY", "SELL"])]\n'
+     '        _ks_sc = _ks_sc[~_ks_sc["ticker"].astype(str).isin(\n'
+     '            {"BTC-USD", "ETH-USD", "SOL-USD", "XRP-USD", "DOGE-USD", "BNB-USD"})]\n'
+     '        scored = _ks_sc.tail(KILL_CONSECUTIVE_LOSSES)'),
 ]
 
 failed_cells = []
