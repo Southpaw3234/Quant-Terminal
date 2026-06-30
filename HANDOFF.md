@@ -87,9 +87,15 @@ The run logged `🚨 KILL SWITCH: 5 consecutive losses — halting new entries` 
 
 **Open / next:**
 - [x] **Kill-switch fix MERGED** — `7758ff8` rebased onto master + ff-merged (branch deleted);
-  preflight 9/9 PASS on the rebased tip (runs `28469717330`/`28469911482`). Applies on the next
-  morning cron (no paper orders — entry-gate predicate only). **VERIFY 7/1 run:** no spurious
-  `5 consecutive losses` halt when the equity BUY/SELL tail isn't a true 5-loss streak.
+  preflight **9/9 PASS** on the rebased tip (runs `28469717330` pre-rebase / `28469911482` on the
+  merged tree). Applies on the next morning cron (no paper orders — entry-gate predicate only).
+  ⚠️ **Two validation layers, both green, don't conflate them:** preflight is *static only*
+  (py_compile / AST / patch-string parse / dispatcher-dict / import-smoke — it does NOT execute
+  `check_kill_switch`); the *behavioral* proof was the local replay of the new logic against the
+  run-start `predictions.csv` (commit `0611832`) showing 6/30 would NOT have halted.
+  **VERIFY 7/1 run:** confirm no spurious `5 consecutive losses` halt unless the equity BUY/SELL
+  tail (crypto excluded) is a genuine 5-loss streak — read the run log's kill-switch line + that
+  new equity BUYs actually filled.
 - [ ] **`DISCORD_WEBHOOK_URL`** still unset — would have turned today's halt + guard warnings into
   a real-time ping instead of log-only.
 - [ ] **TRACK rank-IC trend** toward +0.03/t≥2 — trailing window is the live read.
