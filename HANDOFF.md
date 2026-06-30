@@ -1,7 +1,7 @@
 # Quant Terminal v25 — Session Handoff
-**Date:** 2026-06-29 (updated — **clean run; Frame 3 stat-arb SHADOW book built + merged; rank-IC drifting to ~zero, still NO-GO**)  
+**Date:** 2026-06-30 (updated — **Frame 3 evidence clock STARTED (first stat_arb_ls row); diagnosed + fixed a spurious crypto-driven kill-switch halt**)  
 **Branch:** `master` (live/cron)  
-**Last commit:** `e46315b` (master — Frame 3 shadow stat-arb trading layer P0 + workflow wiring) · `afa326d` (trailing-20d rank-IC) · `095ff07` (scorer pred_ts format fix)  
+**Last commit:** `e46315b` (master — Frame 3 shadow stat-arb P0) · `f8e643a` (branch `fix/killswitch-crypto-hold-streak` — consecutive-loss kill-switch fix, pending merge) · `095ff07` (scorer pred_ts format fix)  
 **Repo:** https://github.com/Southpaw3234/Quant-Terminal
 
 ---
@@ -41,6 +41,58 @@ and the ONE highest-priority action for today. Then wait for direction.
 
 > 📌 Full reasoning for every item lives below: roadmap → §"FUTURE UPGRADES";
 > real-money rules → §"REAL-MONEY DEPLOYMENT GATE"; Monday verification → §"CHECKPOINT".
+
+---
+
+## 🗓️ SESSION LEDGER — 2026-06-30: Frame 3 clock STARTED + spurious kill-switch halt diagnosed & fixed
+
+**THE HEADLINE: the 6/30 verification PASSED — Frame 3's second evidence clock took
+its first real step. Separately, diagnosed why the live model halted new entries
+today: a crypto-driven artifact in the consecutive-loss kill switch, now fixed.**
+
+**Today's morning run (`28448430743`, 13:35 UTC dispatch) — clean.** `MORNING cycle
+complete -- 2026-06-30 15:35 UTC`, no `Cell N raised`, all 24 steps green. Walk-forward
+**AUC 0.5453 / IC 0.0740 / last 0.6048 ("weak/no edge")** — pinned at the frozen ceiling.
+Drawdown kill switch healthy: equity **$121,010** new HWM, peak_dd +0.00%, no trip. Scorer
+alive (Cell14 backfilled 1530/1535 matured). rank-IC: full **−0.0278**, trailing-20d
+**−0.0119** — still NO-GO, ~zero not anti-predictive.
+
+**① Frame 3 evidence clock VERIFIED started (closes the #1 open item from 6/29).**
+First `data/stat_arb/stat_arb_ls.csv` row landed in Auto commit `e166817`:
+`2026-06-30,-0.0005,0.0,40.0,-40.0,4,4,0` — 4 pairs entered, gross $0 (marked at entry),
+cost **$40 = 4 legs×2×$10k×5bps** (locked defaults computing correctly), book_return −5bps
+(entry-day cost drag). Idempotency guard held (later cycles "already advanced — skipping",
+no double-count). Persistence guard ✅ green. Decision-grade ~mid-to-late Aug, in step w/ Frame 1.
+
+**② Spurious entry halt — ROOT-CAUSED & FIXED (branch `fix/killswitch-crypto-hold-streak`, `f8e643a`).**
+The run logged `🚨 KILL SWITCH: 5 consecutive losses — halting new entries` →
+`No new positions will be opened today`, blocking **all 10 intended equity BUYs**
+(DHR/ZBH/ALGN/DG/PEP/INTC/AMAT/TXN/LRCX/KLAC/GE/PPG/SOXX…). It was a **false alarm**:
+- `check_kill_switch()` (notebook Cell 13) reads `predictions.csv` →
+  `plog[scored==True].tail(5)`, halting if none are `was_correct`. **It measures prediction
+  labels, not trade P&L.**
+- The crypto sleeve (BTC/ETH/SOL/XRP/DOGE) is written **last** in every batch → `tail(5)` is
+  *structurally* those 5 crypto names. A HOLD scores correct only if `abs(5d ret) ≤ 0.04`;
+  crypto's median 5d move is **9.2%**, so crypto HOLDs are wrong **~78%** of the time (vs 49%
+  equity). The 6/23→6/30 crypto sell-off (XRP −14%, DOGE −12%, BTC −6%, ETH −6%, SOL +6.8%)
+  made all 5 "incorrect" → halt. Equity book itself was fine (+$15k, 59.5% BUY acc; its real
+  BUY/SELL tail included a PSA **win**, so no true 5-loss streak).
+- Timing twist: the halt check (15:32) ran *before* the scorer backfill (15:34), so the
+  committed end-of-run `predictions.csv` no longer shows all-5-false — the trip is invisible
+  unless you read the run-start commit (`0611832`).
+- **Fix** via the existing `_SRC_REPLACE` idiom in `quant_runner.py`: filter the streak to real
+  directional trades (`action in BUY/SELL`) and exclude crypto. **Verified locally:** anchor
+  matches Cell 13 verbatim, patched cell + `quant_runner.py` compile, and **6/30 would NOT have
+  halted** under the fix. Same crypto/ETF contamination flagged 6/26 (poisoned shadow β/DD).
+
+**Open / next:**
+- [ ] **Preflight + merge `f8e643a`** — preflight dispatched on the branch (run `28469717330`);
+  if green, rebase onto master + ff-merge so the next morning cron applies it (no paper orders).
+- [ ] **`DISCORD_WEBHOOK_URL`** still unset — would have turned today's halt + guard warnings into
+  a real-time ping instead of log-only.
+- [ ] **TRACK rank-IC trend** toward +0.03/t≥2 — trailing window is the live read.
+- [ ] **P2 stat-arb gate scorecard** (β/DD/Sharpe/%win) once `stat_arb_ls.csv` has ~rows.
+- Memory written: `killswitch-crypto-hold-streak.md`.
 
 ---
 
