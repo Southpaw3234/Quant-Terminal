@@ -7,10 +7,23 @@
     "entry_z": -2.932,
     "half_life": 5.34,
     "hedge_ratio": 0.840612,
-    "last_y": 198.11000061035156,
-    "last_x": 548.1500244140625,
-    "days_held": 1,
-    "cum_pnl": 0.5277747811938127
+    "last_y": 194.97000122070312,
+    "last_x": 539.489990234375,
+    "days_held": 0,
+    "cum_pnl": 0.0
+  },
+  "PFE/BMY": {
+    "y": "PFE",
+    "x": "BMY",
+    "side": 1,
+    "entry_date": "2026-06-30",
+    "entry_z": -2.8146,
+    "half_life": 6.72,
+    "hedge_ratio": 0.790625,
+    "last_y": 24.3700008392334,
+    "last_x": 58.560001373291016,
+    "days_held": 0,
+    "cum_pnl": 0.0
   },
   "MU/KLAC": {
     "y": "MU",
@@ -20,9 +33,22 @@
     "entry_z": -2.5854,
     "half_life": 7.65,
     "hedge_ratio": 1.263708,
-    "last_y": 1045.5001220703125,
-    "last_x": 263.0799865722656,
-    "days_held": 1,
-    "cum_pnl": -321.2782699326122
+    "last_y": 1145.280029296875,
+    "last_x": 278.3900146484375,
+    "days_held": 0,
+    "cum_pnl": 0.0
+  },
+  "PFE/AMGN": {
+    "y": "PFE",
+    "x": "AMGN",
+    "side": 1,
+    "entry_date": "2026-06-30",
+    "entry_z": -2.6315,
+    "half_life": 8.75,
+    "hedge_ratio": 0.542879,
+    "last_y": 24.3700008392334,
+    "last_x": 360.54998779296875,
+    "days_held": 0,
+    "cum_pnl": 0.0
   }
 }
