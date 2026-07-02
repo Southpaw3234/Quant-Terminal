@@ -63,14 +63,6 @@
     "created_date": "2026-07-02",
     "created_regime": 1
   },
-  "ticker_CAT": {
-    "dampen": 0.16,
-    "count": 5,
-    "accuracy": 0.286,
-    "description": "CAT systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 29% accurate (5 samples)",
-    "created_date": "2026-07-02",
-    "created_regime": 1
-  },
   "ticker_AMT": {
     "dampen": 0.2,
     "count": 11,
@@ -137,9 +129,17 @@
   },
   "ticker_MGM": {
     "dampen": 0.2,
-    "count": 41,
-    "accuracy": 0.186,
-    "description": "MGM systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 19% accurate (41 samples)",
+    "count": 43,
+    "accuracy": 0.178,
+    "description": "MGM systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 18% accurate (43 samples)",
+    "created_date": "2026-07-02",
+    "created_regime": 1
+  },
+  "ticker_DPZ": {
+    "dampen": 0.18,
+    "count": 9,
+    "accuracy": 0.273,
+    "description": "DPZ systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 27% accurate (9 samples)",
     "created_date": "2026-07-02",
     "created_regime": 1
   },
@@ -169,9 +169,9 @@
   },
   "ticker_SWKS": {
     "dampen": 0.2,
-    "count": 53,
-    "accuracy": 0.2,
-    "description": "SWKS systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 20% accurate (53 samples)",
+    "count": 55,
+    "accuracy": 0.193,
+    "description": "SWKS systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 19% accurate (55 samples)",
     "created_date": "2026-07-02",
     "created_regime": 1
   },
@@ -223,6 +223,14 @@
     "created_date": "2026-07-02",
     "created_regime": 1
   },
+  "ticker_FCX": {
+    "dampen": 0.2,
+    "count": 5,
+    "accuracy": 0.143,
+    "description": "FCX systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 14% accurate (5 samples)",
+    "created_date": "2026-07-02",
+    "created_regime": 1
+  },
   "ticker_CMS": {
     "dampen": 0.2,
     "count": 6,
@@ -241,9 +249,9 @@
   },
   "ticker_TTWO": {
     "dampen": 0.2,
-    "count": 26,
-    "accuracy": 0.036,
-    "description": "TTWO systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 4% accurate (26 samples)",
+    "count": 29,
+    "accuracy": 0.129,
+    "description": "TTWO systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 13% accurate (29 samples)",
     "created_date": "2026-07-02",
     "created_regime": 1
   },
@@ -296,9 +304,9 @@
     },
     "momentum_bull": {
       "boost": 0.06,
-      "count": 401,
-      "accuracy": 0.66,
-      "description": "BUY with RSI 55-68 in Bull \u00e2\u20ac\u201d 66% accurate (401 samples)"
+      "count": 429,
+      "accuracy": 0.661,
+      "description": "BUY with RSI 55-68 in Bull \u00e2\u20ac\u201d 66% accurate (429 samples)"
     },
     "created_date": "2026-07-02",
     "created_regime": 1
