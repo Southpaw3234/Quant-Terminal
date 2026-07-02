@@ -1,1 +1,146 @@
-[]
+[
+  {
+    "y": "JPM",
+    "x": "BAC",
+    "sector": "Financials",
+    "coint_pval": 2.8e-05,
+    "hedge_ratio": 1.429603,
+    "half_life": 3.33,
+    "spread_mean": -0.0,
+    "spread_std": 0.014834,
+    "z_score": 0.6521,
+    "as_of": "2026-07-02"
+  },
+  {
+    "y": "DDOG",
+    "x": "CRWD",
+    "sector": "Cloud",
+    "coint_pval": 0.000787,
+    "hedge_ratio": 1.056721,
+    "half_life": 4.66,
+    "spread_mean": 0.0,
+    "spread_std": 0.060446,
+    "z_score": -0.589,
+    "as_of": "2026-07-02"
+  },
+  {
+    "y": "PFE",
+    "x": "GILD",
+    "sector": "Pharma",
+    "coint_pval": 0.00043,
+    "hedge_ratio": 0.656898,
+    "half_life": 5.11,
+    "spread_mean": -0.0,
+    "spread_std": 0.028335,
+    "z_score": -1.6198,
+    "as_of": "2026-07-02"
+  },
+  {
+    "y": "NVDA",
+    "x": "AMD",
+    "sector": "Semiconductors",
+    "coint_pval": 0.005365,
+    "hedge_ratio": 0.840742,
+    "half_life": 5.32,
+    "spread_mean": 0.0,
+    "spread_std": 0.037975,
+    "z_score": -2.6699,
+    "as_of": "2026-07-02"
+  },
+  {
+    "y": "NVDA",
+    "x": "INTC",
+    "sector": "Semiconductors",
+    "coint_pval": 0.00523,
+    "hedge_ratio": 1.089663,
+    "half_life": 5.63,
+    "spread_mean": 0.0,
+    "spread_std": 0.043087,
+    "z_score": -1.7945,
+    "as_of": "2026-07-02"
+  },
+  {
+    "y": "MU",
+    "x": "KLAC",
+    "sector": "Semiconductors",
+    "coint_pval": 0.001658,
+    "hedge_ratio": 1.254151,
+    "half_life": 6.65,
+    "spread_mean": -0.0,
+    "spread_std": 0.135654,
+    "z_score": -0.4116,
+    "as_of": "2026-07-02"
+  },
+  {
+    "y": "NVDA",
+    "x": "TXN",
+    "sector": "Semiconductors",
+    "coint_pval": 0.008496,
+    "hedge_ratio": 0.928252,
+    "half_life": 7.3,
+    "spread_mean": 0.0,
+    "spread_std": 0.0567,
+    "z_score": -0.8718,
+    "as_of": "2026-07-02"
+  },
+  {
+    "y": "NVDA",
+    "x": "MU",
+    "sector": "Semiconductors",
+    "coint_pval": 0.026655,
+    "hedge_ratio": 0.760865,
+    "half_life": 7.53,
+    "spread_mean": 0.0,
+    "spread_std": 0.049531,
+    "z_score": -1.2713,
+    "as_of": "2026-07-02"
+  },
+  {
+    "y": "NVDA",
+    "x": "ADI",
+    "sector": "Semiconductors",
+    "coint_pval": 0.021306,
+    "hedge_ratio": 0.886033,
+    "half_life": 7.79,
+    "spread_mean": -0.0,
+    "spread_std": 0.053873,
+    "z_score": -0.4876,
+    "as_of": "2026-07-02"
+  },
+  {
+    "y": "NVDA",
+    "x": "QCOM",
+    "sector": "Semiconductors",
+    "coint_pval": 0.015033,
+    "hedge_ratio": 1.014258,
+    "half_life": 7.89,
+    "spread_mean": 0.0,
+    "spread_std": 0.058817,
+    "z_score": 0.2089,
+    "as_of": "2026-07-02"
+  },
+  {
+    "y": "KO",
+    "x": "SBUX",
+    "sector": "Consumer",
+    "coint_pval": 0.043469,
+    "hedge_ratio": 0.9501,
+    "half_life": 8.01,
+    "spread_mean": -0.0,
+    "spread_std": 0.036822,
+    "z_score": 1.1117,
+    "as_of": "2026-07-02"
+  },
+  {
+    "y": "JNJ",
+    "x": "MRK",
+    "sector": "Pharma",
+    "coint_pval": 0.014912,
+    "hedge_ratio": 1.144612,
+    "half_life": 8.23,
+    "spread_mean": 0.0,
+    "spread_std": 0.036692,
+    "z_score": 0.8505,
+    "as_of": "2026-07-02"
+  }
+]
