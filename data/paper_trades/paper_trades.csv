@@ -40,3 +40,7 @@ ts,ticker,action,price,qty,dollars,confidence,regime,vix,portfolio_value,notes,o
 2026-07-02T15:31:34.870527,PPG,BUY,118.25,18,,0.6661,2,,,,"alpaca_error:{""buying_power"":""1417.84"",""code"":4031000",error,2026-07-02,NORMAL,1.0,5321.25
 2026-07-02T15:31:59.191696,DUK,BUY,123.52,21,,0.5,1,,,,"alpaca_error:{""buying_power"":""1794.57"",""code"":4031000",error,2026-07-02,NORMAL,1.0,6670.08
 2026-07-02T15:32:15.470991,TTWO,BUY,235.77,11,,0.5,1,,,,"alpaca_error:{""available"":""3"",""code"":40310000,""existi",error,2026-07-02,NORMAL,1.0,6601.56
+2026-07-02T16:02:08.054796,MU,SELL,986.0,1,,0.5,1,,,,"alpaca_error:{""buying_power"":""0"",""code"":40310000,""cos",error,2026-07-02,NORMAL,1.0,986.0
+2026-07-02T16:02:08.696406,TXN,SELL,293.855,6,,0.5,1,,,,"alpaca_error:{""buying_power"":""0"",""code"":40310000,""cos",error,2026-07-02,NORMAL,1.0,1763.13
+2026-07-02T16:02:09.326848,MCHP,SELL,85.06,26,,0.5,1,,,,"alpaca_error:{""buying_power"":""0"",""code"":40310000,""cos",error,2026-07-02,NORMAL,1.0,2211.56
+2026-07-02T16:02:09.794677,TER,SELL,380.0,6,,0.5,1,,,,ba7f4dc5-458d-4cc1-96da-d8c6d8e05acc,filled,2026-07-02,NORMAL,1.0,2280.0
