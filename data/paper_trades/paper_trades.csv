@@ -35,3 +35,6 @@ ts,ticker,action,price,qty,dollars,confidence,regime,vix,portfolio_value,notes,o
 2026-07-03T15:32:32.420699,GE,BUY,356.47,7,,0.7169,1,,,,"alpaca_error:{""buying_power"":""977.65"",""code"":40310000",error,2026-07-03,NORMAL,1.0,6416.46
 2026-07-03T15:33:19.176692,TTWO,BUY,238.72,10,,0.5,1,,,,"alpaca_error:{""available"":""3"",""code"":40310000,""existi",error,2026-07-03,NORMAL,1.0,6445.44
 2026-07-03T15:33:38.916043,SOXX,BUY,625.2,2,,0.5,0,,,,"alpaca_error:{""buying_power"":""977.65"",""code"":40310000",error,2026-07-03,NORMAL,1.0,3751.2
+2026-07-03T15:47:22.221316,INTC,SELL,120.35,17,,0.5,1,,,,"alpaca_error:{""available"":""3"",""code"":40310000,""existi",error,2026-07-03,NORMAL,1.0,2045.95
+2026-07-03T15:47:23.407991,TER,SELL,369.09,5,,0.5,1,,,,"alpaca_error:{""available"":""3"",""code"":40310000,""existi",error,2026-07-03,NORMAL,1.0,1845.45
+2026-07-03T15:47:24.447538,SOXX,SELL,566.32,2,,0.5,1,,,,dd0be494-6981-4371-988d-df0071118a2e,filled,2026-07-03,NORMAL,1.0,1132.64
