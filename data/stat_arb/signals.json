@@ -10,7 +10,7 @@
     "spread_mean": -0.0,
     "spread_std": 0.014835,
     "action": "HOLD",
-    "generated": "2026-07-03T00:31:42.624166"
+    "generated": "2026-07-03T15:36:42.726903"
   },
   {
     "pair": "DDOG/CRWD",
@@ -23,7 +23,7 @@
     "spread_mean": -0.0,
     "spread_std": 0.060428,
     "action": "EXIT",
-    "generated": "2026-07-03T00:31:42.624732"
+    "generated": "2026-07-03T15:36:42.727397"
   },
   {
     "pair": "PFE/GILD",
@@ -33,10 +33,10 @@
     "hedge_ratio": 0.656531,
     "half_life": 5.14,
     "z_score": -1.7285,
-    "spread_mean": -0.0,
+    "spread_mean": 0.0,
     "spread_std": 0.028356,
     "action": "HOLD",
-    "generated": "2026-07-03T00:31:42.625308"
+    "generated": "2026-07-03T15:36:42.727889"
   },
   {
     "pair": "NVDA/AMD",
@@ -46,10 +46,10 @@
     "hedge_ratio": 0.840713,
     "half_life": 5.25,
     "z_score": -2.4971,
-    "spread_mean": -0.0,
+    "spread_mean": 0.0,
     "spread_std": 0.037905,
     "action": "ENTER_LONG_Y",
-    "generated": "2026-07-03T00:31:42.625867"
+    "generated": "2026-07-03T15:36:42.728353"
   },
   {
     "pair": "NVDA/INTC",
@@ -62,7 +62,7 @@
     "spread_mean": -0.0,
     "spread_std": 0.043032,
     "action": "HOLD",
-    "generated": "2026-07-03T00:31:42.626414"
+    "generated": "2026-07-03T15:36:42.728803"
   },
   {
     "pair": "MU/KLAC",
@@ -72,10 +72,10 @@
     "hedge_ratio": 1.252813,
     "half_life": 6.84,
     "z_score": -0.7102,
-    "spread_mean": -0.0,
+    "spread_mean": 0.0,
     "spread_std": 0.135746,
     "action": "HOLD",
-    "generated": "2026-07-03T00:31:42.626989"
+    "generated": "2026-07-03T15:36:42.729263"
   },
   {
     "pair": "NVDA/TXN",
@@ -85,10 +85,10 @@
     "hedge_ratio": 0.928412,
     "half_life": 7.28,
     "z_score": -0.7494,
-    "spread_mean": 0.0,
+    "spread_mean": -0.0,
     "spread_std": 0.056677,
     "action": "HOLD",
-    "generated": "2026-07-03T00:31:42.627532"
+    "generated": "2026-07-03T15:36:42.729700"
   },
   {
     "pair": "NVDA/MU",
@@ -101,7 +101,7 @@
     "spread_mean": 0.0,
     "spread_std": 0.049494,
     "action": "HOLD",
-    "generated": "2026-07-03T00:31:42.628084"
+    "generated": "2026-07-03T15:36:42.730170"
   },
   {
     "pair": "NVDA/ADI",
@@ -114,7 +114,7 @@
     "spread_mean": 0.0,
     "spread_std": 0.05386,
     "action": "EXIT",
-    "generated": "2026-07-03T00:31:42.628606"
+    "generated": "2026-07-03T15:36:42.730620"
   },
   {
     "pair": "NVDA/QCOM",
@@ -124,10 +124,10 @@
     "hedge_ratio": 1.014024,
     "half_life": 7.9,
     "z_score": 0.2978,
-    "spread_mean": 0.0,
+    "spread_mean": -0.0,
     "spread_std": 0.058822,
     "action": "EXIT",
-    "generated": "2026-07-03T00:31:42.629169"
+    "generated": "2026-07-03T15:36:42.731078"
   },
   {
     "pair": "KO/SBUX",
@@ -137,10 +137,10 @@
     "hedge_ratio": 0.950841,
     "half_life": 8.06,
     "z_score": 1.3685,
-    "spread_mean": -0.0,
+    "spread_mean": 0.0,
     "spread_std": 0.03687,
     "action": "HOLD",
-    "generated": "2026-07-03T00:31:42.629684"
+    "generated": "2026-07-03T15:36:42.731527"
   },
   {
     "pair": "JNJ/MRK",
@@ -153,7 +153,7 @@
     "spread_mean": 0.0,
     "spread_std": 0.036682,
     "action": "HOLD",
-    "generated": "2026-07-03T00:31:42.630233"
+    "generated": "2026-07-03T15:36:42.731989"
   },
   {
     "pair": "NVDA/LRCX",
@@ -163,10 +163,10 @@
     "hedge_ratio": 0.889142,
     "half_life": 8.58,
     "z_score": -0.8427,
-    "spread_mean": 0.0,
+    "spread_mean": -0.0,
     "spread_std": 0.051856,
     "action": "HOLD",
-    "generated": "2026-07-03T00:31:42.630801"
+    "generated": "2026-07-03T15:36:42.732453"
   },
   {
     "pair": "JNJ/AMGN",
@@ -179,6 +179,6 @@
     "spread_mean": 0.0,
     "spread_std": 0.059831,
     "action": "HOLD",
-    "generated": "2026-07-03T00:31:42.631351"
+    "generated": "2026-07-03T15:36:42.732912"
   }
 ]
