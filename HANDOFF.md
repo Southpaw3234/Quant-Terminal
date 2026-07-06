@@ -1,7 +1,7 @@
 # Quant Terminal v25 — Session Handoff
-**Date:** 2026-06-30 (updated — **Frame 3 evidence clock STARTED (first stat_arb_ls row); diagnosed + fixed a spurious crypto-driven kill-switch halt**)  
+**Date:** 2026-07-06 (updated — **Drive-sync stale-state resurrection diagnosed & FIXED: rclone restore was reverting evidence data daily, freezing the morning marker at 6/09, and doubling BUY batches via duplicate retrains**)  
 **Branch:** `master` (live/cron)  
-**Last commit:** `7758ff8` (master — consecutive-loss kill-switch fix, MERGED) · `e46315b` (Frame 3 shadow stat-arb P0) · `095ff07` (scorer pred_ts format fix)  
+**Last commit:** `497f277` (master — Drive-sync `--ignore-existing` fix + 7/6 evidence-data recovery, MERGED) · `7758ff8` (consecutive-loss kill-switch fix) · `e46315b` (Frame 3 shadow stat-arb P0)  
 **Repo:** https://github.com/Southpaw3234/Quant-Terminal
 
 ---
@@ -41,6 +41,74 @@ and the ONE highest-priority action for today. Then wait for direction.
 
 > 📌 Full reasoning for every item lives below: roadmap → §"FUTURE UPGRADES";
 > real-money rules → §"REAL-MONEY DEPLOYMENT GATE"; Monday verification → §"CHECKPOINT".
+
+---
+
+## 🗓️ SESSION LEDGER — 2026-07-06: Drive-sync stale-state resurrection — diagnosed, FIXED, data recovered
+
+**THE HEADLINE: the Google Drive sync inside `quant_runner.py` had been silently resurrecting a
+frozen June-9 snapshot on every run — reverting the evidence clock daily, triggering duplicate
+full retrains (3× on 7/6), and DOUBLING equity positions via repeated BUY batches. Root-caused,
+fixed (`497f277`, merged, preflight 9/9), and the destroyed 7/6 evidence data restored.**
+
+**① The bug (mechanism, all verified in git history + run logs):**
+- `quant_runner.py` Stage 0a runs `rclone copy gdrive:… → data/` with NO `--ignore-existing`/
+  `--update` → any Drive file whose content differs CLOBBERS the fresh git checkout, no matter
+  how stale Drive is.
+- Stage 6 (local→Drive) runs *inside* quant_runner — i.e. BEFORE the workflow steps that write
+  `rank_ic.csv`, `stat_arb_ls.csv`, `pairs.json`, and `data/last_morning_run.txt`. Those files'
+  updates NEVER reached Drive, so Drive's snapshot froze: marker permanently `2026-06-09`,
+  rank_ic.csv the pre-6/26 n=307 blob. Each Stage 0a→Stage 6 round-trip re-laundered the stale
+  copies back to Drive, so it could never converge.
+- Every intraday/evening cycle then COMMITTED the restored stale files. Verified: every
+  intraday/evening `Auto:` commit 6/30→7/6 reverts marker to 6/09; evening `ddd3b7d` (7/6)
+  DELETED the day's stat_arb_ls row, emptied pairs.json, and reverted rank_ic.csv +
+  shadow_positions.json that morning commit `12a20cc` had just written.
+- Stale marker → the self-heal gate saw "no morning retrain today" on EVERY scheduled run →
+  duplicate FULL retrains. 7/6 had THREE (13:35 dispatch, 16:52, 18:09 crons). The mysterious
+  nightly `Auto: morning cycle 00:3x` commits (since ~6/18) are the 21:30 UTC evening cron
+  retraining for 2–3h. **The schedule has NO overnight cron — those were all this bug.**
+- **Trading impact: duplicate order flow.** The 16:52 rerun re-bought ~16 of the same names the
+  13:35 run had bought 90 min earlier (JPM/ABT/VRTX/BAX/IQV/EXPE/INTC/AMAT/TER/GE/ITW/PPG/WELL/
+  VTR/TTWO/SOXX; cash guard $114k→$59k) → **position sizes ~2× intended**. This has plausibly
+  inflated position sizes on other days too (every day had ≥2 full retrains).
+
+**② Fix `497f277` (MERGED to master, preflight 9/9 PASS run `28828704225`):** Stage 0a
+Drive→local now passes `--ignore-existing` — the git checkout is the source of truth for every
+tracked file; Drive only FILLS GAPS (kill-switch flag, model pickles, anything not in git).
+local→Drive (Stage 6) unchanged, so Drive now converges to fresh copies over time. Same commit
+restored the 7/6 evidence data from `12a20cc`: stat_arb book (7/6 row: 1 entry, 3 exits, net
+−$254.90, 2 pairs open), pairs.json (12 pairs), shadow_positions/trades, signals,
+pair_history, rank_ic.csv through 6/26, clean cross_sectional_ls.csv, marker=2026-07-06.
+
+**③ Today's model read (from the runs, story unchanged):** walk-forward AUC 0.5413/IC 0.0682
+(13:35) and 0.5427/0.0691 (16:52) — ceiling, "weak/no edge"; first sub-0.50 last fold (0.4958)
+at 13:35, noise-band. Kill switch healthy (equity $114,544 at check, peak_dd −5.34% vs HWM
+$121,010, no trip; **no spurious consecutive-loss halt — `7758ff8` still holding**). Account
+$115,601 (+15.6% total, 65 open). Gate scorecard (window 5/12→6/26, N=36, clean equity-only):
+rank-IC full **−0.0265** (t −1.77), trailing-20d **−0.0111** (t −0.71, trend +0.0154 improving
+toward zero), β **+0.22** (FAIL, but sign flipped again — unstable), max-DD **−29.9%** (FAIL).
+**Still NO-GO on every gate; frozen-by-default posture unchanged.**
+
+**④ Secondary:** the 13:35 run's `stat_arb.py` + `analyze_rank_ic.py` got ZERO price data
+("Tested 0 pairs", "no price data — cannot compute") while the 16:52 run fetched fine — looks
+like transient Yahoo rate-limiting, but note the runner now installs **yfinance 1.5.1** (pin is
+`>=0.2.40`, major versions walk in freely). Non-fatal wrappers worked as designed. Consider
+pinning yfinance.
+
+**Open / next:**
+- [ ] **VERIFY 7/7 run** (auto-verify armed): (a) exactly ONE full morning retrain; (b) the
+  16:00Z/19:00Z intraday commits NO LONGER revert `data/last_morning_run.txt` (must stay
+  2026-07-07) or evidence files; (c) `stat_arb_ls.csv` gains a 7/7 row; (d) rank_ic.csv
+  advances past 6/26; (e) no `00:3x morning cycle` commit tonight.
+- [ ] **DECIDE: trim doubled positions?** The 7/6 duplicate batch roughly doubled JPM/ABT/VRTX/
+  BAX/IQV/EXPE/INTC/AMAT/TER/GE/ITW/PPG/WELL/VTR/TTWO/SOXX. Options: let the model's normal
+  exit logic unwind them, or manually trim to intended size. (Also check earlier days.)
+- [ ] **Pin yfinance** in requirements.txt (cheap insurance vs silent major-version breaks).
+- [ ] **`DISCORD_WEBHOOK_URL`** still unset — would have paged on the persistence-guard
+  `::warning::` that fired on 7/6 (it caught this bug; nobody was listening).
+- [ ] **TRACK rank-IC trend** toward +0.03/t≥2 — trailing window is the live read.
+- Memory written: `drive-sync-stale-state-resurrection.md`.
 
 ---
 
@@ -96,6 +164,10 @@ The run logged `🚨 KILL SWITCH: 5 consecutive losses — halting new entries` 
   **VERIFY 7/1 run:** confirm no spurious `5 consecutive losses` halt unless the equity BUY/SELL
   tail (crypto excluded) is a genuine 5-loss streak — read the run log's kill-switch line + that
   new equity BUYs actually filled.
+  ✅ **VERIFIED PASS 7/1** — run `28521546094` (13:35 UTC dispatch): zero exceptions, no
+  `🚨 KILL SWITCH`/"consecutive losses"/"halting new entries" anywhere in the log, 12 equity BUYs
+  filled (JPM/ABBV/SYK/VRTX/MTD/ZBH/DLTR/INTC/TXN/GE/PPG/TTWO) + ETH-USD crypto. Drawdown kill
+  switch also healthy (equity $115,898, peak_dd −4.22%, no trip). Fix confirmed live.
 - [ ] **`DISCORD_WEBHOOK_URL`** still unset — would have turned today's halt + guard warnings into
   a real-time ping instead of log-only.
 - [ ] **TRACK rank-IC trend** toward +0.03/t≥2 — trailing window is the live read.
