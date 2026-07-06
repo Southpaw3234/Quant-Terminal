@@ -107,12 +107,12 @@ def _write_rclone_conf():
     print("  rclone config written")
     return True
 
-def _rclone(src, dst, label):
+def _rclone(src, dst, label, extra_flags=None):
     try:
         r = subprocess.run(
             ["rclone", "copy", src, dst,
              "--exclude", "model_cache.pkl",
-             "--transfers", "8", "--quiet"],
+             "--transfers", "8", "--quiet"] + (extra_flags or []),
             capture_output=True, text=True, timeout=120)
         if r.returncode == 0:
             print(f"  {label} OK")
@@ -139,7 +139,19 @@ def _rclone_delete(remote_relpath, label="rclone delete"):
 _drive_ok = _write_rclone_conf()
 if _drive_ok:
     print("Stage 0a: Drive -> local sync...")
-    _rclone(f"gdrive:{GDRIVE_FOLDER}", str(LOCAL_DATA), "Drive->local")
+    # --ignore-existing: the git checkout is the source of truth for every
+    # tracked file (each run commits state to master at the end), so Drive may
+    # only FILL GAPS (kill-switch flag, model pickles, anything not in git) —
+    # never overwrite a file the checkout already has. Without this flag,
+    # `rclone copy` overwrites on any size/modtime difference, and because
+    # Stage 6 (local->Drive) runs BEFORE the workflow steps that write
+    # rank_ic.csv / stat_arb_ls.csv / last_morning_run.txt, Drive held a frozen
+    # snapshot (marker stuck at 2026-06-09) that every cycle restored and
+    # re-committed: evening commits deleted the day's evidence rows, and the
+    # stale marker made every scheduled run self-heal into a duplicate full
+    # morning retrain that re-placed the same BUY orders (see 2026-07-06).
+    _rclone(f"gdrive:{GDRIVE_FOLDER}", str(LOCAL_DATA), "Drive->local",
+            extra_flags=["--ignore-existing"])
 
 # Cumulative trade history for the dashboard. paper_trades.csv is reset to
 # today-only every run so the cash guard's BUY−SELL notional calc stays
