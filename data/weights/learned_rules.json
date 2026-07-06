@@ -153,9 +153,9 @@
   },
   "ticker_DPZ": {
     "dampen": 0.2,
-    "count": 14,
-    "accuracy": 0.188,
-    "description": "DPZ systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 19% accurate (14 samples)",
+    "count": 15,
+    "accuracy": 0.176,
+    "description": "DPZ systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 18% accurate (15 samples)",
     "created_date": "2026-07-06",
     "created_regime": 1
   },
@@ -239,6 +239,14 @@
     "created_date": "2026-07-06",
     "created_regime": 1
   },
+  "ticker_HWM": {
+    "dampen": 0.2,
+    "count": 5,
+    "accuracy": 0.143,
+    "description": "HWM systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 14% accurate (5 samples)",
+    "created_date": "2026-07-06",
+    "created_regime": 1
+  },
   "ticker_FCX": {
     "dampen": 0.2,
     "count": 7,
@@ -257,9 +265,9 @@
   },
   "ticker_AES": {
     "dampen": 0.2,
-    "count": 7,
-    "accuracy": 0.111,
-    "description": "AES systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 11% accurate (7 samples)",
+    "count": 8,
+    "accuracy": 0.1,
+    "description": "AES systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 10% accurate (8 samples)",
     "created_date": "2026-07-06",
     "created_regime": 1
   },
@@ -272,10 +280,10 @@
     "created_regime": 1
   },
   "ticker_TTWO": {
-    "dampen": 0.16,
-    "count": 36,
-    "accuracy": 0.289,
-    "description": "TTWO systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 29% accurate (36 samples)",
+    "dampen": 0.14,
+    "count": 37,
+    "accuracy": 0.308,
+    "description": "TTWO systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 31% accurate (37 samples)",
     "created_date": "2026-07-06",
     "created_regime": 1
   },

@@ -584,12 +584,12 @@
     "rolling_acc": 0.0
   },
   "DHR": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "PFE": {
     "correct": 1,
@@ -800,12 +800,12 @@
     "rolling_acc": 0.0
   },
   "ALGN": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "BAX": {
     "correct": 0,
@@ -976,12 +976,12 @@
     "rolling_acc": 0.0
   },
   "DLTR": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "YUM": {
     "correct": 0,
