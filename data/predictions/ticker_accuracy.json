@@ -1,4 +1,1964 @@
 {
+  "AAPL": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "MSFT": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "NVDA": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "GOOGL": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "AMZN": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "META": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "TSLA": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "AVGO": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "ORCL": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "ADBE": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "CRM": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "NOW": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "SNOW": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "PLTR": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "NET": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "DDOG": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "ZS": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "CRWD": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "PANW": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "SHOP": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "WDAY": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "TEAM": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "INTU": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "CDNS": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "SNPS": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "FTNT": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "ANET": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "ACN": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "IBM": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "CSCO": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "IT": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "TYL": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "ROP": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "PYPL": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "COIN": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "AFRM": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "HOOD": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "JPM": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "V": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "MA": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "BAC": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "GS": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "MS": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "BLK": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "AXP": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "WFC": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "C": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "SCHW": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "PGR": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "CB": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "COF": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "USB": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "TFC": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "PNC": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "ICE": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "CME": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "SPGI": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "MCO": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "AON": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "TRV": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "ALL": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "MET": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "PRU": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "AIG": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "HIG": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "AFL": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "UNH": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "LLY": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "JNJ": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "ABBV": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "MRK": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "TMO": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "ABT": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "DHR": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "PFE": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "AMGN": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "CVS": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "CI": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "HUM": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "BSX": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "MDT": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "SYK": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "ISRG": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "VRTX": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "REGN": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "BMY": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "GILD": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "ELV": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "MCK": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "COR": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "A": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "IQV": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "MTD": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "WAT": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "ZBH": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "RMD": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "DXCM": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "IDXX": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "EW": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "PODD": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "ALGN": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "BAX": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "HD": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "NKE": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "LOW": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "TJX": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "ROST": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "SBUX": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "CMG": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "MCD": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "COST": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "TGT": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "GM": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "F": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "UBER": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "BKNG": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "ABNB": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "MAR": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "HLT": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "LVS": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "MGM": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "DG": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "DLTR": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "YUM": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "DPZ": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "APTV": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "CCL": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "RCL": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "EXPE": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "NCLH": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "WMT": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "PG": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "KO": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "PEP": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "MDLZ": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "CL": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "MO": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "PM": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "EL": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "CHD": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "CLX": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "GIS": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "TSN": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "STZ": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "SJM": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "HRL": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "CAG": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "HSY": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "AMD": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "INTC": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "QCOM": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "AMAT": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "MU": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "TXN": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "LRCX": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "KLAC": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "ADI": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "MRVL": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "ASML": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "TSM": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "ON": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "MCHP": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "ENPH": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "FSLR": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "TER": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "SWKS": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "MPWR": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "NXPI": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "XOM": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "CVX": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "COP": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "SLB": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "EOG": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "HAL": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "OXY": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "PSX": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "MPC": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "VLO": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "DVN": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "APA": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "KMI": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "WMB": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "BKR": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "LNG": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "FANG": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "BA": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "CAT": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "DE": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "HON": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "GE": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "RTX": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "LMT": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "NOC": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "UPS": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "FDX": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "MMM": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "EMR": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "ETN": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "ITW": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "PH": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "CMI": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "PCAR": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "GWW": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "CTAS": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "EXPD": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "NSC": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "UNP": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "CSX": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "GD": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "TDG": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "HWM": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "FTV": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "XYL": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "FAST": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "CHRW": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "LIN": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "APD": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "SHW": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "PPG": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "NEM": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "FCX": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "NUE": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "ALB": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "LYB": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "DD": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "DOW": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "CF": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "MOS": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "ECL": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "IFF": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "CE": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "PKG": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "AMT": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "PLD": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "EQIX": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "CCI": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "WELL": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "SPG": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "O": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "DLR": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "PSA": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "EXR": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "VTR": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "VICI": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "WY": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
   "EQR": {
     "correct": 0,
     "total": 1,

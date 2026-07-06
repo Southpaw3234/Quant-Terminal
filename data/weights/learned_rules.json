@@ -1,4 +1,12 @@
 {
+  "high_rsi_bear": {
+    "dampen": 0.1,
+    "count": 79,
+    "accuracy": 0.395,
+    "description": "BUY with RSI>68 in Bear regime \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 40% accurate (79 samples)",
+    "created_date": "2026-07-06",
+    "created_regime": 1
+  },
   "ticker_GOOGL": {
     "dampen": 0.2,
     "count": 23,
@@ -145,9 +153,9 @@
   },
   "ticker_DPZ": {
     "dampen": 0.2,
-    "count": 13,
-    "accuracy": 0.2,
-    "description": "DPZ systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 20% accurate (13 samples)",
+    "count": 14,
+    "accuracy": 0.188,
+    "description": "DPZ systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 19% accurate (14 samples)",
     "created_date": "2026-07-06",
     "created_regime": 1
   },
@@ -249,9 +257,9 @@
   },
   "ticker_AES": {
     "dampen": 0.2,
-    "count": 6,
-    "accuracy": 0.125,
-    "description": "AES systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 12% accurate (6 samples)",
+    "count": 7,
+    "accuracy": 0.111,
+    "description": "AES systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 11% accurate (7 samples)",
     "created_date": "2026-07-06",
     "created_regime": 1
   },
@@ -264,10 +272,10 @@
     "created_regime": 1
   },
   "ticker_TTWO": {
-    "dampen": 0.18,
-    "count": 35,
-    "accuracy": 0.27,
-    "description": "TTWO systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 27% accurate (35 samples)",
+    "dampen": 0.16,
+    "count": 36,
+    "accuracy": 0.289,
+    "description": "TTWO systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 29% accurate (36 samples)",
     "created_date": "2026-07-06",
     "created_regime": 1
   },
@@ -318,16 +326,18 @@
       "accuracy": 0.833,
       "description": "BUY with RSI<35 in Bull regime \u00e2\u20ac\u201d 83% accurate (16 samples)"
     },
-    "momentum_bull": {
-      "boost": 0.05,
-      "count": 487,
-      "accuracy": 0.65,
-      "description": "BUY with RSI 55-68 in Bull \u00e2\u20ac\u201d 65% accurate (487 samples)"
-    },
     "created_date": "2026-07-06",
     "created_regime": 1
   },
   "_regime_bull": {
+    "high_rsi_bear": {
+      "dampen": 0.1,
+      "count": 79,
+      "accuracy": 0.395,
+      "description": "BUY with RSI>68 in Bear regime \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 40% accurate (79 samples)",
+      "created_date": "2026-07-06",
+      "created_regime": 1
+    },
     "created_date": "2026-07-06",
     "created_regime": 1
   }
