@@ -1,7 +1,7 @@
 # Quant Terminal v25 — Session Handoff
 **Date:** 2026-07-06 (updated — **Drive-sync stale-state resurrection diagnosed & FIXED: rclone restore was reverting evidence data daily, freezing the morning marker at 6/09, and doubling BUY batches via duplicate retrains**)  
 **Branch:** `master` (live/cron)  
-**Last commit:** `497f277` (master — Drive-sync `--ignore-existing` fix + 7/6 evidence-data recovery, MERGED) · `7758ff8` (consecutive-loss kill-switch fix) · `e46315b` (Frame 3 shadow stat-arb P0)  
+**Last commit:** `b9e8e6e` (master tip — full 7/6 session: `497f277` Drive-sync fix + data recovery · `43448f3` de-lever tool + yfinance<2 pin · `f80fe03`/`4f4bdf6` de-lever v2 · docs) — **preflight 9/9 on this exact tree (run `28834778666`)**  
 **Repo:** https://github.com/Southpaw3234/Quant-Terminal
 
 ---
@@ -92,9 +92,9 @@ toward zero), β **+0.22** (FAIL, but sign flipped again — unstable), max-DD *
 
 **④ Secondary:** the 13:35 run's `stat_arb.py` + `analyze_rank_ic.py` got ZERO price data
 ("Tested 0 pairs", "no price data — cannot compute") while the 16:52 run fetched fine — looks
-like transient Yahoo rate-limiting, but note the runner now installs **yfinance 1.5.1** (pin is
-`>=0.2.40`, major versions walk in freely). Non-fatal wrappers worked as designed. Consider
-pinning yfinance.
+like transient Yahoo rate-limiting, but note the runner now installs **yfinance 1.5.1** (pin was
+`>=0.2.40`, major versions walked in freely). Non-fatal wrappers worked as designed.
+**DONE same session: capped `yfinance>=0.2.40,<2` in requirements.txt** (`43448f3`).
 
 **⑤ LEVERAGE DISCOVERED & DE-LEVERED (same session, evening).** Reconciling the trim against
 Alpaca ground truth revealed the duplicate batches mostly **BOUNCED on 7/6** (insufficient
@@ -110,6 +110,16 @@ was reading ~3×-beta equity. **USER-APPROVED REMEDIATION EXECUTED** via new
 never a BUY). Projected after fills: **gross ~1.06×, cash ~+$41k** → buying power restored
 before the 9:35 ET morning run. Note: repo Alpaca secrets carry a UTF-8 BOM (PowerShell
 `gh secret set` pipe artifact) — `_clean()` strips it; raw urllib headers choke otherwise.
+
+**⑥ Validation status (both layers, don't conflate — same discipline as the 6/30 fix):**
+- **Static:** preflight **9/9 PASS twice** — on the fix branch tip pre-merge (`28828704225`)
+  and on the final master tree `b9e8e6e` (`28834778666`, covers the yfinance `<2` pin via the
+  dependency-install + import-smoke steps, the de-lever tooling, and the restored data files).
+- **Behavioral:** the de-lever tool is ALREADY proven live (2 dry-runs + execute `28834531442`,
+  44/44 orders accepted). The Drive-sync fix's behavioral proof is TOMORROW's runs — that's
+  what the armed 1:15 PM ET auto-verify checks (single retrain / stable marker / no evidence
+  reverts / de-lever filled / morning BUYs fill). Until that passes, treat the incident as
+  FIXED-UNVERIFIED.
 
 **Open / next:**
 - [ ] **VERIFY 7/7 run** (auto-verify armed, 1:15 PM ET): (a) exactly ONE full morning retrain;
