@@ -1,9 +1,10 @@
 name: Position Trim (one-off remediation)
 
-# Remediation tool for the 2026-07-06 duplicate-retrain order flow (Drive-sync
-# stale-marker bug, fixed in 497f277 — see HANDOFF.md ledger 2026-07-06).
-# dry-run (default) only REPORTS the reconciliation; execute cancels the
-# residual queued BUYs and sells the excess over batch-1 quantities.
+# Remediation tool for the duplicate-retrain leverage (Drive-sync stale-marker
+# bug, fixed in 497f277 — see HANDOFF.md ledger 2026-07-06). The dup batches
+# levered the paper account to ~2.9x gross; this pro-rata sells long equities
+# back to ~1.0x (crypto untouched, model's queued exits netted out).
+# dry-run (default) only REPORTS the plan; execute submits the sells.
 # Manual dispatch only — never scheduled.
 
 on:
