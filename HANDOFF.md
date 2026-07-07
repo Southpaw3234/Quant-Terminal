@@ -96,15 +96,29 @@ like transient Yahoo rate-limiting, but note the runner now installs **yfinance 
 `>=0.2.40`, major versions walk in freely). Non-fatal wrappers worked as designed. Consider
 pinning yfinance.
 
+**⑤ LEVERAGE DISCOVERED & DE-LEVERED (same session, evening).** Reconciling the trim against
+Alpaca ground truth revealed the duplicate batches mostly **BOUNCED on 7/6** (insufficient
+buying power — submission log lines ≠ fills, same phantom pattern as May-12): only JPM 36 and
+USB 130 filled. The real damage was **accumulated leverage from prior days' duplicates**:
+account at **3.32× gross** ($389.6k long — $365.5k equities + $24.1k crypto — on $117.4k
+equity, cash **−$224.0k**, buying power **$0.00**; e.g. ZBH x716 ≈ $64k, BAX x1490 ≈ $34k in a
+~$2–5k/position design). Model's intended entries were being silently rejected; kill switch
+was reading ~3×-beta equity. **USER-APPROVED REMEDIATION EXECUTED** via new
+`delever_account.py` + `position_trim.yml` (manual dispatch, dry-run→execute, run
+`28834531442`): **44 pro-rata market SELLs ~$239.7k** queued for the 7/7 9:30 ET open (factor
+0.726 per long equity, crypto untouched, model's own queued C x63/JPM x48 exits netted out,
+never a BUY). Projected after fills: **gross ~1.06×, cash ~+$41k** → buying power restored
+before the 9:35 ET morning run. Note: repo Alpaca secrets carry a UTF-8 BOM (PowerShell
+`gh secret set` pipe artifact) — `_clean()` strips it; raw urllib headers choke otherwise.
+
 **Open / next:**
-- [ ] **VERIFY 7/7 run** (auto-verify armed): (a) exactly ONE full morning retrain; (b) the
-  16:00Z/19:00Z intraday commits NO LONGER revert `data/last_morning_run.txt` (must stay
+- [ ] **VERIFY 7/7 run** (auto-verify armed, 1:15 PM ET): (a) exactly ONE full morning retrain;
+  (b) the 16:00Z/19:00Z intraday commits NO LONGER revert `data/last_morning_run.txt` (must stay
   2026-07-07) or evidence files; (c) `stat_arb_ls.csv` gains a 7/7 row; (d) rank_ic.csv
-  advances past 6/26; (e) no `00:3x morning cycle` commit tonight.
-- [ ] **DECIDE: trim doubled positions?** The 7/6 duplicate batch roughly doubled JPM/ABT/VRTX/
-  BAX/IQV/EXPE/INTC/AMAT/TER/GE/ITW/PPG/WELL/VTR/TTWO/SOXX. Options: let the model's normal
-  exit logic unwind them, or manually trim to intended size. (Also check earlier days.)
-- [ ] **Pin yfinance** in requirements.txt (cheap insurance vs silent major-version breaks).
+  advances past 6/26; (e) no `00:3x morning cycle` commit tonight; (f) **de-lever filled at the
+  open** — gross ≈1.0–1.1× equity, cash positive, morning-run BUYs actually FILL (not rejected).
+- [ ] **Watch the drawdown kill switch on 7/7**: realizing the de-lever P&L + a gap at the open
+  moves equity; peak_dd was −5.34% vs −15% peak limit — headroom OK but check the log line.
 - [ ] **`DISCORD_WEBHOOK_URL`** still unset — would have paged on the persistence-guard
   `::warning::` that fired on 7/6 (it caught this bug; nobody was listening).
 - [ ] **TRACK rank-IC trend** toward +0.03/t≥2 — trailing window is the live read.
