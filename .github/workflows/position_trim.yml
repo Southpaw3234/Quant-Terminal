@@ -1,0 +1,46 @@
+name: Position Trim (one-off remediation)
+
+# Remediation tool for the 2026-07-06 duplicate-retrain order flow (Drive-sync
+# stale-marker bug, fixed in 497f277 — see HANDOFF.md ledger 2026-07-06).
+# dry-run (default) only REPORTS the reconciliation; execute cancels the
+# residual queued BUYs and sells the excess over batch-1 quantities.
+# Manual dispatch only — never scheduled.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'dry-run = report only; execute = cancel + sell'
+        required: true
+        default: 'dry-run'
+        type: choice
+        options: [dry-run, execute]
+
+permissions:
+  contents: read
+
+# Same group as the trading workflow so a trim never runs mid-cycle.
+concurrency:
+  group: quant-terminal
+  cancel-in-progress: false
+
+jobs:
+  trim:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Reconcile and trim
+        env:
+          ALPACA_API_KEY:    ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          ALPACA_BASE_URL:   'https://paper-api.alpaca.markets'
+          TRIM_MODE:         ${{ github.event.inputs.mode }}
+        run: python trim_duplicate_positions.py
