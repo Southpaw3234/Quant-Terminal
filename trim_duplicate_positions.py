@@ -28,9 +28,15 @@ import sys
 import urllib.parse
 import urllib.request
 
-BASE = os.environ.get("ALPACA_BASE_URL", "https://paper-api.alpaca.markets").rstrip("/")
-KEY = os.environ["ALPACA_API_KEY"]
-SEC = os.environ["ALPACA_SECRET_KEY"]
+def _clean(v):
+    # The repo secrets carry a UTF-8 BOM from the original PowerShell
+    # `$val | gh secret set` pipe; urllib rejects it in header values.
+    return v.strip().strip("\ufeff").strip()
+
+
+BASE = _clean(os.environ.get("ALPACA_BASE_URL", "https://paper-api.alpaca.markets")).rstrip("/")
+KEY = _clean(os.environ["ALPACA_API_KEY"])
+SEC = _clean(os.environ["ALPACA_SECRET_KEY"])
 MODE = os.environ.get("TRIM_MODE", "dry-run").strip().lower()
 TRADE_DAY = os.environ.get("TRIM_DAY", "2026-07-06")
 
