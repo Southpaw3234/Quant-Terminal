@@ -1,7 +1,7 @@
 # Quant Terminal v25 — Session Handoff
-**Date:** 2026-07-08 evening (updated — **GROSS-CAP HARD GATE SHIPPED `9f10c0a`: the cash guard now BINDS (the old one was a NO-OP — 26 BUYs ≈$131k were submitted this morning right past "max 2 new BUYs", re-levering 1.27×→2.36×); dup-retrain source #3 found (marker checkout race) and the dup run cancelled mid-flight; `a29d075` catch-up gate VERIFIED live; Discord webhook LIVE**)  
+**Date:** 2026-07-08 end-of-day (updated — **GROSS-CAP HARD GATE SHIPPED `9f10c0a` (cash guard was a NO-OP: 26 BUYs ≈$131k sailed past "max 2 new BUYs", re-levered 1.27×→2.36×); DE-LEVER EXECUTED (50 SELLs ≈$161k queued for the 7/9 open, target 0.90× → projected 0.97×); BETA-HEDGED shadow series shipped `9c3d70d` — first read: hedged book −35.2% cumulative, residual β +0.05 → no alpha behind the beta; dup-retrain #3 (marker checkout race) caught & cancelled mid-flight, fix pending; `a29d075` catch-up gate VERIFIED live; Discord webhook LIVE**)  
 **Branch:** `master` (live/cron)  
-**Last commit:** `3b8898e` (master tip — gross-cap hard gate `9f10c0a` + validation suite `scripts/validate_gross_cap.py` / `validate_gross_cap.yml`) — **preflight 9/9 (run `28976335595`) + behavioral validation ALL PASS (run `28976374760`) on the fix branch; both re-dispatched on the merged master tree 21:23Z**  
+**Last commit:** `6947a65` (master tip — gross-cap gate `9f10c0a` + validation suite · trim `target_ratio` input `6478fca` · beta-hedged LS series `9c3d70d` + validation workflow · ledgers) — **preflight 9/9 green on the final merged tree (run `28981767949`); gross-cap behavioral suite ALL PASS (`28976374760`); hedge validation PASS end-to-end (`28981677263`)**  
 **Repo:** https://github.com/Southpaw3234/Quant-Terminal
 
 ---
@@ -18,8 +18,10 @@
 milestones below are now DUE or PAST-DUE.
 
 **Step 2 — every-session quick health check** (do these regardless of date):
-- [ ] **Latest morning run clean?** Check `gh run list` / the run log for `MORNING cycle complete`, no `Cell N raised an exception`, kill switch not tripped.
-- [ ] **Evidence engines still recording?** `data/shadow/cross_sectional_pnl.csv` and `data/stat_arb/pairs.json` (>0 pairs) gaining rows. If either is empty/stale → the evidence clock stalled, fix immediately (see CHECKPOINT section).
+- [ ] **Latest morning run clean?** Check `gh run list` / the run log for `MORNING cycle complete`, no `Cell N raised an exception`, kill switch not tripped. (Known-benign: intraday cycles print `Cell 11 raised: NameError 'models'` — pre-existing, non-fatal.)
+- [ ] **Leverage capped?** The morning log's `[patch] Gross cap:` line must show live equity/gross and gross ≤ ~1.0× (gate `9f10c0a`, `QT_MAX_GROSS` default 1.0). If gross is climbing again or the line is missing → the hard gate regressed, fix before anything else. Ground truth = Alpaca positions (gross MV ÷ equity), never the trades ledger.
+- [ ] **Evidence engines still recording?** `data/shadow/rank_ic.csv`, `data/shadow/cross_sectional_ls.csv` (now incl. `ls_hedged`), and `data/stat_arb/stat_arb_ls.csv` gaining rows. If any is empty/stale → the evidence clock stalled, fix immediately (see CHECKPOINT section).
+- [ ] **Exactly one morning retrain?** Watch for the marker checkout race (dup-retrain source #3, fix pending): any *scheduled* run whose "Run trading cycle" step exceeds ~1 h is a duplicate retrain — cancel it before the trade cell (~3 h in).
 - [ ] **Any new uncommitted handoff edits or open follow-ups** from the last session?
 
 **Step 3 — date-triggered checkpoints** (act on whichever have come due):
@@ -28,10 +30,10 @@ milestones below are now DUE or PAST-DUE.
 |----------|-----------|------------|
 | ~~Mon 2026-06-08~~ ✅ | Evidence clock started | **PASS (verified 6/10):** shadow recording (30L/30S books), stat-arb 13/172 pairs. pair_history.csv append bug fixed `45f4260`. |
 | ~~Thu 2026-06-11+~~ ✅ | **Phase 1 GPU validation — DONE 2026-06-14** | **RESULT: FLAT — frame at ceiling.** Run `27484667746` (feat/maximize-model, QT_GPU=True, 80-trial light profile, device=cuda): walk-forward **mean OOS AUC=0.5500 / IC=0.0805** vs baseline 0.5461/0.0754 → Δ noise, "weak/no edge". **Verdict: tuning is NOT the lever; do NOT merge PR #21 for AUC; pivot to frame changes (Frame 1/3).** River clamp FAILED its test (still 46%). See SESSION LEDGER 2026-06-12/14. |
-| **Anytime before real $** | Stage-0 prerequisites | Discord webhook set? **River: clamp tested 6/14 → still 46%, must CUT or fix.** Intraday-pickle bug fixed? Fill audit done? (See REAL-MONEY DEPLOYMENT GATE.) |
+| **Anytime before real $** | Stage-0 prerequisites | ~~Discord webhook~~ ✅ LIVE 7/8 (test ping verified). ~~River~~ ✅ CUT from weights 6/14+. ~~Hard gross cap~~ ✅ SHIPPED 7/8 `9f10c0a` (verify 7/9). **Still open: marker checkout race fix (dup-retrain #3); fill audit** (submission ≠ fill — 3 phantom incidents). (See REAL-MONEY DEPLOYMENT GATE.) |
 | ~~**~2026-06-15**~~ ✅ | First shadow positions mature | **PASS (verified 6/24):** persistence fix `a0231ca` held — shadow now matures+scores real 5-day books (6/23 scored 2 matured; pnl.csv has scored rows), stat-arb persists 20 pairs/day. Clock is alive; first readable rank-IC ~early July. |
 | ~~**~early July 2026**~~ ✅ | Shadow rank-IC readable | **READ EARLY 6/25; re-read 6/26:** full −0.0396 / trailing-20d −0.0097 (trend +0.0299 *improving*). **NO-GO** (gate +0.03/t≥2) — beta, not alpha — but recent regime flat not anti-predictive, trailing creeping toward zero/positive. Track the trailing trend. |
-| **~late Jul / early Aug 2026** | **GO/NO-GO alpha gate** | Evaluate ALL Stage-1 gate thresholds. **As of 6/26 (clean equity-only): NO-GO on every measurable gate** — rank-IC −0.0345/t−1.99, AUC 0.5461, max-DD −26.1%, β −1.18. Read from `data/shadow/rank_ic.csv` + `cross_sectional_ls.csv` (NOT the legacy `cross_sectional_pnl.csv`). See REAL-MONEY GATE table + ledger §④. |
+| **~late Jul / early Aug 2026** | **GO/NO-GO alpha gate** | Evaluate ALL Stage-1 gate thresholds. **As of 7/8: NO-GO on every gate** — rank-IC full −0.0276 / trailing-20d −0.0109 (converging to zero, NOT to +0.03), AUC 0.5413 (ceiling), and the new **beta-HEDGED read is decisive: hedged book −35.2% cumulative, residual β +0.05 → with beta stripped, the picks lose outright**. Read from `data/shadow/rank_ic.csv` + `cross_sectional_ls.csv` incl. `ls_hedged` (NOT the legacy `cross_sectional_pnl.csv`). **Kill criterion sharpened 7/8: Frame 1 survives only if the trailing `ls_hedged` curve turns positive — a rank-IC turn while hedged stays underwater is a beta artifact, retire without debate.** See REAL-MONEY GATE table + ledger §⑦. |
 | **~mid-Aug 2026** | Frame 2 intraday trainable | 60 trading days of `data/intraday_history/` should exist → `model_intraday.py` trains for real. |
 | **~Aug 2026** | Build Frame 3 trading layer | If Phase 1 passed the gate, write the stat-arb trading layer (`stat_arb.py`: Kalman hedge, spread entry/exit). |
 | **8 wks after any frame starts** | Frame KILL check | If a frame's shadow rank-IC is flat/negative with no trend → retire it, reallocate. |
@@ -138,7 +140,8 @@ negative, the turn is a beta artifact, not a GO.
   equity/gross and positive room; (c) new BUYs fill BUT total stays under the 1.0× cap —
   look for `[gross-cap] BLOCKED BUY` once room is exhausted + the `[gross-cap] summary:`
   line; (d) NO dup retrain (watch the marker race, see ②); (e) evening/scoring cycles
-  submit zero orders.
+  submit zero orders; (f) rank-IC step prints the new `beta-HEDGED long-short` block and
+  `cross_sectional_ls.csv` carries `beta_roll`/`ls_hedged` columns in the Auto commit.
 - [ ] **Fix dup-retrain #3 (marker checkout race)** — re-read marker from origin/master in
   the run-type gate (see ②). Until then: a long morning run + queued cron = dup risk; check
   for >1 h trading-cycle steps on scheduled runs and cancel pre-trade-cell.
