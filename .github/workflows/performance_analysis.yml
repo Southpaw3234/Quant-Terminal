@@ -1,0 +1,38 @@
+name: Performance Analysis (read-only)
+
+# Measurement-only: reconstructs true daily gross exposure from Alpaca FILL
+# activities and reports the leverage-adjusted return (what the account's
+# gains look like de-levered to 1.0x gross — see HANDOFF.md 7/7-7/8 ledgers).
+# GETs only; submits and cancels nothing. Manual dispatch only.
+#
+# Deliberately NOT in the quant-terminal concurrency group: read-only, so it
+# never needs to serialize with (or block behind) live trading runs.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install minimal deps
+        run: pip install "yfinance>=0.2.40,<2" pandas
+
+      - name: Leverage-adjusted return
+        env:
+          ALPACA_API_KEY:    ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          ALPACA_BASE_URL:   'https://paper-api.alpaca.markets'
+        run: python leverage_adjusted_return.py
