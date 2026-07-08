@@ -23,6 +23,14 @@
     "created_date": "2026-07-08",
     "created_regime": 1
   },
+  "ticker_C": {
+    "dampen": 0.12,
+    "count": 31,
+    "accuracy": 0.333,
+    "description": "C systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 33% accurate (31 samples)",
+    "created_date": "2026-07-08",
+    "created_regime": 1
+  },
   "ticker_UNH": {
     "dampen": 0.12,
     "count": 10,
@@ -41,9 +49,9 @@
   },
   "ticker_PEP": {
     "dampen": 0.2,
-    "count": 5,
-    "accuracy": 0.143,
-    "description": "PEP systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 14% accurate (5 samples)",
+    "count": 6,
+    "accuracy": 0.25,
+    "description": "PEP systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 25% accurate (6 samples)",
     "created_date": "2026-07-08",
     "created_regime": 1
   },
@@ -60,6 +68,14 @@
     "count": 19,
     "accuracy": 0.286,
     "description": "ADI systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 29% accurate (19 samples)",
+    "created_date": "2026-07-08",
+    "created_regime": 1
+  },
+  "ticker_MCHP": {
+    "dampen": 0.2,
+    "count": 7,
+    "accuracy": 0.111,
+    "description": "MCHP systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 11% accurate (7 samples)",
     "created_date": "2026-07-08",
     "created_regime": 1
   },
@@ -257,9 +273,9 @@
   },
   "ticker_FCX": {
     "dampen": 0.2,
-    "count": 7,
-    "accuracy": 0.111,
-    "description": "FCX systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 11% accurate (7 samples)",
+    "count": 8,
+    "accuracy": 0.1,
+    "description": "FCX systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 10% accurate (8 samples)",
     "created_date": "2026-07-08",
     "created_regime": 1
   },
@@ -273,9 +289,9 @@
   },
   "ticker_AES": {
     "dampen": 0.2,
-    "count": 13,
-    "accuracy": 0.067,
-    "description": "AES systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 7% accurate (13 samples)",
+    "count": 17,
+    "accuracy": 0.053,
+    "description": "AES systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 5% accurate (17 samples)",
     "created_date": "2026-07-08",
     "created_regime": 1
   },
