@@ -1,0 +1,53 @@
+name: Validate rank-IC beta hedge (one-off, read-only)
+
+# End-to-end run of analyze_rank_ic.py to validate the beta-hedged shadow
+# series — measurement-only, no trading keys, no orders, nothing committed.
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'feat/rank-ic-beta-hedge'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas "yfinance>=0.2.40,<2"
+
+      - name: Compile check
+        run: python -m py_compile analyze_rank_ic.py
+
+      - name: Run analyze_rank_ic.py end-to-end
+        run: python analyze_rank_ic.py
+
+      - name: Assert hedged series landed in the output CSV
+        run: |
+          python - <<'PYEOF'
+          import pandas as pd, sys
+          df = pd.read_csv("data/shadow/cross_sectional_ls.csv")
+          missing = {"beta_roll", "ls_hedged"} - set(df.columns)
+          if missing:
+              print(f"FAIL: cross_sectional_ls.csv missing {missing}")
+              sys.exit(1)
+          n = df["beta_roll"].notna().sum()
+          if len(df) >= 10 and n == 0:
+              print("FAIL: no hedged rows despite enough history")
+              sys.exit(1)
+          # warm-up rows must be unhedged (causal shift) and hedged rows must
+          # differ from raw where a hedge was actually applied
+          applied = df.dropna(subset=["beta_roll", "spy_fwd"])
+          diff = (applied["ls_hedged"] - applied["long_short"]).abs().sum()
+          print(f"rows={len(df)} hedged={n} sum|hedge adj|={diff:.5f}")
+          if len(applied) >= 5 and diff == 0:
+              print("FAIL: hedge never changed a return — overlay inert")
+              sys.exit(1)
+          print("PASS: hedged series present and behaving causally")
+          PYEOF

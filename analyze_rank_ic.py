@@ -223,6 +223,24 @@ def main() -> None:
         lsdf = pd.DataFrame(ls_recs).sort_values("date").reset_index(drop=True)
         lsdf["spy_fwd"] = [_fwd_ret(prices, "SPY", d, int(h))
                            for d, h in zip(lsdf["date"], lsdf["h"])]
+
+        # Beta-hedged variant (measurement-only, added 2026-07-08): the SAME
+        # long-short picks with a causal SPY overlay sized to the rolling beta.
+        # Pre-answers the August gate question: if the trailing rank-IC turns
+        # positive, does the signal survive beta neutralization, or was it a
+        # beta artifact? (The raw book fails |beta|<0.2 structurally: defensive
+        # longs vs high-beta shorts.) beta_roll for row i is fit on the trailing
+        # <=20 PRIOR rows only (shift(1) — implementable, no look-ahead), needs
+        # >=5 obs, clamped to +/-3; rows without a beta estimate or SPY return
+        # stay unhedged (warm-up ~first 5 rows).
+        _ls_v = lsdf["long_short"].astype(float)
+        _spy_v = pd.to_numeric(lsdf["spy_fwd"], errors="coerce")
+        _beta_roll = (_ls_v.rolling(20, min_periods=5).cov(_spy_v)
+                      / _spy_v.rolling(20, min_periods=5).var()
+                      ).shift(1).replace([np.inf, -np.inf], np.nan).clip(-3.0, 3.0)
+        lsdf["beta_roll"] = _beta_roll.round(4)
+        lsdf["ls_hedged"] = (_ls_v - (_beta_roll * _spy_v).fillna(0.0)).round(5)
+
         LS_CSV.parent.mkdir(parents=True, exist_ok=True)
         lsdf.to_csv(LS_CSV, index=False)
 
@@ -246,6 +264,27 @@ def main() -> None:
                   f"[gate: |beta| < 0.2  -> {'OK' if abs(beta) < 0.2 else 'FAIL'}]")
         else:
             print(f"beta vs SPY   : n/a (need >=3 matured days with SPY)")
+
+        # Beta-hedged read (same picks + causal SPY overlay).
+        hs = lsdf["ls_hedged"].astype(float)
+        heq = (1.0 + hs).cumprod()
+        hdd = float((heq / heq.cummax() - 1.0).min())
+        hfit = lsdf.dropna(subset=["spy_fwd", "beta_roll"])
+        hbeta = float("nan")
+        if len(hfit) >= 3 and float(hfit["spy_fwd"].std()) > 0:
+            hbeta = float(np.polyfit(hfit["spy_fwd"].astype(float).values,
+                                     hfit["ls_hedged"].astype(float).values, 1)[0])
+        n_hedged = int(lsdf["beta_roll"].notna().sum())
+        print(f"\n--- beta-HEDGED long-short (same picks + causal SPY overlay) ---")
+        print(f"days hedged   : {n_hedged}/{len(lsdf)}  (first ~5 are warm-up, unhedged)")
+        print(f"mean ret      : {hs.mean():+.4f}   cumulative {(heq.iloc[-1] - 1) * 100:+.1f}%")
+        print(f"max drawdown  : {hdd * 100:.1f}%      [gate: > -15%  -> "
+              f"{'OK' if hdd > -0.15 else 'FAIL'}]")
+        if hbeta == hbeta:  # not NaN
+            print(f"residual beta : {hbeta:+.2f}   (hedged rows only, n={len(hfit)})   "
+                  f"[gate: |beta| < 0.2  -> {'OK' if abs(hbeta) < 0.2 else 'FAIL'}]")
+        else:
+            print("residual beta : n/a (not enough hedged rows yet)")
         print(f"[rank-ic] wrote {LS_CSV}")
 
     def _gate(st: dict) -> bool:
