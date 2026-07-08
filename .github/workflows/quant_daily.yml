@@ -29,6 +29,11 @@ on:
         default: 'morning'
         type: choice
         options: [morning, intraday, evening, scoring]
+      force:
+        description: 'Force a full morning retrain even if one already ran today'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -111,6 +116,20 @@ jobs:
               TYPE="morning"
             elif [ "$TYPE" = "morning" ]; then
               echo "Morning retrain already done for $TODAY — downgrading duplicate morning cron to intraday refresh."
+              TYPE="intraday"
+            fi
+          fi
+
+          # Explicit morning dispatches are marker-gated too: the workstation's
+          # Task-Scheduler catch-up fired a stale run_type=morning on PC wake
+          # (2026-07-07) and forced a duplicate retrain + duplicate BUY batch.
+          # A same-day second full morning now requires force=true.
+          FORCE="${{ github.event.inputs.force }}"
+          if [ "$TYPE" = "morning" ] && [ -n "$MANUAL" ] && [ "$FORCE" != "true" ]; then
+            LAST_MORNING=""
+            [ -f data/last_morning_run.txt ] && LAST_MORNING="$(cat data/last_morning_run.txt | tr -d '[:space:]')"
+            if [ "$LAST_MORNING" = "$(date -u +%Y-%m-%d)" ]; then
+              echo "Explicit morning dispatch but retrain already done today — downgrading to intraday (dispatch with force=true to override)."
               TYPE="intraday"
             fi
           fi

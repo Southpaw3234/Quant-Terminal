@@ -26,3 +26,9 @@ trading_model_v23.ipynb
 
 # Dashboard data feed — pushed to orphan `data` branch each cycle, never accumulated in master
 docs/data.json
+
+# local DPAPI-encrypted gh token for scheduled triggers (never commit)
+scripts/.gh_token.dpapi
+
+# local trigger/watch logs from the workstation scheduled tasks
+run_logs/

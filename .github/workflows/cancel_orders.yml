@@ -1,0 +1,47 @@
+name: Cancel Open BUY Orders (one-off remediation)
+
+# Remediation for the 2026-07-07 Task-Scheduler catch-up dispatch: a stale
+# explicit run_type=morning dispatch bypassed the marker gate, ran a duplicate
+# morning cycle after the close, and queued ~26 duplicate BUY orders for the
+# next open. This lists all open orders and cancels the open BUYs (the model's
+# own queued SELLs are left alone). dry-run (default) only REPORTS the plan.
+# Manual dispatch only — never scheduled.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'dry-run = report only; execute = cancel open BUYs'
+        required: true
+        default: 'dry-run'
+        type: choice
+        options: [dry-run, execute]
+
+permissions:
+  contents: read
+
+# Same group as the trading workflow so a cancel never runs mid-cycle.
+concurrency:
+  group: quant-terminal
+  cancel-in-progress: false
+
+jobs:
+  cancel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: List and cancel open BUY orders
+        env:
+          ALPACA_API_KEY:    ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          ALPACA_BASE_URL:   'https://paper-api.alpaca.markets'
+          CANCEL_MODE:       ${{ github.event.inputs.mode }}
+        run: python cancel_open_buys.py
