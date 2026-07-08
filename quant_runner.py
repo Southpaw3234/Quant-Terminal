@@ -3198,42 +3198,119 @@ try:
 except Exception as _hc13e:
     print(f"  [patch] http.client putheader patch skipped: {_hc13e}")
 
-# ── Fix: Cash guard — cap BUY signals to what PORTFOLIO_CAPITAL can fund ─────
-# Kelly sizing can assign qty to 100+ tickers, but the portfolio only has
-# PORTFOLIO_CAPITAL to spend. Rank BUY signals by confidence desc, allow
-# only as many as MAX_POSITION_PCT * PORTFOLIO_CAPITAL budgets for.
+# ── Fix (2026-07-08): HARD gross-exposure cap + run-type order gate ──────────
+# Replaces the old "cash guard", which was a NO-OP: it lowered blocked signals'
+# confidence to 0.50, but Cell 13's trade loop never re-reads confidence (no
+# MIN_CONFIDENCE gate exists anywhere in the execution path), so every
+# action=BUY signal traded regardless — 26 BUYs (~$131k) were submitted on
+# 2026-07-08 moments after the guard printed "max 2 new BUYs", re-levering the
+# account 1.27x -> 2.36x. It also budgeted from the local paper ledger instead
+# of the real account, which is how the account averaged 2.75x gross since
+# 2026-06-02. Three layers, all ENFORCED (not advisory):
+#   1. run-type gate — only morning/intraday runs may submit BUY orders
+#      (a run_type=scoring cycle submitted 25 BUYs at 11 PM ET on 2026-07-07);
+#   2. exec_blocked pre-trim — excess BUY signals beyond the gross budget are
+#      marked exec_blocked, highest confidence kept (confidence and action are
+#      NOT touched, so predictions.csv still records the model's real signal
+#      for rank-IC scoring); the trade loop skips them via _SRC_REPLACE;
+#   3. _gross_cap_allows() — hard per-order gate inside execute_trade (via
+#      _SRC_REPLACE): a BUY that would push gross position market value above
+#      QT_MAX_GROSS x equity (default 1.0x) is refused at submission time,
+#      using Alpaca's LIVE equity/positions plus a running total of notional
+#      this run has already submitted.
+# Fail-closed: if the Alpaca account read fails while keys are set, ALL BUYs
+# are blocked this run — sizing blind is what built the 3.3x book.
+import os as _os_gc
+_GROSS_CAP = {
+    "ratio":      float(_os_gc.environ.get("QT_MAX_GROSS", "1.0") or 1.0),
+    "run_type":   _os_gc.environ.get("RUN_TYPE", "morning"),
+    "equity":     None,    # live account equity ($)
+    "gross_mv":   None,    # live gross position market value ($, abs long+short)
+    "submitted":  0.0,     # BUY notional already allowed this run ($)
+    "acct_ok":    False,   # account state successfully read
+    "blocked_n":  0,
+    "blocked_nl": 0.0,
+}
+_GROSS_CAP["run_ok"] = _GROSS_CAP["run_type"] in ("morning", "intraday")
+
+def _gross_cap_allows(_tk_gc, _notional_gc):
+    # Hard BUY gate: True only if this order keeps gross <= ratio x equity.
+    # Never called for SELLs (exits always allowed — they reduce gross).
+    try:
+        _n_gc = max(0.0, float(_notional_gc))
+        if not _GROSS_CAP["run_ok"]:
+            _GROSS_CAP["blocked_n"] += 1; _GROSS_CAP["blocked_nl"] += _n_gc
+            print(f"    [gross-cap] BLOCKED BUY {_tk_gc} ~${_n_gc:,.0f} — "
+                  f"run_type={_GROSS_CAP['run_type']} does not submit orders")
+            return False
+        if not _GROSS_CAP["acct_ok"]:
+            _GROSS_CAP["blocked_n"] += 1; _GROSS_CAP["blocked_nl"] += _n_gc
+            print(f"    [gross-cap] BLOCKED BUY {_tk_gc} ~${_n_gc:,.0f} — "
+                  f"account state unknown (fail-closed)")
+            return False
+        _room_gc = (_GROSS_CAP["ratio"] * _GROSS_CAP["equity"]
+                    - _GROSS_CAP["gross_mv"] - _GROSS_CAP["submitted"])
+        if _n_gc > _room_gc:
+            _GROSS_CAP["blocked_n"] += 1; _GROSS_CAP["blocked_nl"] += _n_gc
+            print(f"    [gross-cap] BLOCKED BUY {_tk_gc} ~${_n_gc:,.0f} — "
+                  f"room ${max(0.0, _room_gc):,.0f} at {_GROSS_CAP['ratio']:.2f}x cap")
+            return False
+        _GROSS_CAP["submitted"] += _n_gc
+        return True
+    except Exception as _gca_e:
+        print(f"    [gross-cap] gate error — BLOCKED BUY {_tk_gc} (fail-closed): {_gca_e}")
+        return False
+
 try:
-    import pandas as _pd13cg
-    from pathlib import Path as _P13cg
-    _pt_cg = _P13cg("data/paper_trades/paper_trades.csv")
-    _spent_cg = 0.0
-    if _pt_cg.exists():
-        _df_cg = _pd13cg.read_csv(_pt_cg)
-        _df_cg["qty"]   = _pd13cg.to_numeric(_df_cg["qty"],   errors="coerce").fillna(0)
-        _df_cg["price"] = _pd13cg.to_numeric(_df_cg["price"], errors="coerce").fillna(0)
-        _df_cg["notional"] = _df_cg["qty"] * _df_cg["price"]
-        _spent_cg = (_df_cg[_df_cg["action"]=="BUY"]["notional"].sum()
-                     - _df_cg[_df_cg["action"]=="SELL"]["notional"].sum())
-    _avail_cg = max(0.0, PORTFOLIO_CAPITAL - _spent_cg)
-    # Max new positions = floor(available_cash / min_position_size)
-    _min_pos_size = PORTFOLIO_CAPITAL * MAX_POSITION_PCT   # e.g. $500 at 5%
-    _max_new_buys = max(1, int(_avail_cg / _min_pos_size)) if _min_pos_size > 0 else 20
-    # Sort BUY signals by confidence desc, suppress beyond budget
-    _buy_sigs_cg = sorted(
-        [(tk, sig) for tk, sig in signals.items()
-         if sig.get("ternary_label", "BUY") == "BUY" and sig.get("confidence", 0) >= 0.51],
-        key=lambda x: x[1].get("confidence", 0),
-        reverse=True
-    )
-    _blocked_cg = 0
-    for _i_cg, (_tk_cg, _) in enumerate(_buy_sigs_cg):
-        if _i_cg >= _max_new_buys:
-            signals[_tk_cg]["confidence"] = 0.50   # push below MIN_CONFIDENCE
-            _blocked_cg += 1
-    print(f"  [patch] Cash guard: ${_avail_cg:,.0f} available → max {_max_new_buys} new BUYs, "
-          f"blocked {_blocked_cg} low-confidence excess signals")
-except Exception as _cg13e:
-    print(f"  [patch] Cash guard error (non-fatal): {_cg13e}")
+    if ALPACA_API_KEY and ALPACA_SECRET_KEY:
+        from alpaca.trading.client import TradingClient as _TC_gc
+        _tc_gc   = _TC_gc(ALPACA_API_KEY, ALPACA_SECRET_KEY, paper=True)
+        _acct_gc = _tc_gc.get_account()
+        _GROSS_CAP["equity"]   = float(_acct_gc.equity)
+        _GROSS_CAP["gross_mv"] = float(sum(abs(float(_p_gc.market_value))
+                                           for _p_gc in _tc_gc.get_all_positions()))
+        _GROSS_CAP["acct_ok"]  = True
+    else:
+        # No broker keys (pure local paper mode): budget from the ledger.
+        import pandas as _pd_gc
+        from pathlib import Path as _P_gc
+        _gmv_gc = 0.0
+        _pt_gc = _P_gc("data/paper_trades/paper_trades.csv")
+        if _pt_gc.exists():
+            _df_gc = _pd_gc.read_csv(_pt_gc)
+            _df_gc["qty"]   = _pd_gc.to_numeric(_df_gc["qty"],   errors="coerce").fillna(0)
+            _df_gc["price"] = _pd_gc.to_numeric(_df_gc["price"], errors="coerce").fillna(0)
+            _nl_gc = _df_gc["qty"] * _df_gc["price"]
+            _gmv_gc = max(0.0, float(_nl_gc[_df_gc["action"] == "BUY"].sum()
+                                     - _nl_gc[_df_gc["action"] == "SELL"].sum()))
+        _GROSS_CAP["equity"]   = float(PORTFOLIO_CAPITAL)
+        _GROSS_CAP["gross_mv"] = _gmv_gc
+        _GROSS_CAP["acct_ok"]  = True
+
+    _room0_gc = max(0.0, _GROSS_CAP["ratio"] * _GROSS_CAP["equity"] - _GROSS_CAP["gross_mv"])
+    # Pre-trim: keep the highest-confidence BUY signals that fit the budget,
+    # estimating one MAX_POSITION_PCT slot per name (the per-order hard gate
+    # in execute_trade enforces actual dollars).
+    _slot_gc = max(1.0, float(_GROSS_CAP["equity"]) * float(MAX_POSITION_PCT))
+    _max_new_gc = int(_room0_gc / _slot_gc)
+    _buys_gc = sorted(
+        [(_tk_gc2, _sig_gc) for _tk_gc2, _sig_gc in signals.items()
+         if _sig_gc.get("action") == "BUY"],
+        key=lambda _x_gc: _x_gc[1].get("confidence", 0), reverse=True)
+    _pre_blocked_gc = 0
+    for _i_gc, (_tk_gc2, _) in enumerate(_buys_gc):
+        if _i_gc >= _max_new_gc:
+            signals[_tk_gc2]["exec_blocked"] = True
+            _pre_blocked_gc += 1
+    _lev_gc = (_GROSS_CAP["gross_mv"] / _GROSS_CAP["equity"]) if _GROSS_CAP["equity"] else 0.0
+    print(f"  [patch] Gross cap: equity ${_GROSS_CAP['equity']:,.0f} | gross "
+          f"${_GROSS_CAP['gross_mv']:,.0f} ({_lev_gc:.2f}x) | cap {_GROSS_CAP['ratio']:.2f}x "
+          f"-> room ${_room0_gc:,.0f} = {_max_new_gc} new BUY slots | "
+          f"pre-blocked {_pre_blocked_gc}/{len(_buys_gc)} BUY signals | "
+          f"run_ok={_GROSS_CAP['run_ok']} ({_GROSS_CAP['run_type']})")
+except Exception as _gc_e:
+    print(f"  [patch] GROSS CAP SETUP ERROR: {_gc_e} — hard gate stays active "
+          f"(BUYs blocked unless account read succeeded above)")
 """
 
 # ── Tier 2 extension: adaptive TWAP execution helpers ────────────────────────
@@ -3443,6 +3520,15 @@ try:
                     print(f"  [TierC] Conformal Kelly: scaled qty for {_n_scaled13} today's orders")
 except Exception as _ck13e:
     print(f"  [TierC] Conformal Kelly post-scale error (non-fatal): {_ck13e}")
+
+# Gross-cap end-of-cell summary (2026-07-08) — one greppable line per run.
+try:
+    if "_GROSS_CAP" in dir() and (_GROSS_CAP["blocked_n"] or _GROSS_CAP["submitted"]):
+        print(f"  [gross-cap] summary: allowed ${_GROSS_CAP['submitted']:,.0f} new BUY "
+              f"notional | blocked {_GROSS_CAP['blocked_n']} orders "
+              f"(~${_GROSS_CAP['blocked_nl']:,.0f}) | cap {_GROSS_CAP['ratio']:.2f}x")
+except Exception:
+    pass
 """
 
 # ── Tier 2: Nowcasting macro — injected AFTER Cell 4 fetches FRED data ───────
@@ -4955,6 +5041,37 @@ _SRC_REPLACE = [
      '        _ks_sc = _ks_sc[~_ks_sc["ticker"].astype(str).isin(\n'
      '            {"BTC-USD", "ETH-USD", "SOL-USD", "XRP-USD", "DOGE-USD", "BNB-USD"})]\n'
      '        scored = _ks_sc.tail(KILL_CONSECUTIVE_LOSSES)'),
+    # Gross-cap hard gate (2026-07-08), 3 anchors into Cell 13 — see the
+    # CELL_13_PREPATCH gross-cap block for the full rationale. The old cash
+    # guard mutated signals[tk]["confidence"], which nothing in the execution
+    # path reads; these rewrites make the gate binding at the three points
+    # that matter: the signal loop, the order funnel, and the trade print.
+    # (a) trade loop: skip signals the prepatch marked exec_blocked. Placed
+    #     AFTER log_prediction so predictions.csv still records the signal.
+    ('for tk, sig in signals.items():\n'
+     '    log_prediction(sig)\n'
+     '    if halt or sig["action"] == "HOLD":\n'
+     '        continue',
+     'for tk, sig in signals.items():\n'
+     '    log_prediction(sig)\n'
+     '    if halt or sig["action"] == "HOLD":\n'
+     '        continue\n'
+     '    if sig.get("exec_blocked"):\n'
+     '        continue'),
+    # (b) order funnel: every order goes through execute_trade — refuse BUYs
+    #     that fail the hard gross cap BEFORE _try_alpaca submits anything.
+    ('    if action not in ("BUY","SELL") or qty <= 0:\n'
+     '        return {"status":"skip","reason":"HOLD or qty=0"}',
+     '    if action not in ("BUY","SELL") or qty <= 0:\n'
+     '        return {"status":"skip","reason":"HOLD or qty=0"}\n'
+     '    if action == "BUY" and not _gross_cap_allows(ticker, qty * price):\n'
+     '        return {"status":"skip","reason":"gross_cap"}'),
+    # (c) trade print: a gross-cap-refused BUY must not print as an executed
+    #     trade or count toward trade_count (the 7/7-style "filled" phantoms).
+    ('        result = execute_trade(sig, qty, equity)\n',
+     '        result = execute_trade(sig, qty, equity)\n'
+     '        if isinstance(result, dict) and result.get("reason") == "gross_cap":\n'
+     '            continue\n'),
 ]
 
 failed_cells = []
