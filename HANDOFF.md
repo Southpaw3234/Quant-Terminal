@@ -112,6 +112,21 @@ drifting toward zero. Frozen-by-default posture unchanged.
   morning/intraday run types** inside quant_runner/notebook — a scoring/evening cycle
   submitting BUYs at 11 PM ET is a real bug, third order-flow surprise this week.
 
+**⑤ 7/8 — leverage-adjusted performance (new `leverage_adjusted_return.py` +
+`performance_analysis.yml`, read-only, run `28934521740`; reconstruction sanity: +0.8% vs live gross):**
+- Broker fill history shows trading effectively began **2026-05-28 at ~$100k** (zero fills
+  before then — early-May "trades" were the phantom-submission era; the "+18.7% total"
+  baseline matches this start).
+- **The account was levered almost from day one — NOT just the duplicate-retrain era:** gross
+  hit **2.06× on 6/02** (3rd trading day) and **~3.2–3.5× from 6/10 onward** (avg **2.75×**,
+  max **3.54×**). The model's own sizing did this (the cash guard reads *equity* as "available
+  cash"); the dup retrains only topped it up. The 7/7 de-lever is visible: gross $375k→$151k.
+- **Raw window return +20.8% → leverage-adjusted ≈ +7.6%** over 27 trading days (each day's
+  return ÷ that day's leverage, capped at 1×) — the honest headline for a 1×-gross account,
+  and per the shadow gates still long-book beta in an up tape, not alpha.
+- Big single days confirm the beta-amplifier read: +11.3% (6/12), −9.2% (6/06), −7.2% (6/11)
+  raw at ~3× ≡ roughly ±2–4% de-levered.
+
 **Open / next:**
 - [ ] **VERIFY 7/8 morning run:** (a) cancels held — no dup/overnight BUY fills at the open
   (Alpaca order history, not the trades ledger); (b) queued model SELLs filled → gross ≤1.27×;
@@ -119,6 +134,9 @@ drifting toward zero. Frozen-by-default posture unchanged.
   `Explicit morning dispatch but retrain already done today — downgrading` (the new gate's
   live proof).
 - [ ] **Gate the trade cell by run_type** (scoring/evening must not submit orders) — see ④.
+- [ ] **Hard-cap gross at ~1.0× in code** — fix the cash guard to read actual cash/buying
+  power instead of equity (see ⑤; ran 2.75× avg from June without any bug). Stage-0
+  prerequisite before real money.
 - [ ] **`DISCORD_WEBHOOK_URL`** still unset — third incident in a row it would have paged on.
 - [ ] **TRACK rank-IC trend** toward +0.03/t≥2 — trailing window is the live read.
 - Memory written: `task-scheduler-catchup-dispatch.md`; `drive-sync-stale-state-resurrection.md`
