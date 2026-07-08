@@ -109,16 +109,26 @@ de-levered truth ≈ +7.6%). Known-benign: intraday cycles print `Cell 11 raised
 'models'` (shadow harness needs retrain-run models; non-fatal wrapper catches it; pre-dates
 today).
 
+**⑥ DE-LEVER EXECUTED (evening, user-approved):** `position_trim.yml` dispatched at
+**target_ratio 0.90** (new dispatch input `6478fca` — share rounding lands ~0.07 above
+target, so 1.0 would have left the gate still blocking at a projected 1.07×). Run
+`28978355602`: **50 market SELLs ≈ $161k submitted, all accepted** (BAX x808, ZBH x151, …,
+crypto untouched, factor 0.768), queued for the 7/9 9:30 ET open. Projected after fills:
+**gross ~0.97×, cash ~+$110k** → the gross cap has room and entries resume, now permanently
+capped at 1.0×. Decision context: user confirmed NO paper-account reset (stands with the
+2026-06-07 decision — shadow files are the evidence; `leverage_adjusted_return.py` is the
+honest live number; the capped account is the clean 1× experiment going forward).
+
 **Open / next:**
-- [ ] **VERIFY 7/9 morning run:** (a) log shows `[patch] Gross cap: … pre-blocked N/M BUY
-  signals` with LIVE equity/gross numbers; (b) `[gross-cap] BLOCKED BUY` lines instead of a
-  BUY batch (account still >1.0×); (c) NO new BUY fills in Alpaca order history; (d) gross ≤
-  yesterday's (only exits fill); (e) evening/scoring cycles submit zero orders.
+- [ ] **VERIFY 7/9 morning run:** (a) trim SELLs filled at the open (Alpaca orders, NOT the
+  trades ledger) → gross ≤1.0×, cash positive; (b) log shows `[patch] Gross cap:` with LIVE
+  equity/gross and positive room; (c) new BUYs fill BUT total stays under the 1.0× cap —
+  look for `[gross-cap] BLOCKED BUY` once room is exhausted + the `[gross-cap] summary:`
+  line; (d) NO dup retrain (watch the marker race, see ②); (e) evening/scoring cycles
+  submit zero orders.
 - [ ] **Fix dup-retrain #3 (marker checkout race)** — re-read marker from origin/master in
   the run-type gate (see ②). Until then: a long morning run + queued cron = dup risk; check
   for >1 h trading-cycle steps on scheduled runs and cancel pre-trade-cell.
-- [ ] **Decide de-lever path:** let the gate grind gross down via exits, or dispatch
-  `position_trim.yml` (proven 7/6) to ~1.0× in one shot.
 - [ ] **TRACK rank-IC trend** toward +0.03/t≥2 — trailing window is the live read.
 - Memory: `cash-guard-not-binding-relever.md` (flip to FIXED-pending-verify),
   `morning-marker-checkout-race.md`, `discord-webhook-live.md`, a29d075 flipped ✅ in
