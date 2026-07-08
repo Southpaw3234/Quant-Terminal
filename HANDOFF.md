@@ -1,7 +1,7 @@
 # Quant Terminal v25 — Session Handoff
-**Date:** 2026-07-08 pre-open (updated — **scoring-run trade bug caught (25 BUYs submitted 11 PM ET, 100% cancelled, clean slate pre-open); leverage-adjusted truth: account ran 2.75× avg gross since 6/02 by its own sizing → real de-levered return ≈ +7.6%, not +18.7%**)  
+**Date:** 2026-07-08 evening (updated — **GROSS-CAP HARD GATE SHIPPED `9f10c0a`: the cash guard now BINDS (the old one was a NO-OP — 26 BUYs ≈$131k were submitted this morning right past "max 2 new BUYs", re-levering 1.27×→2.36×); dup-retrain source #3 found (marker checkout race) and the dup run cancelled mid-flight; `a29d075` catch-up gate VERIFIED live; Discord webhook LIVE**)  
 **Branch:** `master` (live/cron)  
-**Last commit:** `f1cfcc4` (master tip — `a29d075` explicit-morning marker gate + `force` input · `cancel_open_buys.py`/`cancel_orders.yml` (proven live: 25/25 cancelled) · `leverage_adjusted_return.py`/`performance_analysis.yml` (read-only) · `scripts/trigger_cycle.ps1` committed · ledgers) — **preflight 9/9 on `58c8cac` (run `28908853493`); later commits are docs + read-only measurement only**  
+**Last commit:** `3b8898e` (master tip — gross-cap hard gate `9f10c0a` + validation suite `scripts/validate_gross_cap.py` / `validate_gross_cap.yml`) — **preflight 9/9 (run `28976335595`) + behavioral validation ALL PASS (run `28976374760`) on the fix branch; both re-dispatched on the merged master tree 21:23Z**  
 **Repo:** https://github.com/Southpaw3234/Quant-Terminal
 
 ---
@@ -41,6 +41,88 @@ and the ONE highest-priority action for today. Then wait for direction.
 
 > 📌 Full reasoning for every item lives below: roadmap → §"FUTURE UPGRADES";
 > real-money rules → §"REAL-MONEY DEPLOYMENT GATE"; Monday verification → §"CHECKPOINT".
+
+---
+
+## 🗓️ SESSION LEDGER — 2026-07-08 (intraday→evening): cash guard proven a NO-OP & replaced with a HARD gross cap; dup-retrain #3 (marker race) caught live; webhook live
+
+**THE HEADLINE: the morning run re-levered the account 1.27×→2.36× ($131k of BUYs on "$29k
+available") because the cash guard NEVER BOUND — it lowers `confidence`, which nothing in the
+execution path reads. Shipped `9f10c0a`: a hard, fail-closed gross cap enforced INSIDE
+`execute_trade`. Also: a third dup-retrain source (checkout/marker race) fired today and was
+cancelled ~30 min before its trade cell; the `a29d075` catch-up gate passed its live test;
+`DISCORD_WEBHOOK_URL` is finally set and verified.**
+
+**① 7/8 verification checklist (armed 7/7 pre-open) — verdicts:**
+| Check | Verdict |
+|---|---|
+| (a) overnight cancels held, no dup fills at open | ✅ zero open BUYs pre-open (09:58Z dry-run) |
+| (b) model SELLs filled, gross ≤1.27× | ❌ **FAIL on leverage** — morning run submitted 26 BUYs ≈$131k, all filled → gross $277k on $117.5k equity = **2.36×** (Alpaca snapshot 16:39Z, 83 open) |
+| (c) exactly ONE morning retrain | ⚠️ one completed (13:35Z cron-job.org dispatch, clean) — a SECOND raced past the gate (see ②) and was **cancelled manually** (run `28958437527`) before its trade cell |
+| (d) catch-up dispatch downgrades | ✅ **VERIFIED LIVE** — PC-wake double-fire 19:06:36Z; explicit morning dispatch `28968570156` logged `downgrading to intraday`, ran 13 min as intraday |
+
+**② Dup-retrain source #3 — morning-marker CHECKOUT RACE (new, fix pending):** the 16:23Z
+scheduled cron sat queued behind the morning run in the concurrency group; its job started
+16:41:31Z — ~10 s AFTER the marker commit `3b0505c` (16:41:20Z) pushed — but its checkout
+missed the commit, the self-heal gate saw "no retrain today", and it launched a full duplicate
+retrain. Caught by its 2.5 h "Run trading cycle" step; cancelled 19:11Z, ~30 min before order
+submission (market still open). **Fix pending: re-read the marker from `origin/master`
+immediately before deciding run type instead of trusting the job-start checkout.** Memory:
+`morning-marker-checkout-race.md`.
+
+**③ The cash guard was a NO-OP — root cause + fix `9f10c0a` (MERGED, master `3b8898e`):**
+- **Root cause:** the guard (and the ternary gate's HOLD suppression) block by setting
+  `signals[tk]["confidence"] = 0.50` — but Cell 13's trade loop has **no MIN_CONFIDENCE
+  check anywhere**; it executes every `action=="BUY"` signal. Sizing even overrides
+  confidence with per-ticker walk-forward accuracy. So "max 2 new BUYs, blocked 21" printed
+  and 26 orders went out anyway. The guard also budgeted from the local paper ledger, not
+  the broker (why the account averaged 2.75× gross since 6/02 with no alarm).
+- **Fix — three ENFORCED layers** (CELL_13_PREPATCH + 3 `_SRC_REPLACE` anchors into Cell 13):
+  (1) **run-type gate** — only morning/intraday may submit BUYs (closes the 7/7 scoring-run
+  hole); (2) **exec_blocked pre-trim** — excess BUY signals skipped by the loop, highest
+  confidence kept; `confidence`/`action` untouched so predictions.csv keeps the real signal
+  for rank-IC; (3) **`_gross_cap_allows()` inside `execute_trade`** — refuses any BUY that
+  would push gross MV above **`QT_MAX_GROSS` × equity (default 1.0×)**, read LIVE from
+  Alpaca (equity + positions) plus a running submitted total. **Fail-closed** on account-read
+  error. Refused BUYs don't print as trades or hit the paper ledger.
+- **Validation (both layers):** preflight 9/9 (`28976335595`) AND a new behavioral suite
+  `scripts/validate_gross_cap.py` (`28976374760`, ALL PASS): anchors unique in Cell 13,
+  patched cell compiles, and replay — today's 2.36× book blocks all 30 BUYs + pre-trims
+  30/30; de-levered 0.51× allows exactly to the 1.0× cap then cuts; scoring runs blocked;
+  fail-closed on API error; no-keys ledger fallback. Merged 21:22Z, BEFORE the 21:30Z
+  evening cron → tonight's runs are protected.
+- **Expected behavior until de-levered:** at 2.36× the gate blocks ALL new BUYs — the model
+  can only exit. Gross drifts down via its own SELLs (or dispatch `position_trim.yml` to
+  jump straight to ~1.0×; user previously declined trimming below 1.27×, revisit).
+
+**④ Discord alerting LIVE (closes the recurring Stage-0 item):** created server
+"Quant Terminal" (#general) + webhook "Quant-Terminal Alerts"; `DISCORD_WEBHOOK_URL` secret
+set BOM-free via `--body`; end-to-end test ping delivered using the workflow's exact payload
+format. Kill-switch/persistence/staleness guards page in real time from the next run onward.
+
+**⑤ Routine health:** morning run clean (`MORNING cycle complete 16:39Z`, no exceptions),
+kill switch healthy (peak_dd −0.17% vs HWM $121,010). Walk-forward AUC 0.5413 / IC 0.0677 —
+ceiling, unchanged. Evidence clocks advancing: stat-arb book +$301.89→7/8 row +$301.18
+(+0.38%, 2 pairs), rank_ic through 6/30, clean LS series through 6/30. rank-IC full −0.0276 /
+trailing-20d −0.0109 (trend +0.0167 improving) — **still NO-GO**. Equity $117.5k (+17.5% raw;
+de-levered truth ≈ +7.6%). Known-benign: intraday cycles print `Cell 11 raised: NameError
+'models'` (shadow harness needs retrain-run models; non-fatal wrapper catches it; pre-dates
+today).
+
+**Open / next:**
+- [ ] **VERIFY 7/9 morning run:** (a) log shows `[patch] Gross cap: … pre-blocked N/M BUY
+  signals` with LIVE equity/gross numbers; (b) `[gross-cap] BLOCKED BUY` lines instead of a
+  BUY batch (account still >1.0×); (c) NO new BUY fills in Alpaca order history; (d) gross ≤
+  yesterday's (only exits fill); (e) evening/scoring cycles submit zero orders.
+- [ ] **Fix dup-retrain #3 (marker checkout race)** — re-read marker from origin/master in
+  the run-type gate (see ②). Until then: a long morning run + queued cron = dup risk; check
+  for >1 h trading-cycle steps on scheduled runs and cancel pre-trade-cell.
+- [ ] **Decide de-lever path:** let the gate grind gross down via exits, or dispatch
+  `position_trim.yml` (proven 7/6) to ~1.0× in one shot.
+- [ ] **TRACK rank-IC trend** toward +0.03/t≥2 — trailing window is the live read.
+- Memory: `cash-guard-not-binding-relever.md` (flip to FIXED-pending-verify),
+  `morning-marker-checkout-race.md`, `discord-webhook-live.md`, a29d075 flipped ✅ in
+  `task-scheduler-catchup-dispatch.md`.
 
 ---
 
