@@ -98,11 +98,27 @@ Kill switch healthy: peak_dd −3.31% vs HWM $121,010, no trip; equity $118.7k (
 67 open). rank-IC: full **−0.0249**, trailing-20d **−0.0114** — still NO-GO, trailing still
 drifting toward zero. Frozen-by-default posture unchanged.
 
+**④ 7/8 pre-open addendum — SCORING runs TRADE (new latent bug, caught & neutralized):**
+- The `run_type=scoring` validation dispatch (00:10Z, run `28907693901`) turned out NOT to be
+  benign: the scoring cycle ran ~3h and its trade cell **submitted 25 fresh BUY intents
+  (~$150k logged) at 03:05–03:09Z** (11 PM ET — PYPL x145, UBER x105, BAX x467, NCLH x459,
+  MO x136, D x145, DLTR x88, PPG x85…). The queued cancel-execute run (`28908702055`) fired
+  2 min later and **cancelled 25/25** before anything could fill (its "failure" = the script's
+  strict re-list seeing 2 async cancels still transitioning; they completed).
+- Fresh dry-run 09:58Z 7/8: **ZERO open BUYs**; only the model's 7 exit SELLs remain (fill at
+  the open, de-lever further). Equity $118,863, cash +$40,453, BP $282k. Clean slate pre-open.
+- **Two lessons:** (1) NEVER dispatch `quant_daily.yml` (any run_type) as a validation vehicle —
+  every run type reaches the trade cell; (2) **open item: gate order submission to
+  morning/intraday run types** inside quant_runner/notebook — a scoring/evening cycle
+  submitting BUYs at 11 PM ET is a real bug, third order-flow surprise this week.
+
 **Open / next:**
-- [ ] **VERIFY 7/8:** (a) BAX/USB cancels held (no dup fills at the open); (b) queued model
-  SELLs filled → gross ≤1.27×; (c) exactly ONE morning retrain; (d) on the next PC-wake
-  catch-up, the run log shows `Explicit morning dispatch but retrain already done today —
-  downgrading` (the new gate's live proof).
+- [ ] **VERIFY 7/8 morning run:** (a) cancels held — no dup/overnight BUY fills at the open
+  (Alpaca order history, not the trades ledger); (b) queued model SELLs filled → gross ≤1.27×;
+  (c) exactly ONE morning retrain; (d) on the next PC-wake catch-up, the run log shows
+  `Explicit morning dispatch but retrain already done today — downgrading` (the new gate's
+  live proof).
+- [ ] **Gate the trade cell by run_type** (scoring/evening must not submit orders) — see ④.
 - [ ] **`DISCORD_WEBHOOK_URL`** still unset — third incident in a row it would have paged on.
 - [ ] **TRACK rank-IC trend** toward +0.03/t≥2 — trailing window is the live read.
 - Memory written: `task-scheduler-catchup-dispatch.md`; `drive-sync-stale-state-resurrection.md`
