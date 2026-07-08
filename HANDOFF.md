@@ -1,7 +1,7 @@
 # Quant Terminal v25 — Session Handoff
-**Date:** 2026-07-06 (updated — **Drive-sync stale-state resurrection diagnosed & FIXED: rclone restore was reverting evidence data daily, freezing the morning marker at 6/09, and doubling BUY batches via duplicate retrains**)  
+**Date:** 2026-07-07 (updated — **Drive-sync fix VERIFIED PASS on every 7/7 check; de-lever confirmed (3.32×→1.27× gross, cash +$40k); NEW second dup-retrain source found & fixed same day: workstation Task-Scheduler catch-up dispatches bypassing the marker gate**)  
 **Branch:** `master` (live/cron)  
-**Last commit:** `b9e8e6e` (master tip — full 7/6 session: `497f277` Drive-sync fix + data recovery · `43448f3` de-lever tool + yfinance<2 pin · `f80fe03`/`4f4bdf6` de-lever v2 · docs) — **preflight 9/9 on this exact tree (run `28834778666`)**  
+**Last commit:** `a29d075` (master tip — explicit-morning marker gate + `force` input in `quant_daily.yml` · `cancel_open_buys.py`/`cancel_orders.yml` remediation tool · `scripts/trigger_cycle.ps1` committed for visibility)  
 **Repo:** https://github.com/Southpaw3234/Quant-Terminal
 
 ---
@@ -41,6 +41,72 @@ and the ONE highest-priority action for today. Then wait for direction.
 
 > 📌 Full reasoning for every item lives below: roadmap → §"FUTURE UPGRADES";
 > real-money rules → §"REAL-MONEY DEPLOYMENT GATE"; Monday verification → §"CHECKPOINT".
+
+---
+
+## 🗓️ SESSION LEDGER — 2026-07-07: Drive-sync fix VERIFIED + 2nd dup-retrain source (Task-Scheduler catch-up) found & fixed
+
+**THE HEADLINE: yesterday's Drive-sync fix passed every behavioral check — marker stable all
+day, evidence advancing, scheduled crons downgrading, de-lever filled (gross 3.32×→1.27×,
+cash +$40k). But a SECOND, independent duplicate-retrain source surfaced the same day: the
+workstation's Task-Scheduler catch-up fired a stale explicit `run_type=morning` dispatch on
+PC wake, bypassing the marker gate, and ran a full duplicate morning cycle after the close.
+Root-caused, gated (`a29d075`), and the 2 queued duplicate BUYs cancelled.**
+
+**① 7/7 verification checklist (armed 7/6) — verdicts:**
+| Check | Verdict |
+|---|---|
+| (a) exactly ONE full morning retrain | ❌ two — but NOT the Drive-sync bug (see ②); all *scheduled* runs downgraded correctly |
+| (b) marker stays 2026-07-07, no evidence reverts | ✅ all 8 Auto commits |
+| (c) `stat_arb_ls.csv` gains 7/7 row | ✅ `+$351.89, book_return +0.44%, 2 pairs open` |
+| (d) `rank_ic.csv` advances past 6/26 | ✅ through 6/29 (later dates await 5-day maturity) |
+| (e) no `00:3x` overnight morning commit | ✅ evening cycle committed 00:03 as *evening*, no retrain |
+| (f) de-lever filled; BUYs fill again | ✅ 44 sells filled at open; Alpaca ground truth 00:10Z 7/8: equity $118,741, **cash +$40,453**, BP $280.6k, gross $151.0k = **1.27×** (48 long eq $114.7k + 19 crypto/other $36.4k) |
+
+**Drive-sync incident: FIXED-VERIFIED — closed.** Memory flipped to ✅.
+
+**② The NEW bug — Task-Scheduler catch-up dispatch (independent of Drive-sync):**
+- `scripts/trigger_cycle.ps1` is registered as Windows Scheduled Tasks (QT-Morning 9:35 ET,
+  QT-Intraday 11/12/15 ET, QT-Evening 17:30 ET, QT-Weekend Sat 10 ET), ALL with
+  `StartWhenAvailable=True`, each passing an EXPLICIT `-f run_type=…` — and the workflow gate
+  deliberately honored explicit dispatches ("manual = explicit intent").
+- PC off at 9:35 → on wake, Task Scheduler fires the missed tasks: 7/7 at 18:31:16 UTC it
+  fired `morning`+`intraday` back-to-back (same catch-up double-fires in `run_logs/trigger.log`
+  on 6/26, 6/29, 6/30 — a dup-retrain source that predates and survived the Drive-sync fix).
+- The rogue 18:31 run retrained until 20:38Z and submitted **26 duplicate BUY intents
+  (~$143k logged)** at 20:33–20:38Z — after the close. Alpaca ground truth: only **2 accepted**
+  (BAX x254 + USB x72 ≈ $9.8k queued for the 7/8 open); the rest rejected. **Cancelled** via new
+  `cancel_open_buys.py` + `cancel_orders.yml` (dry-run → user-approved execute, run `28908702055`).
+  User declined the optional further trim 1.27×→1.0× (cash positive, BP ample, queued model
+  SELLs de-lever ~$10k more at the open).
+- ⚠️ **Fill-ledger optimism confirmed again:** the 20:57Z intraday "filled" SELL entries in the
+  dashboard trades ledger were actually still OPEN at 00:10Z — submission/poll status ≠ fill
+  (same phantom pattern as 5/12 and 7/6). Never read fills from `trades`; read Alpaca orders.
+- **Fix `a29d075` (master):** `quant_daily.yml` now marker-gates EXPLICIT morning dispatches
+  too — if `data/last_morning_run.txt` == today, an explicit `run_type=morning` downgrades to
+  intraday unless new dispatch input `force=true` is set. Scheduled-run gate unchanged. This
+  covers Task-Scheduler catch-ups, cron-job.org, and UI double-clicks in one place.
+  (Deliberately did NOT drop `-f run_type=` from trigger_cycle.ps1: omitted dispatch inputs
+  resolve to their DEFAULTS (`morning`), so an input-less dispatch would mistype the evening
+  task. Workflow-side gate is the robust layer. YAML validated via accepted dispatch.)
+- The mystery 23:54Z dispatch was QT-Evening firing late on the same wake — ran as `evening`,
+  harmless (scoring only, no retrain/orders).
+
+**③ Daily health (routine):** 13:35Z morning run clean — `MORNING cycle complete 15:33 UTC`,
+no exceptions. Walk-forward **AUC 0.5435 / IC 0.0723 ("weak/no edge")** — ceiling, unchanged.
+Kill switch healthy: peak_dd −3.31% vs HWM $121,010, no trip; equity $118.7k (+18.7% total,
+67 open). rank-IC: full **−0.0249**, trailing-20d **−0.0114** — still NO-GO, trailing still
+drifting toward zero. Frozen-by-default posture unchanged.
+
+**Open / next:**
+- [ ] **VERIFY 7/8:** (a) BAX/USB cancels held (no dup fills at the open); (b) queued model
+  SELLs filled → gross ≤1.27×; (c) exactly ONE morning retrain; (d) on the next PC-wake
+  catch-up, the run log shows `Explicit morning dispatch but retrain already done today —
+  downgrading` (the new gate's live proof).
+- [ ] **`DISCORD_WEBHOOK_URL`** still unset — third incident in a row it would have paged on.
+- [ ] **TRACK rank-IC trend** toward +0.03/t≥2 — trailing window is the live read.
+- Memory written: `task-scheduler-catchup-dispatch.md`; `drive-sync-stale-state-resurrection.md`
+  flipped to ✅ VERIFIED.
 
 ---
 
