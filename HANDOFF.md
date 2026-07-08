@@ -1,7 +1,7 @@
 # Quant Terminal v25 — Session Handoff
 **Date:** 2026-07-07 (updated — **Drive-sync fix VERIFIED PASS on every 7/7 check; de-lever confirmed (3.32×→1.27× gross, cash +$40k); NEW second dup-retrain source found & fixed same day: workstation Task-Scheduler catch-up dispatches bypassing the marker gate**)  
 **Branch:** `master` (live/cron)  
-**Last commit:** `a29d075` (master tip — explicit-morning marker gate + `force` input in `quant_daily.yml` · `cancel_open_buys.py`/`cancel_orders.yml` remediation tool · `scripts/trigger_cycle.ps1` committed for visibility)  
+**Last commit:** `58c8cac` (master tip — `a29d075` explicit-morning marker gate + `force` input in `quant_daily.yml` · `cancel_open_buys.py`/`cancel_orders.yml` remediation tool · `scripts/trigger_cycle.ps1` committed for visibility · 7/7 ledger) — **preflight 9/9 on this exact tree (run `28908853493`)**  
 **Repo:** https://github.com/Southpaw3234/Quant-Terminal
 
 ---
