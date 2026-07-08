@@ -20,7 +20,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install deps
-        run: pip install "numpy<2.4" pandas "yfinance>=0.2.40,<2"
+        run: pip install "numpy<2.4" pandas scipy "yfinance>=0.2.40,<2"
 
       - name: Compile check
         run: python -m py_compile analyze_rank_ic.py
