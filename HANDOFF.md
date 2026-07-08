@@ -1,7 +1,7 @@
 # Quant Terminal v25 — Session Handoff
-**Date:** 2026-07-07 (updated — **Drive-sync fix VERIFIED PASS on every 7/7 check; de-lever confirmed (3.32×→1.27× gross, cash +$40k); NEW second dup-retrain source found & fixed same day: workstation Task-Scheduler catch-up dispatches bypassing the marker gate**)  
+**Date:** 2026-07-08 pre-open (updated — **scoring-run trade bug caught (25 BUYs submitted 11 PM ET, 100% cancelled, clean slate pre-open); leverage-adjusted truth: account ran 2.75× avg gross since 6/02 by its own sizing → real de-levered return ≈ +7.6%, not +18.7%**)  
 **Branch:** `master` (live/cron)  
-**Last commit:** `58c8cac` (master tip — `a29d075` explicit-morning marker gate + `force` input in `quant_daily.yml` · `cancel_open_buys.py`/`cancel_orders.yml` remediation tool · `scripts/trigger_cycle.ps1` committed for visibility · 7/7 ledger) — **preflight 9/9 on this exact tree (run `28908853493`)**  
+**Last commit:** `f1cfcc4` (master tip — `a29d075` explicit-morning marker gate + `force` input · `cancel_open_buys.py`/`cancel_orders.yml` (proven live: 25/25 cancelled) · `leverage_adjusted_return.py`/`performance_analysis.yml` (read-only) · `scripts/trigger_cycle.ps1` committed · ledgers) — **preflight 9/9 on `58c8cac` (run `28908853493`); later commits are docs + read-only measurement only**  
 **Repo:** https://github.com/Southpaw3234/Quant-Terminal
 
 ---
@@ -41,6 +41,72 @@ and the ONE highest-priority action for today. Then wait for direction.
 
 > 📌 Full reasoning for every item lives below: roadmap → §"FUTURE UPGRADES";
 > real-money rules → §"REAL-MONEY DEPLOYMENT GATE"; Monday verification → §"CHECKPOINT".
+
+---
+
+## 🗓️ SESSION LEDGER — 2026-07-08 (pre-open): scoring-run trade bug caught + the honest performance number
+
+**THE HEADLINE: two things learned overnight. (1) A `run_type=scoring` dispatch ran the trade
+cell and submitted 25 BUY intents at 11 PM ET — caught and 100% cancelled before any fill;
+account is a CLEAN SLATE pre-open (zero open BUYs). (2) Broker-truth reconstruction shows the
+account has run levered since June 2 by its own sizing — the real, de-levered return is
+≈ +7.6%, not the +18.7% headline.**
+
+**① SCORING runs TRADE (new latent bug, caught & neutralized):**
+- The `run_type=scoring` validation dispatch (00:10Z, run `28907693901`) turned out NOT to be
+  benign: the scoring cycle ran ~3h and its trade cell **submitted 25 fresh BUY intents
+  (~$150k logged) at 03:05–03:09Z** (11 PM ET — PYPL x145, UBER x105, BAX x467, NCLH x459,
+  MO x136, D x145, DLTR x88, PPG x85…). The queued cancel-execute run (`28908702055`) fired
+  2 min later and **cancelled 25/25** before anything could fill (its "failure" = the script's
+  strict re-list seeing 2 async cancels still transitioning; they completed).
+- Fresh dry-run 09:58Z: **ZERO open BUYs**; only the model's 7 exit SELLs remain (fill at
+  the open, de-lever further). Equity $118,863, cash +$40,453, BP $282k. Clean slate pre-open.
+- **Two lessons:** (1) NEVER dispatch `quant_daily.yml` (any run_type) as a validation vehicle —
+  every run type reaches the trade cell; (2) **open item: gate order submission to
+  morning/intraday run types** inside quant_runner/notebook — a scoring/evening cycle
+  submitting BUYs at 11 PM ET is a real bug, third order-flow surprise this week.
+
+**② Leverage-adjusted performance — the honest number (new `leverage_adjusted_return.py` +
+`performance_analysis.yml`, read-only, run `28934521740`; reconstruction sanity: +0.8% vs live gross):**
+- Broker fill history shows trading effectively began **2026-05-28 at ~$100k** (zero fills
+  before then — early-May "trades" were the phantom-submission era; the "+18.7% total"
+  baseline matches this start; Alpaca paper = MARGIN account, 4× intraday BP, which is how
+  $100k cash carried $390k of positions).
+- **The account was levered almost from day one — NOT just the duplicate-retrain era:** gross
+  hit **2.06× on 6/02** (3rd trading day) and **~3.2–3.5× from 6/10 onward** (avg **2.75×**,
+  max **3.54×**). The model's own sizing did this (the cash guard reads *equity* as "available
+  cash"); the dup retrains only topped it up. The 7/7 de-lever is visible: gross $375k→$151k.
+- **Raw window return +20.8% → leverage-adjusted ≈ +7.6%** over 27 trading days (each day's
+  return ÷ that day's leverage, capped at 1×) — the honest headline for a 1×-gross account,
+  and per the shadow gates still long-book beta in an up tape, not alpha.
+- Big single days confirm the beta-amplifier read: +11.3% (6/12), −9.2% (6/06), −7.2% (6/11)
+  raw at ~3× ≡ roughly ±2–4% de-levered. (Corollary: the risk-gate reads measured through the
+  3× lens — e.g. max-DD −26% — overstate the 1×-frame's risk; the alpha verdict is unchanged.)
+
+**Shipped this session (7/7 evening → 7/8 pre-open), all on master:**
+- `a29d075` — `quant_daily.yml`: explicit `run_type=morning` dispatches now marker-gated
+  (downgrade to intraday if retrain already done today) unless new `force=true` input set.
+- `cancel_open_buys.py` + `cancel_orders.yml` — list all open orders / cancel open BUYs
+  (dry-run default). Proven live: 25/25 cancelled.
+- `leverage_adjusted_return.py` + `performance_analysis.yml` — re-run the adjusted-return
+  read any time (read-only, outside the trading concurrency group).
+- `scripts/trigger_cycle.ps1` committed for visibility; `run_logs/` ignored.
+- Preflight **9/9 PASS** on `58c8cac` (run `28908853493`); commits since are docs + the
+  read-only measurement tool only — no trading-path changes.
+
+**Open / next:**
+- [ ] **VERIFY 7/8 morning run (~1 PM ET):** (a) cancels held — no dup/overnight BUY fills at
+  the open (Alpaca order history, NOT the trades ledger); (b) queued model SELLs filled →
+  gross ≤1.27×; (c) exactly ONE morning retrain; (d) on the next PC-wake catch-up, the run log
+  shows `Explicit morning dispatch but retrain already done today — downgrading` (the new
+  gate's live proof).
+- [ ] **Gate the trade cell by run_type** (scoring/evening must not submit orders) — see ①.
+- [ ] **Hard-cap gross at ~1.0× in code** — fix the cash guard to read actual cash/buying
+  power instead of equity (see ②; ran 2.75× avg from June without any bug firing). Stage-0
+  prerequisite before real money.
+- [ ] **`DISCORD_WEBHOOK_URL`** still unset — third incident in a row it would have paged on.
+- [ ] **TRACK rank-IC trend** toward +0.03/t≥2 — trailing window is the live read.
+- Memory updated: `task-scheduler-catchup-dispatch.md` (+ scoring-runs-trade lesson).
 
 ---
 
@@ -98,49 +164,9 @@ Kill switch healthy: peak_dd −3.31% vs HWM $121,010, no trip; equity $118.7k (
 67 open). rank-IC: full **−0.0249**, trailing-20d **−0.0114** — still NO-GO, trailing still
 drifting toward zero. Frozen-by-default posture unchanged.
 
-**④ 7/8 pre-open addendum — SCORING runs TRADE (new latent bug, caught & neutralized):**
-- The `run_type=scoring` validation dispatch (00:10Z, run `28907693901`) turned out NOT to be
-  benign: the scoring cycle ran ~3h and its trade cell **submitted 25 fresh BUY intents
-  (~$150k logged) at 03:05–03:09Z** (11 PM ET — PYPL x145, UBER x105, BAX x467, NCLH x459,
-  MO x136, D x145, DLTR x88, PPG x85…). The queued cancel-execute run (`28908702055`) fired
-  2 min later and **cancelled 25/25** before anything could fill (its "failure" = the script's
-  strict re-list seeing 2 async cancels still transitioning; they completed).
-- Fresh dry-run 09:58Z 7/8: **ZERO open BUYs**; only the model's 7 exit SELLs remain (fill at
-  the open, de-lever further). Equity $118,863, cash +$40,453, BP $282k. Clean slate pre-open.
-- **Two lessons:** (1) NEVER dispatch `quant_daily.yml` (any run_type) as a validation vehicle —
-  every run type reaches the trade cell; (2) **open item: gate order submission to
-  morning/intraday run types** inside quant_runner/notebook — a scoring/evening cycle
-  submitting BUYs at 11 PM ET is a real bug, third order-flow surprise this week.
-
-**⑤ 7/8 — leverage-adjusted performance (new `leverage_adjusted_return.py` +
-`performance_analysis.yml`, read-only, run `28934521740`; reconstruction sanity: +0.8% vs live gross):**
-- Broker fill history shows trading effectively began **2026-05-28 at ~$100k** (zero fills
-  before then — early-May "trades" were the phantom-submission era; the "+18.7% total"
-  baseline matches this start).
-- **The account was levered almost from day one — NOT just the duplicate-retrain era:** gross
-  hit **2.06× on 6/02** (3rd trading day) and **~3.2–3.5× from 6/10 onward** (avg **2.75×**,
-  max **3.54×**). The model's own sizing did this (the cash guard reads *equity* as "available
-  cash"); the dup retrains only topped it up. The 7/7 de-lever is visible: gross $375k→$151k.
-- **Raw window return +20.8% → leverage-adjusted ≈ +7.6%** over 27 trading days (each day's
-  return ÷ that day's leverage, capped at 1×) — the honest headline for a 1×-gross account,
-  and per the shadow gates still long-book beta in an up tape, not alpha.
-- Big single days confirm the beta-amplifier read: +11.3% (6/12), −9.2% (6/06), −7.2% (6/11)
-  raw at ~3× ≡ roughly ±2–4% de-levered.
-
-**Open / next:**
-- [ ] **VERIFY 7/8 morning run:** (a) cancels held — no dup/overnight BUY fills at the open
-  (Alpaca order history, not the trades ledger); (b) queued model SELLs filled → gross ≤1.27×;
-  (c) exactly ONE morning retrain; (d) on the next PC-wake catch-up, the run log shows
-  `Explicit morning dispatch but retrain already done today — downgrading` (the new gate's
-  live proof).
-- [ ] **Gate the trade cell by run_type** (scoring/evening must not submit orders) — see ④.
-- [ ] **Hard-cap gross at ~1.0× in code** — fix the cash guard to read actual cash/buying
-  power instead of equity (see ⑤; ran 2.75× avg from June without any bug). Stage-0
-  prerequisite before real money.
-- [ ] **`DISCORD_WEBHOOK_URL`** still unset — third incident in a row it would have paged on.
-- [ ] **TRACK rank-IC trend** toward +0.03/t≥2 — trailing window is the live read.
-- Memory written: `task-scheduler-catchup-dispatch.md`; `drive-sync-stale-state-resurrection.md`
-  flipped to ✅ VERIFIED.
+**Open / next:** moved to the 2026-07-08 ledger above (the overnight incident superseded them).
+Memory written: `task-scheduler-catchup-dispatch.md`; `drive-sync-stale-state-resurrection.md`
+flipped to ✅ VERIFIED.
 
 ---
 
