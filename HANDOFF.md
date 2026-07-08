@@ -119,6 +119,19 @@ capped at 1.0×. Decision context: user confirmed NO paper-account reset (stands
 2026-06-07 decision — shadow files are the evidence; `leverage_adjusted_return.py` is the
 honest live number; the capped account is the clean 1× experiment going forward).
 
+**⑦ Beta-hedged shadow series SHIPPED (`9c3d70d`, measurement-only) — and it already answers
+the question it was built for.** `analyze_rank_ic.py` now writes `beta_roll` + `ls_hedged`
+columns to `data/shadow/cross_sectional_ls.csv`: the same decile picks with a CAUSAL SPY
+overlay (rolling β on trailing ≤20 PRIOR rows, `shift(1)` = no look-ahead, min 5 obs,
+clamped ±3, warm-up unhedged). Validated end-to-end on the runner (run `28981677263`:
+39 rows, 34 hedged, overlay active, PASS). **First read (n=39, 5/12→6/30): with beta
+stripped, the picks LOSE money outright — hedged mean −1.08%/day, cumulative −35.2%,
+max-DD −34.3%, residual β +0.05 (hedge works; the alpha isn't there).** The raw book's full-
+window β estimate has meanwhile flipped again (+0.20, was −1.18 on 6/26 → +0.22 → +0.38 —
+small-sample instability). Read going forward: the hedged trailing window is the honest
+"is alpha emerging" curve — if trailing rank-IC turns positive but `ls_hedged` stays flat/
+negative, the turn is a beta artifact, not a GO.
+
 **Open / next:**
 - [ ] **VERIFY 7/9 morning run:** (a) trim SELLs filled at the open (Alpaca orders, NOT the
   trades ledger) → gross ≤1.0×, cash positive; (b) log shows `[patch] Gross cap:` with LIVE
