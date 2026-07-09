@@ -107,9 +107,23 @@ jobs:
           #   • morning already done today -> a duplicate morning-window cron
           #     downgrades to a cheap intraday refresh (no wasteful 2nd retrain)
           # Manual dispatches are left exactly as requested (explicit intent).
+
+          # Dup-retrain #3 fix — marker CHECKOUT RACE (2026-07-08 incident): a run
+          # queued behind the morning run in the concurrency group can check out a
+          # commit resolved BEFORE the marker commit lands (7/8: missed it by ~10 s),
+          # so the workspace copy of data/last_morning_run.txt lies and the gate
+          # fires a duplicate full retrain. Re-read the marker from origin/master's
+          # tip at decision time — it is never older than the checkout — and fall
+          # back to the workspace file only if the fetch fails.
+          git fetch --quiet origin master || true
+          MARKER_REF="$( (git show FETCH_HEAD:data/last_morning_run.txt 2>/dev/null || true) | tr -d '[:space:]')"
+          MARKER_WS=""
+          [ -f data/last_morning_run.txt ] && MARKER_WS="$(cat data/last_morning_run.txt | tr -d '[:space:]')"
+          LAST_MORNING="$MARKER_REF"
+          [ -z "$LAST_MORNING" ] && LAST_MORNING="$MARKER_WS"
+          echo "Morning marker: origin/master='$MARKER_REF' checkout='$MARKER_WS' -> using '$LAST_MORNING'"
+
           if [ -z "$MANUAL" ] && [ "$DAY" -le 5 ]; then
-            LAST_MORNING=""
-            [ -f data/last_morning_run.txt ] && LAST_MORNING="$(cat data/last_morning_run.txt | tr -d '[:space:]')"
             TODAY=$(date -u +%Y-%m-%d)
             if [ "$LAST_MORNING" != "$TODAY" ]; then
               echo "Self-heal: no morning retrain for $TODAY (last=$LAST_MORNING) — running morning."
@@ -126,8 +140,7 @@ jobs:
           # A same-day second full morning now requires force=true.
           FORCE="${{ github.event.inputs.force }}"
           if [ "$TYPE" = "morning" ] && [ -n "$MANUAL" ] && [ "$FORCE" != "true" ]; then
-            LAST_MORNING=""
-            [ -f data/last_morning_run.txt ] && LAST_MORNING="$(cat data/last_morning_run.txt | tr -d '[:space:]')"
+            # Same race-proof marker as above (origin/master tip, workspace fallback).
             if [ "$LAST_MORNING" = "$(date -u +%Y-%m-%d)" ]; then
               echo "Explicit morning dispatch but retrain already done today — downgrading to intraday (dispatch with force=true to override)."
               TYPE="intraday"
