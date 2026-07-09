@@ -30,12 +30,13 @@ jobs:
           python -m py_compile quant_runner.py  && echo "quant_runner.py  PASS"
           python -m py_compile stat_arb.py       && echo "stat_arb.py       PASS"
           python -m py_compile shadow_stat_arb.py && echo "shadow_stat_arb.py PASS"
+          python -m py_compile fill_audit.py     && echo "fill_audit.py     PASS"
 
       - name: 2 — AST parse + triple-quote balance
         run: |
           python - <<'PYEOF'
           import ast, sys
-          files = ["quant_runner.py", "stat_arb.py", "shadow_stat_arb.py"]
+          files = ["quant_runner.py", "stat_arb.py", "shadow_stat_arb.py", "fill_audit.py"]
           ok = True
           for f in files:
               src = open(f, encoding="utf-8-sig").read()

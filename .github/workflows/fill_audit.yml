@@ -1,0 +1,40 @@
+name: Fill Audit (read-only)
+
+# Measurement-only: reconciles the dashboard trades ledger
+# (data/paper_trades/trade_history.csv) against Alpaca order history by
+# order_id — the ledger records submission-poll status, not fills, and has
+# claimed "filled" for orders the broker rejected/cancelled three times
+# (5/12, 7/6, 7/7 — see HANDOFF.md). GETs only; submits and cancels nothing.
+# Manual dispatch only.
+#
+# Deliberately NOT in the quant-terminal concurrency group: read-only, so it
+# never needs to serialize with (or block behind) live trading runs.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install minimal deps
+        run: pip install pandas
+
+      - name: Reconcile ledger vs broker fills
+        env:
+          ALPACA_API_KEY:    ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          ALPACA_BASE_URL:   'https://paper-api.alpaca.markets'
+        run: python fill_audit.py
