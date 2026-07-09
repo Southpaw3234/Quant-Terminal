@@ -1,7 +1,7 @@
 # Quant Terminal v25 — Session Handoff
-**Date:** 2026-07-08 end-of-day (updated — **GROSS-CAP HARD GATE SHIPPED `9f10c0a` (cash guard was a NO-OP: 26 BUYs ≈$131k sailed past "max 2 new BUYs", re-levered 1.27×→2.36×); DE-LEVER EXECUTED (50 SELLs ≈$161k queued for the 7/9 open, target 0.90× → projected 0.97×); BETA-HEDGED shadow series shipped `9c3d70d` — first read: hedged book −35.2% cumulative, residual β +0.05 → no alpha behind the beta; dup-retrain #3 (marker checkout race) caught & cancelled mid-flight, fix pending; `a29d075` catch-up gate VERIFIED live; Discord webhook LIVE**)  
+**Date:** 2026-07-09 end-of-day (updated — **GROSS-CAP GATE ✅ VERIFIED LIVE (7/9 morning: 7/8's 50-SELL trim filled at the open, gross 2.36×→1.00×, cap line reads live Alpaca, pre-blocked 9/9 BUYs — but room $0 = ENTRY-STARVED, 2nd trim to ~0.93× queued for the 7/10 open); dup-retrain #3 marker-race FIX SHIPPED `8c30187`; FILL AUDIT tool shipped + first read (28 phantom rows $216k = the known incidents; NEW: ledger `qty` column is wrong — trust `notional`/broker); hedged book −34.6% cum → NO-GO unchanged**)  
 **Branch:** `master` (live/cron)  
-**Last commit:** `6947a65` (master tip — gross-cap gate `9f10c0a` + validation suite · trim `target_ratio` input `6478fca` · beta-hedged LS series `9c3d70d` + validation workflow · ledgers) — **preflight 9/9 green on the final merged tree (run `28981767949`); gross-cap behavioral suite ALL PASS (`28976374760`); hedge validation PASS end-to-end (`28981677263`)**  
+**Last commit:** `7f7dd01` (master tip — marker-race gate fix `8c30187` · fill audit `fill_audit.py` + `fill_audit.yml` · ledgers) — **preflight green on both trees (`29049685523`, `29050096071`); fill audit clean first run (`29050066165`); trim execute 22/22 accepted (`29050244457`)**  
 **Repo:** https://github.com/Southpaw3234/Quant-Terminal
 
 ---
@@ -21,7 +21,7 @@ milestones below are now DUE or PAST-DUE.
 - [ ] **Latest morning run clean?** Check `gh run list` / the run log for `MORNING cycle complete`, no `Cell N raised an exception`, kill switch not tripped. (Known-benign: intraday cycles print `Cell 11 raised: NameError 'models'` — pre-existing, non-fatal.)
 - [ ] **Leverage capped?** The morning log's `[patch] Gross cap:` line must show live equity/gross and gross ≤ ~1.0× (gate `9f10c0a`, `QT_MAX_GROSS` default 1.0). If gross is climbing again or the line is missing → the hard gate regressed, fix before anything else. Ground truth = Alpaca positions (gross MV ÷ equity), never the trades ledger.
 - [ ] **Evidence engines still recording?** `data/shadow/rank_ic.csv`, `data/shadow/cross_sectional_ls.csv` (now incl. `ls_hedged`), and `data/stat_arb/stat_arb_ls.csv` gaining rows. If any is empty/stale → the evidence clock stalled, fix immediately (see CHECKPOINT section).
-- [ ] **Exactly one morning retrain?** Watch for the marker checkout race (dup-retrain source #3, fix pending): any *scheduled* run whose "Run trading cycle" step exceeds ~1 h is a duplicate retrain — cancel it before the trade cell (~3 h in).
+- [ ] **Exactly one morning retrain?** Marker race FIXED `8c30187` (7/9): the gate now logs `Morning marker: origin/master=… checkout=…` — check that line exists on scheduled runs. Behavioral proof still pending a real queued-cron collision, so keep the backstop: any *scheduled* run whose "Run trading cycle" step exceeds ~1 h is a duplicate retrain — cancel it before the trade cell (~3 h in).
 - [ ] **Any new uncommitted handoff edits or open follow-ups** from the last session?
 
 **Step 3 — date-triggered checkpoints** (act on whichever have come due):
@@ -30,10 +30,10 @@ milestones below are now DUE or PAST-DUE.
 |----------|-----------|------------|
 | ~~Mon 2026-06-08~~ ✅ | Evidence clock started | **PASS (verified 6/10):** shadow recording (30L/30S books), stat-arb 13/172 pairs. pair_history.csv append bug fixed `45f4260`. |
 | ~~Thu 2026-06-11+~~ ✅ | **Phase 1 GPU validation — DONE 2026-06-14** | **RESULT: FLAT — frame at ceiling.** Run `27484667746` (feat/maximize-model, QT_GPU=True, 80-trial light profile, device=cuda): walk-forward **mean OOS AUC=0.5500 / IC=0.0805** vs baseline 0.5461/0.0754 → Δ noise, "weak/no edge". **Verdict: tuning is NOT the lever; do NOT merge PR #21 for AUC; pivot to frame changes (Frame 1/3).** River clamp FAILED its test (still 46%). See SESSION LEDGER 2026-06-12/14. |
-| **Anytime before real $** | Stage-0 prerequisites | ~~Discord webhook~~ ✅ LIVE 7/8 (test ping verified). ~~River~~ ✅ CUT from weights 6/14+. ~~Hard gross cap~~ ✅ SHIPPED 7/8 `9f10c0a` (verify 7/9). **Still open: marker checkout race fix (dup-retrain #3); fill audit** (submission ≠ fill — 3 phantom incidents). (See REAL-MONEY DEPLOYMENT GATE.) |
+| **Anytime before real $** | Stage-0 prerequisites | ~~Discord webhook~~ ✅ LIVE 7/8. ~~River~~ ✅ CUT 6/14+. ~~Hard gross cap~~ ✅ VERIFIED LIVE 7/9 (blocked 9/9 BUYs at 1.00×). ~~Marker race fix~~ ✅ SHIPPED 7/9 `8c30187` (behavioral proof awaits a queued-cron collision). ~~Fill audit~~ ✅ SHIPPED + FIRST READ 7/9 (`fill_audit.yml` dispatch; re-run before any GO decision). **Stage-0 list is CLEAR** pending the two live-proofs. (See REAL-MONEY DEPLOYMENT GATE.) |
 | ~~**~2026-06-15**~~ ✅ | First shadow positions mature | **PASS (verified 6/24):** persistence fix `a0231ca` held — shadow now matures+scores real 5-day books (6/23 scored 2 matured; pnl.csv has scored rows), stat-arb persists 20 pairs/day. Clock is alive; first readable rank-IC ~early July. |
 | ~~**~early July 2026**~~ ✅ | Shadow rank-IC readable | **READ EARLY 6/25; re-read 6/26:** full −0.0396 / trailing-20d −0.0097 (trend +0.0299 *improving*). **NO-GO** (gate +0.03/t≥2) — beta, not alpha — but recent regime flat not anti-predictive, trailing creeping toward zero/positive. Track the trailing trend. |
-| **~late Jul / early Aug 2026** | **GO/NO-GO alpha gate** | Evaluate ALL Stage-1 gate thresholds. **As of 7/8: NO-GO on every gate** — rank-IC full −0.0276 / trailing-20d −0.0109 (converging to zero, NOT to +0.03), AUC 0.5413 (ceiling), and the new **beta-HEDGED read is decisive: hedged book −35.2% cumulative, residual β +0.05 → with beta stripped, the picks lose outright**. Read from `data/shadow/rank_ic.csv` + `cross_sectional_ls.csv` incl. `ls_hedged` (NOT the legacy `cross_sectional_pnl.csv`). **Kill criterion sharpened 7/8: Frame 1 survives only if the trailing `ls_hedged` curve turns positive — a rank-IC turn while hedged stays underwater is a beta artifact, retire without debate.** See REAL-MONEY GATE table + ledger §⑦. |
+| **~late Jul / early Aug 2026** | **GO/NO-GO alpha gate** | Evaluate ALL Stage-1 gate thresholds. **As of 7/9: NO-GO on every gate** — rank-IC full −0.0292 / trailing-20d −0.0115 (trend +0.0178 — converging to zero, NOT to +0.03), AUC 0.5516 (⚠️ log now prints "genuine edge" — that's a 0.55-threshold label flip, same ceiling band since June, don't over-read), and the **beta-HEDGED read is decisive: hedged book −34.6% cumulative (n=40, 35 hedged), max-DD −34.1%, residual β +0.07 → with beta stripped, the picks lose outright**. Read from `data/shadow/rank_ic.csv` + `cross_sectional_ls.csv` incl. `ls_hedged` (NOT the legacy `cross_sectional_pnl.csv`). **Kill criterion sharpened 7/8: Frame 1 survives only if the trailing `ls_hedged` curve turns positive — a rank-IC turn while hedged stays underwater is a beta artifact, retire without debate.** See REAL-MONEY GATE table + ledger §⑦. |
 | **~mid-Aug 2026** | Frame 2 intraday trainable | 60 trading days of `data/intraday_history/` should exist → `model_intraday.py` trains for real. |
 | **~Aug 2026** | Build Frame 3 trading layer | If Phase 1 passed the gate, write the stat-arb trading layer (`stat_arb.py`: Kalman hedge, spread entry/exit). |
 | **8 wks after any frame starts** | Frame KILL check | If a frame's shadow rank-IC is flat/negative with no trend → retire it, reallocate. |
@@ -43,6 +43,82 @@ and the ONE highest-priority action for today. Then wait for direction.
 
 > 📌 Full reasoning for every item lives below: roadmap → §"FUTURE UPGRADES";
 > real-money rules → §"REAL-MONEY DEPLOYMENT GATE"; Monday verification → §"CHECKPOINT".
+
+---
+
+## 🗓️ SESSION LEDGER — 2026-07-09: gross cap VERIFIED live (and it bit — entry-starved at 1.00×); marker-race fix + fill audit SHIPPED; Stage-0 list cleared
+
+**THE HEADLINE: all four 7/8 open items closed in one session. The 7/9 morning run proved the
+gross-cap gate end-to-end (trim filled, 2.36×→1.00×, 9/9 BUYs blocked) — and exposed the
+flip side: at exactly 1.00× the model can only exit, so a 2nd trim (~0.93× target) was
+executed for the 7/10 open. Dup-retrain #3 fix shipped (`8c30187`). Fill-audit tool shipped
+and its first read reconciled every known phantom incident against broker truth — plus a new
+finding: the ledger's `qty` column has been wrong all along.**
+
+**① 7/9 verification checklist (armed 7/8) — verdicts:**
+| Check | Verdict |
+|---|---|
+| (a) trim SELLs filled at open, gross ≤1.0× | ✅ fill-audit reverse check: 51 broker fills $161,925 on 7/9; gross **1.00×** ($116,004 on $115,639 equity) |
+| (b) `[patch] Gross cap:` line, live equity/gross | ✅ `equity $115,639 \| gross $116,004 (1.00x) \| cap 1.00x -> room $0 = 0 new BUY slots \| pre-blocked 9/9 \| run_ok=True (morning)` |
+| (c) new BUYs fill under the cap | ⚠️ **zero fills — room $0.** 7/8's trim (target 0.90, projected 0.97) landed AT the cap; the gate blocked all 9 BUY signals. Cap works; book entry-starved. |
+| (d) exactly one retrain, no marker race | ✅ one morning commit (`be16c36`); all 5 scheduled runs 6–9 min intraday downgrades. PC-wake catch-up double-fired 20:48Z again — queue collapsed one, `a29d075` gate covers the rest |
+| (e) evening/scoring submit zero orders | ✅ 7/8 21:30Z evening run shows `[SKIP] Cell 13 (Paper trading)` — evening cycles never reach the trade cell; the `9f10c0a` run-type gate is the second layer. 7/9 evening run re-check below |
+| (f) hedged block + `ls_hedged` in Auto commit | ✅ `beta-HEDGED long-short` block printed; `cross_sectional_ls.csv` written with `beta_roll`/`ls_hedged` |
+
+**② Dup-retrain #3 FIXED (`8c30187`):** "Determine run type" in `quant_daily.yml` now runs
+`git fetch origin master` and reads the marker from `FETCH_HEAD:data/last_morning_run.txt`
+at decision time (workspace file only as fallback — origin/master is never older than the
+checkout), logging `Morning marker: origin/master=… checkout=… -> using …`. Applies to BOTH
+the scheduled self-heal gate and the explicit-dispatch gate. Marker-read snippet behaviorally
+tested locally under `bash -e -o pipefail` (Actions' shell flags), incl. the bad-ref fallback
+path. Behavioral proof in anger needs a real queued-cron collision — until one passes, keep
+the >1 h-trading-cycle tripwire.
+
+**③ ENTRY-STARVATION + 2nd trim EXECUTED:** at gross exactly 1.00× the cap leaves zero BUY
+room; today the model could only close positions (1/11 SELLs closed). Decision: trim again
+rather than run an exit-only book. `position_trim.yml` dry-run then execute at
+**target_ratio 0.87** (rounding lands ~0.05-0.07 high): run `29050244457`, **22 market SELLs
+~$6.9k all accepted**, fill at the 7/10 open. Projected: **gross ~0.93×, cash ~$117k** →
+~$8k of entry headroom under the 1.0× cap. Account state at trim time: equity $116,326,
+cash +$110,469 (7/8's de-lever restored it), 60 long equities $60.4k + crypto $54.5k.
+
+**④ FILL AUDIT SHIPPED (`7f7dd01`, closes the last open Stage-0 item):** `fill_audit.py` +
+`fill_audit.yml` (manual dispatch, read-only, GETs only, outside the trading concurrency
+group; guarded in preflight). Joins every `trade_history.csv` row to the broker order by
+`order_id`, classifies OK / PARTIAL_FILL / PHANTOM_FILL / UNKNOWN_TO_BROKER / NO_ORDER_ID,
+plus the reverse check (broker fills with no ledger row). **First read (377 ledger rows,
+520 broker orders, 5/29→7/8):**
+- **28 PHANTOM_FILL rows / $215,766** — all match known incidents: 23 rows $196,732 on 7/8
+  (the 11 PM scoring-run BUYs, `broker=canceled, filled_qty=0`), 2 on 7/7 (BAX+USB catch-up
+  dups, cancelled), 1 each 6/04・6/11・6/24 (previously unknown — small, one per day).
+- **NEW FINDING — the ledger `qty` column is systematically wrong:** 288 rows flag as
+  qty-mismatch where the broker FILLED MORE than the ledger qty (e.g. ZBH ledger qty 6,
+  broker filled 112 — and 112×price ≈ the row's $9.5k `notional`). The dollars are real and
+  match `notional`; only the `qty` column lies. Corollary: **never compute exposure from
+  ledger qty; use `notional` or broker positions.** Only 61/377 rows are broker-exact on qty.
+- **Reverse check:** 143 broker fills with no ledger row ($498.5k) — dominated by the
+  remediation tooling as expected (7/7 de-lever 51 fills $279k; 7/9 trim 51 fills $161.9k;
+  5/28-29 pre-ledger era). Unexplained residue is small (6/22 2 fills $32k — dup-retrain era).
+- Re-dispatch `fill_audit.yml` before any GO decision or after any incident.
+
+**⑤ Routine health:** morning run clean (`MORNING cycle complete 15:57Z`), kill switch
+healthy (equity $119,124 pre-open, peak_dd −1.56% vs HWM $121,010). Walk-forward AUC
+**0.5516** / IC 0.0834 — ⚠️ the log's label flipped to "genuine edge" at the 0.55 threshold;
+same ceiling band as June, treat as noise. rank-IC full **−0.0292** / trailing-20d **−0.0115**
+(trend +0.0178) — **still NO-GO**; hedged book −34.6% cum / residual β +0.07 — the picks
+lose outright with beta stripped. Stat-arb book 7/9 row −0.86% (worst day yet, 2 pairs).
+Equity $116.3k.
+
+**Open / next:**
+- [ ] **VERIFY 7/10 morning run:** (a) 22 trim SELLs filled at open → gross ~0.93×;
+  (b) `[patch] Gross cap:` shows positive room and new BUYs actually FILL, total staying
+  ≤1.0× (`[gross-cap] BLOCKED BUY` once room exhausts); (c) `Morning marker:` line prints
+  on scheduled runs (fix `8c30187` live); (d) exactly one retrain.
+- [ ] **Marker-race behavioral proof:** on the next queued-cron collision with a long
+  morning run, confirm the gate downgrades (watch the `Morning marker:` line).
+- [ ] **TRACK the trailing `ls_hedged` curve** — Frame 1 lives only if it turns positive.
+- Memory: `cash-guard-not-binding-relever.md` ✅ VERIFIED; `morning-marker-checkout-race.md`
+  → FIXED-pending-collision.
 
 ---
 
