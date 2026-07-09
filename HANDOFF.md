@@ -62,7 +62,7 @@ finding: the ledger's `qty` column has been wrong all along.**
 | (b) `[patch] Gross cap:` line, live equity/gross | ✅ `equity $115,639 \| gross $116,004 (1.00x) \| cap 1.00x -> room $0 = 0 new BUY slots \| pre-blocked 9/9 \| run_ok=True (morning)` |
 | (c) new BUYs fill under the cap | ⚠️ **zero fills — room $0.** 7/8's trim (target 0.90, projected 0.97) landed AT the cap; the gate blocked all 9 BUY signals. Cap works; book entry-starved. |
 | (d) exactly one retrain, no marker race | ✅ one morning commit (`be16c36`); all 5 scheduled runs 6–9 min intraday downgrades. PC-wake catch-up double-fired 20:48Z again — queue collapsed one, `a29d075` gate covers the rest |
-| (e) evening/scoring submit zero orders | ✅ 7/8 21:30Z evening run shows `[SKIP] Cell 13 (Paper trading)` — evening cycles never reach the trade cell; the `9f10c0a` run-type gate is the second layer. 7/9 evening run re-check below |
+| (e) evening/scoring submit zero orders | ✅ CONFIRMED both nights: 7/8 21:30Z AND 7/9 23:18Z evening runs show `[SKIP] Cell 13 (Paper trading)` → zero orders by construction; the `9f10c0a` run-type gate is the second layer |
 | (f) hedged block + `ls_hedged` in Auto commit | ✅ `beta-HEDGED long-short` block printed; `cross_sectional_ls.csv` written with `beta_roll`/`ls_hedged` |
 
 **② Dup-retrain #3 FIXED (`8c30187`):** "Determine run type" in `quant_daily.yml` now runs
@@ -71,8 +71,10 @@ at decision time (workspace file only as fallback — origin/master is never old
 checkout), logging `Morning marker: origin/master=… checkout=… -> using …`. Applies to BOTH
 the scheduled self-heal gate and the explicit-dispatch gate. Marker-read snippet behaviorally
 tested locally under `bash -e -o pipefail` (Actions' shell flags), incl. the bad-ref fallback
-path. Behavioral proof in anger needs a real queued-cron collision — until one passes, keep
-the >1 h-trading-cycle tripwire.
+path. **Parse + marker line CONFIRMED live same evening** — the 22:46Z scheduled run and the
+23:18Z dispatch both printed `Morning marker: origin/master='2026-07-09' …` and downgraded
+correctly (intraday/evening). Behavioral proof in anger needs a real queued-cron collision —
+until one passes, keep the >1 h-trading-cycle tripwire.
 
 **③ ENTRY-STARVATION + 2nd trim EXECUTED:** at gross exactly 1.00× the cap leaves zero BUY
 room; today the model could only close positions (1/11 SELLs closed). Decision: trim again
