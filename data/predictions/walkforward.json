@@ -1,109 +1,109 @@
 {
-  "generated": "2026-07-08T16:24 UTC",
+  "generated": "2026-07-09T15:42 UTC",
   "n_folds": 12,
-  "mean_oos_auc": 0.5413,
-  "last_auc": 0.5292,
-  "trailing_mean": 0.5424,
-  "mean_oos_ic": 0.0677,
-  "last_ic": 0.0596,
+  "mean_oos_auc": 0.5516,
+  "last_auc": 0.5429,
+  "trailing_mean": 0.5524,
+  "mean_oos_ic": 0.0834,
+  "last_ic": 0.0909,
   "drift_detected": false,
-  "verdict": "weak/no edge",
+  "verdict": "genuine edge",
   "folds": [
     {
       "fold": 1,
       "train_end": "2024-01-24",
       "test_end": "2024-03-30",
       "n_test": 4550,
-      "auc": 0.4349,
-      "ic": -0.0684
+      "auc": 0.4356,
+      "ic": -0.0711
     },
     {
       "fold": 2,
       "train_end": "2024-03-30",
       "test_end": "2024-06-09",
       "n_test": 6428,
-      "auc": 0.5276,
-      "ic": 0.0578
+      "auc": 0.5873,
+      "ic": 0.1514
     },
     {
       "fold": 3,
       "train_end": "2024-06-09",
       "test_end": "2024-08-16",
       "n_test": 6422,
-      "auc": 0.4979,
-      "ic": -0.0332
+      "auc": 0.5267,
+      "ic": 0.0206
     },
     {
       "fold": 4,
       "train_end": "2024-08-16",
       "test_end": "2024-10-24",
       "n_test": 5642,
-      "auc": 0.6114,
-      "ic": 0.1503
+      "auc": 0.6253,
+      "ic": 0.1733
     },
     {
       "fold": 5,
       "train_end": "2024-10-24",
       "test_end": "2024-12-31",
       "n_test": 6559,
-      "auc": 0.417,
-      "ic": -0.1864
+      "auc": 0.4067,
+      "ic": -0.2017
     },
     {
       "fold": 6,
       "train_end": "2024-12-31",
       "test_end": "2025-03-11",
       "n_test": 6898,
-      "auc": 0.5276,
-      "ic": 0.0848
+      "auc": 0.5753,
+      "ic": 0.1712
     },
     {
       "fold": 7,
       "train_end": "2025-03-11",
       "test_end": "2025-05-25",
       "n_test": 7866,
-      "auc": 0.6906,
-      "ic": 0.3549
+      "auc": 0.6769,
+      "ic": 0.3163
     },
     {
       "fold": 8,
       "train_end": "2025-05-25",
       "test_end": "2025-08-05",
       "n_test": 5319,
-      "auc": 0.5029,
-      "ic": 0.0113
+      "auc": 0.4972,
+      "ic": -0.0023
     },
     {
       "fold": 9,
       "train_end": "2025-08-05",
       "test_end": "2025-10-16",
       "n_test": 5035,
-      "auc": 0.6085,
-      "ic": 0.1833
+      "auc": 0.5986,
+      "ic": 0.1686
     },
     {
       "fold": 10,
       "train_end": "2025-10-16",
       "test_end": "2025-12-29",
       "n_test": 5876,
-      "auc": 0.556,
-      "ic": 0.08
+      "auc": 0.5513,
+      "ic": 0.0675
     },
     {
       "fold": 11,
       "train_end": "2025-12-29",
       "test_end": "2026-03-12",
       "n_test": 7154,
-      "auc": 0.5915,
-      "ic": 0.1184
+      "auc": 0.595,
+      "ic": 0.1157
     },
     {
       "fold": 12,
       "train_end": "2026-03-12",
       "test_end": "2026-05-28",
-      "n_test": 7801,
-      "auc": 0.5292,
-      "ic": 0.0596
+      "n_test": 7803,
+      "auc": 0.5429,
+      "ic": 0.0909
     }
   ]
 }
