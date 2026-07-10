@@ -1,0 +1,61 @@
+name: Backfill intraday features (one-off remediation)
+
+# Fills the 100%-null intraday feature columns in data/intraday_history/
+# snapshots from recomputed 60d x 15m bars (tz bug, HANDOFF 7/9 ledger ⑧).
+# dry-run (default) only reports; execute rewrites the CSVs and commits them.
+# Raw-data backfill only — never touches models/predictions/orders.
+# Manual dispatch only. In the trading concurrency group so it can never
+# race a live run's commit of today's snapshot.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'dry-run = report only; execute = fill + commit'
+        required: true
+        default: 'dry-run'
+        type: choice
+        options: [dry-run, execute]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: quant-terminal
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install minimal deps
+        run: pip install pandas numpy "yfinance>=0.2.40,<2"
+
+      - name: Recompute and fill
+        env:
+          BACKFILL_MODE: ${{ github.event.inputs.mode }}
+        run: python backfill_intraday_features.py
+
+      - name: Commit backfilled snapshots (execute only)
+        if: github.event.inputs.mode == 'execute'
+        run: |
+          git config user.email "quant-bot@github-actions"
+          git config user.name  "Quant Terminal Bot"
+          git add data/intraday_history/
+          if git diff --cached --quiet; then
+            echo "Nothing changed — no commit."
+          else
+            git commit -m "Backfill: intraday features recomputed from 15m bars (tz fix, ledger ⑧)"
+            git pull --rebase --autostash origin master || git rebase --abort || true
+            git push origin master
+          fi

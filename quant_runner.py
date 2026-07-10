@@ -822,6 +822,13 @@ def _fetch_intraday_features(ticker, period="60d", interval="15m"):
         if isinstance(_bars.columns, _pd6.MultiIndex):
             _bars.columns = _bars.columns.get_level_values(0)
         _bars.index = _pd6.to_datetime(_bars.index)
+        # yfinance intraday bars are tz-aware (America/New_York); the featured
+        # frame's daily index is tz-naive. Without stripping the tz the Cell-6
+        # merge's reindex NEVER matches and every feature lands as NaN — which
+        # is exactly what happened from 5/18 to 7/9 (100% null snapshots,
+        # CI-confirmed run 29066101841). Strip it before normalizing.
+        if _bars.index.tz is not None:
+            _bars.index = _bars.index.tz_localize(None)
         _bars["_date"] = _bars.index.normalize()
         _grp = _bars.groupby("_date")
 

@@ -114,9 +114,18 @@ INTRADAY_FEATURES = [
     "attn_ret20", "attn_rsi20", "attn_vol20",
     "xs_mom_5d", "insider_net_buy", "patent_velocity",
 ]
-# Only use columns that actually exist in the history
-FEATURE_COLS = [c for c in INTRADAY_FEATURES if c in history.columns]
+# Only use columns that actually exist in the history AND carry data.
+# A dead column (e.g. attn_vol20 / patent_velocity, 100% null as of 7/10)
+# would otherwise silently zero out every ticker via the all-columns dropna
+# in the training loop — the failure mode that hid the tz bug for 42 snapshots.
+FEATURE_COLS, _dead_cols = [], []
+for _c in INTRADAY_FEATURES:
+    if _c not in history.columns:
+        continue
+    (_dead_cols if history[_c].isna().mean() > 0.5 else FEATURE_COLS).append(_c)
 print(f"  Feature columns available: {len(FEATURE_COLS)} / {len(INTRADAY_FEATURES)}")
+if _dead_cols:
+    print(f"  Excluded as >50% null (broken upstream, must not block training): {_dead_cols}")
 if len(FEATURE_COLS) < 3:
     print("  Too few features to train. Exiting.")
     sys.exit(0)
