@@ -5058,10 +5058,23 @@ _SRC_REPLACE = [
      '        continue'),
     # (b) order funnel: every order goes through execute_trade — refuse BUYs
     #     that fail the hard gross cap BEFORE _try_alpaca submits anything.
+    #     Conformal-Kelly sizing wired here 2026-07-11 (dated MODEL CHANGE):
+    #     scale BUY qty by the uncertainty discount BEFORE the cap check, so
+    #     the submitted order, the gross-cap accounting, and the ledger row
+    #     all see the same true qty. BUY-only — exits close what is actually
+    #     held. Replaces the removed post-scale block that rewrote the ledger
+    #     after submission without touching the order (b3be0f2).
     ('    if action not in ("BUY","SELL") or qty <= 0:\n'
      '        return {"status":"skip","reason":"HOLD or qty=0"}',
      '    if action not in ("BUY","SELL") or qty <= 0:\n'
      '        return {"status":"skip","reason":"HOLD or qty=0"}\n'
+     '    if action == "BUY" and "_CONFORMAL_KELLY_MAP" in globals():\n'
+     '        _ck_d = float(_CONFORMAL_KELLY_MAP.get(ticker, 1.0))\n'
+     '        if _ck_d < 1.0 and qty > 1:\n'
+     '            _ck_q = max(1, int(qty * _ck_d))\n'
+     '            if _ck_q != qty:\n'
+     '                print(f"    [conformal] {ticker}: qty {qty} -> {_ck_q} (x{_ck_d:.2f})")\n'
+     '                qty = _ck_q\n'
      '    if action == "BUY" and not _gross_cap_allows(ticker, qty * price):\n'
      '        return {"status":"skip","reason":"gross_cap"}'),
     # (c) trade print: a gross-cap-refused BUY must not print as an executed
