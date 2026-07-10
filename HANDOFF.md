@@ -111,6 +111,19 @@ same ceiling band as June, treat as noise. rank-IC full **−0.0292** / trailing
 lose outright with beta stripped. Stat-arb book 7/9 row −0.86% (worst day yet, 2 pairs).
 Equity $116.3k.
 
+**⑥ Frame-3 P2 gate scorecard SHIPPED (`e82bc75`, evening — closes the 6/29 P2 open item):**
+`analyze_stat_arb.py` prints β-to-SPY / max-DD / Sharpe / %win for the shadow book each
+morning (non-fatal step after the shadow book; preflight-guarded; one-off validation workflow
+`validate_stat_arb_scorecard.yml` PASS run `29060471149`). Gates as blind-committed:
+|β|<0.2, max-DD>−15%, ≥30-obs window; Sharpe/%win REPORT-ONLY (no threshold was committed
+blind — not inventing one after seeing data). β is span-aligned to consecutive book dates
+(the book has calendar gaps: 7/1–7/3 lost to the Drive-sync incident). **First read (n=5):
+NOT YET decision-grade (~25 trading days to a full read)** — cum −0.42%, max-DD −0.9% (OK),
+Sharpe −2.46, %win days 2/5, β n/a (needs 5 spans, has 4). Early pattern to watch, n tiny:
+4/5 closed trades exited on DE-COINTEGRATION for a net −$362 while the single reversion exit
+made +$330 — if de-coint exits stay the dominant drain at n≥30, that's the strategy's
+adverse-selection tax showing up.
+
 **Open / next:**
 - [ ] **VERIFY 7/10 morning run:** (a) 22 trim SELLs filled at open → gross ~0.93×;
   (b) `[patch] Gross cap:` shows positive room and new BUYs actually FILL, total staying
@@ -507,7 +520,7 @@ The run logged `🚨 KILL SWITCH: 5 consecutive losses — halting new entries` 
 - [ ] **`DISCORD_WEBHOOK_URL`** still unset — would have turned today's halt + guard warnings into
   a real-time ping instead of log-only.
 - [ ] **TRACK rank-IC trend** toward +0.03/t≥2 — trailing window is the live read.
-- [ ] **P2 stat-arb gate scorecard** (β/DD/Sharpe/%win) once `stat_arb_ls.csv` has ~rows.
+- [x] **P2 stat-arb gate scorecard** ✅ BUILT 7/9 `e82bc75` (`analyze_stat_arb.py`, morning step) — see 7/9 ledger ⑥.
 - Memory written: `killswitch-crypto-hold-streak.md`.
 
 ---
@@ -605,9 +618,8 @@ runs only while the Claude app is open (catches up on next launch).
 **Open / next:**
 - [ ] **VERIFY the 6/30 run** — handled by the armed task above; if it didn't fire (app closed), do the
   checks manually (run-log `SHADOW STAT-ARB BOOK`, new `stat_arb_ls.csv` in the `Auto:` commit).
-- [ ] **P2 gate scorecard (measurement-only, follows once `stat_arb_ls.csv` has ~rows)** — β-to-SPY
-  (≈0 by construction is the test), max-DD, Sharpe, %win printed in the morning log w/ PASS/NOT-YET,
-  analog of the rank-IC scorecard. (NOT built — P0 ships only the returns series.)
+- [x] **P2 gate scorecard** ✅ BUILT 2026-07-09 `e82bc75` — `analyze_stat_arb.py` morning step, validated
+  end-to-end (run `29060471149`); see the 7/9 session ledger ⑥.
 - [ ] **`DISCORD_WEBHOOK_URL`** still unset — last cheap Stage-0 prerequisite.
 - [ ] **TRACK rank-IC trend** toward +0.03/t≥2 — trailing window is the live read.
 
