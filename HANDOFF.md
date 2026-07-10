@@ -106,9 +106,16 @@ nothing — the same decorative-control pattern as the old cash guard.
   (d) AUC noted under the 3-change attribution window; (e) one retrain, marker line prints;
   (f) log prints `[TierC] Conformal Kelly: post-scale removed` and the day's new ledger rows
   keep their submitted qty all day (no intraday shrinkage). Re-dispatch `fill_audit.yml`
-  after a few trading days — new rows should reconcile qty-exact.
-- [ ] **DECIDE: conformal-Kelly sizing** — wire the discount into pre-submission sizing
-  (dated model change) or remove the decorative map.
+  after a few trading days — new rows should reconcile qty-exact;
+  (g) conformal sizing live: `[conformal] TICKER: qty N -> M (xD.DD)` lines print for
+  boundary-signal BUYs, and those ledger rows carry the POST-discount qty (== broker).
+- [x] ~~DECIDE: conformal-Kelly sizing~~ ✅ **WIRED 7/11 `2e6c5a5` (4th dated model change,
+  live Mon 7/13):** BUY qty scales by the uncertainty discount (≤60%) inside
+  `execute_trade`, BEFORE the gross-cap check — submitted order, cap accounting, and ledger
+  row all see the same true qty; once per order (no compounding); exits untouched.
+  Validated: preflight green + gross-cap behavioral suite ALL PASS (`29118191637` — anchors
+  unique, patched Cell 13 compiles, replay scenarios hold). Effect to expect Monday:
+  boundary-conviction BUYs get smaller; high-conviction BUYs unchanged.
 - [ ] **Frame-2 decision-grade ~Aug 24** (clock starts 7/13).
 
 ---
