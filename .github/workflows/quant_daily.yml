@@ -196,6 +196,14 @@ jobs:
         if: steps.run_type.outputs.type == 'morning'
         run: python shadow_stat_arb.py || echo "shadow stat-arb non-fatal error — continuing"
 
+      - name: Stat-arb gate scorecard (morning, measurement-only)
+        # P2 of the Frame-3 plan (scoped 2026-06-29, built 2026-07-09): prints
+        # beta-to-SPY / max-DD / Sharpe / %win for the shadow book with the
+        # blind-committed gates (|beta|<0.2, max-DD>-15%, >=30-obs window);
+        # Sharpe/%win report-only. Reads data/stat_arb/*.csv, writes nothing.
+        if: steps.run_type.outputs.type == 'morning'
+        run: python analyze_stat_arb.py || echo "stat-arb scorecard non-fatal error — continuing"
+
       - name: Run intraday model
         if: steps.run_type.outputs.type != 'evening'
         env:

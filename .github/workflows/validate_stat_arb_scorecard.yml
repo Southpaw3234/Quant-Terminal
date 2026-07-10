@@ -1,0 +1,31 @@
+name: Validate stat-arb scorecard (one-off, read-only)
+
+# Behavioral validation for analyze_stat_arb.py on the committed shadow-book
+# data (the runner has no local Python to test with). Fails if the scorecard
+# raises; the log shows the exact block the morning run will print. Reads
+# only; writes/submits nothing. Manual dispatch only.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install minimal deps
+        run: pip install "yfinance>=0.2.40,<2" pandas numpy
+
+      - name: Run scorecard (must not raise)
+        run: python analyze_stat_arb.py
