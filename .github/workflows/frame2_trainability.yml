@@ -27,7 +27,33 @@ jobs:
           python-version: '3.11'
 
       - name: Install minimal deps
-        run: pip install pandas numpy
+        run: pip install pandas numpy "yfinance>=0.2.40,<2"
+
+      - name: Diagnose tz-mismatch hypothesis (15m bars vs daily index)
+        run: |
+          python - <<'PYEOF'
+          import pandas as pd, yfinance as yf
+          bars = yf.download("AAPL", period="5d", interval="15m",
+                             progress=False, auto_adjust=True)
+          daily = yf.download("AAPL", period="5d", interval="1d",
+                              progress=False, auto_adjust=True)
+          print(f"15m  index tz : {bars.index.tz}")
+          print(f"daily index tz: {daily.index.tz}")
+          norm = pd.to_datetime(bars.index).normalize().unique()
+          hit = pd.Index(norm).reindex(daily.index)[1]
+          print(f"norm 15m dates: {list(norm[:3])}")
+          print(f"daily dates   : {list(daily.index[:3])}")
+          import numpy as np
+          overlap = len(set(pd.to_datetime(bars.index.tz_localize(None)).normalize()
+                            ) & set(pd.to_datetime(daily.index.tz_localize(None)
+                            if daily.index.tz else daily.index).normalize()))
+          raw_overlap = len(set(norm) & set(daily.index))
+          print(f"raw index overlap (as the merge does it): {raw_overlap}")
+          print(f"tz-stripped overlap (the fix)           : {overlap}")
+          if raw_overlap == 0 and overlap > 0:
+              print("CONFIRMED: tz-aware 15m index never matches the tz-naive "
+                    "daily index -> reindex writes all-NaN. Fix = tz_localize(None).")
+          PYEOF
 
       - name: Count training-eligible tickers
         run: |
