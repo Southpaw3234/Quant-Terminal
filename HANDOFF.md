@@ -198,9 +198,20 @@ refusal. Preflight green (`29065597444`).** The harness now runs every morning p
 armed notice; the clock starts organically the first morning `model_intraday.py` emits
 fresh scores (~Aug 4-5, earlier if MIN_ROWS trips).
 
+**⑦-STATUS 2: P1+P2 ALSO BUILT & VALIDATED same night ✅ (`6911853`) — Frame-2 harness is
+COMPLETE.** `analyze_shadow_intraday.py`: balanced top/bottom-decile L/S (equities only,
+open→close) with Frame 1's exact causal rolling-β recipe using **SPY's open→close** as the
+hedge leg (matches the book's horizon) → `data/shadow_intraday/cross_sectional_ls.csv`
+(derived, rewritten wholesale = idempotent); P2 scorecard prints rank-IC full+trailing vs
+≥0.03/t≥2, |β|<0.2, max-DD>−15%, ≥30-obs window, Sharpe/%win report-only — same format as
+the Frame-1/3 blocks. Validation now 5/5 PASS (`29065784215`): the new deterministic step
+recomputes the decile L/S independently from a 60-name fixture (exact match), checks the
+warm-up-unhedged invariant, and the scorecard verdict line. Preflight green
+(`29065785383`). **Nothing left to build for Frame 2 measurement — the entire evidence
+pipeline (log→mature→IC→L/S→hedged→scorecard) is armed and waiting for the model's first
+training day (~Aug 4-5).**
+
 **Open / next:**
-- [ ] **Frame-2 P1 (decile L/S + hedged overlay) and P2 (gate scorecard)** — build once P0
-  has a few live rows OR ahead of time in July dead time; same pattern as Frame 1's blocks.
 - [ ] **~Jul 28: dry-run `model_intraday.py`** locally/CI to see if any tickers cross
   MIN_ROWS=30 early — if yes, the clock (and the Cell-11 blend change) starts before Aug 4.
 - [ ] **VERIFY 7/10 morning run:** (a) 22 trim SELLs filled at open → gross ~0.93×;
