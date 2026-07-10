@@ -80,12 +80,18 @@ per the same diagnosis (dead API + placebo 1.0 cache + coverage + ordering).
 (live 7/10) + blend going live (7/10) + attn_vol20 `a1975ef` (live 7/13). Reference remains
 7/9's 0.5516/0.0834. Do not read any AUC/IC move this week as organic.
 
+**③ 3rd micro-trim EXECUTED (evening, user-approved):** `position_trim.yml` at
+**target_ratio 0.82** (dry-run → execute, run `29117166387`): **26 market SELLs ~$7.5k all
+accepted**, fill at the Mon 7/13 open. Projected: **gross ~0.87×, room ~$15k = 1 BUY
+slot/day** plus whatever the model's own exits free. Entries should finally resume Monday.
+
 **Open / next:**
-- [ ] **VERIFY Mon 7/13 morning run:** harness logs first predictions (`logged N signals`),
-  `attn_vol20` non-null in the 7/13 snapshot, AUC noted under the attribution window.
-- [ ] **Entry starvation decision:** room $7.5k < $10k/slot → zero entries since 7/8. Either
-  a 3rd micro-trim (~$5-8k of SELLs) or accept exit-only until positions close naturally.
-- [ ] **Frame-2 decision-grade slips 1 trading day** (clock 7/13 → ~Aug 24).
+- [ ] **VERIFY Mon 7/13 morning run (a loaded one):** (a) 26 trim SELLs filled → gross
+  ~0.87×, `[patch] Gross cap:` shows ≥1 BUY slot and **new BUYs actually FILL** (first
+  entries since 7/8); (b) harness logs first predictions (`logged N signals` — Frame-2
+  clock's first row); (c) `attn_vol20` non-null in the 7/13 snapshot (fix `a1975ef` live);
+  (d) AUC noted under the 3-change attribution window; (e) one retrain, marker line prints.
+- [ ] **Frame-2 decision-grade ~Aug 24** (clock starts 7/13).
 
 ---
 
