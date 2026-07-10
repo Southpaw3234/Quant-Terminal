@@ -237,10 +237,32 @@ feature pipeline has been writing 100% NULLS since day one — Frame 2 could NEV
   backfill of the null columns in existing snapshots preserves the ~Aug 4-5 timeline, minus
   the earliest days (5/18 sits at the edge of the rolling 60-day 15m window).
 
+**⑧-RESOLUTION (same night, user-approved "do both"): FIXED + BACKFILLED — Frame 2 trains
+TOMORROW MORNING (7/10), four weeks early.**
+- **tz fix `c1bf94e`** (quant_runner `_fetch_intraday_features`): strip the America/New_York
+  tz before normalize. ⚠️ **DATED MODEL CHANGE 2026-07-10:** from the 7/10 morning run the 5
+  intraday columns feed the LIVE v25.1 feature set with real values for the first time —
+  attribute any walk-forward AUC shift vs 7/9's 0.5516 to this.
+- **model_intraday null-aware feature selection** (same commit): >50%-null columns excluded
+  with a printed notice — the two separately-broken columns (`attn_vol20`,
+  `patent_velocity`) can no longer zero out training via the all-columns dropna.
+- **Backfill EXECUTED `f8cd41a`** (`backfill_intraday_features.py` + workflow, dry-run →
+  execute): recomputed the 5 columns from 60d×15m bars with the fixed logic (incl. the
+  live merge's shift(1) semantics), filled **55,384 null cells (86% recovered; 1 range-sane
+  skip; 0/307 ticker fetch failures)**. Residual 14% nulls = weekend/holiday snapshots
+  (5/25, 5/30, 6/6, 6/13, 6/19, 7/3) — never trainable rows anyway.
+- **Post-backfill trainability (run `29066466428`): 305/307 tickers ELIGIBLE, median 36
+  usable rows** → `model_intraday.py` trains on the 7/10 morning run. **New Frame-2
+  timeline: clock starts 7/10, decision-grade ~Aug 21** (was: train ~Aug 4-5, decide ~Oct
+  without backfill). The 7/10 scheduled verify task covers the first-day checks (training
+  ran, shadow harness logged its first row, 7/10 snapshot non-null, AUC attribution).
+
 **Open / next:**
-- [ ] **DECIDE + FIX the tz bug** (one line in `_fetch_intraday_features`) and whether to
-  backfill the 5 null snapshot columns from the 60-day 15m window (saves the Aug timeline).
-- [ ] **Diagnose `attn_vol20` 100%-null** (separate bug, attention-feature path).
+- [ ] **VERIFY 7/10 morning run Frame-2 first day** (scheduled task armed, 12:30 ET):
+  training ran, `intraday_signals.json` saved, shadow harness logged first predictions,
+  7/10 snapshot has non-null `intraday_mom` (tz fix live proof), AUC shift attributed.
+- [ ] **Diagnose `attn_vol20` + `patent_velocity` 100%-null** (separate bugs; excluded from
+  training for now, fix restores 2 features).
 - [x] ~~**~Jul 28: dry-run `model_intraday.py`**~~ ✅ RAN EARLY 7/10 via
   `frame2_trainability.yml` — found the ⑧ null-pipeline bug; re-dispatch any time.
 - [ ] **VERIFY 7/10 morning run:** (a) 22 trim SELLs filled at open → gross ~0.93×;
