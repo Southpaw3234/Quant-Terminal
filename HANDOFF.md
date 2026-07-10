@@ -211,9 +211,38 @@ warm-up-unhedged invariant, and the scorecard verdict line. Preflight green
 pipeline (log→mature→IC→L/S→hedged→scorecard) is armed and waiting for the model's first
 training day (~Aug 4-5).**
 
+**⑧ 🔴 CRITICAL FIND (7/10 pre-dawn, via running the trainability check early): the intraday
+feature pipeline has been writing 100% NULLS since day one — Frame 2 could NEVER have trained.**
+- **Discovery:** new read-only `frame2_trainability.yml` (replicates model_intraday's
+  MIN_ROWS gate) found **0 eligible tickers** — `intraday_mom / overnight_gap / vwap_dev /
+  intraday_range / close_to_high` (and `attn_vol20`) are **100% null in all 42 snapshots**
+  since 5/18. The Frame-2 label (`next_intraday_mom`) derives from `intraday_mom`, so the
+  accumulated history is label-dead too. Waiting for Aug 4-5 would have produced NOTHING.
+- **Root cause CONFIRMED by CI diagnostic (run `29066101841`):** yfinance 15-min bars return
+  a **tz-aware** (America/New_York) index; the featured frame's daily index is tz-naive.
+  `_fetch_intraday_features`' daily aggregate keeps the tz → the Cell-6 merge's
+  `.reindex(_fd6id.index)` NEVER matches (raw overlap 0, tz-stripped overlap 5/5) → all-NaN
+  columns that still count as "added" (morning log prints `306/306 tickers (0 failed)` —
+  success theater). **Fix = `tz_localize(None)`** on the bars index in
+  `_fetch_intraday_features` (quant_runner.py ~L825). `attn_vol20` 100%-null is a SEPARATE
+  bug (attn_ret20/rsi20 are fine) — diagnose independently.
+- **⚠️ Implications / decisions pending (user input):**
+  (1) The fix touches the LIVE trading path — 5 formerly-NaN columns start feeding the v25.1
+  feature set for real → walk-forward AUC may move; per the change-one-thing rule, flag the
+  fix date and attribute any AUC shift to it.
+  (2) Frame-2 timeline: without backfill, usable history restarts at the fix date →
+  first training ~late Aug, decision-grade ~Oct. BUT these are RAW market-derived features
+  recomputable from the 60-day 15m window — **backfilling FEATURES from raw bars is
+  legitimate** (the no-backfill lock covers predictions/shadow, not raw data). A one-off
+  backfill of the null columns in existing snapshots preserves the ~Aug 4-5 timeline, minus
+  the earliest days (5/18 sits at the edge of the rolling 60-day 15m window).
+
 **Open / next:**
-- [ ] **~Jul 28: dry-run `model_intraday.py`** locally/CI to see if any tickers cross
-  MIN_ROWS=30 early — if yes, the clock (and the Cell-11 blend change) starts before Aug 4.
+- [ ] **DECIDE + FIX the tz bug** (one line in `_fetch_intraday_features`) and whether to
+  backfill the 5 null snapshot columns from the 60-day 15m window (saves the Aug timeline).
+- [ ] **Diagnose `attn_vol20` 100%-null** (separate bug, attention-feature path).
+- [x] ~~**~Jul 28: dry-run `model_intraday.py`**~~ ✅ RAN EARLY 7/10 via
+  `frame2_trainability.yml` — found the ⑧ null-pipeline bug; re-dispatch any time.
 - [ ] **VERIFY 7/10 morning run:** (a) 22 trim SELLs filled at open → gross ~0.93×;
   (b) `[patch] Gross cap:` shows positive room and new BUYs actually FILL, total staying
   ≤1.0× (`[gross-cap] BLOCKED BUY` once room exhausts); (c) `Morning marker:` line prints
