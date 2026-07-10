@@ -186,8 +186,21 @@ the live account's signal composition changes — note it in the ledger when it 
 **Timeline:** build+validate P0-P2 by **~Jul 24** (all dead time — nothing else competes);
 armed by Jul 31; first row ~Aug 4-5 (or earlier if MIN_ROWS trips); decision-grade ~Sep 15.
 
+**⑦-STATUS: P0 BUILT, VALIDATED, MERGED, ARMED ✅ (`54b5605`, defaults locked by user):**
+`shadow_intraday.py` — pre-blend logger (only rows whose `generated` stamp is today; a stale
+committed signals file is never re-logged), next-session open→close maturation, daily
+Spearman rank-IC (equities only) → `data/shadow_intraday/`. Wired as a non-fatal morning
+step after the intraday model; commit-loop pathspec added; persistence guard covers the new
+clock only once `predictions.csv` exists (no false alarms while armed). **Behavioral
+validation 4/4 PASS (`29065596270`): armed path / live path (18 synthetic signals logged,
+18 matured vs real open→close, IC row n=15 equities-only) / idempotent re-run / stale-file
+refusal. Preflight green (`29065597444`).** The harness now runs every morning printing the
+armed notice; the clock starts organically the first morning `model_intraday.py` emits
+fresh scores (~Aug 4-5, earlier if MIN_ROWS trips).
+
 **Open / next:**
-- [ ] **Build Frame-2 shadow harness P0-P2** (scope above; target validated+armed ≤ Jul 31).
+- [ ] **Frame-2 P1 (decile L/S + hedged overlay) and P2 (gate scorecard)** — build once P0
+  has a few live rows OR ahead of time in July dead time; same pattern as Frame 1's blocks.
 - [ ] **~Jul 28: dry-run `model_intraday.py`** locally/CI to see if any tickers cross
   MIN_ROWS=30 early — if yes, the clock (and the Cell-11 blend change) starts before Aug 4.
 - [ ] **VERIFY 7/10 morning run:** (a) 22 trim SELLs filled at open → gross ~0.93×;
