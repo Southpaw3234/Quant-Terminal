@@ -85,12 +85,30 @@ per the same diagnosis (dead API + placebo 1.0 cache + coverage + ordering).
 accepted**, fill at the Mon 7/13 open. Projected: **gross ~0.87×, room ~$15k = 1 BUY
 slot/day** plus whatever the model's own exits free. Entries should finally resume Monday.
 
+**④ Ledger-qty bug FIXED (`b3be0f2`) — the fill audit's 288 qty-mismatch rows explained:**
+the **conformal-Kelly post-scale** block (Cell-13 postpatch) rewrote today's
+`paper_trades.csv` `qty` by the uncertainty discount AFTER orders were submitted. The
+intended sizing hook (`kelly_qty × _CONFORMAL_KELLY_MAP`, per its own comment) was never
+wired into Cell 13, so actual orders were never scaled — the block was decorative as risk
+control and corrosive as bookkeeping. Worse, it ran on EVERY cycle with a today-mask and no
+already-scaled guard → the discount compounded through the day (ZBH: broker filled 112,
+ledger said 6). REMOVED — the ledger now keeps the true submitted qty (`notional` was always
+correct); historical rows untouched (broker = ground truth). ⚠️ Open decision: wire the
+conformal discount into REAL pre-submission sizing (a dated model change — order sizes would
+shrink for boundary signals) or delete the map; currently it computes and prints but binds
+nothing — the same decorative-control pattern as the old cash guard.
+
 **Open / next:**
 - [ ] **VERIFY Mon 7/13 morning run (a loaded one):** (a) 26 trim SELLs filled → gross
   ~0.87×, `[patch] Gross cap:` shows ≥1 BUY slot and **new BUYs actually FILL** (first
   entries since 7/8); (b) harness logs first predictions (`logged N signals` — Frame-2
   clock's first row); (c) `attn_vol20` non-null in the 7/13 snapshot (fix `a1975ef` live);
-  (d) AUC noted under the 3-change attribution window; (e) one retrain, marker line prints.
+  (d) AUC noted under the 3-change attribution window; (e) one retrain, marker line prints;
+  (f) log prints `[TierC] Conformal Kelly: post-scale removed` and the day's new ledger rows
+  keep their submitted qty all day (no intraday shrinkage). Re-dispatch `fill_audit.yml`
+  after a few trading days — new rows should reconcile qty-exact.
+- [ ] **DECIDE: conformal-Kelly sizing** — wire the discount into pre-submission sizing
+  (dated model change) or remove the decorative map.
 - [ ] **Frame-2 decision-grade ~Aug 24** (clock starts 7/13).
 
 ---
