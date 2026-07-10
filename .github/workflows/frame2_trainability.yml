@@ -51,6 +51,11 @@ jobs:
           feats = [c for c in INTRADAY_FEATURES if c in hist.columns]
           print(f"feature columns: {len(feats)}/{len(INTRADAY_FEATURES)} available: {feats}")
 
+          print("\nper-column null rate (a ~100% column blocks ALL training forever):")
+          for c in feats:
+              nn = hist[c].isna().mean()
+              print(f"  {c:<16} {nn:6.1%} null" + ("   <-- BLOCKER" if nn > 0.9 else ""))
+
           # per-ticker usable-row counts (all features non-null; the label is
           # never NaN by construction so it can't reduce the count)
           usable = (hist.dropna(subset=feats)
