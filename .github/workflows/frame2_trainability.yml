@@ -1,0 +1,84 @@
+name: Frame-2 trainability check (read-only)
+
+# Replicates model_intraday.py's per-ticker eligibility gate (>= MIN_ROWS=30
+# rows with all available feature columns non-null) against the committed
+# data/intraday_history/ snapshots and reports how many tickers would train
+# TODAY plus the ETA for the rest. Answers "does Frame 2 start before the
+# ~Aug 4-5 60-day estimate?" without training anything. GETs nothing,
+# writes nothing, trains nothing. Manual dispatch, any time.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install minimal deps
+        run: pip install pandas numpy
+
+      - name: Count training-eligible tickers
+        run: |
+          python - <<'PYEOF'
+          from pathlib import Path
+          import pandas as pd
+
+          # Mirror model_intraday.py exactly
+          INTRADAY_FEATURES = [
+              "intraday_mom", "overnight_gap", "vwap_dev",
+              "intraday_range", "close_to_high",
+              "attn_ret20", "attn_rsi20", "attn_vol20",
+              "xs_mom_5d", "insider_net_buy", "patent_velocity",
+          ]
+          MIN_ROWS = 30
+
+          files = sorted(Path("data/intraday_history").glob("*.csv"))
+          print(f"snapshot files : {len(files)}  ({files[0].stem} -> {files[-1].stem})")
+          hist = pd.concat([pd.read_csv(f) for f in files], ignore_index=True)
+          hist["date"] = pd.to_datetime(hist["date"], errors="coerce")
+          feats = [c for c in INTRADAY_FEATURES if c in hist.columns]
+          print(f"feature columns: {len(feats)}/{len(INTRADAY_FEATURES)} available: {feats}")
+
+          # per-ticker usable-row counts (all features non-null; the label is
+          # never NaN by construction so it can't reduce the count)
+          usable = (hist.dropna(subset=feats)
+                        .groupby("ticker").size().sort_values(ascending=False))
+          eligible = usable[usable >= MIN_ROWS]
+          print(f"\ntickers with history : {hist['ticker'].nunique()}")
+          print(f"ELIGIBLE TODAY (>= {MIN_ROWS} usable rows): {len(eligible)}")
+          if len(eligible):
+              print("  " + ", ".join(f"{t}:{n}" for t, n in eligible.head(20).items())
+                    + (" ..." if len(eligible) > 20 else ""))
+
+          # ETA distribution: tickers gain ~1 usable row per trading day
+          print("\nrows-needed distribution (usable rows -> tickers):")
+          for lo, hi in [(25, 29), (20, 24), (10, 19), (1, 9)]:
+              band = usable[(usable >= lo) & (usable <= hi)]
+              if len(band):
+                  eta = MIN_ROWS - hi   # best case within the band
+                  print(f"  {lo}-{hi} rows: {len(band):>4} tickers "
+                        f"(eligible in ~{eta}-{MIN_ROWS - lo} trading days)")
+          med = usable.median()
+          print(f"\nmedian usable rows: {med:.0f}  max: {usable.max()}  "
+                f"(median ticker needs ~{max(0, MIN_ROWS - med):.0f} more trading days)")
+          if len(eligible):
+              print("\nVERDICT: model_intraday.py would TRAIN TODAY for the tickers "
+                    "above — the Frame-2 clock (and the Cell-11 blend change) starts "
+                    "on the next morning run, NOT in August.")
+          else:
+              near = usable.max()
+              print(f"\nVERDICT: not trainable yet — closest ticker has {near} usable "
+                    f"rows; first training ~{MIN_ROWS - near} trading days away.")
+          PYEOF
