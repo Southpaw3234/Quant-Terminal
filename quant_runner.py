@@ -3506,35 +3506,18 @@ except Exception as _cl13e:
     print(f"  [patch] close_long error (non-fatal): {_cl13e}")
 
 
-# Apply conformal Kelly discounts to paper_trades.csv.
-# _CONFORMAL_KELLY_MAP was built in CELL_13_PREPATCH; scale today's new orders.
-try:
-    import pandas as _pd13ck
-    from pathlib import Path as _P13ck
-    _pt_file13 = _P13ck("data/paper_trades/paper_trades.csv")
-    if _pt_file13.exists() and "_CONFORMAL_KELLY_MAP" in dir():
-        _pt13 = _pd13ck.read_csv(_pt_file13)
-        if len(_pt13) > 0 and "qty" in _pt13.columns and "ticker" in _pt13.columns:
-            import datetime as _dtt13
-            _today13 = str(_dtt13.date.today())
-            # Only scale rows from today's run (don't retroactively change history)
-            _date_col13 = next((c for c in _pt13.columns if "date" in c.lower()), None)
-            if _date_col13:
-                _today_mask13 = _pt13[_date_col13].astype(str).str.startswith(_today13)
-                _n_scaled13 = 0
-                for _idx13 in _pt13[_today_mask13].index:
-                    _tk13 = str(_pt13.at[_idx13, "ticker"])
-                    _disc13 = _CONFORMAL_KELLY_MAP.get(_tk13, 1.0)
-                    if _disc13 < 1.0:
-                        _old_qty13 = float(_pt13.at[_idx13, "qty"])
-                        _new_qty13 = max(1, int(_old_qty13 * _disc13))
-                        _pt13.at[_idx13, "qty"] = _new_qty13
-                        _n_scaled13 += 1
-                if _n_scaled13 > 0:
-                    _pt_file13.write_text(_pt13.to_csv(index=False))
-                    print(f"  [TierC] Conformal Kelly: scaled qty for {_n_scaled13} today's orders")
-except Exception as _ck13e:
-    print(f"  [TierC] Conformal Kelly post-scale error (non-fatal): {_ck13e}")
+# Conformal-Kelly post-scale REMOVED 2026-07-11 (ledger-qty corruption, fill
+# audit 7/9 + HANDOFF 7/10 ledger). The old block rewrote today's
+# paper_trades.csv qty by the discount AFTER orders were submitted — it never
+# changed the actual orders (the intended sizing hook, kelly_qty x
+# _CONFORMAL_KELLY_MAP, was never wired into Cell 13), and because it ran on
+# EVERY cycle with a today-mask and no already-scaled guard, the discount
+# compounded multiplicatively through the day (ZBH: broker filled 112, ledger
+# said 6). The ledger now keeps the true submitted qty; notional was always
+# correct. Wiring the discount into REAL pre-submission sizing is a separate,
+# dated model-change decision — _CONFORMAL_KELLY_MAP still exists for it.
+print("  [TierC] Conformal Kelly: post-scale removed (ledger keeps true qty; "
+      "sizing hook never wired — see 2026-07-11 handoff)")
 
 # Gross-cap end-of-cell summary (2026-07-08) — one greppable line per run.
 try:
