@@ -7,10 +7,10 @@
     "entry_z": -2.932,
     "half_life": 5.34,
     "hedge_ratio": 0.840612,
-    "last_y": 201.75999450683594,
-    "last_x": 557.4199829101562,
-    "days_held": 4,
-    "cum_pnl": -50.739430884717535
+    "last_y": 209.07000732421875,
+    "last_x": 551.1199951171875,
+    "days_held": 5,
+    "cum_pnl": 424.59335866890325
   },
   "PFE/GILD": {
     "y": "PFE",
@@ -20,9 +20,22 @@
     "entry_z": -2.2122,
     "half_life": 5.33,
     "hedge_ratio": 0.654713,
-    "last_y": 24.210899353027344,
-    "last_x": 133.61000061035156,
-    "days_held": 3,
-    "cum_pnl": -154.5420005720077
+    "last_y": 24.200000762939453,
+    "last_x": 130.44000244140625,
+    "days_held": 4,
+    "cum_pnl": 78.21402939375392
+  },
+  "AAPL/META": {
+    "y": "AAPL",
+    "x": "META",
+    "side": -1,
+    "entry_date": "2026-07-10",
+    "entry_z": 2.5145,
+    "half_life": 14.59,
+    "hedge_ratio": 0.889169,
+    "last_y": 313.25,
+    "last_x": 670.0,
+    "days_held": 0,
+    "cum_pnl": 0.0
   }
 }
