@@ -124,7 +124,72 @@ Sharpe −2.46, %win days 2/5, β n/a (needs 5 spans, has 4). Early pattern to w
 made +$330 — if de-coint exits stay the dominant drain at n≥30, that's the strategy's
 adverse-selection tax showing up.
 
+**⑦ Frame-2 SHADOW HARNESS SCOPED (build target: end of July, BEFORE the model trains)**
+
+**Why now:** `data/intraday_history/` has 42/60 snapshots (started 5/18); the 60th lands
+**~Aug 4-5** — and `model_intraday.py`'s own per-ticker gate is only `MIN_ROWS=30`, so some
+tickers may train even earlier (dry-run check ~Jul 28). Frame 1's clock started ~3 weeks
+late because its instrumentation was built/debugged after the fact; Frame 3 got it right
+(harness validated 6/29, clock started 6/30 day one). Frame 2 must copy Frame 3: harness
+built, validated, and ARMED before the first real training day, so day 1 of model = day 1
+of clean evidence. Decision-grade (≥30 obs) ≈ **mid-September**, ~4 wks after Frame 1's gate.
+
+**What Frame 2 is:** `model_intraday.py` predicts **tomorrow's open→close move** (1-day
+horizon, binary label on `next_intraday_mom`), writes per-ticker
+`data/predictions/intraday_signals.json` `{score, signal, confidence, n_train_days}`;
+morning runs train+predict, intraday runs predict-only, evening skips.
+
+**⚠️ Isolation requirement (the key design constraint):** Cell 11 BLENDS the intraday score
+into the live v25.1 ensemble once the model trains. The shadow harness must therefore read
+`intraday_signals.json` **directly (pre-blend)** so it measures Frame 2's OWN skill — not the
+blend, and not Frame 1 wearing a hat. (Corollary for August: when Frame 2 starts training,
+the live account's signal composition changes — note it in the ledger when it happens.)
+
+**Design (mirrors Frame 1's shadow machinery, simpler than Frame 3 — stateless, 1-day):**
+- **P0 — logger + scorer + rank-IC series (starts the clock, ~½ day):** new
+  `shadow_intraday.py`, forward-only (NO backfill from `intraday_history` — the models were
+  Optuna-tuned on that window; scoring it is in-sample by construction). Each morning:
+  (1) append today's scores → `data/shadow_intraday/predictions.csv`; (2) mature yesterday's
+  row against realized **open→close** returns (yfinance daily OHLC: open_T+1→close_T+1 —
+  NOT close-to-close; that's the label the model predicts); (3) append daily Spearman
+  rank-IC → `data/shadow_intraday/rank_ic.csv`. One obs/day (morning predictions only;
+  intraday-run re-predictions ignored — no double-counting). Idempotent per date.
+- **P1 — decile long-short series + hedged overlay:** balanced top/bottom-decile
+  equal-weight book (equities only, crypto/ETF excluded — the 6/26 contamination lesson) →
+  `data/shadow_intraday/cross_sectional_ls.csv` with the same causal rolling-β SPY overlay
+  as Frame 1 (`ls_hedged`; SPY open→close as the hedge leg, shift(1), ≤20 prior rows,
+  clamp ±3). Measurement-only, no costs (matching Frame 1's shadow; costs enter at the
+  trading-layer stage if the frame survives).
+- **P2 — gate scorecard:** `analyze_shadow_intraday.py` (or extend the P0 script) printing
+  the same blind gates: rank-IC ≥ 0.03 / t ≥ 2.0, |β| < 0.2, max-DD > −15%, window ≥ 30 obs;
+  Sharpe/%win report-only. Same print format as the Frame 1/Frame 3 blocks.
+- **Wiring:** non-fatal morning step in `quant_daily.yml` right after "Run intraday model";
+  new `data/shadow_intraday/` pathspec added to the commit loop (each path added
+  INDEPENDENTLY — the atomic-add lesson); preflight py_compile+AST guard; one-off read-only
+  validation workflow (the `validate_stat_arb_scorecard.yml` precedent); persistence-guard
+  line in the staleness check (the 7/6 lesson: a stalled clock must page, not just stall).
+- **Behavior before the model trains:** `intraday_signals.json` absent/empty → harness
+  prints "no signals yet" and exits 0 (armed, not counting). The clock starts organically
+  the first morning the model emits scores.
+
+**PROPOSED DEFAULTS (commit blind NOW, edit now or never — same discipline as Frame 3):**
+| Knob | Proposed |
+|---|---|
+| Horizon / label | next-session **open→close** return (exactly the model's label) |
+| Book | top/bottom decile by `score`, equal-weight, equities only |
+| Obs cadence | 1/day (morning prediction only) |
+| Costs | none in shadow (measurement); costs at trading-layer stage |
+| Gates | rank-IC ≥0.03 t≥2 · \|β\|<0.2 · max-DD>−15% · ≥30 obs (unchanged Stage-1 set) |
+| Kill rule | 8 wks flat/negative from first obs, same as every frame |
+| Backfill | **NEVER** (tuned-window in-sample; forward-only, settled) |
+
+**Timeline:** build+validate P0-P2 by **~Jul 24** (all dead time — nothing else competes);
+armed by Jul 31; first row ~Aug 4-5 (or earlier if MIN_ROWS trips); decision-grade ~Sep 15.
+
 **Open / next:**
+- [ ] **Build Frame-2 shadow harness P0-P2** (scope above; target validated+armed ≤ Jul 31).
+- [ ] **~Jul 28: dry-run `model_intraday.py`** locally/CI to see if any tickers cross
+  MIN_ROWS=30 early — if yes, the clock (and the Cell-11 blend change) starts before Aug 4.
 - [ ] **VERIFY 7/10 morning run:** (a) 22 trim SELLs filled at open → gross ~0.93×;
   (b) `[patch] Gross cap:` shows positive room and new BUYs actually FILL, total staying
   ≤1.0× (`[gross-cap] BLOCKED BUY` once room exhausts); (c) `Morning marker:` line prints
