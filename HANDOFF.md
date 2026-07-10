@@ -264,8 +264,32 @@ TOMORROW MORNING (7/10), four weeks early.**
 - [ ] **VERIFY 7/10 morning run Frame-2 first day** (scheduled task armed, 12:30 ET):
   training ran, `intraday_signals.json` saved, shadow harness logged first predictions,
   7/10 snapshot has non-null `intraday_mom` (tz fix live proof), AUC shift attributed.
-- [ ] **Diagnose `attn_vol20` + `patent_velocity` 100%-null** (separate bugs; excluded from
-  training for now, fix restores 2 features).
+- [x] ~~Diagnose `attn_vol20` + `patent_velocity` 100%-null~~ ✅ **DIAGNOSED 7/10 (fixes
+  pending user decision):**
+  - **`attn_vol20` — column-name guess mismatch (1-line fix).** The Tier-2 attention patch
+    (quant_runner ~L1229) searches for a volume column named `vol_ratio`/`volume_ratio`/
+    `vol_zscore`; the daily featured frame's real volume features are **`rvol_10` /
+    `rvol_21` / `obv`** (see `data/weights/top_features.json`). `_vol_col` is always None →
+    all-NaN written while the log prints `306/306 tickers` (success theater #3 — the
+    counter tracks ticker-loop completions, not sub-feature success). **Fix:** add
+    `rvol_21`/`rvol_10` to the candidate list — `rvol` (relative volume vs rolling mean) is
+    semantically exactly the "volume ratio" the feature wants. Recomputes over the full
+    frame every morning, so it self-heals in `featured` immediately; snapshots accrue real
+    values from fix date (raw-data backfill possible but optional). ⚠️ live-feature-set
+    change (attn_vol20 is in FEATURE_COLS) — date it like the tz fix.
+  - **`patent_velocity` — THREE stacked failures; recommend SHELVE, not fix.**
+    (1) **Dead API:** the legacy `api.patentsview.org/patents/query` endpoint is retired;
+    every fetch fails and the except path returns the placebo `(1.0, 0)` — **all 48
+    `patent_cache.json` entries are exactly velocity 1.0 / count 0** (Apple with zero
+    patents in 90d = impossible). The feature never carried information, even when "set".
+    (2) **Coverage:** `_TICKER_TO_ASSIGNEE` maps only 48/307 tickers; the rest are
+    structurally excluded. (3) **Ordering:** the snapshot is written by the CELL-6 patch
+    but patent_velocity is set in CELL-9 → the snapshot column can never be populated, even
+    for mapped tickers. It is deliberately NOT in the live FEATURE_COLS (position-sizing
+    use only, i.e. currently decorative) and model_intraday's null-aware selection already
+    excludes it. Resurrecting = new API (search.patentsview.org, key required) + full
+    assignee map + move before the snapshot — heavy lift for a constant-valued, unproven
+    feature. **Recommendation: shelve; remove from `_SNAP_COLS` whenever convenient.**
 - [x] ~~**~Jul 28: dry-run `model_intraday.py`**~~ ✅ RAN EARLY 7/10 via
   `frame2_trainability.yml` — found the ⑧ null-pipeline bug; re-dispatch any time.
 - [ ] **VERIFY 7/10 morning run:** (a) 22 trim SELLs filled at open → gross ~0.93×;
