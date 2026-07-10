@@ -54,7 +54,9 @@ jobs:
           random.seed(7)
 
           # today's "fresh" signals (generated stamp = today)
-          sig = {t: {"score": round(random.uniform(-1,1), 4), "signal": "LONG",
+          # "intraday_score" = model_intraday.py's REAL output key (the 7/10
+          # first-day miss happened because this fixture used "score")
+          sig = {t: {"intraday_score": round(random.uniform(-1,1), 4), "signal": "LONG",
                      "confidence": 0.6, "n_train_days": 30,
                      "generated": today + "T13:00"} for t in eqs + non}
           Path("data/predictions").mkdir(parents=True, exist_ok=True)
@@ -110,7 +112,7 @@ jobs:
           from pathlib import Path
           import pandas as pd
           yday = (datetime.datetime.utcnow() - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
-          sig = {"AAPL": {"score": 0.5, "signal": "LONG", "confidence": 0.6,
+          sig = {"AAPL": {"intraday_score": 0.5, "signal": "LONG", "confidence": 0.6,
                           "generated": yday + "T13:00"}}
           Path("data/predictions/intraday_signals.json").write_text(json.dumps(sig))
           # wipe today's logged rows so a stale log-attempt would be visible
@@ -119,7 +121,7 @@ jobs:
           p[p["date"] != today].to_csv("data/shadow_intraday/predictions.csv", index=False)
           PYEOF
           python shadow_intraday.py | tee /tmp/stale.log
-          grep -q "stale file, not logging" /tmp/stale.log
+          grep -q "1 stale-dated, 0 without a score key" /tmp/stale.log
           echo "STALE-FILE PATH PASS"
 
       - name: 5 — P1/P2 analyzer (deterministic decile L/S + scorecard)

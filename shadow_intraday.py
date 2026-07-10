@@ -169,20 +169,32 @@ def log_today(preds):
         print(f"  {TODAY} already logged — idempotent skip.")
         return preds, 0
     rows = []
+    n_stale = n_noscore = 0
     for tk, s in signals.items():
-        if not isinstance(s, dict) or s.get("score") is None:
+        if not isinstance(s, dict):
+            continue
+        # model_intraday.py writes "intraday_score" (its docstring's "score"
+        # never shipped); accept both keys. The old score-only read silently
+        # skipped every signal on the 7/10 first training day, and the
+        # "stale file" print below misattributed it. Cell 11's live blend
+        # reads intraday_score, so the producer key is the canonical one.
+        sc = s.get("intraday_score", s.get("score"))
+        if sc is None:
+            n_noscore += 1
             continue
         gen = str(s.get("generated", ""))[:10]
         if gen != TODAY:
+            n_stale += 1
             continue   # stale committed file from an earlier day — never re-log
         rows.append({"date": TODAY, "ticker": str(tk),
-                     "score": float(s["score"]),
+                     "score": float(sc),
                      "signal": s.get("signal"),
                      "confidence": s.get("confidence"),
                      "target_session": np.nan, "realized_oc": np.nan,
                      "matured_on": np.nan})
     if not rows:
-        print("  signals file present but none generated today — stale file, not logging.")
+        print(f"  no loggable signals for {TODAY} "
+              f"({n_stale} stale-dated, {n_noscore} without a score key) — not logging.")
         return preds, 0
     preds = pd.concat([preds, pd.DataFrame(rows)], ignore_index=True)
     n_eq = sum(_is_equity(r["ticker"]) for r in rows)
