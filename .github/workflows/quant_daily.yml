@@ -211,6 +211,18 @@ jobs:
           RUN_TYPE: ${{ steps.run_type.outputs.type }}
         run: python model_intraday.py || echo "Intraday model non-fatal error — continuing"
 
+      - name: Frame-2 shadow harness (morning, measurement-only)
+        # P0 (scoped 7/9 ledger ⑦, defaults LOCKED): logs the intraday model's
+        # raw pre-blend scores from data/predictions/intraday_signals.json
+        # (only rows whose "generated" stamp is today — a stale committed file
+        # is never re-logged), matures them vs the realized next-session
+        # open->close return, appends daily Spearman rank-IC (equities only)
+        # to data/shadow_intraday/. Prints "armed" and exits 0 until the model
+        # first trains (~Aug 2026). SHADOW ONLY — no orders, no live-model
+        # state. Idempotent per date; non-fatal.
+        if: steps.run_type.outputs.type == 'morning'
+        run: python shadow_intraday.py || echo "shadow-intraday non-fatal error — continuing"
+
       - name: Save model cache (morning only)
         if: steps.run_type.outputs.type == 'morning'
         uses: actions/cache@v4
@@ -262,7 +274,8 @@ jobs:
           # nothing → commit skipped. Looping isolates missing paths.
           for p in data/paper_trades/ data/predictions/ data/weights/ \
                    data/intraday_history/ data/models/intraday_model.pkl \
-                   data/stat_arb/ data/shadow/ data/last_morning_run.txt docs/index.html; do
+                   data/stat_arb/ data/shadow/ data/shadow_intraday/ \
+                   data/last_morning_run.txt docs/index.html; do
             git add "$p" 2>/dev/null || true
           done
           if git diff --cached --quiet; then
@@ -317,7 +330,11 @@ jobs:
           msg=""
           if git log -1 --pretty=%s | grep -q '^Auto:'; then
             stat="$(git show --stat --name-only --pretty=format: HEAD)"
-            for want in data/shadow/ data/stat_arb/ data/predictions/; do
+            wants="data/shadow/ data/stat_arb/ data/predictions/"
+            # Frame-2 clock is guarded only once it has actually started (the
+            # harness is armed-but-idle until the intraday model first trains).
+            [ -f data/shadow_intraday/predictions.csv ] && wants="$wants data/shadow_intraday/"
+            for want in $wants; do
               echo "$stat" | grep -q "$want" || msg="${msg} ${want}"
             done
           else

@@ -1,0 +1,123 @@
+name: Validate Frame-2 shadow harness (one-off, read-only)
+
+# Behavioral validation for shadow_intraday.py (the runner has no local
+# Python). Exercises: (1) armed path — no signals file, exits 0, writes
+# nothing; (2) live path — synthetic signals generated today + a backdated
+# cohort matures against real next-session open->close and produces a
+# rank-IC row counting equities only; (3) stale-file refusal — signals
+# generated yesterday are never logged; (4) idempotency — a re-run adds no
+# duplicate rows. All inside the runner workspace; commits nothing.
+# Manual dispatch only; NOT in the trading concurrency group.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install minimal deps
+        run: pip install "yfinance>=0.2.40,<2" pandas numpy
+
+      - name: 1 — Armed path (no signals file)
+        run: |
+          rm -f data/predictions/intraday_signals.json
+          python shadow_intraday.py | tee /tmp/armed.log
+          grep -q "harness armed" /tmp/armed.log
+          test ! -f data/shadow_intraday/predictions.csv
+          echo "ARMED PATH PASS"
+
+      - name: 2 — Live path (synthetic today-signals + backdated cohort)
+        run: |
+          python - <<'PYEOF'
+          import json, datetime, random
+          from pathlib import Path
+          import pandas as pd
+
+          today = datetime.datetime.utcnow().strftime("%Y-%m-%d")
+          back = (datetime.datetime.utcnow() - datetime.timedelta(days=7)).strftime("%Y-%m-%d")
+          eqs = ["AAPL","MSFT","NVDA","AMZN","GOOGL","META","JPM","XOM",
+                 "JNJ","PG","UNH","HD","KO","PEP","CSCO"]
+          non = ["SPY","SOXX","BTC-USD"]
+          random.seed(7)
+
+          # today's "fresh" signals (generated stamp = today)
+          sig = {t: {"score": round(random.uniform(-1,1), 4), "signal": "LONG",
+                     "confidence": 0.6, "n_train_days": 30,
+                     "generated": today + "T13:00"} for t in eqs + non}
+          Path("data/predictions").mkdir(parents=True, exist_ok=True)
+          Path("data/predictions/intraday_signals.json").write_text(json.dumps(sig))
+
+          # backdated unmatured cohort (7 days old -> next session completed)
+          rows = [{"date": back, "ticker": t, "score": round(random.uniform(-1,1),4),
+                   "signal": "LONG", "confidence": 0.6, "target_session": None,
+                   "realized_oc": None, "matured_on": None} for t in eqs + non]
+          Path("data/shadow_intraday").mkdir(parents=True, exist_ok=True)
+          pd.DataFrame(rows).to_csv("data/shadow_intraday/predictions.csv", index=False)
+          print(f"fixture: cohort dated {back}, signals generated {today}")
+          PYEOF
+          python shadow_intraday.py | tee /tmp/live.log
+          python - <<'PYEOF'
+          import datetime
+          import pandas as pd
+
+          today = datetime.datetime.utcnow().strftime("%Y-%m-%d")
+          p = pd.read_csv("data/shadow_intraday/predictions.csv")
+          ic = pd.read_csv("data/shadow_intraday/rank_ic.csv")
+
+          cohort = p[p["date"] != today]
+          matured = cohort.dropna(subset=["realized_oc"])
+          assert len(matured) >= 10, f"only {len(matured)} matured"
+          assert (matured["realized_oc"].abs() < 0.25).all(), "implausible open->close"
+
+          assert len(ic) == 1, f"expected 1 IC row, got {len(ic)}"
+          assert ic["n"].iloc[0] <= 15, "IC n must count equities only (<=15)"
+          assert -1 <= ic["rank_ic"].iloc[0] <= 1
+          assert (p["date"] == today).sum() == 18, "today's 18 signals not logged"
+          print(f"LIVE PATH PASS: matured {len(matured)}, "
+                f"IC {ic['rank_ic'].iloc[0]:+.4f} (n={ic['n'].iloc[0]})")
+          PYEOF
+
+      - name: 3 — Idempotency (re-run adds nothing)
+        run: |
+          python shadow_intraday.py | tee /tmp/rerun.log
+          grep -q "already logged" /tmp/rerun.log
+          python - <<'PYEOF'
+          import pandas as pd
+          p = pd.read_csv("data/shadow_intraday/predictions.csv")
+          ic = pd.read_csv("data/shadow_intraday/rank_ic.csv")
+          assert len(p) == 36, f"row count changed on re-run: {len(p)}"
+          assert len(ic) == 1, "IC duplicated on re-run"
+          print("IDEMPOTENCY PASS")
+          PYEOF
+
+      - name: 4 — Stale-file refusal (generated != today)
+        run: |
+          python - <<'PYEOF'
+          import json, datetime
+          from pathlib import Path
+          import pandas as pd
+          yday = (datetime.datetime.utcnow() - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+          sig = {"AAPL": {"score": 0.5, "signal": "LONG", "confidence": 0.6,
+                          "generated": yday + "T13:00"}}
+          Path("data/predictions/intraday_signals.json").write_text(json.dumps(sig))
+          # wipe today's logged rows so a stale log-attempt would be visible
+          p = pd.read_csv("data/shadow_intraday/predictions.csv")
+          today = datetime.datetime.utcnow().strftime("%Y-%m-%d")
+          p[p["date"] != today].to_csv("data/shadow_intraday/predictions.csv", index=False)
+          PYEOF
+          python shadow_intraday.py | tee /tmp/stale.log
+          grep -q "stale file, not logging" /tmp/stale.log
+          echo "STALE-FILE PATH PASS"
