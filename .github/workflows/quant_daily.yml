@@ -223,6 +223,17 @@ jobs:
         if: steps.run_type.outputs.type == 'morning'
         run: python shadow_intraday.py || echo "shadow-intraday non-fatal error — continuing"
 
+      - name: Frame-2 shadow L/S + gate scorecard (morning, measurement-only)
+        # P1+P2 (defaults locked 7/9): derives the balanced-decile long-short
+        # series (equities only, open->close, causal SPY-hedged overlay) from
+        # the P0 harness's matured predictions and prints the blind gate
+        # scorecard (rank-IC >= 0.03 t>=2, |beta|<0.2, max-DD>-15%, >=30 obs;
+        # Sharpe/%win report-only). Rewrites only the derived
+        # data/shadow_intraday/cross_sectional_ls.csv. Armed-notice until the
+        # P0 clock has data. Non-fatal.
+        if: steps.run_type.outputs.type == 'morning'
+        run: python analyze_shadow_intraday.py || echo "frame2 scorecard non-fatal error — continuing"
+
       - name: Save model cache (morning only)
         if: steps.run_type.outputs.type == 'morning'
         uses: actions/cache@v4

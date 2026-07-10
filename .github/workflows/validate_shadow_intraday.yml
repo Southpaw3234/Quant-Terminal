@@ -121,3 +121,61 @@ jobs:
           python shadow_intraday.py | tee /tmp/stale.log
           grep -q "stale file, not logging" /tmp/stale.log
           echo "STALE-FILE PATH PASS"
+
+      - name: 5 — P1/P2 analyzer (deterministic decile L/S + scorecard)
+        run: |
+          python - <<'PYEOF'
+          import datetime
+          from pathlib import Path
+          import pandas as pd
+
+          # last two completed weekdays as target sessions
+          d = datetime.date.today() - datetime.timedelta(days=1)
+          sessions = []
+          while len(sessions) < 2:
+              if d.weekday() < 5:
+                  sessions.append(d.strftime("%Y-%m-%d"))
+              d -= datetime.timedelta(days=1)
+          s1, s0 = sessions[0], sessions[1]   # s0 older
+
+          # 60 synthetic equities; date A: outcome rank == score rank (IC=+1),
+          # date B: inverted (IC=-1). realized_oc spans -3%..+2.9%.
+          rows = []
+          for j, (pdate, sess, sign) in enumerate([(s0, s0, +1), (s1, s1, -1)]):
+              for i in range(60):
+                  rows.append({"date": pdate + "F",  # fake pred date != session
+                               "ticker": f"EQ{i:02d}", "score": i / 59.0,
+                               "signal": "LONG", "confidence": 0.6,
+                               "target_session": sess,
+                               "realized_oc": sign * (i - 30) * 0.001,
+                               "matured_on": s1})
+          p = pd.DataFrame(rows)
+          # pred date must sort before today and differ per cohort; use real dates
+          p.loc[p["date"] == s0 + "F", "date"] = s0
+          p.loc[p["date"] == s1 + "F", "date"] = s1
+          Path("data/shadow_intraday").mkdir(parents=True, exist_ok=True)
+          p.to_csv("data/shadow_intraday/predictions.csv", index=False)
+          pd.DataFrame([{"date": s0, "n": 60, "rank_ic": 1.0},
+                        {"date": s1, "n": 60, "rank_ic": -1.0}]
+                       ).to_csv("data/shadow_intraday/rank_ic.csv", index=False)
+          print(f"fixture: cohorts {s0} (IC +1) and {s1} (IC -1), 60 equities each")
+          PYEOF
+          python analyze_shadow_intraday.py | tee /tmp/an.log
+          grep -q "NOT YET decision-grade" /tmp/an.log
+          python - <<'PYEOF'
+          import pandas as pd
+          ls = pd.read_csv("data/shadow_intraday/cross_sectional_ls.csv")
+          p = pd.read_csv("data/shadow_intraday/predictions.csv")
+          assert list(ls.columns) == ["date", "n", "decile", "target_session",
+                                      "long_short", "spy_oc", "beta_roll", "ls_hedged"], ls.columns
+          assert len(ls) == 2 and (ls["n"] == 60).all() and (ls["decile"] == 6).all()
+          # independent recompute of the decile L/S for each date
+          for _, r in ls.iterrows():
+              g = p[p["date"] == r["date"]].sort_values("score", ascending=False)
+              exp = g.head(6)["realized_oc"].mean() - g.tail(6)["realized_oc"].mean()
+              assert abs(r["long_short"] - exp) < 1e-9, (r["date"], r["long_short"], exp)
+          # warm-up rows (n<5 priors) must be unhedged: ls_hedged == long_short
+          assert (ls["ls_hedged"] == ls["long_short"]).all(), "warm-up should be unhedged"
+          assert ls["beta_roll"].isna().all(), "beta_roll must be NaN in warm-up"
+          print(f"P1/P2 PASS: L/S {ls['long_short'].tolist()} verified against fixture")
+          PYEOF
