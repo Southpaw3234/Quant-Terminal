@@ -74,8 +74,14 @@ jobs:
           print(f"snapshot files : {len(files)}  ({files[0].stem} -> {files[-1].stem})")
           hist = pd.concat([pd.read_csv(f) for f in files], ignore_index=True)
           hist["date"] = pd.to_datetime(hist["date"], errors="coerce")
-          feats = [c for c in INTRADAY_FEATURES if c in hist.columns]
-          print(f"feature columns: {len(feats)}/{len(INTRADAY_FEATURES)} available: {feats}")
+          # Mirror model_intraday.py's null-aware selection (>50%-null excluded)
+          feats, dead = [], []
+          for c in INTRADAY_FEATURES:
+              if c in hist.columns:
+                  (dead if hist[c].isna().mean() > 0.5 else feats).append(c)
+          print(f"feature columns: {len(feats)}/{len(INTRADAY_FEATURES)} usable: {feats}")
+          if dead:
+              print(f"excluded (>50% null, matches the model's exclusion): {dead}")
 
           print("\nper-column null rate (a ~100% column blocks ALL training forever):")
           for c in feats:
