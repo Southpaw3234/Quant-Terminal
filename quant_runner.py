@@ -1225,7 +1225,15 @@ if _os6t.environ.get("RUN_TYPE", "morning") == "morning":
                              if c in _fd6t.columns), None)
             _rsi_col = next((c for c in ["rsi","RSI","rsi_14","rsi14"]
                              if c in _fd6t.columns), None)
-            _vol_col = next((c for c in ["vol_ratio","volume_ratio","vol_zscore"]
+            # rvol_21/rvol_10 appended 2026-07-10: the original three names never
+            # existed in the daily featured frame (real volume features are
+            # rvol_10/rvol_21/obv), so attn_vol20 was 100% NaN since inception
+            # while the Tier2 counter reported success — see HANDOFF ledger ⑧.
+            # rvol_21 (volume vs 21d mean) is the closest match to the 20-day
+            # attention window. DATED MODEL CHANGE: attn_vol20 carries real
+            # values in FEATURE_COLS from the first morning run after this.
+            _vol_col = next((c for c in ["vol_ratio","volume_ratio","vol_zscore",
+                                         "rvol_21","rvol_10"]
                              if c in _fd6t.columns), None)
             if _ret_col is None:
                 continue
