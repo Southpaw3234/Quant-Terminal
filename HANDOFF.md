@@ -1,5 +1,5 @@
 # Quant Terminal v25 — Session Handoff
-**Date:** 2026-07-10 pre-dawn (the 7/9→7/10 overnight session — **🔴 CRITICAL FIND + FIX: the intraday feature pipeline wrote 100% NULLS for all 42 snapshots (tz-aware 15m index, ledger ⑧) — Frame 2 was NEVER trainable; tz FIX `c1bf94e` (⚠️ dated MODEL CHANGE 7/10: 5 real columns enter the live v25.1 feature set) + 86% BACKFILL `f8cd41a` → 305/307 tickers eligible, Frame-2 clock starts on the 7/10 MORNING RUN, decision-grade ~Aug 21 (4 wks early). Also this session: gross cap ✅ VERIFIED LIVE (2.36×→1.00×, blocked 9/9; 2nd trim → ~0.93× queued for the 7/10 open); marker-race fix `8c30187` shipped + marker line confirmed live; fill audit shipped + first read (28 phantoms = known incidents; NEW: ledger `qty` column wrong, trust `notional`/broker); Frame-3 P2 scorecard live; Frame-2 shadow harness COMPLETE (P0-P2, 5/5 validation); hedged book −34.6% cum → Frame-1 NO-GO unchanged**)  
+**Date:** 2026-07-10 evening (see the NEW 7/10-daytime ledger first: **Frame-2 first training day — 304 models + Cell-11 blend LIVE, but the shadow clock missed day one on a `score`/`intraday_score` key mismatch, FIXED `167168d`, clock starts Mon 7/13; attn_vol20 FIXED `a1975ef`; AUC jumped to 0.5631 — attribution window covers 3 dated model changes; STILL entry-starved at 0.94× (room $7.5k < $10k/slot), 3rd-trim decision pending**. Overnight session below — **🔴 CRITICAL FIND + FIX: the intraday feature pipeline wrote 100% NULLS for all 42 snapshots (tz-aware 15m index, ledger ⑧) — Frame 2 was NEVER trainable; tz FIX `c1bf94e` (⚠️ dated MODEL CHANGE 7/10: 5 real columns enter the live v25.1 feature set) + 86% BACKFILL `f8cd41a` → 305/307 tickers eligible, Frame-2 clock starts on the 7/10 MORNING RUN, decision-grade ~Aug 21 (4 wks early). Also this session: gross cap ✅ VERIFIED LIVE (2.36×→1.00×, blocked 9/9; 2nd trim → ~0.93× queued for the 7/10 open); marker-race fix `8c30187` shipped + marker line confirmed live; fill audit shipped + first read (28 phantoms = known incidents; NEW: ledger `qty` column wrong, trust `notional`/broker); Frame-3 P2 scorecard live; Frame-2 shadow harness COMPLETE (P0-P2, 5/5 validation); hedged book −34.6% cum → Frame-1 NO-GO unchanged**)  
 **Branch:** `master` (live/cron)  
 **Last commit:** `70c65dd` (master tip — tz fix `c1bf94e` · backfill `f8cd41a` EXECUTED · Frame-2 harness `09b70b3`+`6911853` · Frame-3 scorecard `e82bc75` · marker-race fix `8c30187` · fill audit `7f7dd01` · trainability check `frame2_trainability.yml` · ledgers) — **preflight green through the final tree (`29066309478` incl. patch-string exec on the tz fix); Frame-2 harness validation 5/5 (`29065784215`); backfill dry-run→execute clean (`29066370659`); post-backfill trainability 305/307 (`29066466428`); trim execute 22/22 accepted (`29050244457`)**  
 **Repo:** https://github.com/Southpaw3234/Quant-Terminal
@@ -46,6 +46,46 @@ and the ONE highest-priority action for today. Then wait for direction.
 
 > 📌 Full reasoning for every item lives below: roadmap → §"FUTURE UPGRADES";
 > real-money rules → §"REAL-MONEY DEPLOYMENT GATE"; Monday verification → §"CHECKPOINT".
+
+---
+
+## 🗓️ SESSION LEDGER — 2026-07-10 (daytime): Frame-2 FIRST TRAINING DAY — model+blend live, but the shadow clock missed day one (key mismatch, fixed); attn_vol20 fixed; still entry-starved at 0.94×
+
+**THE HEADLINE: the 7/10 morning run trained the intraday model for the first time (304/306)
+and Cell 11's 15% blend went live — but the shadow harness logged NOTHING: it read `score`
+while the producer writes `intraday_score`. Fixed same day (`167168d`) with the validation
+fixture corrected to the real schema (the old fixture's `score` is why 5/5 validation passed
+while the first live integration failed). Clock starts Mon 7/13; decision-grade ~Aug 24.**
+
+**① 7/10 morning run (`29096595277`) — first-day verdicts:**
+| Check | Verdict |
+|---|---|
+| tz fix live (snapshot non-null) | ✅ `2026-07-10.csv` carries real values (AAPL intraday_mom +0.0282 …) |
+| Frame-2 trained + signals saved | ✅ `304 models trained, 3 skipped`; `intraday_signals.json` committed; null-aware exclusion printed `['attn_vol20','patent_velocity']` |
+| Cell-11 blend | ✅ LIVE — blend reads `intraday_score` (<6h old, 15% weight). **v25.1's composite signal now includes Frame 2** (2nd model change of 7/10) |
+| Shadow harness logged day one | ❌ **0 logged — key mismatch** (`score` vs `intraday_score`); misleading "stale file" print masked it. FIXED `167168d` + fixture now uses the real key; validation 5/5 (`29116923464`) |
+| Walk-forward | **AUC 0.5631 / IC 0.1101 / last 0.5145 + "DRIFT DETECTED"** — jumped from 0.5516/0.0834. ⚠️ ATTRIBUTE TO THE TZ FIX (5 new live features), not to alpha appearing |
+| Gross cap | ✅ holding — equity $116,082, gross $108,554 = **0.94×**, room $7,529… **= 0 BUY slots** (per-position ~$10k > room) → **14/14 BUYs pre-blocked, STILL entry-starved**. The 0.87-target trim landed 0.94 (rounding overshoot again). Decision pending: 3rd small trim vs wait for exits |
+| Marker line | ✅ `Morning marker: origin/master='2026-07-09' …` printed and gated correctly |
+| Frame-3 β first read | ⚠️ **−0.93 (corr −0.77, n=5) → gate FAIL** — but n=5 spans, one bad day dominates; sanity read only, not decision-grade |
+| rank-IC (Frame 1) | full −0.0303 / trailing −0.0067; raw-book β +0.22 (n=41) — NO-GO unchanged |
+
+**② attn_vol20 FIXED (`a1975ef`, 3rd dated model change of 7/10):** added `rvol_21`/`rvol_10`
+to the Tier-2 attention volume-column candidates (the original three names never existed;
+diagnosis in the 7/9 ledger ⑧ follow-up). Self-heals in `featured` on the next morning run
+(Mon 7/13) — attn_vol20 then carries real values in FEATURE_COLS. patent_velocity SHELVED
+per the same diagnosis (dead API + placebo 1.0 cache + coverage + ordering).
+
+**⚠️ AUC attribution window now covers THREE dated 7/10 model changes:** tz fix `c1bf94e`
+(live 7/10) + blend going live (7/10) + attn_vol20 `a1975ef` (live 7/13). Reference remains
+7/9's 0.5516/0.0834. Do not read any AUC/IC move this week as organic.
+
+**Open / next:**
+- [ ] **VERIFY Mon 7/13 morning run:** harness logs first predictions (`logged N signals`),
+  `attn_vol20` non-null in the 7/13 snapshot, AUC noted under the attribution window.
+- [ ] **Entry starvation decision:** room $7.5k < $10k/slot → zero entries since 7/8. Either
+  a 3rd micro-trim (~$5-8k of SELLs) or accept exit-only until positions close naturally.
+- [ ] **Frame-2 decision-grade slips 1 trading day** (clock 7/13 → ~Aug 24).
 
 ---
 
