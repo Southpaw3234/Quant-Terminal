@@ -1,17 +1,4 @@
 {
-  "NVDA/AMD": {
-    "y": "NVDA",
-    "x": "AMD",
-    "side": 1,
-    "entry_date": "2026-06-30",
-    "entry_z": -2.932,
-    "half_life": 5.34,
-    "hedge_ratio": 0.840612,
-    "last_y": 209.07000732421875,
-    "last_x": 551.1199951171875,
-    "days_held": 5,
-    "cum_pnl": 424.59335866890325
-  },
   "PFE/GILD": {
     "y": "PFE",
     "x": "GILD",
@@ -20,10 +7,10 @@
     "entry_z": -2.2122,
     "half_life": 5.33,
     "hedge_ratio": 0.654713,
-    "last_y": 24.200000762939453,
-    "last_x": 130.44000244140625,
-    "days_held": 4,
-    "cum_pnl": 78.21402939375392
+    "last_y": 24.170000076293945,
+    "last_x": 129.8300018310547,
+    "days_held": 5,
+    "cum_pnl": 112.58189382318488
   },
   "AAPL/META": {
     "y": "AAPL",
@@ -33,9 +20,9 @@
     "entry_z": 2.5145,
     "half_life": 14.59,
     "hedge_ratio": 0.889169,
-    "last_y": 313.25,
-    "last_x": 670.0,
-    "days_held": 0,
-    "cum_pnl": 0.0
+    "last_y": 315.32000732421875,
+    "last_x": 669.2100219726562,
+    "days_held": 1,
+    "cum_pnl": -77.87235526876213
   }
 }
