@@ -81,15 +81,22 @@ jobs:
           MIN=$(date -u +%M)
           DAY=$(date -u +%u)   # 1=Mon ... 6=Sat
 
+          # Weekend ticks resolve FIRST (2026-07-11 incident): the Saturday
+          # scoring cron (14:00 UTC) fell through to the hour checks below and
+          # ran as a FULL morning retrain + live BUY whenever GitHub's delay
+          # left it inside the 14:xx hour. The two prior Saturdays only passed
+          # because the tick slipped past 15:00. Day-of-week must outrank hour.
           if [ -n "$MANUAL" ]; then
             TYPE="$MANUAL"
+          elif [ "$DAY" = "6" ] || [ "$DAY" = "7" ]; then
+            TYPE="evening"
           elif [ "$HOUR" = "13" ] || [ "$HOUR" = "14" ]; then
             TYPE="morning"
           elif [ "$HOUR" = "16" ] || [ "$HOUR" = "17" ] || [ "$HOUR" = "18" ]; then
             TYPE="intraday"
           elif [ "$HOUR" = "19" ]; then
             TYPE="intraday"
-          elif [ "$HOUR" = "21" ] || [ "$DAY" = "6" ]; then
+          elif [ "$HOUR" = "21" ]; then
             TYPE="evening"
           else
             TYPE="morning"
