@@ -1,9 +1,9 @@
 {
   "high_rsi_bear": {
     "dampen": 0.11,
-    "count": 80,
-    "accuracy": 0.39,
-    "description": "BUY with RSI>68 in Bear regime \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 39% accurate (80 samples)",
+    "count": 81,
+    "accuracy": 0.386,
+    "description": "BUY with RSI>68 in Bear regime \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 39% accurate (81 samples)",
     "created_date": "2026-07-13",
     "created_regime": 1
   },
@@ -40,10 +40,10 @@
     "created_regime": 1
   },
   "ticker_SYK": {
-    "dampen": 0.16,
-    "count": 15,
-    "accuracy": 0.294,
-    "description": "SYK systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 29% accurate (15 samples)",
+    "dampen": 0.12,
+    "count": 16,
+    "accuracy": 0.333,
+    "description": "SYK systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 33% accurate (16 samples)",
     "created_date": "2026-07-13",
     "created_regime": 1
   },
@@ -112,10 +112,10 @@
     "created_regime": 1
   },
   "ticker_CAT": {
-    "dampen": 0.16,
-    "count": 12,
-    "accuracy": 0.286,
-    "description": "CAT systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 29% accurate (12 samples)",
+    "dampen": 0.18,
+    "count": 13,
+    "accuracy": 0.267,
+    "description": "CAT systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 27% accurate (13 samples)",
     "created_date": "2026-07-13",
     "created_regime": 1
   },
@@ -161,9 +161,9 @@
   },
   "ticker_ALL": {
     "dampen": 0.2,
-    "count": 9,
-    "accuracy": 0.182,
-    "description": "ALL systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 18% accurate (9 samples)",
+    "count": 10,
+    "accuracy": 0.25,
+    "description": "ALL systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 25% accurate (10 samples)",
     "created_date": "2026-07-13",
     "created_regime": 1
   },
@@ -297,9 +297,9 @@
   },
   "ticker_AES": {
     "dampen": 0.2,
-    "count": 21,
-    "accuracy": 0.043,
-    "description": "AES systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 4% accurate (21 samples)",
+    "count": 22,
+    "accuracy": 0.042,
+    "description": "AES systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 4% accurate (22 samples)",
     "created_date": "2026-07-13",
     "created_regime": 1
   },
@@ -352,10 +352,10 @@
     "created_regime": 1
   },
   "ticker_SOXX": {
-    "dampen": 0.11,
-    "count": 39,
-    "accuracy": 0.341,
-    "description": "SOXX systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 34% accurate (39 samples)",
+    "dampen": 0.12,
+    "count": 40,
+    "accuracy": 0.333,
+    "description": "SOXX systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 33% accurate (40 samples)",
     "created_date": "2026-07-13",
     "created_regime": 1
   },
@@ -372,9 +372,9 @@
   "_regime_bull": {
     "high_rsi_bear": {
       "dampen": 0.11,
-      "count": 80,
-      "accuracy": 0.39,
-      "description": "BUY with RSI>68 in Bear regime \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 39% accurate (80 samples)",
+      "count": 81,
+      "accuracy": 0.386,
+      "description": "BUY with RSI>68 in Bear regime \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 39% accurate (81 samples)",
       "created_date": "2026-07-13",
       "created_regime": 1
     },
