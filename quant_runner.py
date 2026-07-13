@@ -5039,6 +5039,26 @@ _SRC_REPLACE = [
      '        _ks_sc = _ks_sc[~_ks_sc["ticker"].astype(str).isin(\n'
      '            {"BTC-USD", "ETH-USD", "SOL-USD", "XRP-USD", "DOGE-USD", "BNB-USD"})]\n'
      '        scored = _ks_sc.tail(KILL_CONSECUTIVE_LOSSES)'),
+    # Stale featured-row fix (2026-07-13, dated MODEL CHANGE — 5th in the
+    # attribution window): build_features ended with a blanket dropna AFTER the
+    # magnitude-threshold label set target=NaN on mid-quantile rows AND on the
+    # last FORECAST_DAYS rows (fwd_ret unknown), deleting every recent row.
+    # generate_signal's iloc[-1] "current" row was therefore the most recent
+    # EXTREME-move day — 5-10+ sessions stale, a different date per ticker.
+    # Proven by exact price matches: 7/13 TDG BUY @ 1348.49 = TDG close 7/02;
+    # 7/11 GE BUY @ 377.05 = GE adj close 7/02; both 7/08 GE BUYs @ 356.0262 =
+    # GE adj close 6/23. Every live signal, kelly/conformal size, gross-cap
+    # notional, ledger price and price_at_pred came off that stale row since
+    # v25.1 (ec9d19a, 5/17). Fix: drop only rows missing FEATURES (warmup);
+    # keep recent rows whose target is NaN. Training is unchanged — every
+    # training path already does its own dropna(subset=["target"]).
+    ("d[feat_cols]=d[feat_cols].shift(1)\n    d.dropna(inplace=True)",
+     "d[feat_cols]=d[feat_cols].shift(1)\n    d.dropna(subset=feat_cols, inplace=True)"),
+    # Companion: stamp each signal with the bar date it was computed from so
+    # execute_trade can refuse BUYs priced off a stale bar (backstop in case a
+    # ticker's raw download is stale even after the dropna fix above).
+    ("close=round(close,4),",
+     "close=round(close,4),\n        bar_date=str(df_feat.index[-1].date()) if hasattr(df_feat.index[-1], 'date') else str(df_feat.index[-1]),"),
     # Gross-cap hard gate (2026-07-08), 3 anchors into Cell 13 — see the
     # CELL_13_PREPATCH gross-cap block for the full rationale. The old cash
     # guard mutated signals[tk]["confidence"], which nothing in the execution
@@ -5068,6 +5088,15 @@ _SRC_REPLACE = [
      '        return {"status":"skip","reason":"HOLD or qty=0"}',
      '    if action not in ("BUY","SELL") or qty <= 0:\n'
      '        return {"status":"skip","reason":"HOLD or qty=0"}\n'
+     '    if action == "BUY" and sig.get("bar_date"):\n'
+     '        try:\n'
+     '            _bar_d = str(sig["bar_date"])\n'
+     '            _bar_age = (datetime.date.today() - datetime.date.fromisoformat(_bar_d)).days\n'
+     '            if _bar_age > 5:\n'
+     '                print(f"    [stale-bar] {ticker}: BUY refused - signal bar {_bar_d} is {_bar_age}d old")\n'
+     '                return {"status":"skip","reason":"stale_bar"}\n'
+     '        except Exception:\n'
+     '            pass\n'
      '    if action == "BUY" and "_CONFORMAL_KELLY_MAP" in globals():\n'
      '        _ck_d = float(_CONFORMAL_KELLY_MAP.get(ticker, 1.0))\n'
      '        if _ck_d < 1.0 and qty > 1:\n'
@@ -5081,7 +5110,7 @@ _SRC_REPLACE = [
     #     trade or count toward trade_count (the 7/7-style "filled" phantoms).
     ('        result = execute_trade(sig, qty, equity)\n',
      '        result = execute_trade(sig, qty, equity)\n'
-     '        if isinstance(result, dict) and result.get("reason") == "gross_cap":\n'
+     '        if isinstance(result, dict) and result.get("reason") in ("gross_cap", "stale_bar"):\n'
      '            continue\n'),
 ]
 
