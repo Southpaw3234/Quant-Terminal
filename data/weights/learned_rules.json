@@ -56,10 +56,10 @@
     "created_regime": 1
   },
   "ticker_TGT": {
-    "dampen": 0.15,
-    "count": 8,
-    "accuracy": 0.3,
-    "description": "TGT systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 30% accurate (8 samples)",
+    "dampen": 0.18,
+    "count": 9,
+    "accuracy": 0.273,
+    "description": "TGT systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 27% accurate (9 samples)",
     "created_date": "2026-07-13",
     "created_regime": 1
   },
@@ -160,10 +160,10 @@
     "created_regime": 1
   },
   "ticker_ALL": {
-    "dampen": 0.2,
-    "count": 10,
-    "accuracy": 0.25,
-    "description": "ALL systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 25% accurate (10 samples)",
+    "dampen": 0.14,
+    "count": 11,
+    "accuracy": 0.308,
+    "description": "ALL systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 31% accurate (11 samples)",
     "created_date": "2026-07-13",
     "created_regime": 1
   },
@@ -297,9 +297,9 @@
   },
   "ticker_AES": {
     "dampen": 0.2,
-    "count": 22,
-    "accuracy": 0.042,
-    "description": "AES systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 4% accurate (22 samples)",
+    "count": 23,
+    "accuracy": 0.04,
+    "description": "AES systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 4% accurate (23 samples)",
     "created_date": "2026-07-13",
     "created_regime": 1
   },
@@ -353,18 +353,18 @@
   },
   "ticker_SOXX": {
     "dampen": 0.12,
-    "count": 40,
-    "accuracy": 0.333,
-    "description": "SOXX systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 33% accurate (40 samples)",
+    "count": 41,
+    "accuracy": 0.326,
+    "description": "SOXX systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 33% accurate (41 samples)",
     "created_date": "2026-07-13",
     "created_regime": 1
   },
   "_boosts": {
     "low_rsi_bull": {
       "boost": 0.15,
-      "count": 16,
-      "accuracy": 0.833,
-      "description": "BUY with RSI<35 in Bull regime \u00e2\u20ac\u201d 83% accurate (16 samples)"
+      "count": 17,
+      "accuracy": 0.842,
+      "description": "BUY with RSI<35 in Bull regime \u00e2\u20ac\u201d 84% accurate (17 samples)"
     },
     "created_date": "2026-07-13",
     "created_regime": 1
