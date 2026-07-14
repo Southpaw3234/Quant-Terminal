@@ -39,11 +39,21 @@ Safe to run anywhere with pandas + yfinance. Exits 0 even on partial data.
 """
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+
+# Stage-1 window start. Predictions BEFORE this date were produced by the
+# stale-featured-row era (fix 5e96366, 5th dated model change): every signal's
+# features were 5-10 sessions old per ticker, so the pre-fix rank-IC / L/S
+# series measured a different (lagged) strategy. User decision 2026-07-14:
+# restart the Stage-1 window at the fix rather than blend regimes. The full
+# pre-fix series remains recomputable with QT_STAGE1_START=2026-05-12, and its
+# final read is frozen in data/shadow/stale_era_final/.
+STAGE1_START = os.environ.get("QT_STAGE1_START", "2026-07-14")
 
 PRED_CSV = Path("data/predictions/predictions.csv")
 OUT_CSV = Path("data/shadow/rank_ic.csv")
@@ -125,7 +135,15 @@ def _fwd_ret(prices: dict[str, pd.Series], tk: str, entry_iso: str, h: int):
 
 def main() -> None:
     df_all = _load_predictions()
+    n_stale_days = df_all.loc[df_all["date"] < STAGE1_START, "date"].nunique()
+    if n_stale_days:
+        print(f"[rank-ic] Stage-1 window restart: excluding {n_stale_days} pred-days "
+              f"before {STAGE1_START} (stale-feature era, fix 5e96366)")
+    df_all = df_all[df_all["date"] >= STAGE1_START]
     df = df_all[df_all["ticker"].map(_is_equity)].copy()
+    if df.empty:
+        print(f"[rank-ic] no predictions on/after {STAGE1_START} yet — nothing to do.")
+        sys.exit(0)
     n_excl = df_all["ticker"].nunique() - df["ticker"].nunique()
     tickers = sorted(df["ticker"].unique().tolist())
     first_date = df["date"].min()
