@@ -143,6 +143,19 @@ def main():
         for d in sorted(per_day):
             n, tot = per_day[d]
             print(f"  {d}  {n:>3} fills  ${tot:>10,.0f}")
+        # Per-order detail for the most recent active days — attribution
+        # (which tool/code path submitted what) is the point of this check.
+        recent = sorted(per_day)[-3:]
+        print(f"  --- unrecorded order detail ({', '.join(recent)}) ---")
+        for o in sorted(unrecorded,
+                        key=lambda x: (x.get("filled_at") or x["submitted_at"])):
+            d = (o.get("filled_at") or o["submitted_at"])[:10]
+            if d not in recent:
+                continue
+            px = float(o.get("filled_avg_price") or 0)
+            fq = float(o.get("filled_qty") or 0)
+            print(f"  {d}  {o['side']:<4} {o['symbol']:<6} x{fq:>7g} @ {px:>9,.2f} "
+                  f"${px * fq:>9,.0f}  submitted {o['submitted_at'][11:19]}Z")
 
     n_ok = (audit["class"] == "OK").sum()
     print(f"\nVERDICT: {n_ok}/{len(audit)} ledger rows are broker-confirmed fills; "
