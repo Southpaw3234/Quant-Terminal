@@ -132,6 +132,27 @@ rows old — from 7/15 its AUC/IC reads include attn_vol20; attribute shifts to 
 not alpha. Verify on the 7/15 log: `10/11` + `Revived` lines, tickers-trained count ~304
 (unchanged), and the trainability dispatch shows attn_vol20 revived.**
 
+**7/15 morning-run verify (task `qt-wed-0715-verify`, run `29419801641`, 13:35Z-15:57Z,
+2h22m): (a)-(d) ALL PASS.** (a) walkforward log line reads exactly
+`panel=all-days-v2 (baseline 7/14: 0.4973/-0.0130)` (mean OOS AUC=0.4990, mean IC=-0.0093,
+12 folds — in-band vs the 7/14 day-zero reference); `walkforward.json` carries
+`"panel": "all-days-v2 (since 2026-07-14, post-5e96366)"` + the `baseline` block. (b) log
+prints `[rank-ic] Stage-1 window restart: excluding 50 pred-days before 2026-07-14
+(stale-feature era, fix 5e96366)` then `no matured days with enough names yet. Exiting 0`
+— clean, no non-fatal error (expected empty clock until ~7/21-22, not a stall). (c)
+`Feature columns available: 10 / 11`, `patent_velocity` excluded, `Revived (...):
+['attn_vol20']` all printed; `Training complete: 304 models trained, 4 skipped` (in-band,
+no collapse) — OOS AUC mean=0.473 is a model-change-window artifact (attribute to
+`0e0ef56`, not alpha). (d) exactly one retrain — all 4 later scheduled runs (15:27Z,
+16:11Z, 17:15Z scored `Run type: intraday`; two 15:0xZ runs were cancelled by the
+concurrency group, healthy); `Morning marker:` line present; `[patch] Gross cap:` read
+0.99x, pre-blocked 11/11 BUY signals (0 slots, so no live entries to spot-check against
+Yahoo); zero `[stale-bar]` refusals; kill switch logged quiet (`daily_dd=-1.10%
+weekly_dd=-4.24% peak_dd=-4.39%`, no halt); `MORNING cycle complete -- 2026-07-15 15:45
+UTC` printed. **No regressions found. Highest-priority open item unchanged: Frame-1 clock
+stays empty through ~7/21 (expected) and Frame-2's post-7/15 AUC/IC reads must be
+attributed to the attn_vol20 model change, not treated as alpha signal.**
+
 ---
 
 ## 🗓️ SESSION LEDGER — 2026-07-13 (Monday): (a)-(g) ALL PASS; TDG's impossible entry price root-caused to a v25.1-era STALE-SIGNAL bug — every live signal since 5/17 used 5-10 session old features — FIXED `5e96366`
