@@ -9,12 +9,16 @@ held ~$342k gross long on ~$117.9k equity (cash -$224k, buying power ~$1.1k),
 so the model's own intended entries were being rejected and the drawdown kill
 switch was reading ~3x-beta equity swings.
 
-This tool pro-rata sells LONG US-EQUITY positions until projected gross
-exposure ~= equity * TARGET_RATIO (default 1.0), netting out SELL orders the
-model itself already has queued. Guardrails: crypto sleeve untouched, shorts
-untouched, never submits a BUY, never sells more than held-minus-queued.
+This tool pro-rata sells LONG positions in ONE sleeve (TRIM_SLEEVE=equity
+default: US equities, crypto untouched; TRIM_SLEEVE=crypto: crypto only,
+equities untouched — added 7/15 when the crypto sleeve at ~0.71x equity became
+the cap consumer, see HANDOFF 7/15) until projected gross exposure ~= equity *
+TARGET_RATIO (default 1.0), netting out SELL orders the model itself already
+has queued. Guardrails: the other sleeve untouched, shorts untouched, never
+submits a BUY, never sells more than held-minus-queued.
 TRIM_MODE=dry-run (default) prints the full plan and submits NOTHING;
-TRIM_MODE=execute submits market DAY sells (fill at next open).
+TRIM_MODE=execute submits market sells (equity: DAY, fills at next open if the
+market is closed; crypto: GTC fractional, fills ~immediately 24/7).
 
 Run via the "Position Trim (one-off remediation)" workflow_dispatch.
 """
@@ -36,6 +40,7 @@ KEY = _clean(os.environ["ALPACA_API_KEY"])
 SEC = _clean(os.environ["ALPACA_SECRET_KEY"])
 MODE = os.environ.get("TRIM_MODE", "dry-run").strip().lower()
 TARGET_RATIO = float(os.environ.get("TRIM_TARGET_RATIO", "1.0"))
+SLEEVE = os.environ.get("TRIM_SLEEVE", "equity").strip().lower()
 
 
 def api(path, method="GET", body=None):
@@ -56,10 +61,14 @@ def api(path, method="GET", body=None):
 
 
 def main():
-    print(f"MODE={MODE}  TARGET_RATIO={TARGET_RATIO}  BASE={BASE}")
+    print(f"MODE={MODE}  TARGET_RATIO={TARGET_RATIO}  SLEEVE={SLEEVE}  BASE={BASE}")
     if MODE not in ("dry-run", "execute"):
         print(f"Unknown TRIM_MODE '{MODE}' — refusing.")
         return 1
+    if SLEEVE not in ("equity", "crypto"):
+        print(f"Unknown TRIM_SLEEVE '{SLEEVE}' — refusing.")
+        return 1
+    sleeve_class = "us_equity" if SLEEVE == "equity" else "crypto"
 
     acct = api("/v2/account")
     equity = float(acct["equity"])
@@ -69,13 +78,13 @@ def main():
 
     positions = api("/v2/positions")
     longs_eq = [p for p in positions
-                if p["side"] == "long" and p.get("asset_class") == "us_equity"]
+                if p["side"] == "long" and p.get("asset_class") == sleeve_class]
     other = [p for p in positions if p not in longs_eq]
     gross_eq = sum(float(p["market_value"]) for p in longs_eq)
     gross_other = sum(abs(float(p["market_value"])) for p in other)
     gross = gross_eq + gross_other
-    print(f"Positions: {len(longs_eq)} long equities (${gross_eq:,.0f}) + "
-          f"{len(other)} crypto/other (${gross_other:,.0f} — untouched)  "
+    print(f"Positions: {len(longs_eq)} long {SLEEVE} (${gross_eq:,.0f}) + "
+          f"{len(other)} other (${gross_other:,.0f} — untouched)  "
           f"gross=${gross:,.0f} = {gross / equity:.2f}x equity")
 
     # SELL orders the model already queued — they de-lever at the open too.
@@ -103,25 +112,35 @@ def main():
     f = min(1.0, to_sell / sellable_mv)
     print(f"Pro-rata factor on sellable equity book (${sellable_mv:,.0f}): {f:.3f}")
 
-    print(f"\n  {'sym':6s} {'held':>8s} {'queued':>7s} {'price':>9s} "
-          f"{'sell':>6s} {'sell $':>10s} {'P&L':>10s}")
+    print(f"\n  {'sym':10s} {'held':>12s} {'queued':>7s} {'price':>12s} "
+          f"{'sell':>12s} {'sell $':>10s} {'P&L':>10s}")
     plan, plan_mv = [], 0.0
     for p in sorted(longs_eq, key=lambda x: -float(x["market_value"])):
         sym = p["symbol"]
         held = float(p["qty"])
         q = queued.get(sym, 0)
         avail = max(0.0, held - q)
-        sell = math.floor(avail * f)
-        if sell < 1:
-            continue
+        if SLEEVE == "crypto":
+            # Fractional, floored to 6dp; skip dust (<$1 sells are rejected).
+            sell = math.floor(avail * f * 1e6) / 1e6
+            if sell <= 0 or sell * prices[sym] < 1.0:
+                continue
+            qty_s = f"{sell:.6f}".rstrip("0").rstrip(".")
+        else:
+            sell = math.floor(avail * f)
+            if sell < 1:
+                continue
+            qty_s = str(int(sell))
         mv = sell * prices[sym]
         upl_frac = float(p["unrealized_plpc"])
-        print(f"  {sym:6s} {held:8.0f} {q:7.0f} {prices[sym]:9.2f} "
-              f"{sell:6d} {mv:10,.0f} {mv * upl_frac / (1 + upl_frac):+10,.0f}")
-        plan.append((sym, sell))
+        print(f"  {sym:10s} {held:12,.4f} {q:7.0f} {prices[sym]:12,.2f} "
+              f"{qty_s:>12s} {mv:10,.0f} {mv * upl_frac / (1 + upl_frac):+10,.0f}")
+        plan.append((sym, qty_s))
         plan_mv += mv
 
-    print(f"\n── Plan: {len(plan)} market SELLs (DAY, fill at next open), "
+    tif = "gtc" if SLEEVE == "crypto" else "day"
+    when = "fill ~immediately, 24/7" if SLEEVE == "crypto" else "fill at next open"
+    print(f"\n── Plan: {len(plan)} market SELLs ({tif.upper()}, {when}), "
           f"~${plan_mv:,.0f} ──")
     print(f"Projected after queued + plan: gross ~${gross - queued_mv - plan_mv:,.0f} "
           f"({(gross - queued_mv - plan_mv) / equity:.2f}x equity), "
@@ -135,7 +154,7 @@ def main():
     for sym, qty in plan:
         r = api("/v2/orders", method="POST", body={
             "symbol": sym, "qty": str(qty), "side": "sell",
-            "type": "market", "time_in_force": "day",
+            "type": "market", "time_in_force": tif,
         })
         print(f"  SELL {sym} x{qty} submitted (id {r['id'][:8]}…)")
     print(f"Done — {len(plan)} sells queued. Verify account after next open.")
