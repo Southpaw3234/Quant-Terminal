@@ -115,17 +115,39 @@ INTRADAY_FEATURES = [
     "xs_mom_5d", "insider_net_buy", "patent_velocity",
 ]
 # Only use columns that actually exist in the history AND carry data.
-# A dead column (e.g. attn_vol20 / patent_velocity, 100% null as of 7/10)
-# would otherwise silently zero out every ticker via the all-columns dropna
-# in the training loop — the failure mode that hid the tz bug for 42 snapshots.
-FEATURE_COLS, _dead_cols = [], []
+# A dead column (e.g. patent_velocity, 100% null) would otherwise silently
+# zero out every ticker via the strict dropna in the training loop — the
+# failure mode that hid the tz bug for 42 snapshots.
+#
+# RECENCY-WINDOWED aliveness (2026-07-14): judged on the last NULLCHECK_DAYS
+# snapshot dates, not full history — a column revived upstream (attn_vol20,
+# real again since tz/attn fix a1975ef on 7/10) would otherwise stay excluded
+# until its 42-day dead era ages out of the >50% full-history ratio (~late
+# Aug). A REVIVED column (alive recently, still >50% null over full history)
+# joins FEATURE_COLS but stays OUT of the strict dropna subset: its historical
+# NaNs are median-imputed below, so it cannot collapse per-ticker row counts
+# under MIN_ROWS and wipe out training.
+NULLCHECK_DAYS = 5
+_recent_dates = sorted(history["date"].dropna().unique())[-NULLCHECK_DAYS:]
+_recent = history[history["date"].isin(_recent_dates)]
+FEATURE_COLS, _dead_cols, _revived_cols = [], [], []
 for _c in INTRADAY_FEATURES:
     if _c not in history.columns:
         continue
-    (_dead_cols if history[_c].isna().mean() > 0.5 else FEATURE_COLS).append(_c)
+    if _recent[_c].isna().mean() > 0.5:
+        _dead_cols.append(_c)
+        continue
+    FEATURE_COLS.append(_c)
+    if history[_c].isna().mean() > 0.5:
+        _revived_cols.append(_c)
+_STRICT_COLS = [c for c in FEATURE_COLS if c not in _revived_cols]
 print(f"  Feature columns available: {len(FEATURE_COLS)} / {len(INTRADAY_FEATURES)}")
 if _dead_cols:
-    print(f"  Excluded as >50% null (broken upstream, must not block training): {_dead_cols}")
+    print(f"  Excluded as >50% null over last {NULLCHECK_DAYS} snapshot days "
+          f"(broken upstream, must not block training): {_dead_cols}")
+if _revived_cols:
+    print(f"  Revived (alive last {NULLCHECK_DAYS} days, >50% null over full history; "
+          f"historical NaNs median-imputed): {_revived_cols}")
 if len(FEATURE_COLS) < 3:
     print("  Too few features to train. Exiting.")
     sys.exit(0)
@@ -211,7 +233,7 @@ if RUN_TYPE == "morning":
     for tk in tickers:
         try:
             _df = (history[history["ticker"] == tk]
-                   .dropna(subset=FEATURE_COLS + ["label"])
+                   .dropna(subset=_STRICT_COLS + ["label"])
                    .sort_values("date")
                    .reset_index(drop=True))
 

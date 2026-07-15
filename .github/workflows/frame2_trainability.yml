@@ -74,23 +74,41 @@ jobs:
           print(f"snapshot files : {len(files)}  ({files[0].stem} -> {files[-1].stem})")
           hist = pd.concat([pd.read_csv(f) for f in files], ignore_index=True)
           hist["date"] = pd.to_datetime(hist["date"], errors="coerce")
-          # Mirror model_intraday.py's null-aware selection (>50%-null excluded)
-          feats, dead = [], []
+          # Mirror model_intraday.py's null-aware selection (recency-windowed
+          # since 2026-07-14: aliveness over the last NULLCHECK_DAYS snapshot
+          # dates; REVIVED columns join FEATURE_COLS but stay out of the strict
+          # dropna — their historical NaNs are median-imputed by the trainer)
+          NULLCHECK_DAYS = 5
+          recent_dates = sorted(hist["date"].dropna().unique())[-NULLCHECK_DAYS:]
+          recent = hist[hist["date"].isin(recent_dates)]
+          feats, dead, revived = [], [], []
           for c in INTRADAY_FEATURES:
-              if c in hist.columns:
-                  (dead if hist[c].isna().mean() > 0.5 else feats).append(c)
+              if c not in hist.columns:
+                  continue
+              if recent[c].isna().mean() > 0.5:
+                  dead.append(c)
+                  continue
+              feats.append(c)
+              if hist[c].isna().mean() > 0.5:
+                  revived.append(c)
+          strict = [c for c in feats if c not in revived]
           print(f"feature columns: {len(feats)}/{len(INTRADAY_FEATURES)} usable: {feats}")
           if dead:
-              print(f"excluded (>50% null, matches the model's exclusion): {dead}")
+              print(f"excluded (>50% null over last {NULLCHECK_DAYS} snapshot days, "
+                    f"matches the model's exclusion): {dead}")
+          if revived:
+              print(f"revived (alive last {NULLCHECK_DAYS} days, >50% null full-history, "
+                    f"median-imputed by the trainer): {revived}")
 
-          print("\nper-column null rate (a ~100% column blocks ALL training forever):")
+          print("\nper-column null rate (full history / last {} days):".format(NULLCHECK_DAYS))
           for c in feats:
-              nn = hist[c].isna().mean()
-              print(f"  {c:<16} {nn:6.1%} null" + ("   <-- BLOCKER" if nn > 0.9 else ""))
+              nn, nr = hist[c].isna().mean(), recent[c].isna().mean()
+              print(f"  {c:<16} {nn:6.1%} / {nr:6.1%} null"
+                    + ("   <-- BLOCKER" if nr > 0.9 else ""))
 
-          # per-ticker usable-row counts (all features non-null; the label is
+          # per-ticker usable-row counts (strict features non-null; the label is
           # never NaN by construction so it can't reduce the count)
-          usable = (hist.dropna(subset=feats)
+          usable = (hist.dropna(subset=strict)
                         .groupby("ticker").size().sort_values(ascending=False))
           eligible = usable[usable >= MIN_ROWS]
           print(f"\ntickers with history : {hist['ticker'].nunique()}")
