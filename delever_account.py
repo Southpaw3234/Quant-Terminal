@@ -94,6 +94,18 @@ def main():
         comp[k][1] += abs(float(p["market_value"]))
     print("  composition: " + "  ".join(
         f"{k}: {n} pos ${mv:,.0f}" for k, (n, mv) in sorted(comp.items())))
+    shorts = [p for p in positions if p["side"] == "short"]
+    if shorts:
+        print(f"  ⚠️ SHORT positions ({len(shorts)} — the model is long-only; "
+              f"these are likely overlapping-SELL residue):")
+        print(f"    {'sym':6s} {'qty':>8s} {'basis':>10s} {'price':>10s} "
+              f"{'|mv|':>10s} {'uP&L':>10s}")
+        for p in sorted(shorts, key=lambda x: -abs(float(x["market_value"]))):
+            print(f"    {p['symbol']:6s} {float(p['qty']):8.0f} "
+                  f"{float(p['avg_entry_price']):10,.2f} "
+                  f"{float(p['current_price']):10,.2f} "
+                  f"{abs(float(p['market_value'])):10,.0f} "
+                  f"{float(p['unrealized_pl']):+10,.0f}")
 
     # SELL orders the model already queued — they de-lever at the open too.
     queued = {}
