@@ -48,10 +48,10 @@
     "created_regime": 1
   },
   "ticker_INTC": {
-    "dampen": 0.12,
-    "count": 28,
-    "accuracy": 0.333,
-    "description": "INTC systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 33% accurate (28 samples)",
+    "dampen": 0.13,
+    "count": 29,
+    "accuracy": 0.323,
+    "description": "INTC systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 32% accurate (29 samples)",
     "created_date": "2026-07-15",
     "created_regime": 1
   },
@@ -255,6 +255,14 @@
     "created_date": "2026-07-15",
     "created_regime": 1
   },
+  "ticker_TDG": {
+    "dampen": 0.12,
+    "count": 13,
+    "accuracy": 0.333,
+    "description": "TDG systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 33% accurate (13 samples)",
+    "created_date": "2026-07-15",
+    "created_regime": 1
+  },
   "ticker_HWM": {
     "dampen": 0.2,
     "count": 6,
@@ -281,9 +289,9 @@
   },
   "ticker_AES": {
     "dampen": 0.2,
-    "count": 25,
-    "accuracy": 0.037,
-    "description": "AES systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 4% accurate (25 samples)",
+    "count": 26,
+    "accuracy": 0.036,
+    "description": "AES systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 4% accurate (26 samples)",
     "created_date": "2026-07-15",
     "created_regime": 1
   },
