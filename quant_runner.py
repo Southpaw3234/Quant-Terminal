@@ -1773,6 +1773,16 @@ CELL_8_POSTPATCH += "\n\n" + _CELL_8_T3_DSR
 # lightweight XGB per fold, and report mean OOS AUC + a drift flag. This is the
 # honest repeated-OOS number the eventual data-upgrade gate (AUC 0.55–0.68)
 # checks. Capped to the most recent _MAX_FOLDS to bound CI runtime. Morning only.
+#
+# PANEL v2 (2026-07-14): before the stale-row fix 5e96366, build_features'
+# blanket dropna deleted every mid-quantile row from `featured`, so this panel
+# silently held only extreme-move days (~29% of universe-days) and its AUC
+# (~0.54-0.55) measured that easier conditional task. Post-fix the panel holds
+# ALL days (~2.1x rows). User decision 2026-07-14: keep the all-days panel as
+# the honest monitor. New reference baseline: mean OOS AUC 0.4973 / IC -0.0130
+# (2026-07-14). Pre-7/14 walkforward numbers are NOT comparable, and the
+# 0.55-0.68 "genuine edge" band (calibrated on the old tails-only panel) is
+# now strictly harder to hit — read verdicts against the 7/14 baseline.
 _CELL_8_WALKFORWARD = '''
 if __import__("os").environ.get("RUN_TYPE", "morning") == "morning" and "featured" in dir() and "FEATURE_COLS" in dir():
     try:
@@ -1852,10 +1862,14 @@ if __import__("os").environ.get("RUN_TYPE", "morning") == "morning" and "feature
                             "weak/no edge")
                 print(f"  [walkforward] {len(_aucs_wf)} folds | mean OOS AUC={_mean_auc:.4f} "
                       f"| mean IC={_mean_ic:.4f} | last AUC={_last_auc:.4f} | {_verdict}"
-                      + (" | DRIFT DETECTED" if _drift else ""))
+                      + (" | DRIFT DETECTED" if _drift else "")
+                      + " | panel=all-days-v2 (baseline 7/14: 0.4973/-0.0130)")
                 _Pwf("data/predictions").mkdir(parents=True, exist_ok=True)
                 _Pwf("data/predictions/walkforward.json").write_text(_jwf.dumps({
                     "generated": _dtwf.datetime.utcnow().isoformat()[:16] + " UTC",
+                    "panel": "all-days-v2 (since 2026-07-14, post-5e96366)",
+                    "baseline": {"date": "2026-07-14", "mean_oos_auc": 0.4973,
+                                 "mean_oos_ic": -0.013},
                     "n_folds": len(_aucs_wf), "mean_oos_auc": round(_mean_auc, 4),
                     "last_auc": round(_last_auc, 4), "trailing_mean": round(_trail, 4),
                     "mean_oos_ic": round(_mean_ic, 4), "last_ic": round(_last_ic, 4),
