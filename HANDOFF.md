@@ -203,6 +203,25 @@ which also explains intraday "drift" 0.99×→1.11× on 7/15. **OPEN DECISIONS: 
 after root-cause; and whether Frame-1's live entries stay meaningful while the book is net
 short.** The crypto-sleeve options in the trim block above are void.
 
+**→ fill_audit read (run `29446130669`, same evening) — MECHANISM ESSENTIALLY CONFIRMED:
+the ledger writes fills at SUBMISSION, the broker often fills less or nothing, and exits
+sized off model/ledger state oversell into shorts (margin account happily opens them).**
+Evidence: 288 ledger rows are PARTIAL_FILL ($742k notional — ledger qty > broker filled;
+e.g. 6/22 ZBH ledger 6 vs broker 112 and WAT 1 vs 24 are the INVERSE ledger-qty-bug cases)
+and 28 rows are PHANTOM_FILL ($216k — broker=canceled, filled_qty=0, mostly the 7/8
+dup-batch cancels: BAX/PPG/D/MO/DLTR/ALGN/AMGN/ITW/SYK/TER/PSA/DE/LLY…) — the model
+believes it holds names it never (fully) bought, so any close-long SELL on those names
+opens/deepens a naked short. DE is both a 7/8 phantom BUY and a current short — direct
+hit. Reverse check: 234 broker fills with no ledger row ($574k) — 7/9 ($161.9k)/7/10
+($14.4k)/7/15 trims are the expected bulk, **but 7/7 shows 51 unledgered fills $279,026
+(the Task-Scheduler dup-BUY day — bigger than the ~$143k of intents we knew about) and
+7/15 shows 40 fills $45.5k vs the trim's 37 ≈ $29.7k → ~3 fills/$15.8k unexplained — open
+question.** REMEDIATION SHAPE (user decision pending): (1) ship an oversell guard — cap
+every close-long SELL at the LIVE broker position qty (fetch like the gross-cap gate),
+skip if flat/short — execution hygiene, not a dated model change; (2) THEN buy-to-cover
+the 22 shorts (~$81.5k) so they can't regrow; (3) confirm zero shorts + clean audit on the
+7/17 re-read. Until (1) ships, every morning run's close-long exits can mint new shorts.
+
 ---
 
 ## 🗓️ SESSION LEDGER — 2026-07-13 (Monday): (a)-(g) ALL PASS; TDG's impossible entry price root-caused to a v25.1-era STALE-SIGNAL bug — every live signal since 5/17 used 5-10 session old features — FIXED `5e96366`
