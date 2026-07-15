@@ -113,7 +113,10 @@ launch):** verify the 7/15 morning run prints THREE new lines —
 `panel=all-days-v2 (baseline 7/14: 0.4973/-0.0130)` on the walkforward summary (`3f570b1`),
 the rank-ic restart-exclusion line (`b2a15f5`), and Frame-2's `Feature columns available:
 10/11` + `Revived (...): ['attn_vol20']` (`0e0ef56`) — and that walkforward.json carries the
-`panel`/`baseline` fields; fill_audit ~7/17+; Sat 7/18 cron proof.
+`panel`/`baseline` fields; fill_audit re-read ARMED as task `qt-fri-0717-fill-audit`
+(Fri 7/17 12:45 PM ET: dispatches fill_audit.yml, splits findings pre/post-7/14, checks
+fresh-era ledger prices sit inside real day ranges — any 7/14+ price outside its range =
+stale-row-fix regression); Sat 7/18 cron proof.
 
 **⑤ attn_vol20 re-enters the Frame-2 trainer — recency-windowed null check SHIPPED `0e0ef56`
 (⚠️ dated FRAME-2 model change, effective the 7/15 morning retrain):** aliveness is now judged
