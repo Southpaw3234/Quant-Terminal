@@ -222,6 +222,29 @@ skip if flat/short — execution hygiene, not a dated model change; (2) THEN buy
 the 22 shorts (~$81.5k) so they can't regrow; (3) confirm zero shorts + clean audit on the
 7/17 re-read. Until (1) ships, every morning run's close-long exits can mint new shorts.
 
+**→ USER APPROVED BOTH, EXECUTED same evening. (1) OVERSELL GUARD LIVE on master (merge
+`d3e55fd`, branch commit `d5311d8`; validate suite ALL PASS `29446910527` incl. 7 new
+oversell scenarios, preflight PASS `29446908214`).** Mechanics: `_oversell_cap(ticker,qty)`
+in CELL_13_PREPATCH caps every execute_trade SELL at the LIVE broker long qty (position map
+built in the same account read as the gross-cap gate; per-run `sold` tracker so repeat
+SELLs see the drained position), refuses when flat/short, fail-closed if keys are set but
+the position read failed, pass-through in no-keys local paper mode; new skip reason
+`oversell` joins gross_cap/stale_bar in the trade-loop `continue`. **TWO root causes were
+in the exit path: execute_trade's naked SELL submission (no position check + ledger writes
+"filled" at submission), AND the close_long block's `abs(int(float(_pos.qty)))` — on an
+existing short abs() re-submits the |qty| as a SELL, DOUBLING the short every SELL-labelled
+day (how CTAS reached −160). Fixed: signed qty (skip if ≤0) + nets out execute_trade's
+same-run sells.** Validator upgraded in the same commit: the 2.5 needle check was STALE on
+master since `5e96366` (checked for `== "gross_cap"` after the reasons tuple became a
+membership test) — now checks all 4 hooks + section-4 behavioral replay of the guard.
+Execution hygiene, NOT a dated model change (signals/labels/sizing untouched; only
+prevents impossible orders). Watch on the 7/16 morning log: `[patch] Oversell guard:
+enforce=True pos_map=~80 symbols pos_ok=True` line + any `[oversell]` BLOCKED/capped lines
+(each one is a ledger-vs-broker divergence surfacing). (2) short-cover mode added to
+`delever_account.py`/position_trim.yml (`TRIM_SLEEVE=short-cover`: BUY-to-cover every
+short EXACTLY — bounded at |short qty|, nets open BUYs, cash-checked, longs untouched,
+target_ratio ignored) — dry-run + execute status: see next block.
+
 ---
 
 ## 🗓️ SESSION LEDGER — 2026-07-13 (Monday): (a)-(g) ALL PASS; TDG's impossible entry price root-caused to a v25.1-era STALE-SIGNAL bug — every live signal since 5/17 used 5-10 session old features — FIXED `5e96366`
