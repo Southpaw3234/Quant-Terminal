@@ -60,15 +60,87 @@ def api(path, method="GET", body=None):
         raise
 
 
+def cover_shorts():
+    """TRIM_SLEEVE=short-cover: BUY-to-cover every SHORT position, exactly.
+
+    Added 2026-07-15 for the short-book incident (22 accidental shorts,
+    ~$81.5k — oversell bug, see HANDOFF 7/15 + quant_runner _oversell_cap).
+    Guardrails: only positions with side == "short"; BUY qty == abs(position
+    qty), never more; never touches longs; TARGET_RATIO ignored. Market DAY
+    orders — submitted after hours they fill at the next open.
+    """
+    acct = api("/v2/account")
+    equity = float(acct["equity"])
+    cash = float(acct["cash"])
+    print(f"Account: equity=${equity:,.2f}  cash=${cash:,.2f}")
+
+    positions = api("/v2/positions")
+    shorts = [p for p in positions if p["side"] == "short"]
+    gross = sum(abs(float(p["market_value"])) for p in positions)
+    short_mv = sum(abs(float(p["market_value"])) for p in shorts)
+    print(f"Positions: {len(positions)} total, gross ${gross:,.0f} "
+          f"({gross / equity:.2f}x) | {len(shorts)} SHORT (${short_mv:,.0f})")
+    if not shorts:
+        print("No short positions — nothing to cover.")
+        return 0
+    if short_mv > cash:
+        print(f"REFUSING: cover cost ${short_mv:,.0f} exceeds cash ${cash:,.0f}.")
+        return 1
+
+    # Net out any open BUY orders already working these symbols.
+    open_buys = {}
+    for o in api("/v2/orders?status=open&limit=500"):
+        if o["side"] == "buy":
+            open_buys[o["symbol"]] = open_buys.get(o["symbol"], 0) + float(o["qty"])
+
+    print(f"\n  {'sym':6s} {'short':>8s} {'openBUY':>8s} {'price':>10s} "
+          f"{'cover':>6s} {'cost $':>10s} {'P&L':>10s}")
+    plan, plan_mv, pnl = [], 0.0, 0.0
+    for p in sorted(shorts, key=lambda x: -abs(float(x["market_value"]))):
+        sym = p["symbol"]
+        qty = int(abs(float(p["qty"])))
+        cover = qty - int(open_buys.get(sym, 0))
+        if cover < 1:
+            continue
+        px = float(p["current_price"])
+        mv = cover * px
+        upl = float(p["unrealized_pl"])
+        print(f"  {sym:6s} {float(p['qty']):8.0f} {open_buys.get(sym, 0):8.0f} "
+              f"{px:10,.2f} {cover:6d} {mv:10,.0f} {upl:+10,.0f}")
+        plan.append((sym, cover))
+        plan_mv += mv
+        pnl += upl
+    print(f"\n── Plan: {len(plan)} market BUY-to-cover (DAY, fill at next open), "
+          f"~${plan_mv:,.0f}, realizes ~${pnl:+,.0f} ──")
+    print(f"Projected after covers: gross ~${gross - short_mv:,.0f} "
+          f"({(gross - short_mv) / equity:.2f}x equity), zero shorts")
+
+    if MODE == "dry-run":
+        print("DRY-RUN — nothing submitted. Re-dispatch with mode=execute.")
+        return 0
+
+    print("\nEXECUTING…")
+    for sym, qty in plan:
+        r = api("/v2/orders", method="POST", body={
+            "symbol": sym, "qty": str(qty), "side": "buy",
+            "type": "market", "time_in_force": "day",
+        })
+        print(f"  BUY-to-cover {sym} x{qty} submitted (id {r['id'][:8]}…)")
+    print(f"Done — {len(plan)} covers queued. Verify zero shorts after next open.")
+    return 0
+
+
 def main():
     print(f"MODE={MODE}  TARGET_RATIO={TARGET_RATIO}  SLEEVE={SLEEVE}  BASE={BASE}")
     if MODE not in ("dry-run", "execute"):
         print(f"Unknown TRIM_MODE '{MODE}' — refusing.")
         return 1
-    if SLEEVE not in ("equity", "crypto"):
+    if SLEEVE not in ("equity", "crypto", "short-cover"):
         print(f"Unknown TRIM_SLEEVE '{SLEEVE}' — refusing.")
         return 1
     sleeve_class = "us_equity" if SLEEVE == "equity" else "crypto"
+    if SLEEVE == "short-cover":
+        return cover_shorts()
 
     acct = api("/v2/account")
     equity = float(acct["equity"])

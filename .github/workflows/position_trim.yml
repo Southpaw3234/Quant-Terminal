@@ -21,11 +21,11 @@ on:
         required: false
         default: '1.0'
       sleeve:
-        description: 'which sleeve to pro-rata sell (the other is untouched)'
+        description: 'equity/crypto = pro-rata sell that sleeve; short-cover = BUY-to-cover all shorts exactly (target_ratio ignored)'
         required: false
         default: 'equity'
         type: choice
-        options: [equity, crypto]
+        options: [equity, crypto, short-cover]
 
 permissions:
   contents: read
