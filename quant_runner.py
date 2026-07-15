@@ -3264,7 +3264,8 @@ _GROSS_CAP["run_ok"] = _GROSS_CAP["run_type"] in ("morning", "intraday")
 
 def _gross_cap_allows(_tk_gc, _notional_gc):
     # Hard BUY gate: True only if this order keeps gross <= ratio x equity.
-    # Never called for SELLs (exits always allowed — they reduce gross).
+    # SELLs have their own gate (_oversell_cap below) — a SELL beyond real
+    # holdings INCREASES gross by opening a short.
     try:
         _n_gc = max(0.0, float(_notional_gc))
         if not _GROSS_CAP["run_ok"]:
@@ -3290,15 +3291,72 @@ def _gross_cap_allows(_tk_gc, _notional_gc):
         print(f"    [gross-cap] gate error — BLOCKED BUY {_tk_gc} (fail-closed): {_gca_e}")
         return False
 
+# ── Fix (2026-07-15): OVERSELL guard — the short-book incident ───────────────
+# execute_trade submitted SELLs with no position check while the ledger
+# recorded "filled" at submission time, so exits sized off model/ledger state
+# oversold true broker holdings and the margin account opened naked shorts
+# (22 names, $81.5k ≈ 0.71x equity by 7/15 — the book mislabelled "crypto
+# sleeve" since 7/6). This gate caps every SELL at the LIVE broker long qty
+# (minus what this run already sold) and refuses SELLs when flat or short.
+# Fail-closed when keys are set but the position read failed — selling blind
+# is what minted the short book.
+_LIVE_QTY = {}    # symbol -> signed live qty at the broker (short = negative)
+_OVERSELL = {
+    "enforce":  bool(ALPACA_API_KEY and ALPACA_SECRET_KEY),
+    "pos_ok":   False,   # live position map successfully built
+    "sold":     {},      # symbol -> qty this run has already sold
+    "capped_n": 0,
+    "blocked_n": 0,
+}
+
+def _oversell_cap(_tk_os, _qty_os):
+    # Returns the SELL qty actually allowed (0 = refuse the order entirely).
+    try:
+        _q_os = int(_qty_os)
+        if _q_os <= 0:
+            return 0
+        if not _OVERSELL["enforce"]:
+            return _q_os          # local paper mode: no broker, no shorts possible
+        if not _OVERSELL["pos_ok"]:
+            _OVERSELL["blocked_n"] += 1
+            print(f"    [oversell] BLOCKED SELL {_tk_os} x{_q_os} — "
+                  f"live positions unknown (fail-closed)")
+            return 0
+        _held_os = float(_LIVE_QTY.get(_tk_os, 0.0)) - float(_OVERSELL["sold"].get(_tk_os, 0.0))
+        _allow_os = int(min(float(_q_os), max(0.0, _held_os)))
+        if _allow_os <= 0:
+            _OVERSELL["blocked_n"] += 1
+            print(f"    [oversell] BLOCKED SELL {_tk_os} x{_q_os} — live long qty "
+                  f"{_held_os:g} (flat/short: refusing naked short)")
+            return 0
+        if _allow_os < _q_os:
+            _OVERSELL["capped_n"] += 1
+            print(f"    [oversell] {_tk_os}: SELL qty {_q_os} -> {_allow_os} (live long qty)")
+        _OVERSELL["sold"][_tk_os] = float(_OVERSELL["sold"].get(_tk_os, 0.0)) + _allow_os
+        return _allow_os
+    except Exception as _os_e:
+        print(f"    [oversell] gate error — BLOCKED SELL {_tk_os} (fail-closed): {_os_e}")
+        return 0
+
 try:
     if ALPACA_API_KEY and ALPACA_SECRET_KEY:
         from alpaca.trading.client import TradingClient as _TC_gc
         _tc_gc   = _TC_gc(ALPACA_API_KEY, ALPACA_SECRET_KEY, paper=True)
         _acct_gc = _tc_gc.get_account()
+        _pos_list_gc = _tc_gc.get_all_positions()
         _GROSS_CAP["equity"]   = float(_acct_gc.equity)
         _GROSS_CAP["gross_mv"] = float(sum(abs(float(_p_gc.market_value))
-                                           for _p_gc in _tc_gc.get_all_positions()))
+                                           for _p_gc in _pos_list_gc))
         _GROSS_CAP["acct_ok"]  = True
+        # Oversell guard: signed live qty per symbol. Inner try so a schema
+        # surprise degrades to fail-closed SELLs without touching the BUY gate.
+        try:
+            for _p_gc in _pos_list_gc:
+                _LIVE_QTY[str(_p_gc.symbol)] = float(_p_gc.qty)
+            _OVERSELL["pos_ok"] = True
+        except Exception as _lq_e:
+            print(f"  [patch] oversell-guard position map FAILED ({_lq_e}) — "
+                  f"all SELLs refused this run (fail-closed)")
     else:
         # No broker keys (pure local paper mode): budget from the ledger.
         import pandas as _pd_gc
@@ -3337,6 +3395,8 @@ try:
           f"-> room ${_room0_gc:,.0f} = {_max_new_gc} new BUY slots | "
           f"pre-blocked {_pre_blocked_gc}/{len(_buys_gc)} BUY signals | "
           f"run_ok={_GROSS_CAP['run_ok']} ({_GROSS_CAP['run_type']})")
+    print(f"  [patch] Oversell guard: enforce={_OVERSELL['enforce']} "
+          f"pos_map={len(_LIVE_QTY)} symbols pos_ok={_OVERSELL['pos_ok']}")
 except Exception as _gc_e:
     print(f"  [patch] GROSS CAP SETUP ERROR: {_gc_e} — hard gate stays active "
           f"(BUYs blocked unless account read succeeded above)")
@@ -3505,7 +3565,14 @@ try:
         for _cl_tk in _close_long_tickers:
             try:
                 _pos = _tc13.get_open_position(_cl_tk)
-                _qty = abs(int(float(_pos.qty)))
+                # Signed qty — shorts are NEGATIVE. The old abs() here DOUBLED
+                # an existing short every SELL-labelled day (7/15 short-book
+                # incident, e.g. CTAS -160). Also net out SELLs execute_trade
+                # already submitted this run — unfilled orders aren't in the
+                # position read yet.
+                _qty = int(float(_pos.qty))
+                if "_OVERSELL" in globals():
+                    _qty -= int(float(_OVERSELL["sold"].get(_cl_tk, 0)))
                 if _qty > 0:
                     _req13 = _MOR13(symbol=_cl_tk, qty=_qty,
                                     side=_OS13.SELL, time_in_force=_TIF13.DAY)
@@ -5119,12 +5186,16 @@ _SRC_REPLACE = [
      '                print(f"    [conformal] {ticker}: qty {qty} -> {_ck_q} (x{_ck_d:.2f})")\n'
      '                qty = _ck_q\n'
      '    if action == "BUY" and not _gross_cap_allows(ticker, qty * price):\n'
-     '        return {"status":"skip","reason":"gross_cap"}'),
+     '        return {"status":"skip","reason":"gross_cap"}\n'
+     '    if action == "SELL":\n'
+     '        qty = _oversell_cap(ticker, qty)\n'
+     '        if qty <= 0:\n'
+     '            return {"status":"skip","reason":"oversell"}'),
     # (c) trade print: a gross-cap-refused BUY must not print as an executed
     #     trade or count toward trade_count (the 7/7-style "filled" phantoms).
     ('        result = execute_trade(sig, qty, equity)\n',
      '        result = execute_trade(sig, qty, equity)\n'
-     '        if isinstance(result, dict) and result.get("reason") in ("gross_cap", "stale_bar"):\n'
+     '        if isinstance(result, dict) and result.get("reason") in ("gross_cap", "stale_bar", "oversell"):\n'
      '            continue\n'),
 ]
 

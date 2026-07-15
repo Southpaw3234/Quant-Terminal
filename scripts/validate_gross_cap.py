@@ -69,10 +69,11 @@ try:
 except SyntaxError as e:
     fails.append(f"patched cell13 syntax error line {e.lineno}: {e.msg}")
 for needle in ('_gross_cap_allows(ticker, qty * price)', 'sig.get("exec_blocked")',
-               'result.get("reason") == "gross_cap"'):
+               'result.get("reason") in ("gross_cap", "stale_bar", "oversell")',
+               '_oversell_cap(ticker, qty)'):
     if needle not in patched:
         fails.append(f"patched cell13 missing {needle!r}")
-print("2.5 all 3 gate hooks present in patched src  "
+print("2.5 all 4 gate hooks present in patched src  "
       + ("PASS" if not any("missing" in f for f in fails) else "FAIL"))
 
 # ── 3. behavioral replay of the prepatch gate ────────────────────────────────
@@ -160,6 +161,51 @@ run_scenario("account read fails (fail-closed)", "morning", True,
 # (e) no keys, local paper mode, empty ledger: room $100k = 20 x $5k slots
 run_scenario("no keys, paper mode, empty ledger", "morning", False,
              None, None, 30, expect_allow=20, expect_block=10)
+
+# ── 4. behavioral replay of the oversell guard (2026-07-15 short-book fix) ───
+def oversell_ns(keys=True, pos_ok=True, live=None):
+    ns = {"ALPACA_API_KEY": "k" if keys else "", "ALPACA_SECRET_KEY": "s" if keys else "",
+          "PORTFOLIO_CAPITAL": 100_000.0, "MAX_POSITION_PCT": 0.05,
+          "signals": {}, "__builtins__": __builtins__}
+    if keys:
+        _stub_alpaca(100_000.0, 0.0)
+    cwd = os.getcwd()
+    with tempfile.TemporaryDirectory() as tmp:
+        os.chdir(tmp)
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                exec(gross_src, ns)
+        finally:
+            os.chdir(cwd)
+    ns["_OVERSELL"]["pos_ok"] = pos_ok
+    ns["_LIVE_QTY"].update(live or {})
+    return ns
+
+def check4(name, got, want):
+    ok = got == want
+    print(f"4.  {name:<52} got={got:<4} {'PASS' if ok else 'FAIL (want %s)' % want}")
+    if not ok:
+        fails.append(f"oversell {name}: got={got} want={want}")
+
+with contextlib.redirect_stdout(io.StringIO()) as _buf4:
+    ns4 = oversell_ns(live={"LONG10": 10.0, "SHORTED": -160.0})
+    r_within  = ns4["_oversell_cap"]("LONG10", 5)     # within holdings
+    ns4b = oversell_ns(live={"LONG10": 10.0})
+    r_capped  = ns4b["_oversell_cap"]("LONG10", 25)   # capped at live qty
+    r_drained = ns4b["_oversell_cap"]("LONG10", 5)    # already sold out this run
+    r_flat    = ns4["_oversell_cap"]("NOPOS", 5)      # flat -> refuse
+    r_short   = ns4["_oversell_cap"]("SHORTED", 5)    # short -> refuse (abs() trap)
+    ns4c = oversell_ns(pos_ok=False)
+    r_failcl  = ns4c["_oversell_cap"]("LONG10", 5)    # map failed -> fail-closed
+    ns4d = oversell_ns(keys=False)
+    r_local   = ns4d["_oversell_cap"]("ANYTHING", 7)  # local paper mode passthrough
+check4("SELL within live long qty allowed in full", r_within, 5)
+check4("SELL beyond live long qty capped", r_capped, 10)
+check4("second SELL same run sees drained position", r_drained, 0)
+check4("SELL while flat refused (no naked short)", r_flat, 0)
+check4("SELL while SHORT refused (no short doubling)", r_short, 0)
+check4("position map failed -> fail-closed", r_failcl, 0)
+check4("no keys (local paper) -> passthrough", r_local, 7)
 
 print()
 if fails:
