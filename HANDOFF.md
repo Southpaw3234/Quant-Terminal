@@ -217,7 +217,21 @@ hit. Reverse check: 234 broker fills with no ledger row ($574k) — 7/9 ($161.9k
 ($14.4k)/7/15 trims are the expected bulk, **but 7/7 shows 51 unledgered fills $279,026
 (the Task-Scheduler dup-BUY day — bigger than the ~$143k of intents we knew about) and
 7/15 shows 40 fills $45.5k vs the trim's 37 ≈ $29.7k → ~3 fills/$15.8k unexplained — open
-question.** REMEDIATION SHAPE (user decision pending): (1) ship an oversell guard — cap
+question.** **→ 7/15 RESOLVED same evening (fill_audit re-run `29452280732` with new
+per-order detail): the 3 extra fills are the morning run's close_long block orders,
+submitted 15:45:39Z = the `[patch] close_long: closed 3/28` log line to the second —
+close_long submits via the Alpaca client directly, NEVER through execute_trade, so NO
+close_long exit has ever had a ledger row (7/13's 2 extra + 7/14's 1 extra = same path).
+Of the three: NOW ×1 ($106) + GOOGL ×1 ($372) were legitimate long exits; **CTAS SELL ×80
+@ $191.73 = $15,338 was the abs() short-DOUBLER caught in the act — the audit shows the
+whole chain: sell ×20 (7/13) → ×40 (7/14) → ×80 (7/15), one doubling per SELL-labelled
+day, −20→−40→−80→−160, and the "intraday drift" 0.99×→1.11× on 7/15 was mostly this
+$15.3k, not market moves.** Guard `d3e55fd` (signed qty + same-run netting) makes a 4th
+doubling impossible. KNOWN GAP left open deliberately: close_long exits still bypass the
+ledger (paper_trades.csv thinks those longs are still held — e.g. NOW/GOOGL today, GE ×13
+7/13) — harmless for order safety now (guard reads live broker qty) but it skews
+ledger-based analytics/kill-switch trade counts; fold into any future ledger-reconciliation
+work. 7/7's $279k remains the one open attribution question.** REMEDIATION SHAPE (user decision pending): (1) ship an oversell guard — cap
 every close-long SELL at the LIVE broker position qty (fetch like the gross-cap gate),
 skip if flat/short — execution hygiene, not a dated model change; (2) THEN buy-to-cover
 the 22 shorts (~$81.5k) so they can't regrow; (3) confirm zero shorts + clean audit on the
