@@ -107,7 +107,9 @@ log line tagged. The 0.55-0.68 verdict band was left UNCHANGED (now strictly har
 "genuine edge" print on the all-days panel would be far stronger evidence than it was
 pre-fix); recalibrate only if/when a data upgrade actually approaches the gate.**
 
-**④ Handed to Wednesday 7/15:** verify the 7/15 morning run prints THREE new lines —
+**④ Handed to Wednesday 7/15 — auto-verify task `qt-wed-0715-verify` ARMED 12:15 PM ET
+(waits if the run is in flight; runs only while the Claude app is open — catches up on next
+launch):** verify the 7/15 morning run prints THREE new lines —
 `panel=all-days-v2 (baseline 7/14: 0.4973/-0.0130)` on the walkforward summary (`3f570b1`),
 the rank-ic restart-exclusion line (`b2a15f5`), and Frame-2's `Feature columns available:
 10/11` + `Revived (...): ['attn_vol20']` (`0e0ef56`) — and that walkforward.json carries the
