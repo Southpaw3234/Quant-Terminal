@@ -86,6 +86,14 @@ def main():
     print(f"Positions: {len(longs_eq)} long {SLEEVE} (${gross_eq:,.0f}) + "
           f"{len(other)} other (${gross_other:,.0f} — untouched)  "
           f"gross=${gross:,.0f} = {gross / equity:.2f}x equity")
+    comp = {}
+    for p in positions:
+        k = f"{p.get('asset_class', '?')}/{p['side']}"
+        comp[k] = comp.get(k, [0, 0.0])
+        comp[k][0] += 1
+        comp[k][1] += abs(float(p["market_value"]))
+    print("  composition: " + "  ".join(
+        f"{k}: {n} pos ${mv:,.0f}" for k, (n, mv) in sorted(comp.items())))
 
     # SELL orders the model already queued — they de-lever at the open too.
     queued = {}
@@ -109,6 +117,9 @@ def main():
 
     sellable_mv = sum((float(p["qty"]) - queued.get(p["symbol"], 0)) * prices[p["symbol"]]
                       for p in longs_eq)
+    if sellable_mv <= 0:
+        print(f"No sellable long {SLEEVE} positions (see composition above) — nothing to do.")
+        return 0
     f = min(1.0, to_sell / sellable_mv)
     print(f"Pro-rata factor on sellable equity book (${sellable_mv:,.0f}): {f:.3f}")
 
