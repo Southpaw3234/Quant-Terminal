@@ -5120,16 +5120,19 @@ _SRC_REPLACE = [
     # halted the NEW strategy's first open morning (8 slots, 0 entries). Same
     # rationale as the Stage-1 window restart (b2a15f5): pre-QT_STAGE1_START
     # predictions measured a different strategy and must not steer this one.
-    # Lexicographic date compare on the ISO pred_ts prefix — parse-proof, and
-    # drops the ~614 legacy empty/garbage pred_ts rows with it. Self-ages to a
-    # no-op once fresh-era rows dominate the log.
+    # Lexicographic date compare on the ISO pred_ts prefix, gated on the prefix
+    # actually LOOKING like a date — "nan"/empty/garbage pred_ts (the ~614
+    # legacy rows) can't prove they're fresh-era, so they're excluded ("nan" >
+    # "2026-…" lexicographically, caught by validate 5). Self-ages to a no-op
+    # once fresh-era rows dominate the log.
     ('        scored = plog[plog["scored"].astype(str) == "True"].tail(KILL_CONSECUTIVE_LOSSES)',
      '        _ks_sc = plog[plog["scored"].astype(str).isin(["True", "true"])].copy()\n'
      '        _ks_sc = _ks_sc[_ks_sc["action"].astype(str).str.upper().isin(["BUY", "SELL"])]\n'
      '        _ks_sc = _ks_sc[~_ks_sc["ticker"].astype(str).isin(\n'
      '            {"BTC-USD", "ETH-USD", "SOL-USD", "XRP-USD", "DOGE-USD", "BNB-USD"})]\n'
      '        _ks_era = __import__("os").environ.get("QT_STAGE1_START", "2026-07-14")\n'
-     '        _ks_sc = _ks_sc[_ks_sc["pred_ts"].astype(str).str[:10] >= _ks_era]\n'
+     '        _ks_ts = _ks_sc["pred_ts"].astype(str).str[:10]\n'
+     '        _ks_sc = _ks_sc[_ks_ts.str.match(r"\\d{4}-\\d{2}-\\d{2}") & (_ks_ts >= _ks_era)]\n'
      '        scored = _ks_sc.tail(KILL_CONSECUTIVE_LOSSES)'),
     # Stale featured-row fix (2026-07-13, dated MODEL CHANGE — 5th in the
     # attribution window): build_features ended with a blanket dropna AFTER the
