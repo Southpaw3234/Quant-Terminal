@@ -252,6 +252,81 @@ check5("fresh-era crypto still excluded", len(ks_scored(_stale + _crypto)), 0)
 check5("window = fresh equity rows only (mixed log)",
        len(ks_scored(_garbage + _stale + _crypto + _fresh_loss[:3])), 3)
 
+# ── 6. stale-era gates on the remaining predictions.csv consumers (2026-07-16) ─
+# Follow-up to section 5: the rule engine (LEARNED_RULES dampeners -> live
+# composite scores), the staleness detector (RETRAIN_NEEDED.flag), and the
+# _WL_RATIO Kelly win/loss cache all consumed stale-era scored outcomes.
+# Each gate must drop pre-QT_STAGE1_START and garbage-pred_ts rows while
+# keeping fresh-era rows intact.
+
+def find_pair(marker):
+    p = next(((old, new) for old, new in pairs if marker in old), None)
+    assert p, f"era-gate pair with marker {marker!r} not found in _SRC_REPLACE"
+    return p
+
+pair_rules = find_pair('plog = pd.read_csv(PRED_LOG_FILE)')
+pair_stale = find_pair('STALENESS_WINDOW')
+pair_wl    = find_pair('_wl_log')
+
+def check6(name, got, want):
+    ok = got == want
+    print(f"6.  {name:<52} got={str(got):<5} {'PASS' if ok else 'FAIL (want %s)' % want}")
+    if not ok:
+        fails.append(f"stale-era gate {name}: got={got} want={want}")
+
+# 6a. anchors unique across the ENTIRE notebook (pairs apply to every cell —
+#     the one-line variants of these anchors exist in reporting Cells 16/21).
+nb_all = "".join("".join(c["source"]) for c in nb["cells"] if c["cell_type"] == "code")
+for nm, (old, _n) in [("rule-engine", pair_rules), ("staleness", pair_stale), ("wl-ratio", pair_wl)]:
+    check6(f"anchor unique across all cells ({nm})", nb_all.count(old), 1)
+
+# 6b. patched Cell 15 compiles (section 2 only compiles Cell 13).
+cell15 = "".join(nb["cells"][15]["source"])
+patched15 = cell15
+for old, new in pairs:
+    patched15 = patched15.replace(old, new)
+try:
+    compile(patched15, "cell15_patched", "exec")
+    print("6.  patched Cell 15 compiles                         PASS")
+except SyntaxError as e:
+    fails.append(f"patched cell15 syntax error line {e.lineno}: {e.msg}")
+    print(f"6.  patched Cell 15 compiles                         FAIL (line {e.lineno})")
+
+# 6c. behavioral: synthetic log = 6 stale losses + garbage + 3 fresh rows.
+_mix = ([{"pred_ts": f"2026-07-10 15:5{i}:00+0000", "ticker": f"OLD{i}", "action": "BUY",
+          "scored": "True", "was_correct": "False", "actual_return": -0.05} for i in range(6)]
+        + [{"pred_ts": "", "ticker": "GARB1", "action": "BUY", "scored": "True",
+            "was_correct": "False", "actual_return": -0.9},
+           {"pred_ts": "nan", "ticker": "GARB2", "action": "SELL", "scored": "True",
+            "was_correct": "False", "actual_return": 0.9}]
+        + [{"pred_ts": f"2026-07-2{i} 15:00:00+0000", "ticker": f"NEW{i}", "action": "BUY",
+            "scored": "True", "was_correct": "True", "actual_return": 0.02} for i in range(3)])
+_mix_df = pd.DataFrame(_mix)
+
+# rule-engine gate: exec the replacement with PRED_LOG_FILE -> temp csv
+os.environ.pop("QT_STAGE1_START", None)
+with tempfile.TemporaryDirectory() as _tmp6:
+    _csv6 = os.path.join(_tmp6, "predictions.csv")
+    _mix_df.to_csv(_csv6, index=False)
+    ns6 = {"pd": pd, "PRED_LOG_FILE": _csv6, "__builtins__": __builtins__}
+    exec(textwrap.dedent(pair_rules[1]), ns6)
+    check6("rule-engine gate keeps only fresh-era rows", len(ns6["scored"]), 3)
+    check6("rule-engine gate: no stale/garbage tickers survive",
+           sorted(ns6["scored"]["ticker"]), ["NEW0", "NEW1", "NEW2"])
+
+# staleness gate: replacement ends mid-`if` — close the block to exec it
+ns6b = {"plog": _mix_df.copy(), "STALENESS_WINDOW": 20, "__builtins__": __builtins__}
+exec(textwrap.dedent(pair_stale[1]) + "\n    pass", ns6b)
+check6("staleness gate keeps only fresh-era rows", len(ns6b["scored"]), 3)
+
+# WL gate: fresh rows must keep their actual_return; stale returns must not
+# reach the win/loss means
+ns6c = {"_wl_log": _mix_df.copy(), "__builtins__": __builtins__}
+exec(textwrap.dedent(pair_wl[1]), ns6c)
+check6("wl-ratio gate keeps only fresh-era rows", len(ns6c["_wl_log"]), 3)
+check6("wl-ratio gate: stale returns out of the mean",
+       round(float(pd.to_numeric(ns6c["_wl_log"]["actual_return"]).mean()), 2), 0.02)
+
 print()
 if fails:
     print("VALIDATION FAILED:")

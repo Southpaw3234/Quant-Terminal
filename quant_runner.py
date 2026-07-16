@@ -5134,6 +5134,45 @@ _SRC_REPLACE = [
      '        _ks_ts = _ks_sc["pred_ts"].astype(str).str[:10]\n'
      '        _ks_sc = _ks_sc[_ks_ts.str.match(r"\\d{4}-\\d{2}-\\d{2}") & (_ks_ts >= _ks_era)]\n'
      '        scored = _ks_sc.tail(KILL_CONSECUTIVE_LOSSES)'),
+    # Stale-era gate for the remaining live predictions.csv consumers
+    # (2026-07-16, follow-up to the kill-switch era gate above — full audit in
+    # the 7/16 handoff ledger). Predictions before QT_STAGE1_START were made by
+    # the pre-5e96366 lagged model off wrong price_at_pred baselines; their
+    # scored outcomes must not steer the live strategy. Three consumers gated,
+    # same ISO-date-prefix idiom as the kill switch ("nan"/garbage pred_ts
+    # excluded). Reporting-only readers (Cells 16/19/21/23) stay unfiltered.
+    # (a) Cell 15 diagnose_failures_and_rewrite_rules — the single `scored`
+    #     frame feeding LEARNED_RULES dampeners/boosts (applied to live
+    #     composite scores in Cell 11), ADAPTIVE_WEIGHTS nudges,
+    #     FEATURE_IMPORTANCE, and River training rows. Two-line anchor: the
+    #     one-line version also appears in Cells 16/21 (reporting).
+    ('    plog = pd.read_csv(PRED_LOG_FILE)\n'
+     '    scored = plog[plog["scored"].astype(str)=="True"].copy()',
+     '    plog = pd.read_csv(PRED_LOG_FILE)\n'
+     '    scored = plog[plog["scored"].astype(str)=="True"].copy()\n'
+     '    _era_rw = __import__("os").environ.get("QT_STAGE1_START", "2026-07-14")\n'
+     '    _ts_rw = scored["pred_ts"].astype(str).str[:10]\n'
+     '    scored = scored[_ts_rw.str.match(r"\\d{4}-\\d{2}-\\d{2}") & (_ts_rw >= _era_rw)]'),
+    # (b) Cell 15 check_model_staleness — rolling-20 accuracy sets
+    #     RETRAIN_NEEDED.flag; stale-era rows must not trip or clear it.
+    #     Anchor includes the following `if` line for cell-uniqueness (the
+    #     bare line also appears in Cell 21).
+    ('        scored = plog[plog["scored"].astype(str) == "True"].copy()\n'
+     '        if len(scored) < STALENESS_WINDOW:',
+     '        scored = plog[plog["scored"].astype(str) == "True"].copy()\n'
+     '        _era_st = __import__("os").environ.get("QT_STAGE1_START", "2026-07-14")\n'
+     '        _ts_st = scored["pred_ts"].astype(str).str[:10]\n'
+     '        scored = scored[_ts_st.str.match(r"\\d{4}-\\d{2}-\\d{2}") & (_ts_st >= _era_st)]\n'
+     '        if len(scored) < STALENESS_WINDOW:'),
+    # (c) Cell 13 _WL_RATIO Kelly win/loss cache — per-ticker avg_win/avg_loss
+    #     from actual_return multiplies into kelly_qty for every BUY; stale-era
+    #     actual_returns are baseline-corrupted. Until fresh-era tickers reach
+    #     3 wins + 3 losses, kelly_qty falls back to its default W/L assumption.
+    ('        _wl_log = _wl_log[_wl_log["scored"].astype(str).isin(["True","true"])].copy()',
+     '        _wl_log = _wl_log[_wl_log["scored"].astype(str).isin(["True","true"])].copy()\n'
+     '        _era_wl = __import__("os").environ.get("QT_STAGE1_START", "2026-07-14")\n'
+     '        _ts_wl = _wl_log["pred_ts"].astype(str).str[:10]\n'
+     '        _wl_log = _wl_log[_ts_wl.str.match(r"\\d{4}-\\d{2}-\\d{2}") & (_ts_wl >= _era_wl)]'),
     # Stale featured-row fix (2026-07-13, dated MODEL CHANGE — 5th in the
     # attribution window): build_features ended with a blanket dropna AFTER the
     # magnitude-threshold label set target=NaN on mid-quantile rows AND on the
