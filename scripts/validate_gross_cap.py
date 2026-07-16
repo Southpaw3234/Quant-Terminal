@@ -207,6 +207,51 @@ check4("SELL while SHORT refused (no short doubling)", r_short, 0)
 check4("position map failed -> fail-closed", r_failcl, 0)
 check4("no keys (local paper) -> passthrough", r_local, 7)
 
+# ── 5. behavioral replay of the kill-switch era gate (2026-07-16 fix) ────────
+# The consecutive-loss window must count only fresh-era (>= QT_STAGE1_START)
+# equity BUY/SELL predictions: on 7/16 the matured 7/10 stale-era batch (5
+# straight losses, wrong price_at_pred baselines) halted the new strategy's
+# first open morning. The switch must still trip on a real fresh-era streak.
+import pandas as pd
+import textwrap
+
+ks_pair = next((new for old, new in pairs if old.lstrip().startswith("scored = plog[")), None)
+assert ks_pair, "kill-switch rewrite pair not found in _SRC_REPLACE"
+ks_src = textwrap.dedent(ks_pair)
+
+def ks_scored(rows):
+    df = pd.DataFrame(rows, columns=["pred_ts", "ticker", "action", "scored", "was_correct"])
+    ns = {"plog": df, "KILL_CONSECUTIVE_LOSSES": 5, "__builtins__": __builtins__}
+    os.environ.pop("QT_STAGE1_START", None)
+    exec(ks_src, ns)
+    return ns["scored"]
+
+def ks_tripped(rows):
+    scored = ks_scored(rows)
+    return (len(scored) == 5
+            and not scored["was_correct"].astype(str).isin(["True", "true"]).any())
+
+def check5(name, got, want):
+    ok = got == want
+    print(f"5.  {name:<52} got={str(got):<5} {'PASS' if ok else 'FAIL (want %s)' % want}")
+    if not ok:
+        fails.append(f"kill-switch era gate {name}: got={got} want={want}")
+
+_stale = [(f"2026-07-10 15:5{i}:00+0000", f"OLD{i}", "BUY", "True", "False") for i in range(5)]
+_fresh_loss = [(f"2026-07-2{i} 15:00:00+0000", f"NEW{i}", "BUY", "True", "False") for i in range(5)]
+_fresh_mixed = _fresh_loss[:3] + [("2026-07-23 15:00:00+0000", "WIN1", "BUY", "True", "True"),
+                                  ("2026-07-24 15:00:00+0000", "NEW4", "SELL", "True", "False")]
+_crypto = [(f"2026-07-2{i} 16:00:00+0000", "ETH-USD", "BUY", "True", "False") for i in range(5)]
+_garbage = [("", "GARB1", "BUY", "True", "False"), ("nan", "GARB2", "BUY", "True", "False")]
+
+check5("7/16 reality: 5 stale-era losses -> no trip", ks_tripped(_stale), False)
+check5("stale-era rows fully excluded from window", len(ks_scored(_stale + _garbage)), 0)
+check5("5 fresh-era losses STILL trip the switch", ks_tripped(_stale + _fresh_loss), True)
+check5("fresh-era window with a win -> no trip", ks_tripped(_stale + _fresh_mixed), False)
+check5("fresh-era crypto still excluded", len(ks_scored(_stale + _crypto)), 0)
+check5("window = fresh equity rows only (mixed log)",
+       len(ks_scored(_garbage + _stale + _crypto + _fresh_loss[:3])), 3)
+
 print()
 if fails:
     print("VALIDATION FAILED:")

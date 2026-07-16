@@ -5114,11 +5114,22 @@ _SRC_REPLACE = [
     # blocked 10 BUYs during a crypto sell-off while the equity book was +$15k).
     # Fix: count only REAL directional trades (BUY/SELL) and exclude crypto, so the
     # streak reflects the equity strategy this switch is meant to protect.
+    # Era gate (2026-07-16): the switch also counted STALE-ERA predictions — on
+    # 7/16 the Cell-14 backfill scored the matured 7/10 batch (pre-5e96366 lagged
+    # model, price_at_pred = known-wrong stale closes) and its 5 straight losses
+    # halted the NEW strategy's first open morning (8 slots, 0 entries). Same
+    # rationale as the Stage-1 window restart (b2a15f5): pre-QT_STAGE1_START
+    # predictions measured a different strategy and must not steer this one.
+    # Lexicographic date compare on the ISO pred_ts prefix — parse-proof, and
+    # drops the ~614 legacy empty/garbage pred_ts rows with it. Self-ages to a
+    # no-op once fresh-era rows dominate the log.
     ('        scored = plog[plog["scored"].astype(str) == "True"].tail(KILL_CONSECUTIVE_LOSSES)',
      '        _ks_sc = plog[plog["scored"].astype(str).isin(["True", "true"])].copy()\n'
      '        _ks_sc = _ks_sc[_ks_sc["action"].astype(str).str.upper().isin(["BUY", "SELL"])]\n'
      '        _ks_sc = _ks_sc[~_ks_sc["ticker"].astype(str).isin(\n'
      '            {"BTC-USD", "ETH-USD", "SOL-USD", "XRP-USD", "DOGE-USD", "BNB-USD"})]\n'
+     '        _ks_era = __import__("os").environ.get("QT_STAGE1_START", "2026-07-14")\n'
+     '        _ks_sc = _ks_sc[_ks_sc["pred_ts"].astype(str).str[:10] >= _ks_era]\n'
      '        scored = _ks_sc.tail(KILL_CONSECUTIVE_LOSSES)'),
     # Stale featured-row fix (2026-07-13, dated MODEL CHANGE — 5th in the
     # attribution window): build_features ended with a blanket dropna AFTER the
