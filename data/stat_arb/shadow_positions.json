@@ -7,9 +7,22 @@
     "entry_z": -2.2122,
     "half_life": 5.33,
     "hedge_ratio": 0.654713,
-    "last_y": 24.8799991607666,
-    "last_x": 130.08999633789062,
-    "days_held": 12,
-    "cum_pnl": 373.6355041132278
+    "last_y": 25.024999618530273,
+    "last_x": 131.5500030517578,
+    "days_held": 13,
+    "cum_pnl": 319.6849189604789
+  },
+  "AAPL/META": {
+    "y": "AAPL",
+    "x": "META",
+    "side": -1,
+    "entry_date": "2026-07-22",
+    "entry_z": 2.2208,
+    "half_life": 14.82,
+    "hedge_ratio": 0.896086,
+    "last_y": 325.2900085449219,
+    "last_x": 630.280029296875,
+    "days_held": 0,
+    "cum_pnl": 0.0
   }
 }
