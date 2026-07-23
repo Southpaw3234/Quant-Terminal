@@ -108,12 +108,19 @@ def _write_rclone_conf():
     return True
 
 def _rclone(src, dst, label, extra_flags=None):
+    # timeout 300s (was 120s): one budget serves both directions, and `data/`
+    # grows every cycle (evidence CSVs append daily), so the old 120s was
+    # drifting into the sync's normal runtime — 7/20 timed out BOTH ways and
+    # 7/23 saw 4 of 10 legs time out while the very next cycle succeeded.
+    # Timeouts were never auth/config failures (the conf writes fine every run)
+    # and were harmless — a local->Drive miss self-heals on the next cycle, and
+    # a Drive->local miss is gap-fill only thanks to --ignore-existing below.
     try:
         r = subprocess.run(
             ["rclone", "copy", src, dst,
              "--exclude", "model_cache.pkl",
              "--transfers", "8", "--quiet"] + (extra_flags or []),
-            capture_output=True, text=True, timeout=120)
+            capture_output=True, text=True, timeout=300)
         if r.returncode == 0:
             print(f"  {label} OK")
         else:
