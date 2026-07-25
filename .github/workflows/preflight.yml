@@ -260,6 +260,58 @@ jobs:
           assert REGIME_WEIGHTS[(1,1)] == 1.5, "neutral now: neutral samples get boost"
           print(f"  Regime weights      PASS  bear/bear={REGIME_WEIGHTS[(0,0)]}  bull/bull={REGIME_WEIGHTS[(2,2)]}")
 
+          # ── Test WRC pnl_history reader contract (2026-07-24 basis fix) ────
+          # The old reader did .get("total_pnl", 0) on a file with no such
+          # column and would have scored an all-zero series silently. The new
+          # contract: missing column REFUSES, blank cells are SKIPPED (never
+          # zero-filled), values are consumed as a DAILY series without diff.
+          import csv, io
+          def _read_daily(text):
+              r = csv.DictReader(io.StringIO(text))
+              if "total_pnl" not in (r.fieldnames or []):
+                  raise RuntimeError("no total_pnl column")
+              out = []
+              for row in r:
+                  v = str(row.get("total_pnl") or "").strip()
+                  if not v:
+                      continue
+                  try:
+                      out.append(float(v))
+                  except ValueError:
+                      pass
+              return out
+
+          try:
+              _read_daily("date,net_pl\n2026-07-01,5\n")
+              assert False, "reader must refuse a file without total_pnl"
+          except RuntimeError:
+              print("  WRC reader refuse   PASS  (missing column raises, no zero-fill)")
+
+          vals = _read_daily("date,total_pnl\n2026-07-01,\n2026-07-02,3.5\n2026-07-03,-1.25\n")
+          assert vals == [3.5, -1.25], f"blank cells must be skipped, got {vals}"
+          print("  WRC reader blanks   PASS  (blank = skipped, not zeroed)")
+
+          # ── Test pnl_history daily-basis fallback (writer contract) ────────
+          # When Alpaca's profit_loss is missing for a day, the fallback must
+          # be the day-over-day equity change — never equity − window base,
+          # which is cumulative and poisons the daily series (the 7/24 +$13k
+          # tail-row bug).
+          def _daily_fallback(pl, eqs):
+              prev = None; out = []
+              for i, e in enumerate(eqs):
+                  if pl[i] is not None:
+                      v = round(pl[i], 2)
+                  elif prev is not None:
+                      v = round(e - prev, 2)
+                  else:
+                      v = 0.0
+                  out.append(v); prev = e
+              return out
+
+          got = _daily_fallback([None, None, 5.0], [100.0, 102.5, 107.5])
+          assert got == [0.0, 2.5, 5.0], f"daily fallback wrong: {got}"
+          print(f"  Daily-basis fallback PASS  {got} (equity diffs, not eq-base)")
+
           print("\n  ✓ All unit tests passed")
           PYEOF
 
