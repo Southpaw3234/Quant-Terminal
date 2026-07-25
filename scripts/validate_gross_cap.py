@@ -327,6 +327,85 @@ check6("wl-ratio gate keeps only fresh-era rows", len(ns6c["_wl_log"]), 3)
 check6("wl-ratio gate: stale returns out of the mean",
        round(float(pd.to_numeric(ns6c["_wl_log"]["actual_return"]).mean()), 2), 0.02)
 
+# ── 7. kill-switch pnl_history fallback resurrection (2026-07-24) ────────────
+# Dead code 6/30→7/24: the fallback required a portfolio_value column the file
+# never had, so every Alpaca outage ran with NO drawdown check (the blind spot
+# during 7/24's midnight timeout). The writer now records portfolio_value and
+# the logic lives in the pure _ks_pnl_fallback -- extract the SHIPPED source
+# and replay it against synthetic curves. Contract: refuse rather than guess.
+_ks_start = src.index("def _ks_pnl_fallback(")
+_ks_end   = src.index("# ── end _ks_pnl_fallback")
+ns7 = {"__builtins__": __builtins__}
+exec(src[_ks_start:_ks_end], ns7)
+_fb = ns7["_ks_pnl_fallback"]
+
+NOW = pd.Timestamp("2026-07-24 21:00:00")
+LIMS = (-0.10, -0.20, -0.15)   # daily / weekly / peak, mirrors the live constants
+
+def curve(dailies, pv0=100000.0, pv_override=None, dates=None, cols=True):
+    """Build a synthetic pnl_history frame: daily P&L rows + equity levels."""
+    n = len(dailies)
+    if dates is None:
+        dates = [(NOW - pd.Timedelta(days=n - 1 - i)).strftime("%Y-%m-%d") for i in range(n)]
+    pvs, running = [], pv0
+    for d in dailies:
+        running += (d if d is not None else 0)
+        pvs.append(running)
+    if pv_override is not None:
+        pvs = pv_override
+    data = {"date": dates,
+            "unrealized_pnl": [""] * n, "realized_pnl": [""] * n,
+            "total_pnl": ["" if d is None else d for d in dailies],
+            "open_positions": [""] * n}
+    if cols:
+        data["portfolio_value"] = pvs
+    return pd.DataFrame(data)
+
+def check7(name, got, want):
+    ok = got == want
+    print(f"7.  {name:<52} got={str(got):<7} {'PASS' if ok else 'FAIL (want %s)' % want}")
+    if not ok:
+        fails.append(f"ks fallback {name}: got={got} want={want}")
+
+# (a) pre-fix file (no portfolio_value column) -> refuses, stays blind
+r = _fb(curve([100, -50, 200], cols=False), *LIMS, _now=NOW)
+check7("old schema (no portfolio_value) refuses", r["evaluated"], False)
+
+# (b) healthy curve -> evaluates, no trip (and denominator is REAL equity:
+#     -2.6k on a $100k account reads -2.6%, NOT the 6/30 hardcoded-$10k -26%)
+r = _fb(curve([500, -300, 800, -2600]), *LIMS, _now=NOW)
+check7("healthy curve evaluates without tripping", (r["evaluated"], r["reason"] is None), (True, True))
+check7("6/30 regression: real denominator (-2.6k/-100k)", round(r["daily_dd"], 3), -0.026)
+
+# (c) single-day -11% -> daily trip
+r = _fb(curve([200, 100, -11000]), *LIMS, _now=NOW)
+check7("daily -11% trips the daily limit", "Daily drawdown" in str(r["reason"]), True)
+
+# (d) five days summing -21% (each above the daily limit alone) -> weekly trip
+r = _fb(curve([-4500, -4000, -4200, -4300, -4000]), *LIMS, _now=NOW)
+check7("weekly -21% trips the weekly limit", "Weekly drawdown" in str(r["reason"]), True)
+
+# (e) mild dailies but equity 16% off its high-water mark -> peak trip
+r = _fb(curve([-500, -400, -300], pv_override=[118000, 100000, 99000]), *LIMS, _now=NOW)
+check7("peak -16% off HWM trips the peak limit", "Peak drawdown" in str(r["reason"]), True)
+
+# (f) legacy rows only (blank equity everywhere) -> refuses
+r = _fb(curve([100, 200], pv_override=["", ""]), *LIMS, _now=NOW)
+check7("all-blank portfolio_value refuses", r["evaluated"], False)
+
+# (g) last row legacy-blank (total_pnl AND pv) -> falls back to last real day
+r = _fb(curve([300, -700, None], pv_override=[100300, 99600, ""]), *LIMS, _now=NOW)
+check7("blank last row -> uses last real daily", round(r["daily_dd"], 4), round(-700 / 99600, 4))
+
+# (h) curve older than 7 days -> refuses (stale data says nothing about today)
+old = [(NOW - pd.Timedelta(days=40 - i)).strftime("%Y-%m-%d") for i in range(3)]
+r = _fb(curve([100, 200, 300], dates=old), *LIMS, _now=NOW)
+check7("week-stale curve refuses", r["evaluated"], False)
+
+# (i) zero/negative equity -> refuses (never a garbage denominator)
+r = _fb(curve([100, 200], pv_override=[0, -5]), *LIMS, _now=NOW)
+check7("non-positive equity refuses", r["evaluated"], False)
+
 print()
 if fails:
     print("VALIDATION FAILED:")

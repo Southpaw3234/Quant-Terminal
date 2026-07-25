@@ -246,7 +246,7 @@ try:
     # line graph accumulate a real multi-day trend instead of being wiped to
     # a single point every run.
     _PNL_EPOCH = "2026-05-28"
-    _pnl_header = "date,unrealized_pnl,realized_pnl,total_pnl,open_positions\n"
+    _pnl_header = "date,unrealized_pnl,realized_pnl,total_pnl,open_positions,portfolio_value\n"
     if _pnl_path.exists():
         try:
             _pnl_df = _pd_rst.read_csv(_pnl_path)
@@ -4906,6 +4906,70 @@ _KILL_DAILY_DRAWDOWN  = -0.10   # -10% net liquidation value in one day (paper a
 _KILL_WEEKLY_DRAWDOWN = -0.20   # -20% over rolling 5-day window (paper account)
 _KILL_VIX_LEVEL       = 45.0   # hard VIX stop
 
+def _ks_pnl_fallback(_df, _daily_lim, _weekly_lim, _peak_lim, _now=None, _max_age_days=7):
+    """Drawdown evaluator for when Alpaca is unreachable (pure; validated in
+    scripts/validate_gross_cap.py section 7 -- keep it dependency-light).
+
+    Resurrected 2026-07-24: this fallback was dead code from 6/30 to now -- it
+    required a portfolio_value column pnl_history.csv never had, so every
+    Alpaca outage ran the cycle with NO drawdown check at all (the blind spot
+    during 7/24's midnight timeout). The writer now records portfolio_value
+    (broker closing equity) per row, and this evaluates the same three
+    drawdowns as the primary Alpaca path.
+
+    Contract (2026-07-24 basis fix): total_pnl is a DAILY P&L series;
+    portfolio_value is that day's closing equity, blank on rows the yfinance
+    fallback wrote. Daily dd = last daily P&L / last real equity; weekly =
+    5-day P&L sum / equity; peak = last equity vs the file's equity HWM.
+
+    Refusals (returns evaluated=False, caller stays blind rather than guess):
+    no portfolio_value column (pre-fix file), no positive equity value, no
+    parseable total_pnl, or data older than _max_age_days (a week-stale
+    curve says nothing about today -- the 6/30 phantom trip came from
+    dividing by a WRONG denominator; never repeat that class).
+    """
+    import pandas as _pd
+    _out = {"evaluated": False, "reason": None, "daily_dd": None,
+            "weekly_dd": None, "peak_dd": None, "pv": None}
+    if "portfolio_value" not in _df.columns:
+        return _out
+    _df = _df.copy()
+    _df["date"]            = _pd.to_datetime(_df["date"], errors="coerce")
+    _df["total_pnl"]       = _pd.to_numeric(_df["total_pnl"], errors="coerce")
+    _df["portfolio_value"] = _pd.to_numeric(_df["portfolio_value"], errors="coerce")
+    _df = _df.dropna(subset=["date"]).sort_values("date")
+
+    _pv_rows = _df[_df["portfolio_value"] > 0]
+    _dd_rows = _df.dropna(subset=["total_pnl"])
+    if not len(_pv_rows) or not len(_dd_rows):
+        return _out
+
+    _last_dt = max(_pv_rows["date"].iloc[-1], _dd_rows["date"].iloc[-1])
+    _now = _pd.Timestamp.utcnow().tz_localize(None) if _now is None else _pd.Timestamp(_now)
+    if (_now.normalize() - _last_dt.normalize()).days > _max_age_days:
+        return _out          # stale curve -> stay blind, never guess
+
+    _pv = float(_pv_rows["portfolio_value"].iloc[-1])
+    _out["pv"] = _pv
+    _out["evaluated"] = True
+    _out["daily_dd"]  = float(_dd_rows["total_pnl"].iloc[-1]) / _pv
+    _out["weekly_dd"] = float(_dd_rows["total_pnl"].tail(5).sum()) / _pv
+    if len(_pv_rows) >= 2:
+        _hwm = float(_pv_rows["portfolio_value"].max())
+        _out["peak_dd"] = (_pv - _hwm) / max(_hwm, 1.0)
+
+    if _out["daily_dd"] <= _daily_lim:
+        _out["reason"] = (f"Daily drawdown {_out['daily_dd']:+.2%} breached limit "
+                          f"{_daily_lim:.0%} (pnl_history fallback)")
+    elif _out["weekly_dd"] <= _weekly_lim:
+        _out["reason"] = (f"Weekly drawdown {_out['weekly_dd']:+.2%} breached limit "
+                          f"{_weekly_lim:.0%} (pnl_history fallback)")
+    elif _out["peak_dd"] is not None and _out["peak_dd"] <= _peak_lim:
+        _out["reason"] = (f"Peak drawdown {_out['peak_dd']:+.2%} breached limit "
+                          f"{_peak_lim:.0%} (pnl_history fallback)")
+    return _out
+# ── end _ks_pnl_fallback (validator extraction sentinel — do not remove) ──────
+
 _pnl_kill_triggered = False
 _kill_reason = None
 _ks_evaluated = False   # True once we have a valid drawdown reading this run
@@ -4958,37 +5022,36 @@ if True:
         print(f"  [kill switch] Alpaca drawdown check failed ({_ks_ae}) — falling back to pnl_history")
 
     # ── Fallback: internal pnl_history (only if Alpaca unreachable) ───────────
-    # Still requires a REAL account value — never the old hardcoded $10k. If we
-    # can't establish it, skip the P&L check rather than trip on a bad ratio.
+    # Resurrected 2026-07-24 (was dead code since 6/30: it required a
+    # portfolio_value column the file never had, and its diff math predated
+    # the daily basis contract). Logic lives in _ks_pnl_fallback above --
+    # pure, and behaviorally validated in scripts/validate_gross_cap.py §7.
+    # Still refuses without a REAL account value — never a guessed
+    # denominator, and never a curve older than a week. Note evaluated=True
+    # also enables the stale-flag self-heal below, same as the primary path:
+    # a genuine breach is still IN the CSV, so it cannot clear erroneously.
     if not _ks_alpaca_ok:
         try:
             import pandas as _pd_ks
             _hist_ks = Path("data/predictions/pnl_history.csv")
+            _fb = None
             if _hist_ks.exists():
-                _pnl_df = _pd_ks.read_csv(_hist_ks)
-                _pnl_df["date"]      = _pd_ks.to_datetime(_pnl_df["date"], errors="coerce")
-                _pnl_df["total_pnl"] = _pd_ks.to_numeric(_pnl_df["total_pnl"], errors="coerce")
-                _pnl_df = _pnl_df.sort_values("date").dropna(subset=["date", "total_pnl"])
-                _portfolio_val = None
-                if "portfolio_value" in _pnl_df.columns and len(_pnl_df):
-                    try: _portfolio_val = float(_pnl_df["portfolio_value"].iloc[-1])
-                    except Exception: _portfolio_val = None
-                if len(_pnl_df) >= 2 and _portfolio_val and _portfolio_val > 0:
-                    _today_pnl  = float(_pnl_df["total_pnl"].iloc[-1])
-                    _yest_pnl   = float(_pnl_df["total_pnl"].iloc[-2])
-                    _peak_pnl   = float(_pnl_df["total_pnl"].tail(6).iloc[0])
-                    _daily_dd   = (_today_pnl - _yest_pnl) / _portfolio_val
-                    _weekly_dd  = (_today_pnl - _peak_pnl) / _portfolio_val
-                    _ks_evaluated = True
-                    print(f"\n[KILL SWITCH · pnl_history] daily_dd={_daily_dd:+.2%}  "
-                          f"weekly_dd={_weekly_dd:+.2%}  (acct=${_portfolio_val:,.0f})")
-                    if _daily_dd <= _KILL_DAILY_DRAWDOWN:
-                        _kill_reason = f"Daily drawdown {_daily_dd:+.2%} breached limit {_KILL_DAILY_DRAWDOWN:.0%}"
-                    elif _weekly_dd <= _KILL_WEEKLY_DRAWDOWN:
-                        _kill_reason = f"Weekly drawdown {_weekly_dd:+.2%} breached limit {_KILL_WEEKLY_DRAWDOWN:.0%}"
-                else:
-                    print("  [kill switch] no real account value available — skipping P&L "
-                          "drawdown check (refuses to trip on a guessed denominator)")
+                _fb = _ks_pnl_fallback(_pd_ks.read_csv(_hist_ks),
+                                       _KILL_DAILY_DRAWDOWN,
+                                       _KILL_WEEKLY_DRAWDOWN,
+                                       _KILL_PEAK_DRAWDOWN)
+            if _fb and _fb["evaluated"]:
+                _ks_evaluated = True
+                _peak_str = (f"peak_dd={_fb['peak_dd']:+.2%}  "
+                             if _fb["peak_dd"] is not None else "")
+                print(f"\n[KILL SWITCH · pnl_history] daily_dd={_fb['daily_dd']:+.2%}  "
+                      f"weekly_dd={_fb['weekly_dd']:+.2%}  {_peak_str}"
+                      f"(acct=${_fb['pv']:,.0f}, broker unreachable — CSV fallback)")
+                if _fb["reason"]:
+                    _kill_reason = _fb["reason"]
+            else:
+                print("  [kill switch] no real account value available — skipping P&L "
+                      "drawdown check (refuses to trip on a guessed denominator)")
         except Exception as _ks_check_e:
             print(f"  Kill switch check error (non-fatal): {_ks_check_e}")
 
@@ -5609,11 +5672,17 @@ if RUN_TYPE in ("morning", "intraday") and _AK and _SK:
             # WRC sample with fake zero-P&L observations and dilute its SR.
             if _d < "2026-05-28":
                 continue
+            # portfolio_value = that day's closing equity. Added 2026-07-24 so
+            # the kill-switch pnl_history fallback has a REAL denominator when
+            # Alpaca is unreachable (it was dead code without this column, and
+            # the account ran without any drawdown check during outages).
             _rows.append({"date": _d, "unrealized_pnl": "", "realized_pnl": "",
-                          "total_pnl": _tot_i, "open_positions": ""})
+                          "total_pnl": _tot_i, "open_positions": "",
+                          "portfolio_value": round(_eq_i, 2)})
 
         _hist_df = _pd_ap.DataFrame(_rows, columns=["date", "unrealized_pnl",
-                                    "realized_pnl", "total_pnl", "open_positions"])
+                                    "realized_pnl", "total_pnl", "open_positions",
+                                    "portfolio_value"])
         if len(_hist_df):
             _hist_df = _hist_df.drop_duplicates(subset="date", keep="last")
 
@@ -5644,7 +5713,8 @@ if RUN_TYPE in ("morning", "intraday") and _AK and _SK:
         _today_real  = round(_cum_total - _unrealized, 2)
         _today_row   = {"date": _today_str, "unrealized_pnl": _unrealized,
                         "realized_pnl": _today_real, "total_pnl": _today_total,
-                        "open_positions": _n_open}
+                        "open_positions": _n_open,
+                        "portfolio_value": round(_equity, 2)}
         _hist_df = _hist_df[_hist_df["date"] != _today_str]
         _hist_df = _pd_ap.concat([_hist_df, _pd_ap.DataFrame([_today_row])],
                                  ignore_index=True).sort_values("date")
@@ -5737,6 +5807,10 @@ if RUN_TYPE in ("morning", "intraday") and not _alpaca_pnl_ok:
                 "realized_pnl":   round(_realized, 2),
                 "total_pnl":      "",
                 "open_positions": len(_open_pos),
+                # Blank like total_pnl: this path has no broker equity, and a
+                # yfinance-reconstructed guess must never become the kill
+                # switch's drawdown denominator (the 6/30 phantom-trip class).
+                "portfolio_value": "",
             }
 
             if _hist_path.exists():
