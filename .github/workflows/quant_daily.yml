@@ -154,6 +154,32 @@ jobs:
             fi
           fi
 
+          # ── Market-hours guard on the morning retrain (2026-07-24 incident) ──
+          # A full morning retrain must only resolve when it can actually trade.
+          # Two paths could fire one overnight:
+          #   • the catch-all `else TYPE="morning"` above swallows every hour not
+          #     named in the branches — including 00-12 and 22-23;
+          #   • the self-heal compares against a UTC date, but the UTC day rolls
+          #     over at 8 PM ET, so from 00:00Z the marker (still yesterday's)
+          #     looks stale and forces a "morning" that is really last night.
+          # 7/24: a 00:00:03Z dispatch retrained 00:00-01:46Z (8-9:46 PM ET Thu),
+          # traded nothing (market shut), advanced the marker, and so downgraded
+          # the real 13:35Z morning to intraday -> a zero-entry trading day. It
+          # also ran the kill switch blind (Alpaca timed out; the P&L drawdown
+          # check skipped) and printed no gross-cap/oversell-guard lines at all,
+          # because no BUY path is reached outside market hours.
+          # 13-20Z covers the US session in both DST regimes (EDT 13:30-20:00Z,
+          # EST 14:30-21:00Z) and leaves the 16/17/18Z self-heal path intact.
+          # force=true is a deliberate manual override and is left alone.
+          # 10# forces base 10: bash reads a bare 08/09 as invalid octal and dies.
+          HOUR_N=$((10#$HOUR))
+          if [ "$TYPE" = "morning" ] && [ "$FORCE" != "true" ]; then
+            if [ "$HOUR_N" -lt 13 ] || [ "$HOUR_N" -gt 20 ]; then
+              echo "Market-hours guard: morning retrain resolved at ${HOUR}:${MIN} UTC, outside the 13-20Z session window — downgrading to intraday (dispatch with force=true to override)."
+              TYPE="intraday"
+            fi
+          fi
+
           echo "type=$TYPE" >> $GITHUB_OUTPUT
           echo "Run type: $TYPE (UTC hour=$HOUR day=$DAY)"
 
