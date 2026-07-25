@@ -3511,20 +3511,40 @@ def _white_reality_check(daily_pnl, n_bootstrap=1000, seed=42):
 if _os15wrc.environ.get("RUN_TYPE", "morning") in ("morning", "evening"):
     try:
         import csv as _csv15
-        _pnl_path = _P15wrc("data/predictions/daily_pnl_log.csv")
+        # 2026-07-24 audit: this read data/predictions/daily_pnl_log.csv, which
+        # nothing ever writes rows to (header-only since creation) -- so this
+        # Stage-1 gate never ran. Worse, that file has no total_pnl column, and
+        # .get("total_pnl", 0) would have scored an all-zero series and emitted
+        # a p-value without ever erroring. A blind gate that silently returns a
+        # fake answer is worse than one that is visibly broken: read the real
+        # curve, and REFUSE loudly if the column is missing.
+        _pnl_path = _P15wrc("data/predictions/pnl_history.csv")
         _pnl_rows = []
+        _pnl_skipped = 0
         if _pnl_path.exists():
-            with open(_pnl_path, encoding="utf-8") as _f15:
+            with open(_pnl_path, encoding="utf-8-sig") as _f15:
                 _reader15 = _csv15.DictReader(_f15)
+                if "total_pnl" not in (_reader15.fieldnames or []):
+                    raise RuntimeError(
+                        f"pnl_history.csv has no total_pnl column (found "
+                        f"{_reader15.fieldnames}) -- refusing to run the "
+                        "Reality Check on a defaulted series")
                 for _row15 in _reader15:
+                    _v15 = str(_row15.get("total_pnl") or "").strip()
+                    if not _v15:
+                        continue      # blank cell = no data, never a zero
                     try:
-                        _pnl_rows.append(float(_row15.get("total_pnl", 0) or 0))
-                    except Exception:
-                        pass
+                        _pnl_rows.append(float(_v15))
+                    except ValueError:
+                        _pnl_skipped += 1
+        if _pnl_skipped:
+            print(f"  [Tier3] WRC: skipped {_pnl_skipped} unparseable total_pnl rows")
 
         if len(_pnl_rows) >= 30:
-            # Compute daily returns from cumulative PnL
-            _daily_rets = _np15wrc.diff(_pnl_rows)
+            # pnl_history's total_pnl is a DAILY P&L series (basis contract
+            # fixed alongside this repoint) -- consume it directly. Do NOT
+            # np.diff: diffing a daily series destroys the signal.
+            _daily_rets = _np15wrc.asarray(_pnl_rows, dtype=float)
             _wrc_result = _white_reality_check(_daily_rets, n_bootstrap=1000)
             if _wrc_result:
                 _P15wrc("data/predictions").mkdir(exist_ok=True)
@@ -5549,9 +5569,14 @@ if RUN_TYPE in ("morning", "intraday") and _AK and _SK:
             pass
 
         # --- portfolio history: full daily equity curve (#2) ---
+        # period=1A, not 2M: this file is rebuilt from scratch every run, so a
+        # 2M window would silently slide the 2026-05-28 trading epoch off the
+        # front by late September and shrink the WRC's measurement window from
+        # under it. 1A holds the whole account history until this account is a
+        # year old. Rows before the epoch are dropped below.
         _ph = _rq_ap.get(f"{_ap_base}/v2/account/portfolio/history",
                          headers=_ap_hdr,
-                         params={"period": "2M", "timeframe": "1D",
+                         params={"period": "1A", "timeframe": "1D",
                                  "extended_hours": "true"}, timeout=20).json()
         _ts   = _ph.get("timestamp", []) or []
         _eq   = _ph.get("equity", []) or []
@@ -5559,6 +5584,7 @@ if RUN_TYPE in ("morning", "intraday") and _AK and _SK:
         _base = float(_ph.get("base_value", 0) or 0)
 
         _rows = []
+        _prev_eq_i = None
         for _i in range(len(_ts)):
             try:
                 _d = datetime.datetime.utcfromtimestamp(int(_ts[_i])).strftime("%Y-%m-%d")
@@ -5567,11 +5593,22 @@ if RUN_TYPE in ("morning", "intraday") and _AK and _SK:
             _eq_i = float(_eq[_i]) if _i < len(_eq) and _eq[_i] not in (None, "") else None
             if _eq_i is None:
                 continue
-            # Alpaca-computed P/L vs window base; fall back to equity − base.
+            # Alpaca's per-day profit_loss; fall back to the day-over-day
+            # equity change. NEVER equity − base: that is cumulative-vs-window,
+            # and a single cumulative row inside a daily series is exactly the
+            # basis break the contract above forbids.
             if _i < len(_pl) and _pl[_i] not in (None, ""):
                 _tot_i = round(float(_pl[_i]), 2)
+            elif _prev_eq_i is not None:
+                _tot_i = round(_eq_i - _prev_eq_i, 2)
             else:
-                _tot_i = round(_eq_i - _base, 2) if _base else 0.0
+                _tot_i = 0.0
+            _prev_eq_i = _eq_i
+            # Same epoch as data_reset's _PNL_EPOCH: trading began 2026-05-28;
+            # pre-epoch rows are flat-$100k funding days that would pad the
+            # WRC sample with fake zero-P&L observations and dilute its SR.
+            if _d < "2026-05-28":
+                continue
             _rows.append({"date": _d, "unrealized_pnl": "", "realized_pnl": "",
                           "total_pnl": _tot_i, "open_positions": ""})
 
@@ -5580,12 +5617,31 @@ if RUN_TYPE in ("morning", "intraday") and _AK and _SK:
         if len(_hist_df):
             _hist_df = _hist_df.drop_duplicates(subset="date", keep="last")
 
-        # Today's row: enrich with the live unrealized/realized split. Total is
-        # the broker curve value; unrealized is open-position MTM; realized is
-        # the remainder (locked-in P&L = total − currently-open unrealized).
-        _today_str   = datetime.datetime.utcnow().strftime("%Y-%m-%d")
-        _today_total = round(_equity - _base, 2) if _base else _unrealized
-        _today_real  = round(_today_total - _unrealized, 2)
+        # Today's row: enrich with the live unrealized/realized split.
+        # ── BASIS CONTRACT (2026-07-24): total_pnl is a DAILY P&L series in
+        # EVERY row. ── The historical rows above are Alpaca's per-day
+        # profit_loss values, but this row used to write equity − window base
+        # (CUMULATIVE): one +$13k-scale outlier at the tail of an otherwise
+        # daily file, poisoning every downstream Sharpe/diff consumer (the
+        # White Reality Check reads this file now). Daily = equity vs prior
+        # trading-day close (last_equity) -- the same basis as the
+        # [KILL SWITCH - Alpaca] daily_dd line.
+        # unrealized_pnl stays a snapshot (open-position MTM) and realized_pnl
+        # stays CUMULATIVE locked-in P&L vs the window base -- today-only
+        # enrichment columns, deliberately NOT part of the daily series.
+        # Date is the ET trading day, not UTC (same rollover class as the
+        # morning-marker fix 49092f1: UTC flips at 8 PM ET, and an overnight
+        # intraday cycle would stamp tomorrow's date on today's P&L).
+        try:
+            import zoneinfo as _zi_ap
+            _today_str = datetime.datetime.now(
+                _zi_ap.ZoneInfo("America/New_York")).strftime("%Y-%m-%d")
+        except Exception:
+            _today_str = datetime.datetime.utcnow().strftime("%Y-%m-%d")
+        _last_eq     = float(_acct.get("last_equity", 0) or 0)
+        _today_total = round(_equity - _last_eq, 2) if _last_eq else 0.0
+        _cum_total   = round(_equity - _base, 2) if _base else _unrealized
+        _today_real  = round(_cum_total - _unrealized, 2)
         _today_row   = {"date": _today_str, "unrealized_pnl": _unrealized,
                         "realized_pnl": _today_real, "total_pnl": _today_total,
                         "open_positions": _n_open}
@@ -5598,7 +5654,8 @@ if RUN_TYPE in ("morning", "intraday") and _AK and _SK:
         _hist_df.to_csv(_hist_path, index=False)
         _alpaca_pnl_ok = True
         print(f"  P&L snapshot via Alpaca [{_today_str}]: equity=${_equity:,.2f}  "
-              f"unrealized={_unrealized:+.2f}  total={_today_total:+.2f}  "
+              f"unrealized={_unrealized:+.2f}  today={_today_total:+.2f}  "
+              f"cum={_cum_total:+.2f}  "
               f"open={_n_open}  | {len(_hist_df)}-day curve from portfolio/history")
     except Exception as _ap_pnl_e:
         print(f"  P&L snapshot via Alpaca failed ({_ap_pnl_e}) — falling back to CSV reconstruction")
@@ -5660,12 +5717,25 @@ if RUN_TYPE in ("morning", "intraday") and not _alpaca_pnl_ok:
                 _dl = _pd.read_csv(_pnl_log_path)
                 _realized = _pd.to_numeric(_dl.get("net_pl", _pd.Series(dtype=float)), errors="coerce").sum()
 
-            _today_str = datetime.datetime.utcnow().strftime("%Y-%m-%d")
+            # ET trading date, same class as the Alpaca path / marker fix.
+            try:
+                import zoneinfo as _zi_lg
+                _today_str = datetime.datetime.now(
+                    _zi_lg.ZoneInfo("America/New_York")).strftime("%Y-%m-%d")
+            except Exception:
+                _today_str = datetime.datetime.utcnow().strftime("%Y-%m-%d")
+            # total_pnl left BLANK on this fallback path: the daily basis
+            # contract needs equity vs prior close, which this yfinance
+            # reconstruction cannot know (unrealized + all-time realized is a
+            # third, different basis — and on 2026-07-24's midnight Alpaca
+            # timeout this path wrote a fake $0.00 row). A blank is skipped by
+            # every reader; a wrong-basis number poisons the series until the
+            # next Alpaca rebuild replaces it.
             _new_row = {
                 "date":           _today_str,
                 "unrealized_pnl": round(_unrealized, 2),
                 "realized_pnl":   round(_realized, 2),
-                "total_pnl":      round(_unrealized + _realized, 2),
+                "total_pnl":      "",
                 "open_positions": len(_open_pos),
             }
 
@@ -5680,7 +5750,8 @@ if RUN_TYPE in ("morning", "intraday") and not _alpaca_pnl_ok:
                 _h = _pd.DataFrame([_new_row])
 
             _h.to_csv(_hist_path, index=False)
-            print(f"  P&L snapshot [{_today_str}]: unrealized={_unrealized:+.2f}  realized={_realized:+.2f}  total={_unrealized+_realized:+.2f}")
+            print(f"  P&L snapshot [{_today_str}]: unrealized={_unrealized:+.2f}  realized={_realized:+.2f}  "
+                  f"total_pnl=blank (daily basis unknowable without broker equity; next Alpaca rebuild fills it)")
 
     except Exception as _pnl_snap_e:
         print(f"  P&L snapshot error: {_pnl_snap_e}")
