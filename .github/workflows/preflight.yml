@@ -336,6 +336,26 @@ jobs:
           print("\n  All workflow YAML parses ✓")
           PYEOF
 
+      - name: 11 — Runner tz database resolves America/New_York
+        run: |
+          # The morning marker is an ET date (7/24 fix). If the runner image
+          # ever ships without tzdata, `date` silently returns UTC and the
+          # marker quietly reverts to the UTC rollover that caused the 7/24
+          # zero-entry day — the resolver warns at runtime, but that is after
+          # the fact. Prove it here instead. (Git Bash on Windows really does
+          # return GMT for this, so it is not a hypothetical.)
+          ZONE="$(TZ=America/New_York date +%Z 2>/dev/null || echo UNKNOWN)"
+          ET="$(TZ=America/New_York date +%Y-%m-%d 2>/dev/null || echo none)"
+          UTC="$(date -u +%Y-%m-%d)"
+          echo "  zone=$ZONE  ET=$ET  UTC=$UTC"
+          case "$ZONE" in
+            EDT|EST) echo "  tz database resolves America/New_York ✓" ;;
+            *) echo "  tz lookup FAILED (got '$ZONE') — the ET marker would silently fall back to UTC ✗"; exit 1 ;;
+          esac
+          echo "$ET" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' \
+            && echo "  ET date well-formed ✓" \
+            || { echo "  ET date malformed ✗"; exit 1; }
+
       - name: Summary
         if: always()
         run: |

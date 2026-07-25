@@ -130,8 +130,34 @@ jobs:
           [ -z "$LAST_MORNING" ] && LAST_MORNING="$MARKER_WS"
           echo "Morning marker: origin/master='$MARKER_REF' checkout='$MARKER_WS' -> using '$LAST_MORNING'"
 
+          # ── The marker is an ET date, not a UTC one (2026-07-24 root cause) ──
+          # The marker answers "has the retrain run for THIS TRADING DAY?", and a
+          # trading day is an ET day. Comparing it against `date -u` made it roll
+          # over at 8 PM ET (7 PM under EST), so every run in that window saw
+          # yesterday's marker as stale and self-healed into an after-hours
+          # retrain -- which then advanced the marker and downgraded the real
+          # morning run to intraday (7/24: a zero-entry trading day).
+          # TZ=America/New_York tracks EDT/EST automatically. If the tz database
+          # is missing, `date` silently returns UTC, so the zone is verified and
+          # the fallback is loud: degrade to exactly the old UTC behaviour rather
+          # than take the system offline -- the 13-20Z guard below is the backstop.
+          # HOUR/MIN/DAY deliberately stay UTC: the hour branches and the 7/11
+          # weekend fix are all written against UTC and must not shift.
+          UTC_TODAY="$(date -u +%Y-%m-%d)"
+          ET_ZONE="$(TZ=America/New_York date +%Z 2>/dev/null || echo UNKNOWN)"
+          ET_TODAY="$(TZ=America/New_York date +%Y-%m-%d 2>/dev/null || echo "$UTC_TODAY")"
+          case "$ET_ZONE" in
+            EDT|EST)
+              TODAY_ET="$ET_TODAY" ;;
+            *)
+              TODAY_ET="$UTC_TODAY"
+              echo "::warning::tz lookup for America/New_York failed (zone='$ET_ZONE') — falling back to the UTC date for the morning marker." ;;
+          esac
+          echo "Trading date: ET='$TODAY_ET' (UTC='$UTC_TODAY', zone='$ET_ZONE')"
+          echo "today_et=$TODAY_ET" >> $GITHUB_OUTPUT
+
           if [ -z "$MANUAL" ] && [ "$DAY" -le 5 ]; then
-            TODAY=$(date -u +%Y-%m-%d)
+            TODAY="$TODAY_ET"
             if [ "$LAST_MORNING" != "$TODAY" ]; then
               echo "Self-heal: no morning retrain for $TODAY (last=$LAST_MORNING) — running morning."
               TYPE="morning"
@@ -148,7 +174,7 @@ jobs:
           FORCE="${{ github.event.inputs.force }}"
           if [ "$TYPE" = "morning" ] && [ -n "$MANUAL" ] && [ "$FORCE" != "true" ]; then
             # Same race-proof marker as above (origin/master tip, workspace fallback).
-            if [ "$LAST_MORNING" = "$(date -u +%Y-%m-%d)" ]; then
+            if [ "$LAST_MORNING" = "$TODAY_ET" ]; then
               echo "Explicit morning dispatch but retrain already done today — downgrading to intraday (dispatch with force=true to override)."
               TYPE="intraday"
             fi
@@ -211,7 +237,22 @@ jobs:
 
       - name: Record morning retrain marker
         if: steps.run_type.outputs.type == 'morning'
-        run: date -u +%Y-%m-%d > data/last_morning_run.txt
+        # Reuse the SAME date the gate compared against rather than recomputing
+        # it here. This step runs 2-3 h after the gate, so an independent `date`
+        # call could land on the next day and write a marker the gate would never
+        # match -- silently re-arming the duplicate retrain the marker prevents.
+        # An empty or malformed marker is worse than a stale one: the gate would
+        # read "" , never match today, and self-heal a full retrain on EVERY
+        # subsequent cycle -- the exact failure this marker exists to prevent.
+        # So validate the shape and never write anything but a real ISO date.
+        run: |
+          ET_DATE="${{ steps.run_type.outputs.today_et }}"
+          if ! printf '%s' "$ET_DATE" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'; then
+            ET_DATE="$(TZ=America/New_York date +%Y-%m-%d 2>/dev/null || date -u +%Y-%m-%d)"
+            echo "::error::run_type emitted no usable today_et — fell back to a locally computed '$ET_DATE'. The marker gate and this writer may now disagree; check the resolver."
+          fi
+          printf '%s\n' "$ET_DATE" > data/last_morning_run.txt
+          echo "Marker written: $(cat data/last_morning_run.txt)"
 
       - name: Run stat-arb pairs scanner (morning weekly)
         if: steps.run_type.outputs.type == 'morning'
