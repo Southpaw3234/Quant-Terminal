@@ -289,6 +289,53 @@ jobs:
           print("\n  Workflow YAML OK ✓")
           PYEOF
 
+      - name: 10 — Workflow YAML actually parses
+        run: |
+          pip install --quiet pyyaml
+          python - <<'PYEOF'
+          import sys, glob, yaml
+
+          # Check 9 only substring-greps quant_daily.yml, so a syntactically
+          # broken workflow passes every other check and lands on master, where
+          # an unparseable file means GitHub runs NOTHING — a silent trading
+          # outage. Parse them all for real.
+          ok = True
+          for path in sorted(glob.glob(".github/workflows/*.yml")):
+              try:
+                  doc = yaml.safe_load(open(path, encoding="utf-8"))
+                  assert isinstance(doc, dict), "top level is not a mapping"
+                  print(f"  {path:<45} PARSES ✓")
+              except Exception as e:
+                  print(f"  {path:<45} BROKEN ✗  {type(e).__name__}: {e}")
+                  ok = False
+
+          # A `run: |` block scalar can stay valid YAML while silently losing
+          # lines to a bad indent, so assert the run-type resolver survived
+          # intact — it is the gate every dup-retrain fix hangs off.
+          try:
+              d = yaml.safe_load(open(".github/workflows/quant_daily.yml", encoding="utf-8"))
+              step = [s for s in d["jobs"]["trade"]["steps"] if s.get("id") == "run_type"][0]
+              body = step["run"]
+              anchors = [
+                  'echo "type=$TYPE" >> $GITHUB_OUTPUT',   # step output survives
+                  "Morning marker:",                        # 7/8 checkout-race gate
+                  "Market-hours guard:",                    # 7/24 overnight-retrain gate
+              ]
+              for a in anchors:
+                  if a in body:
+                      print(f"  run_type anchor {a[:38]:<40} PRESENT ✓")
+                  else:
+                      print(f"  run_type anchor {a[:38]:<40} MISSING ✗")
+                      ok = False
+          except Exception as e:
+              print(f"  quant_daily.yml run_type step   UNREADABLE ✗  {type(e).__name__}: {e}")
+              ok = False
+
+          if not ok:
+              sys.exit(1)
+          print("\n  All workflow YAML parses ✓")
+          PYEOF
+
       - name: Summary
         if: always()
         run: |
