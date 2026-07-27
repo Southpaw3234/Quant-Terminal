@@ -24,44 +24,44 @@
     "rolling_acc": 1.0
   },
   "GOOGL": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "AMZN": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "META": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "TSLA": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "AVGO": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "ORCL": {
     "correct": 0,
@@ -72,20 +72,20 @@
     "rolling_acc": 0.0
   },
   "ADBE": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "CRM": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "NOW": {
     "correct": 0,
@@ -104,28 +104,28 @@
     "rolling_acc": 1.0
   },
   "PLTR": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "NET": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "DDOG": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "ZS": {
     "correct": 0,
@@ -152,28 +152,28 @@
     "rolling_acc": 0.0
   },
   "SHOP": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "WDAY": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "TEAM": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "INTU": {
     "correct": 1,
@@ -184,28 +184,28 @@
     "rolling_acc": 1.0
   },
   "CDNS": {
-    "correct": 0,
-    "total": 1,
-    "recent": [
-      0
-    ],
-    "rolling_acc": 0.0
-  },
-  "SNPS": {
-    "correct": 0,
-    "total": 1,
-    "recent": [
-      0
-    ],
-    "rolling_acc": 0.0
-  },
-  "FTNT": {
     "correct": 1,
     "total": 1,
     "recent": [
       1
     ],
     "rolling_acc": 1.0
+  },
+  "SNPS": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "FTNT": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
   },
   "ANET": {
     "correct": 0,
@@ -224,14 +224,22 @@
     "rolling_acc": 1.0
   },
   "IBM": {
-    "correct": 0,
+    "correct": 1,
     "total": 1,
     "recent": [
-      0
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "CSCO": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "IT": {
     "correct": 0,
     "total": 1,
     "recent": [
@@ -239,21 +247,13 @@
     ],
     "rolling_acc": 0.0
   },
-  "IT": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
-      1
-    ],
-    "rolling_acc": 1.0
-  },
   "TYL": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "ROP": {
     "correct": 1,
@@ -264,12 +264,12 @@
     "rolling_acc": 1.0
   },
   "PYPL": {
-    "correct": 0,
+    "correct": 1,
     "total": 1,
     "recent": [
-      0
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "COIN": {
     "correct": 1,
@@ -288,12 +288,12 @@
     "rolling_acc": 0.0
   },
   "HOOD": {
-    "correct": 0,
+    "correct": 1,
     "total": 1,
     "recent": [
-      0
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "JPM": {
     "correct": 1,
@@ -304,12 +304,12 @@
     "rolling_acc": 1.0
   },
   "V": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "MA": {
     "correct": 1,
@@ -328,28 +328,28 @@
     "rolling_acc": 1.0
   },
   "GS": {
-    "correct": 0,
+    "correct": 1,
     "total": 1,
     "recent": [
-      0
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "MS": {
-    "correct": 0,
+    "correct": 1,
     "total": 1,
     "recent": [
-      0
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "BLK": {
-    "correct": 0,
+    "correct": 1,
     "total": 1,
     "recent": [
-      0
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "AXP": {
     "correct": 1,
@@ -368,12 +368,12 @@
     "rolling_acc": 1.0
   },
   "C": {
-    "correct": 0,
+    "correct": 1,
     "total": 1,
     "recent": [
-      0
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "SCHW": {
     "correct": 1,
@@ -384,12 +384,12 @@
     "rolling_acc": 1.0
   },
   "PGR": {
-    "correct": 0,
+    "correct": 1,
     "total": 1,
     "recent": [
-      0
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "CB": {
     "correct": 1,
@@ -400,12 +400,12 @@
     "rolling_acc": 1.0
   },
   "COF": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "USB": {
     "correct": 1,
@@ -448,20 +448,20 @@
     "rolling_acc": 1.0
   },
   "SPGI": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "MCO": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "AON": {
     "correct": 1,
@@ -472,12 +472,12 @@
     "rolling_acc": 1.0
   },
   "TRV": {
-    "correct": 0,
+    "correct": 1,
     "total": 1,
     "recent": [
-      0
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "ALL": {
     "correct": 1,
@@ -496,12 +496,12 @@
     "rolling_acc": 1.0
   },
   "PRU": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "AIG": {
     "correct": 1,
@@ -568,14 +568,6 @@
     "rolling_acc": 1.0
   },
   "TMO": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
-      1
-    ],
-    "rolling_acc": 1.0
-  },
-  "ABT": {
     "correct": 0,
     "total": 1,
     "recent": [
@@ -583,13 +575,21 @@
     ],
     "rolling_acc": 0.0
   },
-  "DHR": {
+  "ABT": {
     "correct": 1,
     "total": 1,
     "recent": [
       1
     ],
     "rolling_acc": 1.0
+  },
+  "DHR": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
   },
   "PFE": {
     "correct": 1,
@@ -616,12 +616,12 @@
     "rolling_acc": 1.0
   },
   "CI": {
-    "correct": 0,
+    "correct": 1,
     "total": 1,
     "recent": [
-      0
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "HUM": {
     "correct": 1,
@@ -696,12 +696,12 @@
     "rolling_acc": 1.0
   },
   "ELV": {
-    "correct": 0,
+    "correct": 1,
     "total": 1,
     "recent": [
-      0
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "MCK": {
     "correct": 1,
@@ -712,20 +712,20 @@
     "rolling_acc": 1.0
   },
   "COR": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "A": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "IQV": {
     "correct": 1,
@@ -768,28 +768,28 @@
     "rolling_acc": 1.0
   },
   "DXCM": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
-      1
-    ],
-    "rolling_acc": 1.0
-  },
-  "IDXX": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
-      1
-    ],
-    "rolling_acc": 1.0
-  },
-  "EW": {
     "correct": 0,
     "total": 1,
     "recent": [
       0
     ],
     "rolling_acc": 0.0
+  },
+  "IDXX": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "EW": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
   },
   "PODD": {
     "correct": 1,
@@ -800,36 +800,36 @@
     "rolling_acc": 1.0
   },
   "ALGN": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "BAX": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "HD": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "NKE": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "LOW": {
     "correct": 1,
@@ -848,12 +848,12 @@
     "rolling_acc": 1.0
   },
   "ROST": {
-    "correct": 0,
+    "correct": 1,
     "total": 1,
     "recent": [
-      0
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "SBUX": {
     "correct": 1,
@@ -896,12 +896,12 @@
     "rolling_acc": 1.0
   },
   "GM": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "F": {
     "correct": 1,
@@ -912,28 +912,28 @@
     "rolling_acc": 1.0
   },
   "UBER": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "BKNG": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "ABNB": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "MAR": {
     "correct": 1,
@@ -968,28 +968,28 @@
     "rolling_acc": 1.0
   },
   "DG": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
-      1
-    ],
-    "rolling_acc": 1.0
-  },
-  "DLTR": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
-      1
-    ],
-    "rolling_acc": 1.0
-  },
-  "YUM": {
     "correct": 0,
     "total": 1,
     "recent": [
       0
     ],
     "rolling_acc": 0.0
+  },
+  "DLTR": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "YUM": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
   },
   "DPZ": {
     "correct": 1,
@@ -1024,28 +1024,28 @@
     "rolling_acc": 1.0
   },
   "EXPE": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "NCLH": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "WMT": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "PG": {
     "correct": 1,
@@ -1096,12 +1096,12 @@
     "rolling_acc": 1.0
   },
   "PM": {
-    "correct": 0,
+    "correct": 1,
     "total": 1,
     "recent": [
-      0
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "EL": {
     "correct": 1,
@@ -1128,12 +1128,12 @@
     "rolling_acc": 1.0
   },
   "GIS": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "TSN": {
     "correct": 1,
@@ -1192,20 +1192,20 @@
     "rolling_acc": 0.0
   },
   "INTC": {
-    "correct": 0,
+    "correct": 1,
     "total": 1,
     "recent": [
-      0
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "QCOM": {
-    "correct": 0,
+    "correct": 1,
     "total": 1,
     "recent": [
-      0
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "AMAT": {
     "correct": 0,
@@ -1224,28 +1224,28 @@
     "rolling_acc": 0.0
   },
   "TXN": {
-    "correct": 0,
+    "correct": 1,
     "total": 1,
     "recent": [
-      0
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "LRCX": {
-    "correct": 0,
+    "correct": 1,
     "total": 1,
     "recent": [
-      0
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "KLAC": {
-    "correct": 0,
+    "correct": 1,
     "total": 1,
     "recent": [
-      0
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "ADI": {
     "correct": 1,
@@ -1288,14 +1288,6 @@
     "rolling_acc": 1.0
   },
   "MCHP": {
-    "correct": 0,
-    "total": 1,
-    "recent": [
-      0
-    ],
-    "rolling_acc": 0.0
-  },
-  "ENPH": {
     "correct": 1,
     "total": 1,
     "recent": [
@@ -1303,13 +1295,21 @@
     ],
     "rolling_acc": 1.0
   },
-  "FSLR": {
+  "ENPH": {
     "correct": 0,
     "total": 1,
     "recent": [
       0
     ],
     "rolling_acc": 0.0
+  },
+  "FSLR": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
   },
   "TER": {
     "correct": 0,
@@ -1328,20 +1328,20 @@
     "rolling_acc": 1.0
   },
   "MPWR": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
-      1
-    ],
-    "rolling_acc": 1.0
-  },
-  "NXPI": {
     "correct": 0,
     "total": 1,
     "recent": [
       0
     ],
     "rolling_acc": 0.0
+  },
+  "NXPI": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
   },
   "XOM": {
     "correct": 1,
@@ -1384,28 +1384,28 @@
     "rolling_acc": 1.0
   },
   "HAL": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
-      1
-    ],
-    "rolling_acc": 1.0
-  },
-  "OXY": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
-      1
-    ],
-    "rolling_acc": 1.0
-  },
-  "PSX": {
     "correct": 0,
     "total": 1,
     "recent": [
       0
     ],
     "rolling_acc": 0.0
+  },
+  "OXY": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "PSX": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
   },
   "MPC": {
     "correct": 1,
@@ -1416,12 +1416,12 @@
     "rolling_acc": 1.0
   },
   "VLO": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "DVN": {
     "correct": 1,
@@ -1472,12 +1472,12 @@
     "rolling_acc": 1.0
   },
   "FANG": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "BA": {
     "correct": 1,
@@ -1488,12 +1488,12 @@
     "rolling_acc": 1.0
   },
   "CAT": {
-    "correct": 0,
+    "correct": 1,
     "total": 1,
     "recent": [
-      0
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "DE": {
     "correct": 1,
@@ -1504,12 +1504,12 @@
     "rolling_acc": 1.0
   },
   "HON": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "GE": {
     "correct": 1,
@@ -1520,20 +1520,20 @@
     "rolling_acc": 1.0
   },
   "RTX": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "LMT": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "NOC": {
     "correct": 1,
@@ -1544,12 +1544,12 @@
     "rolling_acc": 1.0
   },
   "UPS": {
-    "correct": 0,
+    "correct": 1,
     "total": 1,
     "recent": [
-      0
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "FDX": {
     "correct": 1,
@@ -1560,12 +1560,12 @@
     "rolling_acc": 1.0
   },
   "MMM": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "EMR": {
     "correct": 1,
@@ -1624,20 +1624,20 @@
     "rolling_acc": 1.0
   },
   "CTAS": {
-    "correct": 0,
-    "total": 1,
-    "recent": [
-      0
-    ],
-    "rolling_acc": 0.0
-  },
-  "EXPD": {
     "correct": 1,
     "total": 1,
     "recent": [
       1
     ],
     "rolling_acc": 1.0
+  },
+  "EXPD": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
   },
   "NSC": {
     "correct": 1,
@@ -1648,20 +1648,20 @@
     "rolling_acc": 1.0
   },
   "UNP": {
-    "correct": 0,
-    "total": 1,
-    "recent": [
-      0
-    ],
-    "rolling_acc": 0.0
-  },
-  "CSX": {
     "correct": 1,
     "total": 1,
     "recent": [
       1
     ],
     "rolling_acc": 1.0
+  },
+  "CSX": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
   },
   "GD": {
     "correct": 1,
@@ -1680,12 +1680,12 @@
     "rolling_acc": 1.0
   },
   "HWM": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "FTV": {
     "correct": 1,
@@ -1696,12 +1696,12 @@
     "rolling_acc": 1.0
   },
   "XYL": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "FAST": {
     "correct": 1,
@@ -1712,12 +1712,12 @@
     "rolling_acc": 1.0
   },
   "CHRW": {
-    "correct": 0,
+    "correct": 1,
     "total": 1,
     "recent": [
-      0
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "LIN": {
     "correct": 1,
@@ -1736,12 +1736,12 @@
     "rolling_acc": 1.0
   },
   "SHW": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "PPG": {
     "correct": 1,
@@ -1752,20 +1752,20 @@
     "rolling_acc": 1.0
   },
   "NEM": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "FCX": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "NUE": {
     "correct": 1,
@@ -1776,20 +1776,20 @@
     "rolling_acc": 1.0
   },
   "ALB": {
-    "correct": 0,
-    "total": 1,
-    "recent": [
-      0
-    ],
-    "rolling_acc": 0.0
-  },
-  "LYB": {
     "correct": 1,
     "total": 1,
     "recent": [
       1
     ],
     "rolling_acc": 1.0
+  },
+  "LYB": {
+    "correct": 0,
+    "total": 1,
+    "recent": [
+      0
+    ],
+    "rolling_acc": 0.0
   },
   "DD": {
     "correct": 1,
@@ -1808,12 +1808,12 @@
     "rolling_acc": 1.0
   },
   "CF": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "MOS": {
     "correct": 1,
@@ -1832,20 +1832,20 @@
     "rolling_acc": 1.0
   },
   "IFF": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
-      1
-    ],
-    "rolling_acc": 1.0
-  },
-  "CE": {
     "correct": 0,
     "total": 1,
     "recent": [
       0
     ],
     "rolling_acc": 0.0
+  },
+  "CE": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
   },
   "PKG": {
     "correct": 1,
@@ -1880,12 +1880,12 @@
     "rolling_acc": 1.0
   },
   "CCI": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "WELL": {
     "correct": 1,
@@ -1936,12 +1936,12 @@
     "rolling_acc": 1.0
   },
   "VTR": {
-    "correct": 0,
+    "correct": 1,
     "total": 1,
     "recent": [
-      0
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "VICI": {
     "correct": 1,
@@ -1952,12 +1952,12 @@
     "rolling_acc": 1.0
   },
   "WY": {
-    "correct": 0,
+    "correct": 1,
     "total": 1,
     "recent": [
-      0
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "EQR": {
     "correct": 1,
@@ -2128,6 +2128,14 @@
     "rolling_acc": 1.0
   },
   "NFLX": {
+    "correct": 1,
+    "total": 1,
+    "recent": [
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "DIS": {
     "correct": 0,
     "total": 1,
     "recent": [
@@ -2135,21 +2143,13 @@
     ],
     "rolling_acc": 0.0
   },
-  "DIS": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
-      1
-    ],
-    "rolling_acc": 1.0
-  },
   "CMCSA": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "VZ": {
     "correct": 1,
@@ -2160,20 +2160,20 @@
     "rolling_acc": 1.0
   },
   "T": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "TMUS": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "CHTR": {
     "correct": 1,
@@ -2216,12 +2216,12 @@
     "rolling_acc": 1.0
   },
   "OMC": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "SPY": {
     "correct": 1,
@@ -2304,12 +2304,12 @@
     "rolling_acc": 1.0
   },
   "XLY": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "XLU": {
     "correct": 1,
@@ -2336,12 +2336,12 @@
     "rolling_acc": 1.0
   },
   "XLC": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "GLD": {
     "correct": 1,
@@ -2392,12 +2392,12 @@
     "rolling_acc": 1.0
   },
   "ARKK": {
-    "correct": 0,
+    "correct": 1,
     "total": 1,
     "recent": [
-      0
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "SMH": {
     "correct": 0,
