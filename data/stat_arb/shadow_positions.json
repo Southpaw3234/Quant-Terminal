@@ -1,1 +1,28 @@
-{}
+{
+  "KO/SBUX": {
+    "y": "KO",
+    "x": "SBUX",
+    "side": -1,
+    "entry_date": "2026-07-28",
+    "entry_z": 2.9904,
+    "half_life": 5.96,
+    "hedge_ratio": 0.957212,
+    "last_y": 88.95999908447266,
+    "last_x": 103.55999755859375,
+    "days_held": 0,
+    "cum_pnl": 0.0
+  },
+  "AAPL/META": {
+    "y": "AAPL",
+    "x": "META",
+    "side": -1,
+    "entry_date": "2026-07-28",
+    "entry_z": 2.1917,
+    "half_life": 14.52,
+    "hedge_ratio": 0.909504,
+    "last_y": 339.2850036621094,
+    "last_x": 594.2349853515625,
+    "days_held": 0,
+    "cum_pnl": 0.0
+  }
+}
