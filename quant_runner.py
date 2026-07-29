@@ -4387,22 +4387,40 @@ import datetime as _dt15gpr
 # GPR < 0.5 → strategy gives back more than it earns → fire Discord warning.
 # Complements existing peak drawdown kill switch (which fires immediately);
 # GPR detects slow bleed that doesn't trigger single-day limits.
+#
+# 2026-07-24 repoint + basis decision: this read daily_pnl_log.csv (net_pl),
+# a file nothing ever writes rows to -- GPR never computed once. Basis chosen:
+# MONTHLY EQUITY CHANGE (monthly sums of pnl_history's daily total_pnl), not
+# monthly realized. (1) Schwager's GPR is monthly strategy returns = total
+# MTM P&L for a portfolio; (2) a slow-bleed detector that ignores unrealized
+# bleed is self-defeating -- bleed shows up FIRST as unrealized drawdown;
+# (3) no trustworthy realized series exists (ledger is blind to close_long/
+# remediation flows), while pnl_history is broker-authoritative; (4) one
+# basis, one file: WRC, the kill-switch fallback and GPR now share the same
+# daily contract. Thresholds deliberately unchanged.
 _GPR_WARN_THRESHOLD = 0.5   # warn below 0.5
 _GPR_KILL_THRESHOLD = 0.20  # kill switch below 0.20 (severe persistent bleed)
 
 try:
     import pandas as _pd15gpr
-    _pnl_path15 = _P15gpr("data/predictions/daily_pnl_log.csv")
+    _pnl_path15 = _P15gpr("data/predictions/pnl_history.csv")
     if _pnl_path15.exists():
         _dl15 = _pd15gpr.read_csv(_pnl_path15)
-        _dl15["date"]   = _pd15gpr.to_datetime(_dl15["date"], errors="coerce")
-        _dl15["net_pl"] = _pd15gpr.to_numeric(_dl15.get("net_pl", _pd15gpr.Series(dtype=float)), errors="coerce")
-        _dl15 = _dl15.sort_values("date").dropna(subset=["date","net_pl"])
+        if "total_pnl" not in _dl15.columns:
+            raise RuntimeError(
+                f"pnl_history.csv has no total_pnl column (found "
+                f"{list(_dl15.columns)}) -- refusing to compute GPR on a "
+                "defaulted series")
+        _dl15["date"]      = _pd15gpr.to_datetime(_dl15["date"], errors="coerce")
+        _dl15["total_pnl"] = _pd15gpr.to_numeric(_dl15["total_pnl"], errors="coerce")
+        # coerce+dropna: blank cells (yfinance-fallback rows) are SKIPPED,
+        # never zero-filled -- same reader contract as the WRC.
+        _dl15 = _dl15.sort_values("date").dropna(subset=["date","total_pnl"])
 
         if len(_dl15) >= 30:
-            # Resample to monthly
+            # Resample daily MTM P&L to monthly equity change
             _dl15 = _dl15.set_index("date")
-            _monthly = _dl15["net_pl"].resample("ME").sum()
+            _monthly = _dl15["total_pnl"].resample("ME").sum()
             _gains   = float(_monthly[_monthly > 0].sum())
             _pains   = float(_monthly[_monthly < 0].sum())
             _gpr     = _gains / max(abs(_pains), 1e-8)
@@ -4419,7 +4437,8 @@ try:
             _P15gpr("data/predictions/gain_to_pain.json").write_text(
                 _j15gpr.dumps(_gpr_result, indent=2))
             print(f"  [TierC] Gain-to-Pain Ratio: {_gpr:.3f} "
-                  f"({'OK' if _gpr >= _GPR_WARN_THRESHOLD else 'WARN' if _gpr >= _GPR_KILL_THRESHOLD else 'KILL'})")
+                  f"({'OK' if _gpr >= _GPR_WARN_THRESHOLD else 'WARN' if _gpr >= _GPR_KILL_THRESHOLD else 'KILL'}, "
+                  f"n_months={len(_monthly)}, basis=monthly-equity-change)")
 
             if _gpr < _GPR_WARN_THRESHOLD:
                 _disc_gpr = __import__("os").environ.get("DISCORD_WEBHOOK_URL","")
@@ -4446,7 +4465,7 @@ try:
         else:
             print(f"  [TierC] Gain-to-Pain: need 30+ daily PnL rows (have {len(_dl15)})")
     else:
-        print("  [TierC] Gain-to-Pain: no daily_pnl_log.csv yet")
+        print("  [TierC] Gain-to-Pain: no pnl_history.csv yet")
 except Exception as _gpr15e:
     print(f"  [TierC] Gain-to-Pain error (non-fatal): {_gpr15e}")
 """

@@ -406,6 +406,86 @@ check7("week-stale curve refuses", r["evaluated"], False)
 r = _fb(curve([100, 200], pv_override=[0, -5]), *LIMS, _now=NOW)
 check7("non-positive equity refuses", r["evaluated"], False)
 
+# ── 8. Gain-to-Pain repoint (2026-07-24) ─────────────────────────────────────
+# GPR read daily_pnl_log.csv (permanently header-only) -> never computed once,
+# and it can WRITE THE KILL FLAG below 0.20, so the repoint to pnl_history's
+# daily total_pnl (monthly-equity-change basis) gets a behavioral replay of
+# the SHIPPED patch string in an isolated cwd. Discord env is stripped.
+gpr_src = next((n.value.value for n in ast.walk(tree)
+                if isinstance(n, ast.Assign)
+                and any(isinstance(t, ast.Name) and t.id == "_CELL_15_GPR" for t in n.targets)
+                and isinstance(n.value, ast.Constant)), None)
+assert gpr_src, "_CELL_15_GPR patch string not found"
+assert '_P15gpr("data/predictions/pnl_history.csv")' in gpr_src \
+    and '_P15gpr("data/predictions/daily_pnl_log.csv")' not in gpr_src, \
+    "GPR still wired to the dead daily_pnl_log.csv"
+
+def run_gpr(csv_text):
+    """Exec the shipped GPR block against a synthetic pnl_history in a tmp cwd."""
+    old_cwd = os.getcwd()
+    with tempfile.TemporaryDirectory() as td:
+        try:
+            os.chdir(td)
+            os.makedirs("data/predictions", exist_ok=True)
+            if csv_text is not None:
+                with open("data/predictions/pnl_history.csv", "w") as fh:
+                    fh.write(csv_text)
+            os.environ.pop("DISCORD_WEBHOOK_URL", None)
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                exec(gpr_src, {"__builtins__": __builtins__})
+            js = None
+            if os.path.exists("data/predictions/gain_to_pain.json"):
+                js = json.load(open("data/predictions/gain_to_pain.json"))
+            flag = os.path.exists("data/KILL_SWITCH_ACTIVE.flag")
+            return buf.getvalue(), js, flag
+        finally:
+            os.chdir(old_cwd)
+
+def check8(name, got, want):
+    ok = got == want
+    print(f"8.  {name:<52} got={str(got):<7} {'PASS' if ok else 'FAIL (want %s)' % want}")
+    if not ok:
+        fails.append(f"gpr repoint {name}: got={got} want={want}")
+
+def rows(month, day_vals):
+    return "".join(f"2026-{month:02d}-{d:02d},,,{'' if v is None else v},,\n"
+                   for d, v in day_vals)
+
+HDR = "date,unrealized_pnl,realized_pnl,total_pnl,open_positions,portfolio_value\n"
+
+# (a) healthy 3-month curve (+2000 / -1000 / +500), 60 valid rows + 3 blanks
+healthy = HDR \
+    + rows(5, [(d, 100) for d in range(1, 21)]) \
+    + rows(6, [(d, -50) for d in range(1, 21)]) + rows(6, [(28, None)]) \
+    + rows(7, [(d, 25) for d in range(1, 21)]) + rows(7, [(22, None), (23, None)])
+out, js, flag = run_gpr(healthy)
+check8("healthy curve computes (json lands)", js is not None, True)
+check8("monthly-equity-change math (2500/1000)", js and js["gpr"], 2.5)
+check8("healthy status OK, no kill flag", (js and js["status"], flag), ("OK", False))
+check8("blank rows skipped, not zeroed (n_months=3)", js and js["n_months"], 3)
+
+# (b) persistent bleed (+300 / -3000 / -1500 -> GPR 0.067) -> KILL + flag
+bleed = HDR \
+    + rows(5, [(d, 10) for d in range(1, 31)]) \
+    + rows(6, [(d, -200) for d in range(1, 16)]) \
+    + rows(7, [(d, -100) for d in range(1, 16)])
+out, js, flag = run_gpr(bleed)
+check8("bleed GPR 0.067 -> status KILL", js and js["status"], "KILL")
+check8("bleed writes the kill flag", flag, True)
+
+# (c) missing total_pnl column -> loud refusal, nothing computed
+out, js, flag = run_gpr("date,net_pl\n" + "".join(f"2026-07-{d:02d},5\n" for d in range(1, 32)))
+check8("missing column refuses loudly", ("no total_pnl column" in out, js, flag), (True, None, False))
+
+# (d) under 30 rows -> skipped
+out, js, flag = run_gpr(HDR + rows(7, [(d, 50) for d in range(1, 11)]))
+check8("<30 rows skipped (no json)", ("need 30+" in out, js), (True, None))
+
+# (e) no file at all -> benign print
+out, js, flag = run_gpr(None)
+check8("no file -> benign skip", "no pnl_history.csv yet" in out, True)
+
 print()
 if fails:
     print("VALIDATION FAILED:")
