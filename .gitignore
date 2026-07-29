@@ -15,14 +15,10 @@ data/models_cache.pkl
 _fix_nb.py
 upgrade_notebook.py
 
-# Old notebook versions
-trading_model_23.2.500.ipynb
-trading_model_v22.ipynb
-trading_model_v23.1.ipynb
-trading_model_v23.2.ipynb
-trading_model_v23.3.ipynb
-trading_model_v23.4.ipynb
-trading_model_v23.ipynb
+# Old notebook versions (v22 -> v23.4) are now TRACKED, not ignored — they were
+# local-only with no git safety net. Archival lineage only; the live model is
+# trading_model_v25.1.ipynb. Verified secret-free before committing (Alpaca refs
+# are "APCA-API-KEY-ID": api_key header names, never literal keys).
 
 # Dashboard data feed — pushed to orphan `data` branch each cycle, never accumulated in master
 docs/data.json
