@@ -7,21 +7,21 @@
     "entry_z": 2.9904,
     "half_life": 5.96,
     "hedge_ratio": 0.957212,
-    "last_y": 88.95999908447266,
-    "last_x": 103.55999755859375,
-    "days_held": 0,
-    "cum_pnl": 0.0
+    "last_y": 90.20999908447266,
+    "last_x": 103.80999755859375,
+    "days_held": 1,
+    "cum_pnl": -116.37199598076853
   },
-  "AAPL/META": {
-    "y": "AAPL",
-    "x": "META",
+  "MU/KLAC": {
+    "y": "MU",
+    "x": "KLAC",
     "side": -1,
-    "entry_date": "2026-07-28",
-    "entry_z": 2.1917,
-    "half_life": 14.52,
-    "hedge_ratio": 0.909504,
-    "last_y": 339.2850036621094,
-    "last_x": 594.2349853515625,
+    "entry_date": "2026-07-29",
+    "entry_z": 2.4999,
+    "half_life": 7.14,
+    "hedge_ratio": 1.282185,
+    "last_y": 778.4000244140625,
+    "last_x": 174.72999572753906,
     "days_held": 0,
     "cum_pnl": 0.0
   }
