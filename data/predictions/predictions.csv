@@ -45425,7 +45425,7 @@ pred_ts,ticker,action,confidence,price_at_pred,rsi,vix,regime,yield_curve,ism_pm
 2026-07-29 15:48:16.955501+0000,EXR,HOLD,0.5,152.21,55.25,18.75,1,0.859,12598.0,0.0,,,False,,,,,,0.4939,0.5,4.2,5.0,NORMAL,1.0,,,
 2026-07-29 15:48:17.618481+0000,VTR,HOLD,0.5,97.98500061035156,50.0,18.75,2,0.859,12598.0,0.0,,,False,,,,,,0.5,0.53,4.2,5.0,"{'ok': False, 'iv_flag': 'NORMAL', 'position_scale': 1.0, 'is_earnings_week': False, 'note': 'ci_skip'}",1.0,earnings_window,,
 2026-07-29 15:48:18.278582+0000,VICI,HOLD,0.5,27.125,50.0,18.75,1,0.859,12598.0,0.0,,,False,,,,,,0.5,0.43,4.2,5.0,"{'ok': False, 'iv_flag': 'NORMAL', 'position_scale': 1.0, 'is_earnings_week': False, 'note': 'ci_skip'}",1.0,earnings_window,,
-2026-07-29 15:48:18.934937+0000,WY,HOLD,0.5,24.399999618530277,50.0,18.75,2,0.859,12598.0,0.0,,,False,,,,,,0.5,0.46,4.2,5.0,"{'ok': False, 'iv_flag': 'NORMAL', 'position_scale': 1.0, 'is_earnings_week': False, 'note': 'ci_skip'}",1.0,earnings_window,,
+2026-07-29 15:48:18.934937+0000,WY,HOLD,0.5,24.39999961853028,50.0,18.75,2,0.859,12598.0,0.0,,,False,,,,,,0.5,0.46,4.2,5.0,"{'ok': False, 'iv_flag': 'NORMAL', 'position_scale': 1.0, 'is_earnings_week': False, 'note': 'ci_skip'}",1.0,earnings_window,,
 2026-07-29 15:48:19.593322+0000,EQR,HOLD,0.5,68.09,46.24,18.75,2,0.859,12598.0,0.0,,,False,,,,,,0.499,0.42,4.2,5.0,NORMAL,1.0,,,
 2026-07-29 15:48:20.248714+0000,AVB,HOLD,0.5,190.39,46.89,18.75,2,0.859,12598.0,0.0,,,False,,,,,,0.5275,0.53,4.2,5.0,NORMAL,1.0,,,
 2026-07-29 15:48:20.903145+0000,ESS,HOLD,0.5,296.8699951171875,50.0,18.75,2,0.859,12598.0,0.0,,,False,,,,,,0.5,0.41,4.2,5.0,"{'ok': False, 'iv_flag': 'NORMAL', 'position_scale': 1.0, 'is_earnings_week': False, 'note': 'ci_skip'}",1.0,earnings_window,,
