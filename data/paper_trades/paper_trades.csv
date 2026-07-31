@@ -1,1 +1,5 @@
 ts,ticker,action,price,qty,dollars,confidence,regime,vix,portfolio_value,notes,order_id,status,run_date,iv_flag,iv_scale,notional
+2026-07-31T15:42:31.372671,CME,BUY,267.22,8,,0.5,2,,,,fb0af865-1691-46ff-93ab-e09a717e61d2,filled,2026-07-31,MODERATE,0.8,2137.76
+2026-07-31T15:42:58.176179,ZBH,BUY,94.96,32,,0.5,2,,,,c0007de0-94d9-466b-9aa1-ea18468923b8,filled,2026-07-31,NORMAL,1.0,3038.72
+2026-07-31T15:43:49.080393,COP,BUY,119.03,27,,0.642,2,,,,5c282777-ea54-4fe1-9830-380a4efe7e42,filled,2026-07-31,NORMAL,1.0,3213.81
+2026-07-31T15:43:54.220412,MPC,BUY,314.08,9,,0.6723,2,,,,a51f62dd-4b6d-43b9-a982-699da6184de6,filled,2026-07-31,NORMAL,1.0,2826.72
