@@ -17,15 +17,19 @@ on:
         type: choice
         options: [dry-run, execute]
       target_ratio:
-        description: 'target gross/equity ratio (share rounding lands ~0.05-0.07 above this)'
+        description: 'gross/equity target (equity+crypto). For sleeve=sector this is the SECTOR share of equity, e.g. 0.25'
         required: false
         default: '1.0'
       sleeve:
-        description: 'equity/crypto = pro-rata sell that sleeve; short-cover = BUY-to-cover all shorts exactly (target_ratio ignored)'
+        description: 'equity/crypto = pro-rata that sleeve; short-cover = BUY-to-cover shorts (target_ratio ignored); sector = trim ONE sector to target_ratio of equity'
         required: false
         default: 'equity'
         type: choice
-        options: [equity, crypto, short-cover]
+        options: [equity, crypto, short-cover, sector]
+      sector:
+        description: 'sleeve=sector only: which sector to trim (Energy, Tech, Finance, Healthcare, …). Ignored otherwise.'
+        required: false
+        default: 'Energy'
 
 permissions:
   contents: read
@@ -56,4 +60,5 @@ jobs:
           TRIM_MODE:         ${{ github.event.inputs.mode }}
           TRIM_TARGET_RATIO: ${{ github.event.inputs.target_ratio || '1.0' }}
           TRIM_SLEEVE:       ${{ github.event.inputs.sleeve || 'equity' }}
+          TRIM_SECTOR:       ${{ github.event.inputs.sector || '' }}
         run: python delever_account.py
