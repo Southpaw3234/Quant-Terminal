@@ -34,3 +34,13 @@ these snapshots are for the record — the live carriers self-heal):
 The live `data/weights/*.json` copies were reset to Cell-3 defaults ({} rules,
 0.55/0.20/0.10/0.10/0.05 weights); the rule engine relearns from fresh-era
 rows only once they mature (~2026-07-21+).
+
+## Addendum 2026-07-31 — run log archived before GitHub's 90-day expiry
+
+`archived_runs/2026-05-12_run-25732008349_morning.log` — the morning run of
+**2026-05-12, the first date in the frozen window above**, pulled from GitHub
+Actions ~10 days before its ~2026-08-10 retention expiry. It predates the trades
+ledger (which starts 2026-05-29), so it is the only surviving record of what the
+system did on day one of this window: 4 BUYs (GOOGL, SPY, AMD, INTC x28),
+139 predictions, and the old-era hardcoded `Current equity: $10,000.00`.
+See `archived_runs/README.md` for the full read and its caveats.
