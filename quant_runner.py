@@ -3119,6 +3119,30 @@ SECTOR_MAP = {
     # Crypto
     "BTC-USD":"Crypto","ETH-USD":"Crypto","SOL-USD":"Crypto",
     "BNB-USD":"Crypto","XRP-USD":"Crypto","DOGE-USD":"Crypto","IBIT":"Crypto",
+    # ── 2026-07-31: the 37 live-universe names that were NOT in this map ──────
+    # Found while shipping the sector cap: 37 of the 307 traded tickers (12%)
+    # resolved to "Other" and pooled into a single pseudo-sector, which the cap
+    # then enforced as if it were real. Worst of them: FANG (Diamondback) is a
+    # PURE ENERGY name that appeared in the 7/24 losing batch (-3.1%) — under
+    # the brand-new cap it would have been counted as "Other", not Energy, so
+    # the gate had a hole in exactly the sector it was built for. Section 10 of
+    # the validate suite now fails if any traded ticker is unmapped, so this
+    # cannot silently regress as the universe changes.
+    "FANG":"Energy",
+    "ALGN":"Healthcare","BAX":"Healthcare","DXCM":"Healthcare",
+    "IDXX":"Healthcare","PODD":"Healthcare",
+    "CHRW":"Industrials","EXPD":"Industrials","FAST":"Industrials",
+    "FTV":"Industrials","XYL":"Industrials",
+    "CCL":"Consumer","EXPE":"Consumer","LVS":"Consumer","MGM":"Consumer",
+    "NCLH":"Consumer","RCL":"Consumer",
+    "CHD":"Staples","HRL":"Staples","HSY":"Staples","SJM":"Staples",
+    "CE":"Materials","DD":"Materials","DOW":"Materials","PKG":"Materials",
+    "AES":"Utilities","ATO":"Utilities","CMS":"Utilities","CNP":"Utilities",
+    "PEG":"Utilities",
+    "ESS":"RealEstate","VTR":"RealEstate","WY":"RealEstate",
+    "OMC":"Communication","WBD":"Communication",
+    "NXPI":"Semis",
+    "IT":"Tech",
 }
 print(f"  [patch] SECTOR_MAP overridden: {len(SECTOR_MAP)} tickers mapped "
       f"({len(set(SECTOR_MAP.values()))} sectors) — prevents false Other breaches")
