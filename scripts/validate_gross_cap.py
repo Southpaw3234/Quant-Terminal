@@ -551,19 +551,31 @@ def call9(ns, tk, notional):
         got = ns["_sector_cap_allows"](tk, notional)
     return got, buf.getvalue()
 
-# The 7/30 book, approximated: ~$66k gross on ~$113k equity, energy-heavy.
-ENERGY_BOOK = [("XOM", 4000.0), ("CVX", 4000.0), ("COP", 4000.0), ("EOG", 3500.0),
-               ("OXY", 3500.0), ("PSX", 3000.0), ("MPC", 3000.0), ("VLO", 3000.0),
-               ("AAPL", 5000.0), ("MSFT", 5000.0), ("JPM", 4000.0)]
-EQ = 113_000.0
+# The REAL book, measured 2026-07-31 22:06Z via position_trim dry-run
+# 30668967145 (read-only, nothing submitted): 35 positions, $74,644 gross on
+# $113,690.49 equity = 0.66x. Energy is $35,635 = 31.3% of equity and 47.7% of
+# the book, across five names; the top six positions are five energy names plus
+# PRU. XOM/CVX/VLO/DVN/LNG/FANG had already been exited by this point.
+ENERGY_BOOK = [
+    ("MPC", 11467.0), ("PRU", 7325.0), ("COP", 7143.0), ("EOG", 6284.0),
+    ("OXY", 5656.0), ("PSX", 5085.0), ("COR", 3425.0), ("ZBH", 3381.0),
+    ("EXPD", 3190.0), ("AFL", 3060.0), ("CTAS", 2871.0), ("CME", 2157.0),
+    ("RCL", 1902.0), ("TMO", 1723.0), ("GWW", 1382.0), ("GIS", 1290.0),
+    ("TDG", 1254.0), ("EXPE", 1178.0), ("PH", 977.0), ("MCK", 856.0),
+    ("SMH", 538.0), ("AMGN", 385.0), ("WAT", 377.0), ("SNOW", 291.0),
+    ("DLTR", 254.0), ("BKNG", 192.0), ("MRVL", 186.0), ("PODD", 165.0),
+    ("ABNB", 152.0), ("SJM", 119.0), ("CSCO", 116.0), ("EL", 83.0),
+    ("ARKK", 71.0), ("APTV", 56.0), ("SLV", 52.0),
+]
+EQ = 113_690.49
 
 # (a) the real map is loaded — the notebook's 16-ticker map would say "Other"
 ns9, _ = sector_ns(EQ, ENERGY_BOOK)
 check9("XOM maps to Energy (full map, not 'Other')", ns9["_sector_of"]("XOM"), "Energy")
-check9("exposure aggregates by sector", round(ns9["_SECTOR_CAP"]["exposure"]["Energy"]), 28000)
+check9("exposure aggregates by sector", round(ns9["_SECTOR_CAP"]["exposure"]["Energy"]), 35635)
 
-# (b) energy at 24.8% of equity, cap 25% -> a further energy BUY is refused,
-#     while an equal-sized BUY in an uncrowded sector still passes.
+# (b) energy at 31.3% of equity, cap 25% -> already over, so a further energy
+#     BUY is refused, while an equal-sized BUY in an uncrowded sector passes.
 ns9, _ = sector_ns(EQ, ENERGY_BOOK, ratio=0.25)
 got9, printed9 = call9(ns9, "DVN", 3000.0)
 check9("energy BUY refused at cap", got9, False)
@@ -578,9 +590,10 @@ ns9, _ = sector_ns(EQ, ENERGY_BOOK, ratio=0.40)
 check9("at old 40% limit the 7/30 book still passes", ns9["_sector_cap_allows"]("DVN", 3000.0), True)
 
 # (d) per-run accumulation: several energy BUYs in ONE run cannot each slip
-#     through by being individually small.
-ns9, _ = sector_ns(EQ, ENERGY_BOOK, ratio=0.30)
-seq = [ns9["_sector_cap_allows"]("DVN", 1500.0) for _ in range(5)]
+#     through by being individually small. Ratio 0.40 leaves ~$9.8k of headroom
+#     over the measured $35,635, so the first adds fit and the tail does not.
+ns9, _ = sector_ns(EQ, ENERGY_BOOK, ratio=0.40)
+seq = [ns9["_sector_cap_allows"]("DVN", 2500.0) for _ in range(5)]
 check9("intra-run accumulation blocks the tail", (seq[0], seq[-1]), (True, False))
 
 # (e) fail-CLOSED — the bug in the notebook gate was failing OPEN and silent.
@@ -594,7 +607,7 @@ check9("exposure map absent -> BUY refused", ns9["_sector_cap_allows"]("XOM", 1.
 
 # (f) release path: a gross-cap refusal must hand the sector reservation back,
 #     or later BUYs are judged against exposure that was never submitted.
-ns9, _ = sector_ns(EQ, ENERGY_BOOK, ratio=0.30)
+ns9, _ = sector_ns(EQ, ENERGY_BOOK, ratio=0.50)
 ns9["_sector_cap_allows"]("DVN", 5000.0)
 before = ns9["_SECTOR_CAP"]["submitted"]["Energy"]
 ns9["_sector_cap_release"]("DVN", 5000.0)
