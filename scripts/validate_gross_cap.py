@@ -69,12 +69,24 @@ try:
 except SyntaxError as e:
     fails.append(f"patched cell13 syntax error line {e.lineno}: {e.msg}")
 for needle in ('_gross_cap_allows(ticker, qty * price)', 'sig.get("exec_blocked")',
-               'result.get("reason") in ("gross_cap", "stale_bar", "oversell")',
-               '_oversell_cap(ticker, qty)'):
+               'result.get("reason") in ("gross_cap", "sector_cap", "stale_bar", "oversell")',
+               '_oversell_cap(ticker, qty)',
+               '_sector_cap_allows(ticker, qty * price)',
+               '_sector_cap_release(ticker, qty * price)'):
     if needle not in patched:
         fails.append(f"patched cell13 missing {needle!r}")
-print("2.5 all 4 gate hooks present in patched src  "
+print("2.5 all 6 gate hooks present in patched src  "
       + ("PASS" if not any("missing" in f for f in fails) else "FAIL"))
+# Ordering contract (2026-07-31): the sector gate must run BEFORE the gross cap.
+# _gross_cap_allows commits its budget on success, so a sector refusal after it
+# would charge gross for an order never submitted and starve later BUYs.
+_i_sec = patched.find("_sector_cap_allows(ticker, qty * price)")
+_i_grs = patched.find("_gross_cap_allows(ticker, qty * price)")
+_ord_ok = 0 <= _i_sec < _i_grs
+if not _ord_ok:
+    fails.append("sector gate must precede gross cap in execute_trade")
+print("2.6 sector gate precedes gross cap          "
+      + ("PASS" if _ord_ok else "FAIL"))
 
 # ── 3. behavioral replay of the prepatch gate ────────────────────────────────
 prepatch = None
@@ -86,7 +98,7 @@ for node in ast.walk(tree):
                     prepatch = node.value.value
 gross_src = prepatch[prepatch.index("# ── Fix (2026-07-08): HARD gross-exposure cap"):]
 
-def _stub_alpaca(equity, gross, boom=False):
+def _stub_alpaca(equity, gross, boom=False, positions=None):
     class _Acct: pass
     class _Pos: pass
     class _TC:
@@ -96,7 +108,14 @@ def _stub_alpaca(equity, gross, boom=False):
         def get_account(self):
             a = _Acct(); a.equity = equity; return a
         def get_all_positions(self):
-            p = _Pos(); p.market_value = gross; return [p]
+            if positions is not None:
+                out = []
+                for _sym, _mv in positions:
+                    p = _Pos(); p.symbol = _sym; p.market_value = _mv; p.qty = 1.0
+                    out.append(p)
+                return out
+            p = _Pos(); p.symbol = "SPY"; p.market_value = gross; p.qty = 1.0
+            return [p]
     mod_a = types.ModuleType("alpaca")
     mod_t = types.ModuleType("alpaca.trading")
     mod_c = types.ModuleType("alpaca.trading.client")
@@ -485,6 +504,108 @@ check8("<30 rows skipped (no json)", ("need 30+" in out, js), (True, None))
 # (e) no file at all -> benign print
 out, js, flag = run_gpr(None)
 check8("no file -> benign skip", "no pnl_history.csv yet" in out, True)
+
+# ── 9. sector concentration cap (2026-07-31) ─────────────────────────────────
+# Pinned to the 7/30 incident: an energy-concentrated book produced the first
+# GENUINE kill-switch trip (7/23 batch 1W/10L, 7/24 batch 2W/12L, eleven of
+# twelve losers energy). Slice from the SECTOR_MAP override so the scenarios
+# exercise the REAL ticker->sector map, not a stub.
+sector_src = prepatch[prepatch.index("SECTOR_MAP = {"):]
+
+def sector_ns(equity, positions, ratio=None, keys=True, boom=False, run="morning"):
+    os.environ["RUN_TYPE"] = run
+    os.environ.pop("QT_MAX_GROSS", None)
+    if ratio is None:
+        os.environ.pop("QT_MAX_SECTOR", None)
+    else:
+        os.environ["QT_MAX_SECTOR"] = str(ratio)
+    gross = sum(abs(mv) for _, mv in positions)
+    ns = {
+        "ALPACA_API_KEY": "k" if keys else "", "ALPACA_SECRET_KEY": "s" if keys else "",
+        "PORTFOLIO_CAPITAL": equity, "MAX_POSITION_PCT": 0.05,
+        "signals": {}, "__builtins__": __builtins__,
+    }
+    if keys:
+        _stub_alpaca(equity, gross, boom=boom, positions=positions)
+    cwd = os.getcwd()
+    with tempfile.TemporaryDirectory() as tmp:
+        os.chdir(tmp)
+        buf = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(buf):
+                exec(sector_src, ns)
+        finally:
+            os.chdir(cwd)
+    return ns, buf.getvalue()
+
+def check9(name, got, want):
+    ok = got == want
+    print(f"9.  {name:<52} got={str(got):<7} {'PASS' if ok else 'FAIL (want %s)' % want}")
+    if not ok:
+        fails.append(f"section9 {name}: got={got} want={want}")
+
+def call9(ns, tk, notional):
+    """Call the gate and capture what it printed — refusals must be loud."""
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        got = ns["_sector_cap_allows"](tk, notional)
+    return got, buf.getvalue()
+
+# The 7/30 book, approximated: ~$66k gross on ~$113k equity, energy-heavy.
+ENERGY_BOOK = [("XOM", 4000.0), ("CVX", 4000.0), ("COP", 4000.0), ("EOG", 3500.0),
+               ("OXY", 3500.0), ("PSX", 3000.0), ("MPC", 3000.0), ("VLO", 3000.0),
+               ("AAPL", 5000.0), ("MSFT", 5000.0), ("JPM", 4000.0)]
+EQ = 113_000.0
+
+# (a) the real map is loaded — the notebook's 16-ticker map would say "Other"
+ns9, _ = sector_ns(EQ, ENERGY_BOOK)
+check9("XOM maps to Energy (full map, not 'Other')", ns9["_sector_of"]("XOM"), "Energy")
+check9("exposure aggregates by sector", round(ns9["_SECTOR_CAP"]["exposure"]["Energy"]), 28000)
+
+# (b) energy at 24.8% of equity, cap 25% -> a further energy BUY is refused,
+#     while an equal-sized BUY in an uncrowded sector still passes.
+ns9, _ = sector_ns(EQ, ENERGY_BOOK, ratio=0.25)
+got9, printed9 = call9(ns9, "DVN", 3000.0)
+check9("energy BUY refused at cap", got9, False)
+check9("refusal names sector and is loud",
+       ("[sector-cap] BLOCKED" in printed9 and "Energy" in printed9), True)
+ns9, _ = sector_ns(EQ, ENERGY_BOOK, ratio=0.25)
+check9("uncrowded-sector BUY still allowed", ns9["_sector_cap_allows"]("JNJ", 3000.0), True)
+
+# (c) THE regression that matters: at the OLD 40% limit the 7/30 book passes.
+#     This is why the pre-existing gate could not have prevented the incident.
+ns9, _ = sector_ns(EQ, ENERGY_BOOK, ratio=0.40)
+check9("at old 40% limit the 7/30 book still passes", ns9["_sector_cap_allows"]("DVN", 3000.0), True)
+
+# (d) per-run accumulation: several energy BUYs in ONE run cannot each slip
+#     through by being individually small.
+ns9, _ = sector_ns(EQ, ENERGY_BOOK, ratio=0.30)
+seq = [ns9["_sector_cap_allows"]("DVN", 1500.0) for _ in range(5)]
+check9("intra-run accumulation blocks the tail", (seq[0], seq[-1]), (True, False))
+
+# (e) fail-CLOSED — the bug in the notebook gate was failing OPEN and silent.
+ns9, _ = sector_ns(EQ, ENERGY_BOOK, boom=True)
+got9, printed9 = call9(ns9, "XOM", 1000.0)
+check9("broker read down -> BUY refused", got9, False)
+check9("fail-closed refusal is printed, not silent", "fail-closed" in printed9, True)
+ns9, _ = sector_ns(EQ, ENERGY_BOOK)
+ns9["_SECTOR_CAP"]["ok"] = False
+check9("exposure map absent -> BUY refused", ns9["_sector_cap_allows"]("XOM", 1.0), False)
+
+# (f) release path: a gross-cap refusal must hand the sector reservation back,
+#     or later BUYs are judged against exposure that was never submitted.
+ns9, _ = sector_ns(EQ, ENERGY_BOOK, ratio=0.30)
+ns9["_sector_cap_allows"]("DVN", 5000.0)
+before = ns9["_SECTOR_CAP"]["submitted"]["Energy"]
+ns9["_sector_cap_release"]("DVN", 5000.0)
+check9("release returns the reservation", (before, ns9["_SECTOR_CAP"]["submitted"]["Energy"]),
+       (5000.0, 0.0))
+
+# (g) the cap never sells: an already-over-cap sector is frozen, and the gate
+#     touches BUYs only — there is no SELL path in it at all.
+ns9, out9 = sector_ns(EQ, ENERGY_BOOK, ratio=0.10)
+check9("over-cap sector frozen, not liquidated", ns9["_sector_cap_allows"]("XOM", 1.0), False)
+check9("over-cap sector surfaced in the log line", "OVER CAP" in out9, True)
 
 print()
 if fails:

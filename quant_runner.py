@@ -3298,6 +3298,100 @@ def _gross_cap_allows(_tk_gc, _notional_gc):
         print(f"    [gross-cap] gate error — BLOCKED BUY {_tk_gc} (fail-closed): {_gca_e}")
         return False
 
+# ── Fix (2026-07-31): SECTOR concentration cap ───────────────────────────────
+# The 7/30 kill-switch trip (`5 consecutive losses` — the FIRST genuine one,
+# every prior trip was a stale-era artifact) was produced by an energy-
+# concentrated book: the 7/23 scored batch went 1W/10L and the 7/24 batch
+# 2W/12L, with eleven of the twelve losers energy or energy-adjacent. The book
+# was not diversified; it was one factor bet, and one sector selling off cost a
+# full trading day of entries.
+#
+# Cell 13 ALREADY calls sector_allows_trade(), and it could not have stopped
+# this, for two INDEPENDENT reasons — both worth stating because fixing either
+# alone would still have let the book build:
+#   1. it FAILS OPEN AND SILENT. Cell 13 builds _open_pos_dict inside
+#      `try: ... except Exception: pass`, so ANY error leaves the dict EMPTY;
+#      get_sector_exposure() then returns {} and `projected` is just this one
+#      order's weight, which never breaches 40%. Nothing is printed when it
+#      happens, so the gate can be dead for weeks and every log looks normal.
+#      Every other guard here (gross cap, oversell) was deliberately made
+#      fail-CLOSED after an incident; this one was missed.
+#   2. MAX_SECTOR_PCT = 0.40 is too loose to bind at the current book size.
+#      With gross ~0.59x equity, energy would have to reach ~$45k of a ~$66k
+#      book before 40% of equity was touched — the concentration that actually
+#      hurt sat well under the limit the whole time.
+# The notebook gate is left in place (it can only ever block MORE, never allow
+# more); THIS is the authoritative one. Same contract as the gross cap: live
+# broker positions + live equity, fail-CLOSED, per-run accumulation so several
+# BUYs in one sector in one run cannot slip through individually.
+#
+# IMPORTANT — this gate only ever refuses NEW BUYS. It never sells. A sector
+# already above the cap is FROZEN, not liquidated; existing positions run to
+# their normal exits. Tightening the ratio can therefore never itself trigger
+# a sale, which is why it is safe to set conservatively.
+_SECTOR_CAP = {
+    "ratio":      float(_os_gc.environ.get("QT_MAX_SECTOR", "0.25") or 0.25),
+    "exposure":   {},      # sector -> live $ market value (abs)
+    "submitted":  {},      # sector -> BUY notional allowed this run ($)
+    "ok":         False,   # live sector exposure map successfully built
+    "blocked_n":  0,
+    "blocked_nl": 0.0,
+    "pre_blocked": 0,
+}
+
+def _sector_of(_tk_sc):
+    # SECTOR_MAP is overridden above with the full ~300-name map; the notebook's
+    # own 16-ticker version would drop everything into "Other" and make the cap
+    # meaningless (that is the bug the override comment refers to).
+    try:
+        return str(SECTOR_MAP.get(str(_tk_sc), "Other"))
+    except Exception:
+        return "Other"
+
+def _sector_cap_allows(_tk_sc, _notional_sc):
+    # Hard BUY gate: True only if this order keeps the ticker's sector at or
+    # below ratio x equity. Fail-closed, mirroring _gross_cap_allows.
+    try:
+        _n_sc = max(0.0, float(_notional_sc))
+        _eq_sc = float(_GROSS_CAP["equity"] or 0.0)
+        if not _SECTOR_CAP["ok"] or _eq_sc <= 0:
+            _SECTOR_CAP["blocked_n"] += 1; _SECTOR_CAP["blocked_nl"] += _n_sc
+            print(f"    [sector-cap] BLOCKED BUY {_tk_sc} ~${_n_sc:,.0f} — "
+                  f"live sector exposure unknown (fail-closed)")
+            return False
+        _sec_sc = _sector_of(_tk_sc)
+        _cap_sc = _SECTOR_CAP["ratio"] * _eq_sc
+        _cur_sc = (float(_SECTOR_CAP["exposure"].get(_sec_sc, 0.0))
+                   + float(_SECTOR_CAP["submitted"].get(_sec_sc, 0.0)))
+        if _cur_sc + _n_sc > _cap_sc:
+            _SECTOR_CAP["blocked_n"] += 1; _SECTOR_CAP["blocked_nl"] += _n_sc
+            print(f"    [sector-cap] BLOCKED BUY {_tk_sc} ~${_n_sc:,.0f} — {_sec_sc} "
+                  f"would reach ${_cur_sc + _n_sc:,.0f} "
+                  f"({(_cur_sc + _n_sc) / _eq_sc:.0%} of equity) > "
+                  f"{_SECTOR_CAP['ratio']:.0%} cap (${_cap_sc:,.0f})")
+            return False
+        _SECTOR_CAP["submitted"][_sec_sc] = (
+            float(_SECTOR_CAP["submitted"].get(_sec_sc, 0.0)) + _n_sc)
+        return True
+    except Exception as _sca_e:
+        print(f"    [sector-cap] gate error — BLOCKED BUY {_tk_sc} (fail-closed): {_sca_e}")
+        return False
+
+def _sector_cap_release(_tk_sc, _notional_sc):
+    # Give back a reservation when a LATER gate refuses the same order.
+    # The sector gate runs before the gross cap (so a sector refusal cannot
+    # consume gross budget); this is the mirror case — without it, an order the
+    # gross cap rejects would permanently charge its sector, and legitimate
+    # BUYs later in the same run would be refused against exposure that was
+    # never actually submitted.
+    try:
+        _sec_sc = _sector_of(_tk_sc)
+        _SECTOR_CAP["submitted"][_sec_sc] = max(
+            0.0, float(_SECTOR_CAP["submitted"].get(_sec_sc, 0.0))
+                 - max(0.0, float(_notional_sc)))
+    except Exception:
+        pass
+
 # ── Fix (2026-07-15): OVERSELL guard — the short-book incident ───────────────
 # execute_trade submitted SELLs with no position check while the ledger
 # recorded "filled" at submission time, so exits sized off model/ledger state
@@ -3364,6 +3458,19 @@ try:
         except Exception as _lq_e:
             print(f"  [patch] oversell-guard position map FAILED ({_lq_e}) — "
                   f"all SELLs refused this run (fail-closed)")
+        # Sector cap: live $ exposure per sector, from the same position read.
+        # Separate try so a schema surprise fails BUYs closed without also
+        # taking down the oversell guard or the gross cap.
+        try:
+            for _p_gc in _pos_list_gc:
+                _sec_gc = _sector_of(str(_p_gc.symbol))
+                _SECTOR_CAP["exposure"][_sec_gc] = (
+                    _SECTOR_CAP["exposure"].get(_sec_gc, 0.0)
+                    + abs(float(_p_gc.market_value)))
+            _SECTOR_CAP["ok"] = True
+        except Exception as _sc_e:
+            print(f"  [patch] sector-cap exposure map FAILED ({_sc_e}) — "
+                  f"all BUYs refused this run (fail-closed)")
     else:
         # No broker keys (pure local paper mode): budget from the ledger.
         import pandas as _pd_gc
@@ -3380,6 +3487,22 @@ try:
         _GROSS_CAP["equity"]   = float(PORTFOLIO_CAPITAL)
         _GROSS_CAP["gross_mv"] = _gmv_gc
         _GROSS_CAP["acct_ok"]  = True
+        # Sector exposure in local paper mode: net notional per ticker from the
+        # same ledger the gross budget uses, mapped to sectors.
+        try:
+            if _pt_gc.exists() and len(_df_gc):
+                _sgn_gc = _df_gc["action"].map(lambda _a: 1.0 if _a == "BUY" else -1.0)
+                _df_gc["_net_gc"] = _df_gc["qty"] * _df_gc["price"] * _sgn_gc
+                for _tk_sc0, _nl_sc0 in _df_gc.groupby("ticker")["_net_gc"].sum().items():
+                    if float(_nl_sc0) <= 0:
+                        continue
+                    _sec_sc0 = _sector_of(str(_tk_sc0))
+                    _SECTOR_CAP["exposure"][_sec_sc0] = (
+                        _SECTOR_CAP["exposure"].get(_sec_sc0, 0.0) + float(_nl_sc0))
+            _SECTOR_CAP["ok"] = True
+        except Exception as _sc_e2:
+            print(f"  [patch] sector-cap ledger exposure FAILED ({_sc_e2}) — "
+                  f"all BUYs refused this run (fail-closed)")
 
     _room0_gc = max(0.0, _GROSS_CAP["ratio"] * _GROSS_CAP["equity"] - _GROSS_CAP["gross_mv"])
     # Pre-trim: keep the highest-confidence BUY signals that fit the budget,
@@ -3392,10 +3515,24 @@ try:
          if _sig_gc.get("action") == "BUY"],
         key=lambda _x_gc: _x_gc[1].get("confidence", 0), reverse=True)
     _pre_blocked_gc = 0
+    _sec_pre_gc = {}     # sector -> notional this pre-trim has already budgeted
     for _i_gc, (_tk_gc2, _) in enumerate(_buys_gc):
         if _i_gc >= _max_new_gc:
             signals[_tk_gc2]["exec_blocked"] = True
             _pre_blocked_gc += 1
+            continue
+        # Sector pre-trim, same one-slot estimate the gross-cap pre-trim uses.
+        # Blocking here (rather than only at the per-order gate) means a capped
+        # sector's slots go to other sectors instead of being burned on refusals.
+        if _SECTOR_CAP["ok"] and _GROSS_CAP["equity"]:
+            _sec_gc2 = _sector_of(_tk_gc2)
+            _proj_gc2 = (_SECTOR_CAP["exposure"].get(_sec_gc2, 0.0)
+                         + _sec_pre_gc.get(_sec_gc2, 0.0) + _slot_gc)
+            if _proj_gc2 > _SECTOR_CAP["ratio"] * float(_GROSS_CAP["equity"]):
+                signals[_tk_gc2]["exec_blocked"] = True
+                _SECTOR_CAP["pre_blocked"] += 1
+                continue
+            _sec_pre_gc[_sec_gc2] = _sec_pre_gc.get(_sec_gc2, 0.0) + _slot_gc
     _lev_gc = (_GROSS_CAP["gross_mv"] / _GROSS_CAP["equity"]) if _GROSS_CAP["equity"] else 0.0
     print(f"  [patch] Gross cap: equity ${_GROSS_CAP['equity']:,.0f} | gross "
           f"${_GROSS_CAP['gross_mv']:,.0f} ({_lev_gc:.2f}x) | cap {_GROSS_CAP['ratio']:.2f}x "
@@ -3404,6 +3541,25 @@ try:
           f"run_ok={_GROSS_CAP['run_ok']} ({_GROSS_CAP['run_type']})")
     print(f"  [patch] Oversell guard: enforce={_OVERSELL['enforce']} "
           f"pos_map={len(_LIVE_QTY)} symbols pos_ok={_OVERSELL['pos_ok']}")
+    # Print the live sector split every run. The concentration that caused the
+    # 7/30 halt built up over days with nothing in the log to show it — this
+    # line is the observability half of the fix, and is worth reading even on
+    # days the cap does not bind.
+    _eq_sc1 = float(_GROSS_CAP["equity"] or 0.0)
+    _top_sc1 = sorted(_SECTOR_CAP["exposure"].items(), key=lambda _x_sc: -_x_sc[1])[:4]
+    if _top_sc1 and _eq_sc1 > 0:
+        _split_sc1 = " ".join(f"{_s_sc}=${_v_sc:,.0f}({_v_sc / _eq_sc1:.0%})"
+                              for _s_sc, _v_sc in _top_sc1)
+    else:
+        _split_sc1 = "(no positions)"
+    _over_sc1 = [f"{_s_sc}={_v_sc / _eq_sc1:.0%}" for _s_sc, _v_sc
+                 in _SECTOR_CAP["exposure"].items()
+                 if _eq_sc1 > 0 and _v_sc > _SECTOR_CAP["ratio"] * _eq_sc1]
+    print(f"  [patch] Sector cap: {_SECTOR_CAP['ratio']:.0%} of equity "
+          f"(${_SECTOR_CAP['ratio'] * _eq_sc1:,.0f}) | ok={_SECTOR_CAP['ok']} | "
+          f"pre-blocked {_SECTOR_CAP['pre_blocked']}/{len(_buys_gc)} BUY signals | "
+          f"top: {_split_sc1}"
+          + (f" | OVER CAP (frozen, not sold): {', '.join(_over_sc1)}" if _over_sc1 else ""))
 except Exception as _gc_e:
     print(f"  [patch] GROSS CAP SETUP ERROR: {_gc_e} — hard gate stays active "
           f"(BUYs blocked unless account read succeeded above)")
@@ -5347,7 +5503,10 @@ _SRC_REPLACE = [
      '            if _ck_q != qty:\n'
      '                print(f"    [conformal] {ticker}: qty {qty} -> {_ck_q} (x{_ck_d:.2f})")\n'
      '                qty = _ck_q\n'
+     '    if action == "BUY" and not _sector_cap_allows(ticker, qty * price):\n'
+     '        return {"status":"skip","reason":"sector_cap"}\n'
      '    if action == "BUY" and not _gross_cap_allows(ticker, qty * price):\n'
+     '        _sector_cap_release(ticker, qty * price)\n'
      '        return {"status":"skip","reason":"gross_cap"}\n'
      '    if action == "SELL":\n'
      '        qty = _oversell_cap(ticker, qty)\n'
@@ -5357,7 +5516,7 @@ _SRC_REPLACE = [
     #     trade or count toward trade_count (the 7/7-style "filled" phantoms).
     ('        result = execute_trade(sig, qty, equity)\n',
      '        result = execute_trade(sig, qty, equity)\n'
-     '        if isinstance(result, dict) and result.get("reason") in ("gross_cap", "stale_bar", "oversell"):\n'
+     '        if isinstance(result, dict) and result.get("reason") in ("gross_cap", "sector_cap", "stale_bar", "oversell"):\n'
      '            continue\n'),
 ]
 
