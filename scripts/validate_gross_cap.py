@@ -620,6 +620,59 @@ ns9, out9 = sector_ns(EQ, ENERGY_BOOK, ratio=0.10)
 check9("over-cap sector frozen, not liquidated", ns9["_sector_cap_allows"]("XOM", 1.0), False)
 check9("over-cap sector surfaced in the log line", "OVER CAP" in out9, True)
 
+# ── 10. SECTOR_MAP covers the whole traded universe (2026-07-31) ─────────────
+# The sector cap is only as good as the map behind it. On 2026-07-31, 37 of the
+# 307 traded tickers were absent and pooled into "Other" — including FANG, a
+# pure energy name from the 7/24 losing batch, which meant the cap had a hole in
+# the exact sector it was built for. An unmapped ticker is not a cosmetic gap:
+# "Other" is enforced as though it were a real sector, so unrelated names can
+# block each other while a genuinely concentrated sector goes uncounted.
+# This check fails the build if the universe drifts ahead of the map again.
+sector_map_src = prepatch[prepatch.index("SECTOR_MAP = {"):]
+_ns10 = {}
+exec(sector_map_src[:sector_map_src.index("\n}") + 2], _ns10)
+SECTOR_MAP_LIVE = _ns10["SECTOR_MAP"]
+print(f"10. SECTOR_MAP entries                               n={len(SECTOR_MAP_LIVE)}")
+
+PRED = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                    "data", "predictions", "predictions.csv")
+if not os.path.exists(PRED):
+    print("10. predictions.csv absent — universe check SKIPPED (not a failure)")
+else:
+    import csv as _csv10
+    _last, _rows10 = None, []
+    with open(PRED, newline="", encoding="utf-8-sig") as _fh10:
+        for _r10 in _csv10.DictReader(_fh10):
+            _d10 = (_r10.get("pred_ts") or "")[:10]
+            _tk10 = (_r10.get("ticker") or "").strip()
+            if not _d10 or not _tk10:
+                continue
+            if _last is None or _d10 > _last:
+                _last, _rows10 = _d10, []
+            if _d10 == _last:
+                _rows10.append(_tk10)
+    universe = sorted(set(_rows10))
+    unmapped = [t for t in universe if t not in SECTOR_MAP_LIVE]
+    ok10 = not unmapped
+    print(f"10. every traded ticker mapped ({_last}, n={len(universe)})   "
+          f"{'PASS' if ok10 else 'FAIL'}")
+    if not ok10:
+        print(f"    unmapped -> would pool into 'Other': {' '.join(unmapped)}")
+        fails.append(f"section10: {len(unmapped)} unmapped tickers: {','.join(unmapped)}")
+    # No ticker may map to the literal "Other" — that is the pooling bucket the
+    # _sector_of() fallback produces, never a sector anyone should assign.
+    explicit_other = [t for t, s in SECTOR_MAP_LIVE.items() if s == "Other"]
+    print("10. no ticker explicitly mapped to 'Other'           "
+          + ("PASS" if not explicit_other else f"FAIL ({explicit_other})"))
+    if explicit_other:
+        fails.append(f"section10: explicit Other mappings {explicit_other}")
+    # FANG regression: the specific miss that motivated this section.
+    got_fang = SECTOR_MAP_LIVE.get("FANG")
+    print(f"10. FANG maps to Energy (7/24 batch, was 'Other')    got={got_fang}  "
+          f"{'PASS' if got_fang == 'Energy' else 'FAIL'}")
+    if got_fang != "Energy":
+        fails.append(f"section10: FANG maps to {got_fang}, want Energy")
+
 print()
 if fails:
     print("VALIDATION FAILED:")
