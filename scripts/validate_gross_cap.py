@@ -673,6 +673,79 @@ else:
     if got_fang != "Energy":
         fails.append(f"section10: FANG maps to {got_fang}, want Energy")
 
+# ── 11. sector-targeted trim sleeve (2026-07-31) ─────────────────────────────
+# delever_account.py's `equity` sleeve is pro-rata across the whole book, so it
+# shrinks gross without changing composition. The `sector` sleeve trims ONE
+# sector. Only the guard rails are exercised here — every one of them returns
+# BEFORE the first api() call, so this section never touches the network and
+# never needs credentials.
+import py_compile as _pyc11
+DELEV = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                     "delever_account.py")
+try:
+    _pyc11.compile(DELEV, doraise=True)
+    print("11. delever_account.py py_compile                    PASS")
+except Exception as _e11:
+    fails.append(f"delever_account.py compile: {_e11}")
+    print(f"11. delever_account.py py_compile                    FAIL ({_e11})")
+
+def check11(name, got, want):
+    ok = got == want
+    print(f"11. {name:<52} got={str(got):<7} {'PASS' if ok else 'FAIL (want %s)' % want}")
+    if not ok:
+        fails.append(f"section11 {name}: got={got} want={want}")
+
+os.environ.setdefault("ALPACA_API_KEY", "dummy")
+os.environ.setdefault("ALPACA_SECRET_KEY", "dummy")
+try:
+    import importlib.util as _ilu11
+    _spec11 = _ilu11.spec_from_file_location("delever_mod", DELEV)
+    dv = _ilu11.module_from_spec(_spec11)
+    _spec11.loader.exec_module(dv)
+
+    # The map must come from quant_runner, not a copy — a trim that disagrees
+    # with the cap about what "Energy" means is worse than no trim.
+    sm11 = dv._load_sector_map()
+    check11("sector map loaded from quant_runner", len(sm11), len(SECTOR_MAP_LIVE))
+    check11("...and agrees on FANG", sm11.get("FANG"), "Energy")
+
+    def guard(sector, ratio):
+        buf = io.StringIO()
+        dv.TRIM_SECTOR, dv.TARGET_RATIO = sector, ratio
+        with contextlib.redirect_stdout(buf):
+            rc = dv.trim_sector()
+        return rc, buf.getvalue()
+
+    rc11, out11 = guard("", 0.25)
+    check11("empty sector refused", (rc11, "refusing" in out11), (1, True))
+    rc11, out11 = guard("Nonsense", 0.25)
+    check11("unknown sector refused, lists known", (rc11, "Known:" in out11), (1, True))
+    rc11, out11 = guard("Energy", 1.0)
+    check11("target>=1.0 refused (can never bind)", (rc11, "can never bind" in out11), (1, True))
+    rc11, out11 = guard("energy", 1.5)
+    check11("sector match is case-insensitive", "Energy <=" in out11, True)
+
+    # Dispatch table: 'sector' must be a recognised sleeve.
+    src11 = open(DELEV, encoding="utf-8").read()
+    check11("main() dispatches sleeve=sector",
+            ('"sector"' in src11 and "return trim_sector()" in src11), True)
+    # It must never submit a BUY, on any path.
+    sec_src11 = src11[src11.index("def trim_sector"):]
+    sec_src11 = sec_src11[:sec_src11.index("\ndef ")] if "\ndef " in sec_src11 else sec_src11
+    check11("sector trim never submits a BUY", '"side": "buy"' in sec_src11, False)
+    check11("sector trim honours dry-run", 'MODE == "dry-run"' in sec_src11, True)
+except Exception as _e11b:
+    fails.append(f"section11 import/replay: {_e11b}")
+    print(f"11. sector-sleeve replay                             FAIL ({_e11b})")
+
+# Workflow must actually pass TRIM_SECTOR through, or the input is inert.
+WF11 = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                    ".github", "workflows", "position_trim.yml")
+wf11 = open(WF11, encoding="utf-8").read()
+check11("workflow wires TRIM_SECTOR env",
+        ("TRIM_SECTOR:" in wf11 and "inputs.sector" in wf11), True)
+check11("workflow offers the sector choice", "short-cover, sector]" in wf11, True)
+
 print()
 if fails:
     print("VALIDATION FAILED:")
