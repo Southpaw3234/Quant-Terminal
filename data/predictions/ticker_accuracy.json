@@ -1,2424 +1,2727 @@
 {
   "AAPL": {
-    "correct": 1,
-    "total": 1,
+    "correct": 0,
+    "total": 2,
     "recent": [
-      1
+      0,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "MSFT": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
   "NVDA": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       1
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "GOOGL": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
   "AMZN": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
   "META": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
   "TSLA": {
-    "correct": 0,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
-      0
+      1,
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "AVGO": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "ORCL": {
-    "correct": 1,
-    "total": 1,
+    "correct": 0,
+    "total": 2,
     "recent": [
-      1
+      0,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "ADBE": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
   "CRM": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
   "NOW": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
   "SNOW": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
-      1
-    ],
-    "rolling_acc": 1.0
-  },
-  "PLTR": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
-  "NET": {
+  "PLTR": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       1
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
+  },
+  "NET": {
+    "correct": 0,
+    "total": 2,
+    "recent": [
+      0,
+      0
+    ],
+    "rolling_acc": 0.0
   },
   "DDOG": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
   "ZS": {
-    "correct": 0,
-    "total": 1,
+    "correct": 1,
+    "total": 2,
     "recent": [
-      0
+      0,
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 0.5
   },
   "CRWD": {
-    "correct": 0,
-    "total": 1,
+    "correct": 1,
+    "total": 2,
     "recent": [
+      1,
       0
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 0.5
   },
   "PANW": {
-    "correct": 0,
-    "total": 1,
+    "correct": 1,
+    "total": 2,
     "recent": [
+      1,
       0
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 0.5
   },
   "SHOP": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
   "WDAY": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
   "TEAM": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
   "INTU": {
-    "correct": 0,
-    "total": 1,
+    "correct": 1,
+    "total": 2,
     "recent": [
-      0
+      0,
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 0.5
   },
   "CDNS": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "SNPS": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "FTNT": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
   "ANET": {
-    "correct": 0,
-    "total": 1,
+    "correct": 1,
+    "total": 2,
     "recent": [
+      1,
       0
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 0.5
   },
   "ACN": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
   "IBM": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       1
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "CSCO": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "IT": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
   "TYL": {
-    "correct": 0,
-    "total": 1,
+    "correct": 1,
+    "total": 2,
     "recent": [
+      1,
+      0
+    ],
+    "rolling_acc": 0.5
+  },
+  "ROP": {
+    "correct": 0,
+    "total": 2,
+    "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
-  "ROP": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
-      1
-    ],
-    "rolling_acc": 1.0
-  },
   "PYPL": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "COIN": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
-      1
-    ],
-    "rolling_acc": 1.0
-  },
-  "AFRM": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
-  "HOOD": {
-    "correct": 1,
-    "total": 1,
+  "AFRM": {
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
-  "JPM": {
-    "correct": 1,
-    "total": 1,
+  "HOOD": {
+    "correct": 0,
+    "total": 2,
     "recent": [
+      0,
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "JPM": {
+    "correct": 2,
+    "total": 2,
+    "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "V": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "MA": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "BAC": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "GS": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       1
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "MS": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "BLK": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       1
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "AXP": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "WFC": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "C": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "SCHW": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "PGR": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "CB": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "COF": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       1
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "USB": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "TFC": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "PNC": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "ICE": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "CME": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
   "SPGI": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
-      1
-    ],
-    "rolling_acc": 1.0
-  },
-  "MCO": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
+  "MCO": {
+    "correct": 2,
+    "total": 2,
+    "recent": [
+      1,
+      1
+    ],
+    "rolling_acc": 1.0
+  },
   "AON": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
-      1
+      1,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "TRV": {
-    "correct": 1,
-    "total": 1,
+    "correct": 0,
+    "total": 2,
     "recent": [
-      1
+      0,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "ALL": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "MET": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "PRU": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "AIG": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "HIG": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "AFL": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "UNH": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "LLY": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
-      1
+      1,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "JNJ": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "ABBV": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      1,
+      0
+    ],
+    "rolling_acc": 0.5
+  },
+  "MRK": {
+    "correct": 2,
+    "total": 2,
+    "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
-  "MRK": {
-    "correct": 0,
-    "total": 1,
-    "recent": [
-      0
-    ],
-    "rolling_acc": 0.0
-  },
   "TMO": {
-    "correct": 0,
-    "total": 1,
+    "correct": 1,
+    "total": 2,
     "recent": [
-      0
+      0,
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 0.5
   },
   "ABT": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
+      1
+    ],
+    "rolling_acc": 0.5
+  },
+  "DHR": {
+    "correct": 2,
+    "total": 2,
+    "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
-  "DHR": {
-    "correct": 0,
-    "total": 1,
-    "recent": [
-      0
-    ],
-    "rolling_acc": 0.0
-  },
   "PFE": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "AMGN": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "CVS": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "CI": {
-    "correct": 1,
-    "total": 1,
+    "correct": 0,
+    "total": 2,
     "recent": [
-      1
+      0,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "HUM": {
-    "correct": 1,
-    "total": 1,
+    "correct": 0,
+    "total": 2,
     "recent": [
-      1
+      0,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "BSX": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "MDT": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "SYK": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
-      1
-    ],
-    "rolling_acc": 1.0
-  },
-  "ISRG": {
-    "correct": 0,
-    "total": 1,
-    "recent": [
+      1,
       0
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 0.5
+  },
+  "ISRG": {
+    "correct": 1,
+    "total": 2,
+    "recent": [
+      0,
+      1
+    ],
+    "rolling_acc": 0.5
   },
   "VRTX": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "REGN": {
-    "correct": 1,
-    "total": 1,
+    "correct": 0,
+    "total": 2,
     "recent": [
-      1
+      0,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "BMY": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "GILD": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "ELV": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "MCK": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "COR": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "A": {
-    "correct": 0,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
-      0
+      1,
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "IQV": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
+      1
+    ],
+    "rolling_acc": 0.5
+  },
+  "MTD": {
+    "correct": 1,
+    "total": 2,
+    "recent": [
+      0,
+      1
+    ],
+    "rolling_acc": 0.5
+  },
+  "WAT": {
+    "correct": 2,
+    "total": 2,
+    "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
-  },
-  "MTD": {
-    "correct": 0,
-    "total": 1,
-    "recent": [
-      0
-    ],
-    "rolling_acc": 0.0
-  },
-  "WAT": {
-    "correct": 0,
-    "total": 1,
-    "recent": [
-      0
-    ],
-    "rolling_acc": 0.0
   },
   "ZBH": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       1
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "RMD": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       1
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "DXCM": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
   "IDXX": {
-    "correct": 0,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
-      0
+      1,
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "EW": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "PODD": {
-    "correct": 0,
-    "total": 1,
+    "correct": 1,
+    "total": 2,
     "recent": [
-      0
+      0,
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 0.5
   },
   "ALGN": {
-    "correct": 0,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
-      0
-    ],
-    "rolling_acc": 0.0
-  },
-  "BAX": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
-  "HD": {
-    "correct": 1,
-    "total": 1,
+  "BAX": {
+    "correct": 0,
+    "total": 2,
     "recent": [
+      0,
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "HD": {
+    "correct": 2,
+    "total": 2,
+    "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "NKE": {
-    "correct": 0,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
-      0
+      1,
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "LOW": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "TJX": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "ROST": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       1
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "SBUX": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "CMG": {
-    "correct": 1,
-    "total": 1,
+    "correct": 0,
+    "total": 2,
     "recent": [
-      1
+      0,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "MCD": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "COST": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "TGT": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       1
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "GM": {
-    "correct": 0,
-    "total": 1,
+    "correct": 1,
+    "total": 2,
     "recent": [
-      0
+      0,
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 0.5
   },
   "F": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "UBER": {
-    "correct": 0,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
-      0
-    ],
-    "rolling_acc": 0.0
-  },
-  "BKNG": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
-  "ABNB": {
-    "correct": 0,
-    "total": 1,
+  "BKNG": {
+    "correct": 1,
+    "total": 2,
     "recent": [
-      0
+      0,
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 0.5
+  },
+  "ABNB": {
+    "correct": 1,
+    "total": 2,
+    "recent": [
+      0,
+      1
+    ],
+    "rolling_acc": 0.5
   },
   "MAR": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "HLT": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "LVS": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       1
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "MGM": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "DG": {
-    "correct": 0,
-    "total": 1,
+    "correct": 1,
+    "total": 2,
     "recent": [
-      0
+      0,
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 0.5
   },
   "DLTR": {
-    "correct": 0,
-    "total": 1,
+    "correct": 1,
+    "total": 2,
     "recent": [
-      0
+      0,
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 0.5
   },
   "YUM": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "DPZ": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       1
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "APTV": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "CCL": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       1
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "RCL": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       1
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "EXPE": {
-    "correct": 1,
-    "total": 1,
+    "correct": 0,
+    "total": 2,
     "recent": [
-      1
+      0,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "NCLH": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
   "WMT": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "PG": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
-      1
+      1,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "KO": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       1
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "PEP": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "MDLZ": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "CL": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "MO": {
-    "correct": 1,
-    "total": 1,
+    "correct": 0,
+    "total": 2,
     "recent": [
-      1
+      0,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "PM": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "EL": {
-    "correct": 0,
-    "total": 1,
+    "correct": 1,
+    "total": 2,
     "recent": [
-      0
+      0,
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 0.5
   },
   "CHD": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "CLX": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "GIS": {
-    "correct": 0,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
-      0
-    ],
-    "rolling_acc": 0.0
-  },
-  "TSN": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
-  "STZ": {
+  "TSN": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      1,
+      0
+    ],
+    "rolling_acc": 0.5
+  },
+  "STZ": {
+    "correct": 2,
+    "total": 2,
+    "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "SJM": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "HRL": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
-      1
+      1,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "CAG": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
-      1
+      1,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "HSY": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "AMD": {
-    "correct": 0,
-    "total": 1,
+    "correct": 1,
+    "total": 2,
     "recent": [
-      0
+      0,
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 0.5
   },
   "INTC": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       1
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "QCOM": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
-      1
-    ],
-    "rolling_acc": 1.0
-  },
-  "AMAT": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
+  "AMAT": {
+    "correct": 1,
+    "total": 2,
+    "recent": [
+      0,
+      1
+    ],
+    "rolling_acc": 0.5
+  },
   "MU": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
   "TXN": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "LRCX": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
   "KLAC": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
   "ADI": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "MRVL": {
-    "correct": 0,
-    "total": 1,
+    "correct": 1,
+    "total": 2,
     "recent": [
-      0
+      0,
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 0.5
   },
   "ASML": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       1
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "TSM": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "ON": {
-    "correct": 1,
-    "total": 1,
+    "correct": 0,
+    "total": 2,
     "recent": [
-      1
+      0,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "MCHP": {
-    "correct": 1,
-    "total": 1,
+    "correct": 0,
+    "total": 2,
     "recent": [
-      1
+      0,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "ENPH": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "FSLR": {
-    "correct": 1,
-    "total": 1,
+    "correct": 0,
+    "total": 2,
     "recent": [
-      1
+      0,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "TER": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
   "SWKS": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
-      1
+      1,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "MPWR": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
   "NXPI": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
-      1
-    ],
-    "rolling_acc": 1.0
-  },
-  "XOM": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
-  "CVX": {
-    "correct": 1,
-    "total": 1,
+  "XOM": {
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
+  },
+  "CVX": {
+    "correct": 1,
+    "total": 2,
+    "recent": [
+      1,
+      0
+    ],
+    "rolling_acc": 0.5
   },
   "COP": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
-      1
+      1,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "SLB": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       1
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "EOG": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
-      1
+      1,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "HAL": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "OXY": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       1
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "PSX": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "MPC": {
-    "correct": 0,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
-      0
-    ],
-    "rolling_acc": 0.0
-  },
-  "VLO": {
-    "correct": 0,
-    "total": 1,
-    "recent": [
-      0
-    ],
-    "rolling_acc": 0.0
-  },
-  "DVN": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
-  "APA": {
-    "correct": 0,
-    "total": 1,
+  "VLO": {
+    "correct": 1,
+    "total": 2,
     "recent": [
+      1,
       0
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 0.5
+  },
+  "DVN": {
+    "correct": 1,
+    "total": 2,
+    "recent": [
+      1,
+      0
+    ],
+    "rolling_acc": 0.5
+  },
+  "APA": {
+    "correct": 1,
+    "total": 2,
+    "recent": [
+      1,
+      0
+    ],
+    "rolling_acc": 0.5
   },
   "KMI": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "WMB": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       1
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "BKR": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       1
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "LNG": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "FANG": {
-    "correct": 0,
-    "total": 1,
+    "correct": 1,
+    "total": 2,
     "recent": [
-      0
+      0,
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 0.5
   },
   "BA": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "CAT": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
-      1
-    ],
-    "rolling_acc": 1.0
-  },
-  "DE": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
-      1
-    ],
-    "rolling_acc": 1.0
-  },
-  "HON": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
-  "GE": {
+  "DE": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      1,
+      0
+    ],
+    "rolling_acc": 0.5
+  },
+  "HON": {
+    "correct": 2,
+    "total": 2,
+    "recent": [
+      1,
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "GE": {
+    "correct": 2,
+    "total": 2,
+    "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "RTX": {
-    "correct": 0,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
-      0
+      1,
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "LMT": {
-    "correct": 0,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
-      0
+      1,
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "NOC": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "UPS": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       1
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "FDX": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "MMM": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "EMR": {
-    "correct": 0,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "ETN": {
+    "correct": 0,
+    "total": 2,
+    "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
-  "ETN": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
-      1
-    ],
-    "rolling_acc": 1.0
-  },
   "ITW": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
-      1
+      1,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "PH": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "CMI": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
-      1
-    ],
-    "rolling_acc": 1.0
-  },
-  "PCAR": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
-  "GWW": {
-    "correct": 1,
-    "total": 1,
+  "PCAR": {
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "GWW": {
+    "correct": 2,
+    "total": 2,
+    "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "CTAS": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
-      1
-    ],
-    "rolling_acc": 1.0
-  },
-  "EXPD": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
-      1
-    ],
-    "rolling_acc": 1.0
-  },
-  "NSC": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
-      1
-    ],
-    "rolling_acc": 1.0
-  },
-  "UNP": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
-      1
-    ],
-    "rolling_acc": 1.0
-  },
-  "CSX": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
-  "GD": {
+  "EXPD": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
+      1
+    ],
+    "rolling_acc": 0.5
+  },
+  "NSC": {
+    "correct": 1,
+    "total": 2,
+    "recent": [
+      0,
+      1
+    ],
+    "rolling_acc": 0.5
+  },
+  "UNP": {
+    "correct": 1,
+    "total": 2,
+    "recent": [
+      0,
+      1
+    ],
+    "rolling_acc": 0.5
+  },
+  "CSX": {
+    "correct": 1,
+    "total": 2,
+    "recent": [
+      0,
+      1
+    ],
+    "rolling_acc": 0.5
+  },
+  "GD": {
+    "correct": 2,
+    "total": 2,
+    "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "TDG": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "HWM": {
-    "correct": 0,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
+      1
+    ],
+    "rolling_acc": 1.0
+  },
+  "FTV": {
+    "correct": 0,
+    "total": 2,
+    "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
-  "FTV": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
-      1
-    ],
-    "rolling_acc": 1.0
-  },
   "XYL": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
-      1
+      1,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "FAST": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "CHRW": {
-    "correct": 1,
-    "total": 1,
+    "correct": 0,
+    "total": 2,
     "recent": [
-      1
+      0,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "LIN": {
-    "correct": 1,
-    "total": 1,
+    "correct": 0,
+    "total": 2,
     "recent": [
-      1
+      0,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "APD": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "SHW": {
-    "correct": 0,
-    "total": 1,
+    "correct": 1,
+    "total": 2,
     "recent": [
+      0,
+      1
+    ],
+    "rolling_acc": 0.5
+  },
+  "PPG": {
+    "correct": 0,
+    "total": 2,
+    "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
-  "PPG": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
-      1
-    ],
-    "rolling_acc": 1.0
-  },
   "NEM": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "FCX": {
-    "correct": 0,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
-      0
+      1,
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "NUE": {
-    "correct": 0,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
-      0
+      1,
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "ALB": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "LYB": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
-      1
+      1,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "DD": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "DOW": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
-      1
+      1,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "CF": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
-      1
+      1,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "MOS": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "ECL": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "IFF": {
-    "correct": 0,
-    "total": 1,
+    "correct": 1,
+    "total": 2,
     "recent": [
-      0
+      0,
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 0.5
   },
   "CE": {
-    "correct": 0,
-    "total": 1,
+    "correct": 1,
+    "total": 2,
     "recent": [
-      0
+      0,
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 0.5
   },
   "PKG": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       1
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "AMT": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "PLD": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "EQIX": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "CCI": {
-    "correct": 0,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
-      0
-    ],
-    "rolling_acc": 0.0
-  },
-  "WELL": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
-  "SPG": {
-    "correct": 1,
-    "total": 1,
+  "WELL": {
+    "correct": 0,
+    "total": 2,
     "recent": [
+      0,
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "SPG": {
+    "correct": 2,
+    "total": 2,
+    "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "O": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "DLR": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       1
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "PSA": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "EXR": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "VTR": {
-    "correct": 1,
-    "total": 1,
+    "correct": 0,
+    "total": 2,
     "recent": [
-      1
+      0,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "VICI": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "WY": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "EQR": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "AVB": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "ESS": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "NEE": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "DUK": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "SO": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "AEP": {
-    "correct": 1,
-    "total": 1,
+    "correct": 0,
+    "total": 2,
     "recent": [
-      1
+      0,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "D": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "EXC": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
-      1
+      1,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "SRE": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       1
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "XEL": {
-    "correct": 1,
-    "total": 1,
+    "correct": 0,
+    "total": 2,
     "recent": [
-      1
+      0,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "AWK": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "WEC": {
-    "correct": 1,
-    "total": 1,
+    "correct": 0,
+    "total": 2,
     "recent": [
-      1
+      0,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "ED": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "PEG": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       1
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "ETR": {
-    "correct": 1,
-    "total": 1,
+    "correct": 0,
+    "total": 2,
     "recent": [
-      1
+      0,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "FE": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "CNP": {
-    "correct": 1,
-    "total": 1,
+    "correct": 0,
+    "total": 2,
     "recent": [
-      1
+      0,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "CMS": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
-      1
+      1,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "AES": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "ATO": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "NFLX": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "DIS": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "CMCSA": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
   "VZ": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       1
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "T": {
-    "correct": 0,
-    "total": 1,
+    "correct": 1,
+    "total": 2,
     "recent": [
+      1,
       0
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 0.5
   },
   "TMUS": {
-    "correct": 0,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
-      0
-    ],
-    "rolling_acc": 0.0
-  },
-  "CHTR": {
-    "correct": 1,
-    "total": 1,
-    "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
-  "EA": {
-    "correct": 1,
-    "total": 1,
+  "CHTR": {
+    "correct": 0,
+    "total": 2,
     "recent": [
+      0,
+      0
+    ],
+    "rolling_acc": 0.0
+  },
+  "EA": {
+    "correct": 2,
+    "total": 2,
+    "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "TTWO": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       1
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "LYV": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
-      1
+      1,
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "WBD": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "OMC": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
   "SPY": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "QQQ": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "IWM": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "DIA": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "XLF": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "XLK": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "XLE": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "XLV": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "XLI": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "XLP": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "XLY": {
     "correct": 0,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       0
     ],
     "rolling_acc": 0.0
   },
   "XLU": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       1
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "XLB": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "XLRE": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "XLC": {
-    "correct": 0,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
-      0
+      1,
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "GLD": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "SLV": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "TLT": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "HYG": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "LQD": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "VNQ": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "ARKK": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
   },
   "SMH": {
     "correct": 1,
-    "total": 1,
+    "total": 2,
     "recent": [
+      0,
       1
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.5
   },
   "SOXX": {
-    "correct": 0,
-    "total": 1,
+    "correct": 1,
+    "total": 2,
     "recent": [
-      0
+      0,
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 0.5
   },
   "IBIT": {
-    "correct": 1,
-    "total": 1,
+    "correct": 2,
+    "total": 2,
     "recent": [
+      1,
       1
     ],
     "rolling_acc": 1.0
