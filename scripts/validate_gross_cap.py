@@ -828,11 +828,19 @@ else:
         _all12 = [(_r12.get("date") or "").strip()
                   for _r12 in _csv12.DictReader(_fh12)]
     _all12 = [_d for _d in _all12 if len(_d) == 10]
-    _scope12 = [_d for _d in _all12 if not _fix_from12 or _d >= _fix_from12]
+    # Drop the trailing row before reading the signature. It is the LIVE
+    # enriched snapshot (the only row carrying open_positions), stamped with
+    # today's ET date by the today-row path — so on a Saturday or Sunday cycle
+    # it legitimately IS a weekend row, and it self-clears on the next trading
+    # day. Asserting over it would fail this suite every weekend for a reason
+    # that has nothing to do with the bar-labelling bug being guarded here.
+    _live12 = _all12[-1] if _all12 else None
+    _settled12 = _all12[:-1]
+    _scope12 = [_d for _d in _settled12 if not _fix_from12 or _d >= _fix_from12]
     _c12 = _Counter12(_dt12.date.fromisoformat(_d).strftime("%a") for _d in _scope12)
     _wk12 = _c12.get("Sat", 0) + _c12.get("Sun", 0)
-    print(f"12. live pnl_history signature (n={len(_scope12)}, "
-          f"from={_fix_from12 or 'ALL'})   "
+    print(f"12. live pnl_history signature (n={len(_scope12)} settled, "
+          f"from={_fix_from12 or 'ALL'}, live row {_live12} excluded)   "
           + "  ".join(f"{_k}={_c12.get(_k, 0)}"
                       for _k in ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")))
     if not _fix_from12:
