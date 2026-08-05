@@ -855,6 +855,121 @@ else:
         check12("post-fix window has Monday rows", _c12.get("Mon", 0) > 0, True)
         check12("post-fix window has no weekend rows", _wk12, 0)
 
+# ── 13. rank_score + the Frame-1 v2 parallel series (2026-08-05) ────────────
+# `confidence` is not a ranking score: Cell 13's ternary execution gate
+# overwrites it to exactly 0.50 for every HOLD and SELL, and log_prediction
+# runs AFTER that — so predictions.csv recorded the execution flag. Measured
+# over 2026-07-14..07-29: 97.5% of all (day,name) rows sat at the modal value,
+# ~7 of 279 names carried a distinct value, and on 17 of 17 days NOT ONE name
+# scored below 0.5, so the short decile never held a model-selected name.
+# rank_score captures the same value BEFORE the gate. This section pins the
+# capture, the logging anchor, the dual-series plumbing, and the tie diagnostic.
+def check13(name, got, want):
+    ok = got == want
+    print(f"13. {name:<52} got={str(got):<7} {'PASS' if ok else 'FAIL (want %s)' % want}")
+    if not ok:
+        fails.append(f"section13 {name}: got={got} want={want}")
+
+
+# (a) the runner stashes rank_score BEFORE the gate flattens confidence.
+_i_stash = src.find('signals[_tk13_r]["rank_score"]')
+_i_flat = src.find('signals[_tk13_w]["confidence"] = 0.50')
+check13("runner captures rank_score", _i_stash >= 0, True)
+check13("...and does so BEFORE the 0.50 flatten", 0 <= _i_stash < _i_flat, True)
+
+# (b) the log_prediction anchor is unique in Cell 13 and survives patching.
+_anchor13 = '        "confidence":   sig["confidence"],\n'
+check13("log_prediction anchor unique in Cell 13", cell13.count(_anchor13), 1)
+check13("patched Cell 13 logs rank_score",
+        '"rank_score":   sig.get("rank_score", None)' in patched, True)
+# Guard the placement note in _SRC_REPLACE: section 2 asserts uniqueness on
+# pairs[-3:], so the new anchor must NOT sit inside that window or it silently
+# evicts gross-cap anchor (a) from the check.
+check13("new anchor kept out of the pairs[-3:] window",
+        any(_anchor13 in _o for _o, _n in pairs[-3:]), False)
+
+# (c) analyzer plumbing: env-configurable, legacy defaults unchanged.
+RIC = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                   "analyze_rank_ic.py")
+ric = open(RIC, encoding="utf-8-sig").read()
+try:
+    py_compile.compile(RIC, doraise=True)
+    print("13. analyze_rank_ic.py py_compile                    PASS")
+except Exception as _e13:
+    fails.append(f"analyze_rank_ic.py compile: {_e13}")
+    print(f"13. analyze_rank_ic.py py_compile                    FAIL ({_e13})")
+check13("score column is env-configurable",
+        'os.environ.get("QT_RANK_SCORE_COL", "confidence")' in ric, True)
+check13("legacy default output path unchanged",
+        '"QT_RANK_IC_OUT", "data/shadow/rank_ic.csv"' in ric, True)
+check13("no hardcoded g[\"confidence\"] left in the loop",
+        'zip(g["ticker"], g["confidence"])' in ric, False)
+check13("loop reads SCORE_COL", 'zip(g["ticker"], g[SCORE_COL])' in ric, True)
+check13("missing score column exits 0, not abort",
+        "series not started. Exiting 0." in ric, True)
+
+# (d) the tie diagnostic — the check that would have caught this on day one.
+check13("tie diagnostic present", "ranking-variable health" in ric, True)
+check13("...flags a degenerate short side", "days with NO name below 0.5" in ric, True)
+# Replay its arithmetic on a synthetic degenerate column: 270 of 279 pinned at
+# 0.50 and nothing below it must trip the warning; a healthy spread must not.
+import pandas as _pd13
+from collections import Counter as _C13
+_bad = _pd13.Series([0.5] * 270 + [0.55 + 0.01 * i for i in range(9)])
+_good = _pd13.Series([0.30 + 0.002 * i for i in range(279)])
+for _lbl, _s, _want_warn in (("degenerate", _bad, True), ("healthy", _good, False)):
+    _pct = 100.0 * int(_s.value_counts().iloc[0]) / len(_s)
+    _no_short = int((_s < 0.5).sum()) == 0
+    check13(f"tie rule flags the {_lbl} column", (_pct >= 50.0 or _no_short), _want_warn)
+
+# (f) BEHAVIOURAL replay of the gate itself: rank_score must survive the very
+#     flatten that destroyed confidence. Source-order checks above prove the
+#     capture is written first; this proves it actually SURVIVES, which is the
+#     property the whole v2 series depends on.
+_b0 = src.find('_orig_signals_13 = dict(signals)')
+_b1 = src.find('SELL signals converted to close-long")', _b0)
+if _b0 < 0 or _b1 < 0:
+    fails.append("section13: could not locate the ternary-gate block for replay")
+    print("13. ternary-gate replay                              FAIL (block not found)")
+else:
+    _gate_src = src[_b0:_b1 + len('SELL signals converted to close-long")')]
+    _sig13 = {
+        "AAA": {"confidence": 0.6412, "ternary_label": "BUY"},
+        "BBB": {"confidence": 0.5183, "ternary_label": "HOLD"},
+        "CCC": {"confidence": 0.3120, "ternary_label": "SELL"},   # the erased short
+        "DDD": {"confidence": 0.4977, "ternary_label": "HOLD"},
+    }
+    _ns13 = {"signals": _sig13, "__builtins__": __builtins__}
+    with contextlib.redirect_stdout(io.StringIO()):
+        exec(_gate_src, _ns13)
+    _sg = _ns13["signals"]
+    # confidence is flattened exactly as before — the execution gate is untouched
+    check13("replay: HOLD confidence still flattened", _sg["BBB"]["confidence"], 0.50)
+    check13("replay: SELL confidence still flattened", _sg["CCC"]["confidence"], 0.50)
+    check13("replay: BUY confidence untouched", _sg["AAA"]["confidence"], 0.6412)
+    # ...but rank_score preserves every original value, including the SELL's
+    check13("replay: rank_score survives on HOLD", _sg["BBB"]["rank_score"], 0.5183)
+    check13("replay: rank_score survives on the SELL", _sg["CCC"]["rank_score"], 0.3120)
+    check13("replay: rank_score survives on BUY", _sg["AAA"]["rank_score"], 0.6412)
+    # the decisive one: v2 gets a short side, the legacy series never could
+    check13("replay: legacy col has NO name below 0.5",
+            any(float(v["confidence"]) < 0.5 for v in _sg.values()), False)
+    check13("replay: rank_score DOES have names below 0.5",
+            sum(1 for v in _sg.values() if float(v["rank_score"]) < 0.5), 2)
+
+# (e) the workflow actually runs the second series — an unwired env is inert.
+WF13 = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                    ".github", "workflows", "quant_daily.yml")
+wf13 = open(WF13, encoding="utf-8").read()
+check13("workflow wires QT_RANK_SCORE_COL=rank_score",
+        "QT_RANK_SCORE_COL: rank_score" in wf13, True)
+check13("...to its OWN output files (legacy not overwritten)",
+        ("QT_RANK_IC_OUT: data/shadow/rank_ic_v2.csv" in wf13
+         and "QT_RANK_LS_OUT: data/shadow/cross_sectional_ls_v2.csv" in wf13), True)
+check13("both invocations still run", wf13.count("python analyze_rank_ic.py"), 2)
+check13("v2 step is morning-gated like the legacy one",
+        wf13.count("if: steps.run_type.outputs.type == 'morning'") >= 2, True)
+
 print()
 if fails:
     print("VALIDATION FAILED:")

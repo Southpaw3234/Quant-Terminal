@@ -325,6 +325,30 @@ jobs:
         if: steps.run_type.outputs.type == 'morning'
         run: python analyze_rank_ic.py || echo "rank-IC analysis non-fatal error — continuing"
 
+      - name: Compute cross-sectional rank-IC — v2 / rank_score (morning, measurement-only)
+        # PARALLEL series (2026-08-05). Identical code, different score column.
+        #
+        # The legacy series above ranks on `confidence`, which Cell 13's ternary
+        # execution gate overwrites to exactly 0.50 for every HOLD and SELL
+        # BEFORE log_prediction records it. Measured over 2026-07-14..07-29:
+        # 95.3-99.6% of the 279-name cross-section sits at one value, no name
+        # ever scores below 0.5, and so the short decile contains ZERO
+        # model-selected names on every single day — both legs fall out in file
+        # order. `rank_score` is the same value captured before that gate.
+        #
+        # Run in parallel rather than as a replacement: the legacy series is
+        # what the Stage-1 gate has always read, and switching outright would
+        # restart the decision window a third time with nothing to compare
+        # against. v2 writes to its own files and stays empty until the first
+        # run that logs rank_score (the analyzer exits 0 on the missing column).
+        if: steps.run_type.outputs.type == 'morning'
+        env:
+          QT_RANK_SCORE_COL: rank_score
+          QT_RANK_SERIES_LABEL: v2 pre-gate conviction
+          QT_RANK_IC_OUT: data/shadow/rank_ic_v2.csv
+          QT_RANK_LS_OUT: data/shadow/cross_sectional_ls_v2.csv
+        run: python analyze_rank_ic.py || echo "rank-IC v2 analysis non-fatal error — continuing"
+
       - name: Commit updated state files to master
         # MUST run BEFORE the orphan-data-branch step below. That step does
         # `git checkout -f "$GITHUB_REF_NAME"`, and `git checkout -f` force-resets
