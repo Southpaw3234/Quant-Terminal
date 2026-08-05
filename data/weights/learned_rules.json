@@ -4,15 +4,23 @@
     "count": 5,
     "accuracy": 0.286,
     "description": "OXY systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 29% accurate (5 samples)",
-    "created_date": "2026-08-04",
+    "created_date": "2026-08-05",
+    "created_regime": 1
+  },
+  "ticker_CTAS": {
+    "dampen": 0.16,
+    "count": 5,
+    "accuracy": 0.286,
+    "description": "CTAS systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 29% accurate (5 samples)",
+    "created_date": "2026-08-05",
     "created_regime": 1
   },
   "_boosts": {
-    "created_date": "2026-08-04",
+    "created_date": "2026-08-05",
     "created_regime": 1
   },
   "_regime_bull": {
-    "created_date": "2026-08-04",
+    "created_date": "2026-08-05",
     "created_regime": 1
   }
 }
