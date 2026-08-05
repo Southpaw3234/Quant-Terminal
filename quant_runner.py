@@ -5850,9 +5850,46 @@ if RUN_TYPE in ("morning", "intraday") and _AK and _SK:
 
         _rows = []
         _prev_eq_i = None
+        # ── DATE BASIS (2026-08-05): render the bar in ET, never UTC. ──
+        # This loop used to format the bar instant in UTC. With
+        # extended_hours=true the session ends 8 PM ET, which in EDT is 00:00 UTC the next
+        # day — so every single bar rolled over and every row wore the next
+        # calendar day's label. The signature was unmistakable: 48 rows split
+        # Tue 10 / Wed 10 / Thu 10 / Fri 10 / Sat 8 and ZERO Mondays (Monday's
+        # session wore Tuesday's label, Friday's wore Saturday's; the two absent
+        # Saturdays are the 6/19 and 7/3 market holidays). Three equity anchors
+        # confirmed it — row 2026-08-04's portfolio_value 113,183.42 is Monday
+        # 8/03's close, matching the 8/04 13:40Z kill-switch read exactly.
+        #
+        # Two downstream consequences, both real:
+        #   - GPR (_P15gpr) buckets by MONTH, so every month boundary was wrong:
+        #     7/31's session counted in August, 6/30's in July.
+        #   - the `!= _today_str` filter below deleted the newest COMPLETED
+        #     session every run (its wrong label = today's date) and replaced it
+        #     with an in-progress partial. That is the 47/47/48-day curve stall.
+        # Both are fixed by labelling correctly here; no other change needed.
+        #
+        # Same rollover class as the morning-marker ET fix 8d3e9df, and the
+        # today-row below (which already derives its date in ET — this loop was
+        # simply missed). Fallback keeps the old UTC behaviour rather than
+        # crashing the snapshot, but says so LOUDLY: a silent fall back to the
+        # broken basis is exactly how this went unnoticed for ten weeks.
+        try:
+            import zoneinfo as _zi_hist
+            _ET_HIST = _zi_hist.ZoneInfo("America/New_York")
+        except Exception as _zi_he:
+            _ET_HIST = None
+            print(f"  ::warning::pnl_history tz lookup for America/New_York failed "
+                  f"({_zi_he}) — falling back to UTC bar dates, which shifts every "
+                  f"row one day forward (bug re-armed; see the DATE BASIS note "
+                  f"in the portfolio/history loop)")
         for _i in range(len(_ts)):
             try:
-                _d = datetime.datetime.utcfromtimestamp(int(_ts[_i])).strftime("%Y-%m-%d")
+                _inst = datetime.datetime.fromtimestamp(
+                    int(_ts[_i]), tz=datetime.timezone.utc)
+                if _ET_HIST is not None:
+                    _inst = _inst.astimezone(_ET_HIST)
+                _d = _inst.strftime("%Y-%m-%d")
             except Exception:
                 continue
             _eq_i = float(_eq[_i]) if _i < len(_eq) and _eq[_i] not in (None, "") else None

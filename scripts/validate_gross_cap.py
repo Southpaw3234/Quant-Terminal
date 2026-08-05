@@ -746,6 +746,107 @@ check11("workflow wires TRIM_SECTOR env",
         ("TRIM_SECTOR:" in wf11 and "inputs.sector" in wf11), True)
 check11("workflow offers the sector choice", "short-cover, sector]" in wf11, True)
 
+# ── 12. pnl_history bar dates are ET, not UTC (2026-08-05) ──────────────────
+# quant_runner.py's portfolio/history loop rendered each 1D bar with
+# utcfromtimestamp() while requesting extended_hours=true. An extended session
+# ends 8 PM ET = EXACTLY 00:00 UTC next day in EDT, so every bar rolled over and
+# every row in pnl_history.csv wore the following calendar day's label.
+# Signature across the 48 rows written under the bug:
+#     Tue 10  Wed 10  Thu 10  Fri 10  Sat 8  Mon 0
+# Monday's session wore Tuesday's label and Friday's wore Saturday's, so no
+# session ever landed on a Monday. (The two absent Saturdays are 2026-06-19
+# Juneteenth and 2026-07-03 July-4th-observed — market holidays.)
+# This poisoned two consumers: the Gain-to-Pain ratio buckets by MONTH, so every
+# month boundary was off by one session; and the `date != _today_str` filter
+# deleted the newest COMPLETED session every run, substituting an in-progress
+# partial row (the 47/47/48-day curve stall observed 8/03-8/05).
+# No network and no credentials — pure date arithmetic plus a source assertion.
+import datetime as _dt12
+from collections import Counter as _Counter12
+
+def check12(name, got, want):
+    ok = got == want
+    print(f"12. {name:<52} got={str(got):<7} {'PASS' if ok else 'FAIL (want %s)' % want}")
+    if not ok:
+        fails.append(f"section12 {name}: got={got} want={want}")
+
+# (a) the bug's exact call must be gone from the runner, and the ET conversion
+#     must be present. A future edit that reinstates utcfromtimestamp here
+#     silently re-arms a ten-week measurement corruption, so pin both halves.
+check12("no utcfromtimestamp anywhere in quant_runner",
+        "utcfromtimestamp" in src, False)
+check12("history loop converts bars to ET",
+        ('_ET_HIST' in src and 'ZoneInfo("America/New_York")' in src), True)
+check12("history loop still requests extended_hours",
+        '"extended_hours": "true"' in src, True)
+
+try:
+    from zoneinfo import ZoneInfo as _ZI12
+    _ET12 = _ZI12("America/New_York")
+
+    # (b) the mechanism itself: an extended-hours close instant must render to
+    #     the SAME calendar day in ET and the NEXT one in UTC. If this ever
+    #     stops holding, the premise behind the fix has changed.
+    _close_edt = _dt12.datetime(2026, 8, 3, 20, 0, tzinfo=_ET12)      # 8 PM EDT
+    _u12 = _close_edt.astimezone(_dt12.timezone.utc).strftime("%Y-%m-%d")
+    _e12 = _close_edt.strftime("%Y-%m-%d")
+    check12("Mon 8/03 20:00 ET renders 08-03 in ET", _e12, "2026-08-03")
+    check12("...and 08-04 in UTC (the bug)", _u12, "2026-08-04")
+
+    # (c) the regression signature. Replay a real trading week of extended-hours
+    #     closes (Mon 7/27 - Fri 7/31) through both renderings. ET must produce
+    #     no weekend label and a Monday; UTC must reproduce the observed
+    #     zero-Monday/Saturday-present signature that motivated this section.
+    _week12 = [_dt12.datetime(2026, 7, d, 20, 0, tzinfo=_ET12)
+               for d in (27, 28, 29, 30, 31)]
+    _dow_et = _Counter12(t.strftime("%a") for t in _week12)
+    _dow_utc = _Counter12(t.astimezone(_dt12.timezone.utc).strftime("%a")
+                          for t in _week12)
+    check12("ET labels: zero weekend rows",
+            _dow_et.get("Sat", 0) + _dow_et.get("Sun", 0), 0)
+    check12("ET labels: Monday present", _dow_et.get("Mon", 0), 1)
+    check12("UTC labels reproduce the bug (Sat row)", _dow_utc.get("Sat", 0), 1)
+    check12("UTC labels reproduce the bug (no Monday)", _dow_utc.get("Mon", 0), 0)
+except Exception as _e12b:
+    fails.append(f"section12 date replay: {_e12b}")
+    print(f"12. date-arithmetic replay                           FAIL ({_e12b})")
+
+# (d) the live file. Rows written BEFORE the fix carry the broken labels and
+#     cannot be retro-corrected here — the file is rebuilt from Alpaca every
+#     run, so it self-heals on the first post-merge snapshot. This check is
+#     therefore INFORMATIONAL until QT_PNLDATE_FIX_FROM names the first date
+#     written by fixed code; from then on a returning zero-Monday window is a
+#     hard failure. Set it in the workflow env once the fix has run once.
+_PNLCSV12 = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                         "data", "predictions", "pnl_history.csv")
+_fix_from12 = os.environ.get("QT_PNLDATE_FIX_FROM", "").strip()
+if not os.path.exists(_PNLCSV12):
+    print("12. pnl_history.csv absent — live signature SKIPPED (not a failure)")
+else:
+    import csv as _csv12
+    with open(_PNLCSV12, newline="", encoding="utf-8-sig") as _fh12:
+        _all12 = [(_r12.get("date") or "").strip()
+                  for _r12 in _csv12.DictReader(_fh12)]
+    _all12 = [_d for _d in _all12 if len(_d) == 10]
+    _scope12 = [_d for _d in _all12 if not _fix_from12 or _d >= _fix_from12]
+    _c12 = _Counter12(_dt12.date.fromisoformat(_d).strftime("%a") for _d in _scope12)
+    _wk12 = _c12.get("Sat", 0) + _c12.get("Sun", 0)
+    print(f"12. live pnl_history signature (n={len(_scope12)}, "
+          f"from={_fix_from12 or 'ALL'})   "
+          + "  ".join(f"{_k}={_c12.get(_k, 0)}"
+                      for _k in ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")))
+    if not _fix_from12:
+        print("    INFO only — QT_PNLDATE_FIX_FROM unset, so pre-fix rows are in "
+              "scope and the broken signature is EXPECTED here.")
+        print("    Set QT_PNLDATE_FIX_FROM to the first post-merge snapshot date "
+              "to turn this into a hard regression gate.")
+    elif len(_scope12) < 15:
+        print(f"    INFO only — {len(_scope12)} rows since {_fix_from12} is too few "
+              "to read a day-of-week signature (need >= 15).")
+    else:
+        check12("post-fix window has Monday rows", _c12.get("Mon", 0) > 0, True)
+        check12("post-fix window has no weekend rows", _wk12, 0)
+
 print()
 if fails:
     print("VALIDATION FAILED:")
