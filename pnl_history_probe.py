@@ -51,9 +51,18 @@ except Exception as _e:  # pragma: no cover - CI images all ship tzdata
     print(f"FATAL: zoneinfo unavailable ({_e}) — cannot render ET, aborting.")
     sys.exit(1)
 
-BASE = (os.environ.get("ALPACA_BASE_URL") or "https://paper-api.alpaca.markets").strip()
-KEY = (os.environ.get("ALPACA_API_KEY") or "").strip()
-SEC = (os.environ.get("ALPACA_SECRET_KEY") or "").strip()
+# The Alpaca secrets carry a leading BOM (U+FEFF). requests encodes headers as
+# latin-1, so passing them through raw dies with UnicodeEncodeError before the
+# first GET. quant_runner.py hits the same thing and strips to ASCII at module
+# scope ("they may carry a non-ASCII char"); mirror that here rather than
+# inventing a second sanitiser.
+def _ascii_strip(_s):
+    return "".join(_c for _c in str(_s or "") if ord(_c) < 128).strip()
+
+
+BASE = _ascii_strip(os.environ.get("ALPACA_BASE_URL")) or "https://paper-api.alpaca.markets"
+KEY = _ascii_strip(os.environ.get("ALPACA_API_KEY"))
+SEC = _ascii_strip(os.environ.get("ALPACA_SECRET_KEY"))
 if not (KEY and SEC):
     print("FATAL: ALPACA_API_KEY / ALPACA_SECRET_KEY not set.")
     sys.exit(1)
