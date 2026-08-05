@@ -56,8 +56,36 @@ import pandas as pd
 STAGE1_START = os.environ.get("QT_STAGE1_START", "2026-07-14")
 
 PRED_CSV = Path("data/predictions/predictions.csv")
-OUT_CSV = Path("data/shadow/rank_ic.csv")
-LS_CSV = Path("data/shadow/cross_sectional_ls.csv")  # clean, equity-only long-short series
+
+# ── DUAL SERIES (2026-08-05) ────────────────────────────────────────────────
+# Which column carries the model's per-name view. Defaults reproduce the legacy
+# series byte-for-byte; the workflow runs this script a second time with
+# QT_RANK_SCORE_COL=rank_score to build the parallel v2 series.
+#
+# WHY: `confidence` is NOT a ranking score. Cell 13's ternary execution gate
+# (quant_runner.py, "Ternary gate:" log line) overwrites it to exactly 0.50 for
+# every HOLD and every SELL in order to suppress execution — and log_prediction
+# runs AFTER that, so predictions.csv records the execution flag, not the
+# model's conviction. Measured 2026-08-05 over 2026-07-14..07-29:
+#   * 95.3%-99.6% of the 279-name cross-section sits at exactly 0.500
+#   * ZERO names ever score below 0.5 (SELLs are flattened too), so the short
+#     decile contains no model-selected name on ANY day — sort_values is stable,
+#     so both legs fall back to file order among the ties
+#   * the long decile is 1-13 genuinely-ranked names padded to 30 with filler
+#   * effective sample is ~91 pick-observations, not the 12 x 279 the header
+#     prints, which is why beta_roll never identified
+# `rank_score` is the same `confidence` captured immediately BEFORE that gate:
+# calibrated P(bull) with the conformal shrink applied — every legitimate
+# modelling layer, minus only the execution suppression.
+#
+# Both series run in parallel deliberately. The legacy one is NOT retired: it
+# is what the Stage-1 gate has always read, and switching outright would
+# restart the decision window a third time with no overlap to compare against.
+SCORE_COL = os.environ.get("QT_RANK_SCORE_COL", "confidence")
+SERIES_LABEL = os.environ.get("QT_RANK_SERIES_LABEL", "")
+OUT_CSV = Path(os.environ.get("QT_RANK_IC_OUT", "data/shadow/rank_ic.csv"))
+LS_CSV = Path(os.environ.get("QT_RANK_LS_OUT",
+                             "data/shadow/cross_sectional_ls.csv"))
 HORIZON_DEFAULT = 5      # trading steps; predictions.csv `horizon_days` overrides per row
 MIN_NAMES = 10           # need a real cross-section before an IC is meaningful
 DECILE = 30              # for the long-short cross-check (mirrors shadow harness)
@@ -84,15 +112,22 @@ def _load_predictions() -> pd.DataFrame:
         print(f"[rank-ic] {PRED_CSV} not found — nothing to do.")
         sys.exit(0)
     df = pd.read_csv(PRED_CSV, low_memory=False)
-    need = {"pred_ts", "ticker", "confidence"}
+    need = {"pred_ts", "ticker", SCORE_COL}
     if not need.issubset(df.columns):
-        print(f"[rank-ic] predictions.csv missing {need - set(df.columns)} — abort.")
+        # Expected for the v2 series until the first post-deploy run logs
+        # rank_score. Exit 0 so the parallel invocation never fails the build.
+        print(f"[rank-ic] predictions.csv has no '{SCORE_COL}' column yet — "
+              f"series not started. Exiting 0.")
         sys.exit(0)
-    df = df.dropna(subset=["pred_ts", "ticker", "confidence"]).copy()
+    df = df.dropna(subset=["pred_ts", "ticker", SCORE_COL]).copy()
     df["date"] = df["pred_ts"].astype(str).str.slice(0, 10)
     df = df[df["date"].str.match(r"\d{4}-\d{2}-\d{2}")]
-    df["confidence"] = pd.to_numeric(df["confidence"], errors="coerce")
-    df = df.dropna(subset=["confidence"])
+    df[SCORE_COL] = pd.to_numeric(df[SCORE_COL], errors="coerce")
+    df = df.dropna(subset=[SCORE_COL])
+    if df.empty:
+        print(f"[rank-ic] '{SCORE_COL}' present but empty on every row — "
+              f"series not started. Exiting 0.")
+        sys.exit(0)
     if "horizon_days" in df.columns:
         df["horizon_days"] = pd.to_numeric(df["horizon_days"], errors="coerce")
     # One prediction per (date, ticker): keep the first cycle of the day.
@@ -162,7 +197,7 @@ def main() -> None:
         if "horizon_days" in g.columns and g["horizon_days"].notna().any():
             h = int(g["horizon_days"].dropna().mode().iloc[0])
         pairs = []
-        for tk, conf in zip(g["ticker"], g["confidence"]):
+        for tk, conf in zip(g["ticker"], g[SCORE_COL]):
             r = _fwd_ret(prices, tk, date, h)
             if r is not None:
                 pairs.append((float(conf), r, tk))
@@ -210,8 +245,39 @@ def main() -> None:
     TRAIL = 20
     trail = _stats(res["rank_ic"].tail(TRAIL))
 
-    print("\n=== cross-sectional rank-IC ===")
+    _hdr = f" [{SERIES_LABEL}]" if SERIES_LABEL else ""
+    print(f"\n=== cross-sectional rank-IC (score column: {SCORE_COL}){_hdr} ===")
     print(res.tail(12).to_string(index=False))
+
+    # ── TIE DIAGNOSTIC (2026-08-05) ─────────────────────────────────────────
+    # The check that would have caught the `confidence` defect on day one. A
+    # rank-IC over a column that is ~98% one value is not measuring a
+    # cross-section: Spearman hands every tied name the same average rank, so
+    # the statistic rides on a handful of names while the header still prints
+    # n=279. Both decile legs degenerate too — with 270 ties, sort_values is
+    # stable and the legs fall out in file order rather than by model view.
+    # Printed for BOTH series so the legacy one carries its own health warning.
+    _tie = []
+    for _d, _g in df.groupby("date"):
+        _v = _g[SCORE_COL]
+        _mode_n = int(_v.value_counts().iloc[0]) if len(_v) else 0
+        _tie.append((len(_v), _mode_n, int((_v < 0.5).sum())))
+    _n_tot = sum(t[0] for t in _tie)
+    _n_tied = sum(t[1] for t in _tie)
+    _pct = 100.0 * _n_tied / _n_tot if _n_tot else 0.0
+    _days_no_short = sum(1 for t in _tie if t[2] == 0)
+    print(f"\n--- ranking-variable health ({SCORE_COL}) ---")
+    print(f"tied at modal value : {_pct:.1f}% of all (day,name) rows"
+          f"   [< 50% -> usable cross-section]")
+    print(f"effective names/day : ~{(_n_tot - _n_tied) / max(len(_tie), 1):.0f} "
+          f"of {_n_tot / max(len(_tie), 1):.0f} carry a distinct value")
+    print(f"days with NO name below 0.5 : {_days_no_short}/{len(_tie)}"
+          f"   [> 0 -> the SHORT decile is not model-selected]")
+    if _pct >= 50.0 or _days_no_short:
+        print("  *** WARNING: this series is NOT a valid cross-sectional rank-IC. ***")
+        print("  *** Ties dominate, so both decile legs fall out in FILE ORDER,  ***")
+        print("  *** the printed n overstates the real sample, and beta_roll     ***")
+        print("  *** cannot identify. Do not gate a GO/NO-GO on it.              ***")
     print("\n--- summary (FULL window) ---")
     print(f"days (N)      : {full['n']}")
     print(f"window        : {res['date'].iloc[0]} -> {res['date'].iloc[-1]}  (~{weeks:.1f} weeks)")

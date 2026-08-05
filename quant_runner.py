@@ -3187,6 +3187,24 @@ else:
 # SELL signals → close existing long if held, never open short (paper acct).
 _orig_signals_13 = dict(signals) if "signals" in dir() else {}
 if _orig_signals_13:
+    # ── rank_score: capture conviction BEFORE this gate flattens it ─────────
+    # (2026-08-05) The loop below overwrites confidence to exactly 0.50 for
+    # every HOLD and SELL to suppress execution. log_prediction() runs AFTER
+    # it, so predictions.csv has been recording the EXECUTION FLAG, not the
+    # model's view — 95-99% of the cross-section pinned at one value, nothing
+    # ever below 0.5, and therefore no model-selected short leg on any day.
+    # That silently broke the Frame-1 rank-IC, its decile L/S and beta_roll.
+    # rank_score preserves calibrated P(bull) with the conformal shrink still
+    # applied: every legitimate modelling layer, minus the execution gate.
+    # NOTE _orig_signals_13 is a SHALLOW copy — the inner dicts are the same
+    # objects the loop below mutates — so this must be its own prior pass.
+    # It only ADDS a field; no execution path reads rank_score.
+    for _tk13_r, _sig13_r in _orig_signals_13.items():
+        try:
+            signals[_tk13_r]["rank_score"] = round(
+                float(_sig13_r.get("confidence", 0.5) or 0.5), 6)
+        except Exception:
+            signals[_tk13_r]["rank_score"] = None
     _n_ternary_blocked = 0
     _n_sell_close = 0
     for _tk13_w, _sig13_w in _orig_signals_13.items():
@@ -5482,6 +5500,21 @@ _SRC_REPLACE = [
     # ticker's raw download is stale even after the dropna fix above).
     ("close=round(close,4),",
      "close=round(close,4),\n        bar_date=str(df_feat.index[-1].date()) if hasattr(df_feat.index[-1], 'date') else str(df_feat.index[-1]),"),
+    # rank_score into predictions.csv (2026-08-05). log_prediction runs INSIDE
+    # the trade loop, i.e. after the ternary gate has already pinned
+    # sig["confidence"] to 0.50 for every HOLD/SELL — so the file has never
+    # carried the model's actual per-name view. This logs the pre-gate value
+    # the prepatch stashed, giving the Frame-1 v2 series a real cross-section
+    # (and, for the first time, a short leg the model actually chose).
+    # row = {col: None for col in PRED_LOG_COLS} then .update(), so the extra
+    # key flows through without touching PRED_LOG_COLS; pandas concat backfills
+    # NaN on the pre-existing rows, which the v2 analyzer drops.
+    # NOTE: kept ABOVE the gross-cap trio deliberately — validate section 2
+    # asserts uniqueness on _SRC_REPLACE[-3:], so appending here would silently
+    # push anchor (a) out of that check's window.
+    ('        "confidence":   sig["confidence"],\n',
+     '        "confidence":   sig["confidence"],\n'
+     '        "rank_score":   sig.get("rank_score", None),\n'),
     # Gross-cap hard gate (2026-07-08), 3 anchors into Cell 13 — see the
     # CELL_13_PREPATCH gross-cap block for the full rationale. The old cash
     # guard mutated signals[tk]["confidence"], which nothing in the execution
