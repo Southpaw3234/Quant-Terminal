@@ -150,12 +150,12 @@ def main() -> None:
     if wknd_e == 0 and mon_e > 0:
         print("VERDICT: convention (A) — ET rendering recovers the true session date.")
         print("  ET labels contain zero weekend rows and a normal count of Mondays.")
-        print("  -> The quant_runner.py:5855 ET fix on this branch is CORRECT. Merge it.")
+        print("  -> The ET fix on branch fix/pnl-history-date-shift is CORRECT. Merge it.")
         verdict = 0
     elif wknd_e > 0 or mon_e == 0:
         print("VERDICT: convention (B) or unknown — ET rendering does NOT fix the labels.")
         print(f"  ET labels still show weekend={wknd_e} Monday={mon_e}.")
-        print("  -> DO NOT MERGE the ET fix as-is. The bar is anchored past the ET")
+        print("  -> DO NOT MERGE fix/pnl-history-date-shift as-is. The bar is anchored past the ET")
         print("     session boundary; drop extended_hours or shift back one session.")
         print("     The raw epoch table above shows the true anchor instant.")
         verdict = 2
