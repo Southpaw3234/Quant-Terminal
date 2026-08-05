@@ -1,0 +1,41 @@
+name: P&L History Date Probe (read-only)
+
+# Settles which calendar day Alpaca's portfolio/history stamps its 1D bars on.
+# pnl_history.csv labels every session one day late (zero Mondays, eight
+# Saturdays across 48 rows) — see pnl_history_probe.py's docstring and
+# HANDOFF.md. GETs only; submits nothing, cancels nothing, writes no state.
+#
+# Dispatch this on the fix branch BEFORE merging: a non-zero exit means the ET
+# fix in quant_runner.py is the wrong remedy and must not ship.
+#
+# Deliberately NOT in the quant-terminal concurrency group: read-only, so it
+# never needs to serialize with (or block behind) live trading runs.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install minimal deps
+        run: pip install requests
+
+      - name: Probe portfolio/history timestamp convention
+        env:
+          ALPACA_API_KEY:    ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          ALPACA_BASE_URL:   'https://paper-api.alpaca.markets'
+        run: python pnl_history_probe.py
