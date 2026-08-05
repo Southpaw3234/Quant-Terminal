@@ -27,4 +27,13 @@ jobs:
         run: pip install pandas
 
       - name: Run gross-cap validation suite
+        env:
+          # Section 12's live-file check. The ET bar-labelling fix c225537
+          # landed 2026-08-05 and pnl_history.csv is rebuilt from Alpaca every
+          # run, so the FULL window (back to the 2026-05-28 trading epoch) was
+          # relabelled correctly on the first post-merge snapshot — verified on
+          # run 31043628348: Mon 0->10, Sat 8->0, Fri 10->8, 48 rows. Setting
+          # this arms the hard regression gate over the whole series; a
+          # returning zero-Monday or any settled weekend row now fails the build.
+          QT_PNLDATE_FIX_FROM: '2026-05-28'
         run: python scripts/validate_gross_cap.py
