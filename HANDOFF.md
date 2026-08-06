@@ -106,7 +106,7 @@ and the ONE highest-priority action for today. Then wait for direction.
 
 **Cost:** the newest observation appears one session later than it used to. **Benefit:** rows never move once written, so a quoted number stays true. Given the observed 7/24 (−67%) and 7/27 (sign flip) restatements, that trade is clearly worth one session of latency.
 
-**`validate` section 14 (14 checks)** drives `_fwd_ret` directly against a synthetic 8-bar series and **reproduces the restatement scenario rather than grepping for it**: the row whose exit lands on the newest bar is withheld under the policy and still computable with it off; settled rows are byte-identical either way; boundary (`exit == len-2`), unmatured and degenerate 1-bar cases pinned; both call sites asserted wired; the env default asserted ON.
+**`validate` section 14 (17 checks)** drives `_fwd_ret` directly against a synthetic 8-bar series and **reproduces the restatement scenario rather than grepping for it**: the row whose exit lands on the newest bar is withheld under the policy and still computable with it off; settled rows are byte-identical either way; boundary (`exit == len-2`), unmatured and degenerate 1-bar cases pinned; both call sites asserted wired; the env default asserted ON.
 
 🔑 **A latent bug found while adding the section:** `validate_gross_cap.py`'s pass/fail summary block sat **above** section 13's tail rather than at the end of the file. Anything appended after it recorded failures into `fails` that were **never checked** — the suite would have printed `ALL VALIDATION CHECKS PASSED` and exited 0 with real failures in hand. Section 14 would have been the first victim. **Summary block moved to the end.**
 
