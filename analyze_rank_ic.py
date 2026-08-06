@@ -261,12 +261,17 @@ def main() -> None:
                             "short_ret": round(sr, 5), "long_short": round(lr - sr, 5)})
 
     # Say out loud when a day is being held back, otherwise the settle policy is
-    # invisible and the series just looks one row short. Only the NEWEST missing
-    # day can be the provisional one; older gaps are genuine (too few names).
+    # invisible and the series just looks one row short.
+    #
+    # Walk the missing days NEWEST-FIRST and report the first one that would
+    # have produced a row under the old rule. The walk is load-bearing: the
+    # newest missing day is almost never the provisional one — every pred-day
+    # from the last HORIZON sessions is also missing simply because it has not
+    # matured (n=0). Reading only the newest would silently print nothing.
+    # Bounded so a long genuine gap can't turn this into a full rescan.
     if SETTLED_ONLY:
         _missing = sorted(set(df["date"]) - {r["date"] for r in rows}, reverse=True)
-        if _missing:
-            _d = _missing[0]
+        for _d in _missing[:10]:
             _g = df[df["date"] == _d]
             _h = HORIZON_DEFAULT
             if "horizon_days" in _g.columns and _g["horizon_days"].notna().any():
@@ -278,6 +283,7 @@ def main() -> None:
                       f"newest bar and is not settled yet; it enters the series "
                       f"next session. Rows already written never move. "
                       f"(QT_SETTLED_ONLY=0 restores the old provisional row.)")
+                break
 
     if not rows:
         print("[rank-ic] no matured days with enough names yet. Exiting 0.")

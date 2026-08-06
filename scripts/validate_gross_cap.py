@@ -1044,6 +1044,14 @@ check14("picks leg honours the flag",
 check14("SPY/beta leg honours the flag",
         '_fwd_ret(prices, "SPY", d, int(h), settled_only=SETTLED_ONLY)' in ric, True)
 check14("withheld day is reported, not silent", "withholding" in ric, True)
+# The report must WALK the missing days newest-first, not read only the newest.
+# Every pred-day inside the last HORIZON sessions is missing too (unmatured,
+# n=0) and sits ABOVE the provisional day in date order, so reading index [0]
+# prints nothing and the policy goes silent. Caught by hand on 8/06 before the
+# first CI run; pinned here so it cannot come back.
+check14("withheld-day report walks past unmatured days",
+        "for _d in _missing[:10]:" in ric, True)
+check14("...and stops at the first reportable day", ric.count("break") >= 1, True)
 # The policy is series-agnostic: v2 reads the same code path, so it can never
 # accumulate provisional rows the legacy series has been purged of.
 check14("policy applies to BOTH series (single code path)",
