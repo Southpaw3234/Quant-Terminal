@@ -29,6 +29,13 @@ Forward-return convention mirrors the in-run shadow harness
 steps, located by searchsorted on each ticker's own calendar (so weekend-trading
 crypto tickers align correctly).
 
+SETTLED ROWS ONLY (2026-08-06): a day enters the series only once its exit bar
+is provably a completed session — i.e. a later bar exists. Before this, the
+newest row was computed off the current session's unsettled intraday print and
+was silently restated next run (7/24 -0.1186 -> -0.0389; 7/27 +0.0168 ->
+-0.0387, a sign flip). The series now lags one session and never moves. See
+SETTLED_ONLY / QT_SETTLED_ONLY below.
+
 OUTPUT
 ------
   data/shadow/rank_ic.csv   — per-day: date,n,rank_ic
@@ -86,6 +93,26 @@ SERIES_LABEL = os.environ.get("QT_RANK_SERIES_LABEL", "")
 OUT_CSV = Path(os.environ.get("QT_RANK_IC_OUT", "data/shadow/rank_ic.csv"))
 LS_CSV = Path(os.environ.get("QT_RANK_LS_OUT",
                              "data/shadow/cross_sectional_ls.csv"))
+# ── SETTLED-ROW POLICY (2026-08-06) ─────────────────────────────────────────
+# The newest row of this series used to be PROVISIONAL and got restated, often
+# badly. The analyzer runs at ~11:50 ET on the day each book matures, so the
+# exit bar it reads is that day's UNSETTLED intraday print; the next session
+# recomputes the row off the real close. Observed restatements (8/05 audit):
+#   * 2026-07-24  -0.1186 -> -0.0389   (-67%)
+#   * 2026-07-27  +0.0168 -> -0.0387   (SIGN FLIP)
+# Both rank_ic.csv and cross_sectional_ls.csv were affected, and every reported
+# mean/t-stat carried one unsettled observation. The 7/31 per-day series quoted
+# 7/24 at its provisional value.
+#
+# With this on, a day enters the series only once its exit bar is provably a
+# completed session (see _fwd_ret). Cost: the newest observation appears one
+# session later than it used to. Benefit: rows never move once written, so a
+# quoted number stays true. Set QT_SETTLED_ONLY=0 to reproduce the old
+# provisional behaviour (both series are rebuilt from scratch every run, so the
+# flag round-trips exactly).
+SETTLED_ONLY = os.environ.get("QT_SETTLED_ONLY", "1").strip().lower() \
+    not in ("0", "false", "no")
+
 HORIZON_DEFAULT = 5      # trading steps; predictions.csv `horizon_days` overrides per row
 MIN_NAMES = 10           # need a real cross-section before an IC is meaningful
 DECILE = 30              # for the long-short cross-check (mirrors shadow harness)
@@ -158,14 +185,27 @@ def _download_prices(tickers: list[str], start: str) -> dict[str, pd.Series]:
     return out
 
 
-def _fwd_ret(prices: dict[str, pd.Series], tk: str, entry_iso: str, h: int):
+def _fwd_ret(prices: dict[str, pd.Series], tk: str, entry_iso: str, h: int,
+             settled_only: bool = True):
     s = prices.get(tk)
     if s is None or len(s) == 0:
         return None
     p = int(s.index.searchsorted(pd.Timestamp(entry_iso)))
-    if p >= len(s) or p + h >= len(s):
-        return None  # not matured yet
-    return float(s.iloc[p + h] / s.iloc[p] - 1.0)
+    if p >= len(s):
+        return None
+    exit_i = p + h
+    # SETTLEMENT TEST: require at least one bar AFTER the exit bar. The newest
+    # bar yfinance returns is the CURRENT session whenever the market is open —
+    # an unsettled intraday print, not a close — and the analyzer runs ~11:50 ET.
+    # The existence of a later bar proves the exit bar is a completed session,
+    # with no dependence on wall-clock, timezone or market calendar. (This repo
+    # has been bitten three times by clock-based reasoning: the ET marker fix
+    # 8d3e9df, the market-hours guard e7b1d5f, and the pnl_history re-dating
+    # c225537. A structural test cannot drift.)
+    last_usable = len(s) - 2 if settled_only else len(s) - 1
+    if exit_i > last_usable:
+        return None  # not matured yet, or exit bar is still unsettled
+    return float(s.iloc[exit_i] / s.iloc[p] - 1.0)
 
 
 def main() -> None:
@@ -198,7 +238,7 @@ def main() -> None:
             h = int(g["horizon_days"].dropna().mode().iloc[0])
         pairs = []
         for tk, conf in zip(g["ticker"], g[SCORE_COL]):
-            r = _fwd_ret(prices, tk, date, h)
+            r = _fwd_ret(prices, tk, date, h, settled_only=SETTLED_ONLY)
             if r is not None:
                 pairs.append((float(conf), r, tk))
         if len(pairs) < MIN_NAMES:
@@ -219,6 +259,31 @@ def main() -> None:
             ls_recs.append({"date": date, "h": int(h), "n_long": DECILE,
                             "n_short": DECILE, "long_ret": round(lr, 5),
                             "short_ret": round(sr, 5), "long_short": round(lr - sr, 5)})
+
+    # Say out loud when a day is being held back, otherwise the settle policy is
+    # invisible and the series just looks one row short.
+    #
+    # Walk the missing days NEWEST-FIRST and report the first one that would
+    # have produced a row under the old rule. The walk is load-bearing: the
+    # newest missing day is almost never the provisional one — every pred-day
+    # from the last HORIZON sessions is also missing simply because it has not
+    # matured (n=0). Reading only the newest would silently print nothing.
+    # Bounded so a long genuine gap can't turn this into a full rescan.
+    if SETTLED_ONLY:
+        _missing = sorted(set(df["date"]) - {r["date"] for r in rows}, reverse=True)
+        for _d in _missing[:10]:
+            _g = df[df["date"] == _d]
+            _h = HORIZON_DEFAULT
+            if "horizon_days" in _g.columns and _g["horizon_days"].notna().any():
+                _h = int(_g["horizon_days"].dropna().mode().iloc[0])
+            _n = sum(_fwd_ret(prices, tk, _d, _h, settled_only=False) is not None
+                     for tk in _g["ticker"])
+            if _n >= MIN_NAMES:
+                print(f"[rank-ic] withholding {_d} (n={_n}) — its exit bar is the "
+                      f"newest bar and is not settled yet; it enters the series "
+                      f"next session. Rows already written never move. "
+                      f"(QT_SETTLED_ONLY=0 restores the old provisional row.)")
+                break
 
     if not rows:
         print("[rank-ic] no matured days with enough names yet. Exiting 0.")
@@ -305,7 +370,7 @@ def main() -> None:
     # window — so beta and drawdown are decision-grade, not 5-name noise.
     if ls_recs:
         lsdf = pd.DataFrame(ls_recs).sort_values("date").reset_index(drop=True)
-        lsdf["spy_fwd"] = [_fwd_ret(prices, "SPY", d, int(h))
+        lsdf["spy_fwd"] = [_fwd_ret(prices, "SPY", d, int(h), settled_only=SETTLED_ONLY)
                            for d, h in zip(lsdf["date"], lsdf["h"])]
 
         # Beta-hedged variant (measurement-only, added 2026-07-08): the SAME
