@@ -970,6 +970,86 @@ check13("both invocations still run", wf13.count("python analyze_rank_ic.py"), 2
 check13("v2 step is morning-gated like the legacy one",
         wf13.count("if: steps.run_type.outputs.type == 'morning'") >= 2, True)
 
+
+# ── SECTION 14 — settled-rows-only policy (2026-08-06) ──────────────────────
+# The newest row of the Frame-1 series used to be PROVISIONAL: analyze_rank_ic
+# runs at ~11:50 ET on the day each book matures, so its exit bar was that
+# session's UNSETTLED intraday print, and the next run silently restated the
+# row off the real close. Observed: 7/24 -0.1186 -> -0.0389 (-67%) and 7/27
+# +0.0168 -> -0.0387 (SIGN FLIP). Fix: a day enters only once a LATER bar
+# exists, which proves the exit bar is a completed session without consulting
+# a clock, a timezone or a market calendar. This section drives _fwd_ret
+# directly — the restatement scenario is reproduced, not just grepped for.
+def check14(name, got, want):
+    ok = got == want
+    print(f"14. {name:<52} got={str(got):<7} {'PASS' if ok else 'FAIL (want %s)' % want}")
+    if not ok:
+        fails.append(f"section14 {name}: got={got} want={want}")
+
+
+import importlib.util as _ilu
+
+_spec14 = _ilu.spec_from_file_location("_ric14", RIC)
+_ric14 = _ilu.module_from_spec(_spec14)
+_spec14.loader.exec_module(_ric14)          # safe: main() is under __main__
+
+# 8 consecutive bars, close = 100..107. The LAST bar (index 7) stands in for
+# today's unsettled intraday print.
+_idx14 = pd.date_range("2026-08-03", periods=8, freq="D")
+_s14 = pd.Series([100.0 + i for i in range(8)], index=_idx14)
+_px14 = {"AAA": _s14}
+_h14 = 5
+
+
+def _fr14(day_i, settled):
+    return _ric14._fwd_ret(_px14, "AAA", _idx14[day_i].strftime("%Y-%m-%d"),
+                           _h14, settled_only=settled)
+
+
+# entry index 0 -> exit index 5, two bars behind the newest: settled either way.
+check14("settled row computes (exit 2 bars back)", round(_fr14(0, True), 6), 0.05)
+check14("...and is IDENTICAL with the policy off", _fr14(0, True), _fr14(0, False))
+# entry index 1 -> exit index 6, exactly one bar behind the newest: still settled.
+check14("boundary: exit one bar back is settled", round(_fr14(1, True), 6),
+        round(106.0 / 101.0 - 1.0, 6))
+# entry index 2 -> exit index 7 == the newest bar. THE regression: this is the
+# row that used to be written provisionally and then restated.
+check14("PROVISIONAL row is withheld", _fr14(2, True), None)
+check14("...but the old behaviour still reproduces it",
+        round(_fr14(2, False), 6), round(107.0 / 102.0 - 1.0, 6))
+# entry index 3 -> exit index 8, past the end: unmatured under both policies.
+check14("unmatured row withheld either way",
+        (_fr14(3, True), _fr14(3, False)), (None, None))
+# a one-bar series can't settle anything and must not raise
+check14("degenerate 1-bar series returns None",
+        _ric14._fwd_ret({"AAA": _s14.iloc[:1]}, "AAA", "2026-08-03", 5), None)
+
+# Default must be ON, and the escape hatch must actually work — the flag is
+# read at import, and both series are rebuilt from scratch every run, so it
+# round-trips exactly.
+check14("QT_SETTLED_ONLY defaults ON", _ric14.SETTLED_ONLY, True)
+check14("_fwd_ret defaults to settled_only=True",
+        _ric14._fwd_ret(_px14, "AAA", _idx14[2].strftime("%Y-%m-%d"), _h14), None)
+os.environ["QT_SETTLED_ONLY"] = "0"
+_spec14.loader.exec_module(_ric14)
+check14("QT_SETTLED_ONLY=0 restores provisional rows", _ric14.SETTLED_ONLY, False)
+del os.environ["QT_SETTLED_ONLY"]
+_spec14.loader.exec_module(_ric14)
+check14("...and unsetting it restores the default", _ric14.SETTLED_ONLY, True)
+
+# Wiring: BOTH call sites must honour the flag. Missing it on the SPY leg would
+# hedge settled picks against an unsettled market return — a silent asymmetry.
+check14("picks leg honours the flag",
+        "_fwd_ret(prices, tk, date, h, settled_only=SETTLED_ONLY)" in ric, True)
+check14("SPY/beta leg honours the flag",
+        '_fwd_ret(prices, "SPY", d, int(h), settled_only=SETTLED_ONLY)' in ric, True)
+check14("withheld day is reported, not silent", "withholding" in ric, True)
+# The policy is series-agnostic: v2 reads the same code path, so it can never
+# accumulate provisional rows the legacy series has been purged of.
+check14("policy applies to BOTH series (single code path)",
+        ric.count("settled_only=SETTLED_ONLY"), 2)
+
+
 print()
 if fails:
     print("VALIDATION FAILED:")
