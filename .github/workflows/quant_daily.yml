@@ -468,3 +468,52 @@ jobs:
           name: cycle-${{ steps.run_type.outputs.type }}-${{ github.run_number }}
           path: cycle_output.log
           retention-days: 60
+
+  # ── FAILURE ALERTING (added 2026-08-06) ─────────────────────────────────────
+  # The INNER of two alarms; morning_watchdog.yml is the outer one and asserts
+  # the outcome instead of the process. This job fires whenever `trade` fails,
+  # which INCLUDES "The job was not acquired by Runner of type hosted" - the
+  # job never runs a step but its result is still `failure`, so a step-level
+  # `if: failure()` inside `trade` would NOT have caught it. That is exactly
+  # the 2026-08-06 outage (six runs, ~15 min each, zero notifications), and it
+  # is why this has to be a separate job rather than a final step.
+  notify_failure:
+    needs: trade
+    if: failure()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Page Discord with the failure class
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -u
+          # Infra vs code needs OPPOSITE responses - re-dispatch, or read the
+          # log. A job that never got a runner executed no steps, so step count
+          # separates the two without parsing annotation text.
+          n_steps=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs" \
+                      --jq '[.jobs[] | select(.name=="trade") | .steps[]?] | length' 2>/dev/null || echo "")
+          n_steps=${n_steps:-0}
+
+          if [ "$n_steps" -le 1 ]; then
+            head="🟠 **Quant-Terminal: run failed with NO RUNNER**"
+            body="The job was never acquired (${n_steps} steps executed). This is GitHub infrastructure, **not** a code fault — re-dispatch, do not debug. Six of these on 2026-08-06."
+          else
+            head="🔴 **Quant-Terminal: RUN FAILED**"
+            body="The job executed ${n_steps} steps and then failed — this one is real. Read the log before the next cycle."
+          fi
+
+          echo "${head} :: ${body}"
+          if [ -n "${DISCORD_WEBHOOK_URL:-}" ]; then
+            curl -s -H 'Content-Type: application/json' \
+              -d "$(printf '{"content":"%s\n%s\nTrigger: `%s`\n%s"}' \
+                     "$head" "$body" "${{ github.event_name }}" "$RUN_URL")" \
+              "$DISCORD_WEBHOOK_URL" >/dev/null || true
+          else
+            echo "::warning::DISCORD_WEBHOOK_URL not set — alert not delivered."
+          fi
