@@ -10,13 +10,23 @@ not the process.
 `HANDOFF.md` is ~450KB and single lines exceed 30KB. **Never `Read` or `cat` it
 whole; it will blow your context.** Instead:
 
+**Derive the line ranges, never hardcode them** — the checkpoint table and the
+ledgers both grow every session, so fixed ranges silently drift onto the wrong
+content. These two recipes are tested and self-locating:
+
 ```bash
-grep -n '^## .* SESSION LEDGER' HANDOFF.md | head -3   # locate newest ledgers
-sed -n '31,60p' HANDOFF.md | cut -c1-600               # checkpoint table, truncated
+# the date-triggered checkpoint table
+S=$(grep -n 'date-triggered checkpoints' HANDOFF.md | cut -d: -f1)
+E=$(grep -n 'Step 4' HANDOFF.md | head -1 | cut -d: -f1)
+sed -n "${S},${E}p" HANDOFF.md | cut -c1-600
+
+# the newest session ledger (start of newest -> line before the one under it)
+L=$(grep -n '^## .* SESSION LEDGER' HANDOFF.md | head -2 | cut -d: -f1 | tr '\n' ' ')
+set -- $L; sed -n "$1,$(($2-1))p" HANDOFF.md | cut -c1-600
 ```
 
-Then `sed` over the newest ledger's line range. `cut -c1-600` on any HANDOFF
-line is the safe default.
+`cut -c1-600` on any HANDOFF line is the safe default — several exceed 30KB and
+one is the entire document headline.
 
 ## Environment gotchas
 
