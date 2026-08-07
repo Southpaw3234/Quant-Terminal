@@ -5432,15 +5432,56 @@ _SRC_REPLACE = [
     # legacy rows) can't prove they're fresh-era, so they're excluded ("nan" >
     # "2026-…" lexicographically, caught by validate 5). Self-ages to a no-op
     # once fresh-era rows dominate the log.
+    # TEMPORAL FIX (2026-08-07): the window was still `.tail(N)` over FILE
+    # ORDER, which is the Cell-11 generation loop, not time. Every trade in a
+    # batch shares one pred date and opens/resolves together, so "the last 5
+    # rows" means "the last 5 TICKERS PROCESSED on the most recent scored day"
+    # — and the universe list is sector-grouped, so that tail is a block of
+    # correlated names. Sorting by pred_ts does NOT fix it: the intra-day
+    # timestamps (15:45:14, :15, :16 …) ARE the loop order.
+    # Live misfire 2026-08-07 (run 31183325178, ZERO entries): the 7/31 batch
+    # scored 5W/9L (35.7%), a bad day but no streak — yet its last five file
+    # rows were CAG/COP/PSX/MPC/VLO, four of them energy, all losers. The
+    # switch read that block as "5 consecutive losses" and halted. Because
+    # the trade cell runs BEFORE Cell 14's scoring, the tail was frozen: the
+    # halt would have repeated every run until 8/03 matured (~8/11).
+    # Fix: the only honest temporal unit is the DAY. Aggregate the gated rows
+    # by pred DATE, score each day by its hit rate, and require N consecutive
+    # LOSING DAYS in DATE order. Emitted as one synthetic row per day so the
+    # downstream `len(scored) == KILL_CONSECUTIVE_LOSSES and no wins` contract
+    # is unchanged — N now counts days, not rows (message reworded below).
+    # Thin days (< QT_KILL_MIN_DAY_TRADES scored trades) carry no verdict and
+    # are skipped entirely: they neither break a streak nor extend one, so one
+    # entry-starved session cannot flip the switch either way (7/28: n=1).
+    # Knobs: QT_KILL_MIN_DAY_TRADES (default 3), QT_KILL_DAY_HIT (default 0.5,
+    # a day loses when its hit rate is strictly below this).
     ('        scored = plog[plog["scored"].astype(str) == "True"].tail(KILL_CONSECUTIVE_LOSSES)',
      '        _ks_sc = plog[plog["scored"].astype(str).isin(["True", "true"])].copy()\n'
      '        _ks_sc = _ks_sc[_ks_sc["action"].astype(str).str.upper().isin(["BUY", "SELL"])]\n'
      '        _ks_sc = _ks_sc[~_ks_sc["ticker"].astype(str).isin(\n'
-     '            {"BTC-USD", "ETH-USD", "SOL-USD", "XRP-USD", "DOGE-USD", "BNB-USD"})]\n'
-     '        _ks_era = __import__("os").environ.get("QT_STAGE1_START", "2026-07-14")\n'
-     '        _ks_ts = _ks_sc["pred_ts"].astype(str).str[:10]\n'
-     '        _ks_sc = _ks_sc[_ks_ts.str.match(r"\\d{4}-\\d{2}-\\d{2}") & (_ks_ts >= _ks_era)]\n'
-     '        scored = _ks_sc.tail(KILL_CONSECUTIVE_LOSSES)'),
+     '            {"BTC-USD", "ETH-USD", "SOL-USD", "XRP-USD", "DOGE-USD", "BNB-USD"})].copy()\n'
+     '        _ks_env = __import__("os").environ\n'
+     '        _ks_era = _ks_env.get("QT_STAGE1_START", "2026-07-14")\n'
+     '        _ks_sc["_ks_day"] = _ks_sc["pred_ts"].astype(str).str[:10]\n'
+     '        _ks_sc = _ks_sc[_ks_sc["_ks_day"].str.match(r"\\d{4}-\\d{2}-\\d{2}")\n'
+     '                        & (_ks_sc["_ks_day"] >= _ks_era)].copy()\n'
+     '        _ks_sc["_ks_win"] = _ks_sc["was_correct"].astype(str).isin(\n'
+     '            ["True", "true"]).astype(int)\n'
+     '        _ks_agg = _ks_sc.groupby("_ks_day", sort=True)["_ks_win"].agg(["size", "sum"])\n'
+     '        _ks_agg = _ks_agg[_ks_agg["size"] >= int(\n'
+     '            _ks_env.get("QT_KILL_MIN_DAY_TRADES", "3"))]\n'
+     '        _ks_hit = float(_ks_env.get("QT_KILL_DAY_HIT", "0.5"))\n'
+     '        scored = __import__("pandas").DataFrame(\n'
+     '            {"was_correct": (_ks_agg["sum"] / _ks_agg["size"] >= _ks_hit).astype(str)}\n'
+     '        ).tail(KILL_CONSECUTIVE_LOSSES)'),
+    # The trip message must say what the window now counts, or the log reads as
+    # 5 losing TRADES when it means 5 losing DAYS. ASCII-only anchor: the line
+    # ends with a mojibake em dash (U+00E2 U+20AC U+201D, a cp1252 round-trip
+    # baked into the notebook) that must not be retyped. Substring replace, so
+    # the dash and the rest of the line survive untouched. The docstring's
+    # "consecutive losses," does not match — the f-string prefix pins it.
+    ('f"{KILL_CONSECUTIVE_LOSSES} consecutive losses ',
+     'f"{KILL_CONSECUTIVE_LOSSES} consecutive losing days '),
     # Stale-era gate for the remaining live predictions.csv consumers
     # (2026-07-16, follow-up to the kill-switch era gate above — full audit in
     # the 7/16 handoff ledger). Predictions before QT_STAGE1_START were made by
