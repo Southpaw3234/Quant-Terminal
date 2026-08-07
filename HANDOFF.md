@@ -6,13 +6,34 @@
 
 ---
 
-## 🔔 DAILY PICKUP — fresh-session checklist (READ FIRST, every day)
+## 🔔 SESSION PICKUP — fresh-session checklist (READ FIRST)
 
+> ### ⚠️ CADENCE CHANGED 2026-08-06 — THIS IS NO LONGER A DAILY RITUAL.
+>
+> **Daily sessions were retired.** The guards are all in place (gross cap, oversell,
+> sector cap, kill switch, era gates) with 140 validate checks behind them, and
+> **`morning_watchdog.yml` now pages Discord whenever a morning run misses** — it
+> runs in GitHub's infrastructure, so it does not depend on anyone opening this app.
+> Daily sessions were mostly re-verifying things that are now mechanically enforced,
+> and finding a "new problem" every day largely because someone went looking.
+>
+> **What replaces it:**
+> - **Mondays — run the weekly review INLINE.** Follow [`docs/WEEKLY_REVIEW.md`](docs/WEEKLY_REVIEW.md)
+>   and report it in-session. (A scheduled task `qt-weekly-review` exists but its
+>   dispatch has never completed — treat any output from it as a bonus, never as a
+>   substitute. Do not wait on it.)
+> - **Any other day — do nothing unless Discord paged or a dated checkpoint below
+>   has come due.** Check the table, act on what is due, and stop.
+>
+> **If the user pastes this handoff on a non-Monday with no page and nothing due,
+> the correct answer is "nothing needs you today" — say so and stop.** Do not
+> manufacture work; that is the habit this change exists to break.
+>
 > **You are a fresh Claude session and the user just pasted this handoff.** Your job
-> on day one of each session is to (1) figure out *today's date*, (2) run the
-> date-triggered checks below that have come due, (3) report PASS/FAIL on each, and
-> (4) tell the user the single most important thing to do today. Do NOT re-derive the
-> whole roadmap — it's already written below. Just pick up the checkpoints.
+> is to (1) figure out *today's date*, (2) run the date-triggered checks below that
+> have come due, (3) report PASS/FAIL on each, and (4) tell the user the single most
+> important thing to do. Do NOT re-derive the whole roadmap — it's already written
+> below. Just pick up the checkpoints.
 
 **Step 1 — orient.** Confirm today's date (from the system context). Note which
 milestones below are now DUE or PAST-DUE.
