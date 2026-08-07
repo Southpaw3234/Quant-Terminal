@@ -5482,6 +5482,56 @@ _SRC_REPLACE = [
     # "consecutive losses," does not match — the f-string prefix pins it.
     ('f"{KILL_CONSECUTIVE_LOSSES} consecutive losses ',
      'f"{KILL_CONSECUTIVE_LOSSES} consecutive losing days '),
+    # Fail-CLOSED on an unreadable streak check (2026-08-07, follow-up to the
+    # temporal fix above). The whole consecutive-loss block sat in a bare
+    # `except Exception: pass`, so ANY error in it — a renamed column, a dtype
+    # change, a corrupt CSV, a bug in the groupby the fix above introduced —
+    # silently DISABLED the brake and let the run trade on unprotected. A risk
+    # control that cannot evaluate must not quietly allow the thing it exists
+    # to prevent. This matches the house pattern: the gross-cap gate already
+    # refuses every BUY fail-closed when its account read fails (validate 3d).
+    # Safe to halt here because a trip is per-RUN and NON-PERSISTENT: both call
+    # sites only print and set `halt = True`, and `activate_kill_switch()` (the
+    # one thing that writes KILL_FLAG_FILE) is never called on this path — so a
+    # transient error costs one session of entries, never a permanent halt.
+    # Two conditions stay benign and do NOT halt, because they mean "no history
+    # yet" rather than "the check is broken": a missing prediction log
+    # (FileNotFoundError, e.g. a fresh clone or the first run of a new era) and
+    # a zero-byte one (pandas EmptyDataError). A header-only file needs no case
+    # — it parses to an empty frame, yields an empty window and cannot trip.
+    # Escape hatch for an incident: QT_KILL_STREAK_FAILOPEN=1 restores the old
+    # swallow-and-continue behaviour for one run, and says so loudly.
+    # ASCII-only in every printed string: the notebook already carries one
+    # mojibake em dash from a cp1252 round-trip (see the message pair above),
+    # and these lines are read from CI logs.
+    # Anchor: `except Exception:` alone appears 119x in the notebook, so it
+    # MUST carry the following comment line to be unique — validate 15 pins
+    # that at exactly one occurrence.
+    ('    except Exception:\n'
+     '        pass\n'
+     '\n'
+     '    # 4. Daily P&L from Alpaca',
+     '    except Exception as _ks_e:\n'
+     '        _ks_name = _ks_e.__class__.__name__\n'
+     '        if _ks_name in ("FileNotFoundError", "EmptyDataError"):\n'
+     '            print("  [kill-switch] no usable prediction log yet "\n'
+     '                  "({}) - streak check skipped, not halting".format(_ks_name))\n'
+     '        elif __import__("os").environ.get("QT_KILL_STREAK_FAILOPEN") == "1":\n'
+     '            print("  [kill-switch] streak check FAILED ({}: {}) - "\n'
+     '                  "QT_KILL_STREAK_FAILOPEN=1 set, CONTINUING UNPROTECTED"\n'
+     '                  .format(_ks_name, _ks_e))\n'
+     '        else:\n'
+     '            print("  [kill-switch] streak check FAILED: {}: {}"\n'
+     '                  .format(_ks_name, _ks_e))\n'
+     '            print("  [kill-switch] a brake that cannot evaluate must not "\n'
+     '                  "silently allow entries - halting FAIL-CLOSED")\n'
+     '            print("  [kill-switch] set QT_KILL_STREAK_FAILOPEN=1 to override "\n'
+     '                  "for one run")\n'
+     '            print(__import__("traceback").format_exc())\n'
+     '            return True, ("consecutive-loss check failed ({}: {}) - "\n'
+     '                          "halting fail-closed".format(_ks_name, _ks_e))\n'
+     '\n'
+     '    # 4. Daily P&L from Alpaca'),
     # Stale-era gate for the remaining live predictions.csv consumers
     # (2026-07-16, follow-up to the kill-switch era gate above — full audit in
     # the 7/16 handoff ledger). Predictions before QT_STAGE1_START were made by
