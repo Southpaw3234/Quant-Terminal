@@ -1273,6 +1273,99 @@ check15("...anchor is disambiguated by trailing context",
 check15("bare 'except Exception:' would NOT have been unique",
         _nb_all.count("    except Exception:\n") > 1, True)
 
+# ── 16. drawdown brake fails CLOSED when it cannot evaluate (2026-08-07) ─────
+# The Alpaca/pnl_history drawdown block already refused to GUESS a denominator
+# (the 6/30 phantom trip) and refused to CLEAR a stale flag when blind. What it
+# did NOT do was stop trading: both sources dead meant the run proceeded with
+# no drawdown brake at all, announced by one "(non-fatal)" line.
+# The halt is deliberately shaped by two facts about THIS brake:
+#   (1) a real trip writes a PERSISTENT _KILL_FLAG, so an evaluation failure
+#       must NOT write it or the halt latches until a valid reading appears;
+#   (2) the flag path skips cells 10-13, which would stall all three evidence
+#       clocks — so this blocks ENTRIES only, via the same `halt` path the
+#       streak check uses, and predictions keep logging.
+# ⚠️ Check 4 inside check_kill_switch() (`if api:` -> Alpaca daily loss) is
+# DEAD CODE and is NOT what protects the account — every call site passes None.
+# It is pinned dead below so it cannot come alive unnoticed.
+def check16(name, got, want):
+    ok = got == want
+    print(f"16. {name:<52} got={str(got):<5} {'PASS' if ok else 'FAIL (want %s)' % want}")
+    if not ok:
+        fails.append(f"drawdown fail-closed {name}: got={got} want={want}")
+
+# The decision block is plain control flow over module state, so replay it
+# directly against the real source rather than re-implementing the rules here.
+_dd_i = src.index("    _ks_keys = bool(")
+_dd_src = textwrap.dedent(src[_dd_i:src.index("if _KILL_FLAG.exists():", _dd_i)])
+
+def dd_run(triggered, evaluated, keys, failopen=False):
+    ns = {"os": os, "print": lambda *a, **k: None,
+          "_pnl_kill_triggered": triggered, "_ks_evaluated": evaluated,
+          "__builtins__": __builtins__}
+    for k, v in (("ALPACA_API_KEY", "k"), ("ALPACA_SECRET_KEY", "s")):
+        os.environ[k] = v if keys else ""
+    if failopen:
+        os.environ["QT_KILL_DD_FAILOPEN"] = "1"
+    else:
+        os.environ.pop("QT_KILL_DD_FAILOPEN", None)
+    try:
+        exec(_dd_src, ns)
+    finally:
+        for k in ("ALPACA_API_KEY", "ALPACA_SECRET_KEY", "QT_KILL_DD_FAILOPEN"):
+            os.environ.pop(k, None)
+    return ns["_ks_blind_halt"]
+
+# THE fix: keys set, neither source could read -> halt.
+check16("blind with keys set -> FAIL-CLOSED halt", dd_run(False, False, True), True)
+# Benign: no keys is local paper mode, a bootstrap state, not a broken check.
+# Same split the gross-cap gate draws (3d fail-closed vs 3e ledger fallback).
+check16("blind without keys (paper mode) -> no halt", dd_run(False, False, False), False)
+# A valid reading, or a real breach, must not be disturbed by any of this.
+check16("valid reading -> no blind halt", dd_run(False, True, True), False)
+check16("real breach -> no blind halt (flag path owns it)", dd_run(True, False, True), False)
+check16("breach AND evaluated -> no blind halt", dd_run(True, True, True), False)
+check16("escape hatch QT_KILL_DD_FAILOPEN=1", dd_run(False, False, True, True), False)
+# The halt must be run-scoped. If it ever writes the persistent flag it can
+# latch indefinitely whenever the data source itself is broken.
+check16("blind halt NEVER writes the persistent flag",
+        "_KILL_FLAG.write_text" in _dd_src, False)
+check16("...and is a namespace entry, not a file",
+        'namespace["_QT_DD_BLIND_HALT"]' in src, True)
+# Entries only: it must NOT reach for SKIP_CELLS, which would stop signal
+# generation and stall Frame 1/2/3 on a day the account is merely unreadable.
+check16("blind halt does NOT skip cells 10-13 (clocks live)",
+        "SKIP_CELLS" in _dd_src, False)
+# Wiring: the notebook side must consult it, ABOVE every other check.
+_dd_pair = next(((o, n) for o, n in pairs
+                 if o.startswith("    # 1. Manual kill flag file")), None)
+check16("check_kill_switch consults _QT_DD_BLIND_HALT", _dd_pair is not None, True)
+check16("...anchor appears exactly once in the notebook",
+        _nb_all.count(_dd_pair[0]) if _dd_pair else -1, 1)
+check16("...and is checked BEFORE the manual flag",
+        _dd_pair[1].index("_QT_DD_BLIND_HALT")
+        < _dd_pair[1].index("KILL_FLAG_FILE.exists()") if _dd_pair else False, True)
+if _ks_fn:      # end-to-end through the patched function from section 15
+    _ks_ns["_QT_DD_BLIND_HALT"] = True
+    _k, _r, _ = ks_call(pathlib.Path(_ks_tmp) / "win.csv")
+    check16("patched function halts on the blind flag", _k, True)
+    check16("...with a reason naming the cause", "drawdown unreadable" in _r, True)
+    _ks_ns["_QT_DD_BLIND_HALT"] = False
+    _k, _r, _ = ks_call(pathlib.Path(_ks_tmp) / "win.csv")
+    check16("...and is inert when not set", _k, False)
+
+# ⚠️ Check 4 (`if api:` daily loss) is DEAD: every call site passes None, so it
+# has never executed and is NOT the drawdown brake. Pinned so that wiring an
+# api in — which would quietly resurrect an unvalidated, fail-open check —
+# fails the build and forces a deliberate decision.
+_ks_calls = re.findall(r"check_kill_switch\(([^)]*)\)", _nb_all)
+_ks_invocations = [c for c in _ks_calls if "api=None" not in c]
+check16("every check_kill_switch call site passes None",
+        all(c.strip() in ("None", "") for c in _ks_invocations), True)
+check16("...so check 4 (`if api:`) is unreachable dead code",
+        _nb_all.count("account = api.get_account()"), 1)
+check16("...and the REAL brake is the Alpaca/pnl_history block",
+        "[KILL SWITCH · Alpaca]" in src and "_ks_pnl_fallback(" in src, True)
+
 
 print()
 if fails:

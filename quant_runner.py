@@ -5326,6 +5326,54 @@ if True:
         if _had_local_flag:
             print("  [kill switch] account healthy — cleared stale flag (local + Drive)")
 
+    # ── Fail-CLOSED when the drawdown check could not evaluate (2026-08-07) ───
+    # The block above already refuses to GUESS a denominator (the 6/30 phantom
+    # trip) and refuses to CLEAR a stale flag when it could not evaluate. The
+    # missing half: staying blind also meant staying UNPROTECTED — both sources
+    # dead and the run traded on with no drawdown brake at all, announced by a
+    # single "(non-fatal)" line. Same class as the consecutive-loss fail-open
+    # fixed today, and the same house rule: a risk control that cannot evaluate
+    # must not silently allow the thing it exists to prevent.
+    #
+    # TWO things make this different from the streak check, and both shape it:
+    # (1) A trip HERE writes a PERSISTENT flag (_KILL_FLAG) that survives runs
+    #     and is even restored from Drive. Writing it on an EVALUATION FAILURE
+    #     would latch the account into a halt that only clears once a valid
+    #     reading arrives — so if the data source itself is broken, the outage
+    #     is indefinite. We therefore do NOT write the flag; this halt is
+    #     scoped to THIS RUN and re-decided from scratch on the next one.
+    # (2) The flag path skips cells 10-13, which would stop signal generation
+    #     and STALL ALL THREE EVIDENCE CLOCKS. For an evaluation failure that
+    #     is the wrong trade (Frame 3 is ~3 sessions from decision-grade). So
+    #     this halts ENTRIES ONLY, via the same `halt` path the streak check
+    #     uses: cells 10-13 still run, predictions still log, clocks advance.
+    #     Wired through _QT_DD_BLIND_HALT into check_kill_switch (_SRC_REPLACE).
+    #
+    # No broker keys = local paper mode = a bootstrap state, not a broken
+    # check, so it stays benign — exactly the split the gross-cap gate already
+    # draws between "no keys -> ledger fallback" (validate 3e) and "keys set
+    # but the account read failed -> refuse every BUY" (validate 3d).
+    _ks_keys = bool(
+        "".join(_c for _c in os.environ.get("ALPACA_API_KEY", "") if ord(_c) < 128).strip()
+        and "".join(_c for _c in os.environ.get("ALPACA_SECRET_KEY", "") if ord(_c) < 128).strip())
+    _ks_blind_halt = False
+    if _pnl_kill_triggered or _ks_evaluated:
+        pass                      # a real breach, or a valid reading - nothing to do
+    elif not _ks_keys:
+        print("  [kill switch] no broker keys (local paper mode) — drawdown check "
+              "skipped, not halting")
+    elif os.environ.get("QT_KILL_DD_FAILOPEN") == "1":
+        print("  [kill switch] drawdown UNREADABLE from BOTH Alpaca and pnl_history "
+              "— QT_KILL_DD_FAILOPEN=1 set, CONTINUING UNPROTECTED")
+    else:
+        _ks_blind_halt = True
+        print("  [kill switch] drawdown UNREADABLE from BOTH Alpaca and pnl_history "
+              "with broker keys SET — blocking new entries FAIL-CLOSED for this run")
+        print("  [kill switch] NOT writing the persistent flag: this is an evaluation "
+              "failure, not a breach, so it must not latch across runs")
+        print("  [kill switch] scoring/signals still run — the evidence clocks keep "
+              "advancing; set QT_KILL_DD_FAILOPEN=1 to override for one run")
+
 if _KILL_FLAG.exists():
     _flag_msg = _KILL_FLAG.read_text()
     print(f"\n⚠️  KILL SWITCH ACTIVE — {_flag_msg}")
@@ -5336,6 +5384,10 @@ if _KILL_FLAG.exists():
         print("  Cells 10-13 (sentiment, signals, CVaR, trading) SKIPPED.")
 
 namespace = {"__name__": "__main__"}
+# Run-scoped, non-persistent: read by check_kill_switch via globals() (see the
+# _QT_DD_BLIND_HALT pair in _SRC_REPLACE). Deliberately NOT a file — it must
+# not survive this process, unlike _KILL_FLAG.
+namespace["_QT_DD_BLIND_HALT"] = bool(globals().get("_ks_blind_halt", False))
 _load_model_cache(namespace)
 
 # ── Notebook source rewrites ──────────────────────────────────────────────
@@ -5507,6 +5559,21 @@ _SRC_REPLACE = [
     # Anchor: `except Exception:` alone appears 119x in the notebook, so it
     # MUST carry the following comment line to be unique — validate 15 pins
     # that at exactly one occurrence.
+    # Entry point for the drawdown fail-closed halt decided in quant_runner
+    # (see the _ks_blind_halt block). Placed FIRST, above the manual flag, so
+    # it cannot be reached around by any later check. It halts ENTRIES only —
+    # the caller sets `halt = True` and log_prediction still runs — so the
+    # evidence clocks keep advancing on a blind day. Run-scoped by construction:
+    # the flag is a namespace entry, never a file, so it cannot latch.
+    ('    # 1. Manual kill flag file\n'
+     '    if KILL_FLAG_FILE.exists():',
+     '    # 0. Drawdown check could not evaluate this run (fail-closed)\n'
+     '    if globals().get("_QT_DD_BLIND_HALT"):\n'
+     '        return True, ("account drawdown unreadable from broker AND pnl_history "\n'
+     '                      "- blocking new entries fail-closed for this run")\n'
+     '\n'
+     '    # 1. Manual kill flag file\n'
+     '    if KILL_FLAG_FILE.exists():'),
     ('    except Exception:\n'
      '        pass\n'
      '\n'
