@@ -1,29 +1,29 @@
 {
   "as_of": "2026-08-07",
   "momentum_12m1m": {
-    "Technology": 0.5251,
-    "Financials": 0.0983,
-    "Healthcare": 0.2368,
-    "Energy": 0.3832,
-    "Consumer Disc": 0.0889,
-    "Consumer Staples": 0.0704,
-    "Industrials": 0.2659,
-    "Materials": 0.1618,
-    "Utilities": 0.164,
-    "Real Estate": 0.1009,
-    "Communication": 0.0744
+    "Technology": 0.5583,
+    "Financials": 0.1097,
+    "Healthcare": 0.2359,
+    "Energy": 0.3638,
+    "Consumer Disc": 0.1036,
+    "Consumer Staples": 0.0553,
+    "Industrials": 0.2707,
+    "Materials": 0.1641,
+    "Utilities": 0.1581,
+    "Real Estate": 0.1029,
+    "Communication": 0.0847
   },
   "score_boost": {
     "Technology": 0.03,
     "Financials": 0.0,
     "Healthcare": 0.0,
     "Energy": 0.03,
-    "Consumer Disc": -0.03,
+    "Consumer Disc": 0.0,
     "Consumer Staples": -0.03,
     "Industrials": 0.03,
     "Materials": 0.0,
     "Utilities": 0.0,
-    "Real Estate": 0.0,
+    "Real Estate": -0.03,
     "Communication": -0.03
   }
 }
