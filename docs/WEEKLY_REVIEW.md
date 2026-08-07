@@ -48,7 +48,7 @@ a re-dispatch, **not** a code fault.
 | file | frame | status |
 |---|---|---|
 | `data/shadow/rank_ic.csv` | Frame-1 legacy | **INVALID — see §4** |
-| `data/shadow/rank_ic_v2.csv` | Frame-1 v2 | the trustworthy one; first row due ~2026-08-13, needs ~30 obs → mid-Sept |
+| `data/shadow/rank_ic_v2.csv` | Frame-1 v2 | the trustworthy one; first row due ~2026-08-13, 30 obs → **~2026-09-24** (counted pred-day by pred-day from 8/06, allowing for Labor Day — *not* "mid-September") |
 | `data/shadow_intraday/rank_ic.csv` | Frame-2 | audited clean 8/06; gate ~8/21 |
 | `data/stat_arb/stat_arb_ls.csv` | Frame-3 | gate at ≥30 obs, due ~2026-08-12 |
 
@@ -56,6 +56,18 @@ a re-dispatch, **not** a code fault.
 each frame is, and whether any is close. As of 8/06 none were: Frame-2 read
 `−0.0030, t −0.18` on 18 obs; Frame-3 Sharpe `−1.37` on 26 obs; walk-forward AUC
 `0.4986` against a `0.4973` baseline.
+
+The scorecard only prints *during* a morning run, so compute the gate numbers
+straight off the CSV rather than hunting for them in a log:
+
+```bash
+awk -F, 'NR>1{v=$3+0; n++; s+=v; a[n]=v}
+END{m=s/n; for(i=1;i<=n;i++) ss+=(a[i]-m)^2; sd=sqrt(ss/(n-1));
+printf "n=%d mean=%+.4f sd=%.4f t=%+.2f\n", n, m, sd, m/(sd/sqrt(n))}' \
+  data/shadow_intraday/rank_ic.csv
+```
+
+Same recipe works on `data/shadow/rank_ic_v2.csv` once it exists.
 
 **4. Do NOT quote the Frame-1 legacy series as evidence.** It ranks on
 `confidence`, which Cell 13's execution gate flattens to exactly 0.50 for every
