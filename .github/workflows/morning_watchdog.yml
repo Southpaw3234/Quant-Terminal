@@ -1,0 +1,80 @@
+name: Morning-run watchdog (alert only, read-only)
+
+# WHY THIS EXISTS
+# ---------------
+# On 2026-08-06 SIX runs failed with "The job was not acquired by Runner of
+# type hosted", each burning ~15 min, and one of them was the 21:30Z evening
+# cycle. Nothing told anyone. The failure that actually matters is the MORNING
+# run: it is the only cycle that retrains and advances all three evidence
+# clocks, and a silent miss is a lost trading day plus a hole in the Stage-1
+# window.
+#
+# This is the OUTER of two alarms and they are deliberately complementary:
+#   * quant_daily.yml's notify_failure job fires when the trade job FAILS -
+#     including "no runner acquired", because the job result is still failure.
+#     It cannot fire if the workflow never started at all.
+#   * this watchdog asserts the OUTCOME instead of watching the process. It
+#     reads data/last_morning_run.txt - the marker the morning retrain writes
+#     itself - and pages if it is not today's ET date. That catches every
+#     path: workflow never fired, runner never acquired, run died before the
+#     marker, or the market-hours guard downgraded it to intraday.
+#
+# Read-only: no keys, no orders, no writes, no state.
+#
+# KNOWN FALSE POSITIVE: a weekday market holiday has no morning run, so the
+# marker legitimately will not advance and this will page. Accepted - it is an
+# alert, not a gate, and a handful of spurious pings a year is cheaper than a
+# silent miss. Do NOT "fix" it by widening the staleness window.
+
+on:
+  schedule:
+    # 17:30 UTC = 13:30 ET. The morning run dispatches 13:35Z and takes
+    # ~130-160 min, so it completes ~16:00-16:15Z. This leaves >1h of margin
+    # over the slowest observed retrain (158 min on 2026-08-06).
+    - cron: '30 17 * * 1-5'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check_marker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Assert the morning marker advanced to today (ET)
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions
+        run: |
+          set -u
+          # ET, not UTC. The marker has been an ET date since 8d3e9df; comparing
+          # it against a UTC date would false-alarm between 20:00Z and midnight
+          # ET. ubuntu-latest ships tzdata, so this resolves properly here even
+          # though it does not in Git Bash on the dev box.
+          TODAY_ET=$(TZ=America/New_York date +%Y-%m-%d)
+          MARKER=$(tr -d ' \t\r\n' < data/last_morning_run.txt 2>/dev/null || echo "")
+
+          echo "marker='${MARKER}' today_et='${TODAY_ET}'"
+
+          if [ "$MARKER" = "$TODAY_ET" ]; then
+            echo "OK: morning retrain completed and marked for ${TODAY_ET}."
+            exit 0
+          fi
+
+          echo "::error::Morning marker is '${MARKER}', expected '${TODAY_ET}' — the morning run did not complete."
+          if [ -n "${DISCORD_WEBHOOK_URL:-}" ]; then
+            curl -s -H 'Content-Type: application/json' \
+              -d "$(printf '{"content":"🔴 **Quant-Terminal: NO MORNING RUN TODAY (%s)**\\nMarker still reads \`%s\`. All three evidence clocks are stalled for the day and no entries were placed.\\n\\n**Check first:** was a runner ever acquired? (`The job was not acquired by Runner of type hosted` = infra, just re-dispatch — do not debug code.)\\n%s"}' \
+                   "$TODAY_ET" "${MARKER:-<empty>}" "$RUN_URL")" \
+              "$DISCORD_WEBHOOK_URL" >/dev/null || true
+          else
+            echo "::warning::DISCORD_WEBHOOK_URL not set — alert not delivered."
+          fi
+          # Fail loudly so the run shows red in the Actions list even if the
+          # webhook is down or unset.
+          exit 1
