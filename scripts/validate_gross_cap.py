@@ -1149,6 +1149,130 @@ check14("...and stops at the first reportable day", ric.count("break") >= 1, Tru
 check14("policy applies to BOTH series (single code path)",
         ric.count("settled_only=SETTLED_ONLY"), 2)
 
+# ── 15. kill switch fails CLOSED when it cannot evaluate (2026-08-07) ────────
+# The consecutive-loss block sat in a bare `except Exception: pass`, so any
+# error in it silently DISABLED the brake and let the run trade on unprotected
+# — the failure mode you never see, because the log looks clean. It now halts
+# fail-closed, matching the gross-cap gate (section 3d). Two conditions stay
+# benign (no history yet, not a broken check): a missing log and a zero-byte
+# one. Escape hatch QT_KILL_STREAK_FAILOPEN=1 restores the old behaviour.
+# Unlike section 5, which execs the window fragment, this replays the WHOLE
+# patched check_kill_switch() end to end — the error path only exists in the
+# function body, and a fragment test cannot see it.
+import pathlib, tempfile
+
+_ksf_i = _nb_all.index("def check_kill_switch(")
+_ksf_src = _nb_all[_ksf_i:_nb_all.index("\ndef ", _ksf_i)]
+for _o, _n in pairs:
+    _ksf_src = _ksf_src.replace(_o, _n)
+
+_ks_tmp = tempfile.mkdtemp(prefix="qt_ks_")
+_ks_ns = {
+    "pd": pd,
+    "KILL_FLAG_FILE": pathlib.Path(_ks_tmp) / "no_such_kill_flag",
+    "MACRO": {"vix": 15.0},
+    "KILL_VIX_THRESHOLD": 40.0,
+    "KILL_CONSECUTIVE_LOSSES": 5,
+    "KILL_DAILY_LOSS_PCT": 0.05,
+    "PRED_LOG_FILE": pathlib.Path(_ks_tmp) / "missing.csv",
+    "__builtins__": __builtins__,
+}
+try:
+    exec(_ksf_src, _ks_ns)
+    _ks_fn = _ks_ns["check_kill_switch"]
+except Exception as e:            # a broken patch must not pass silently
+    _ks_fn = None
+    fails.append(f"section 15: patched check_kill_switch failed to exec: {e}")
+
+def ks_write(name, rows, header=True):
+    p = pathlib.Path(_ks_tmp) / name
+    cols = "pred_ts,ticker,action,scored,was_correct\n"
+    p.write_text((cols if header else "") + "".join(",".join(r) + "\n" for r in rows))
+    return p
+
+def ks_call(path, env=None):
+    """(killed, reason, printed) from the fully patched function."""
+    os.environ.pop("QT_KILL_STREAK_FAILOPEN", None)
+    for k, v in (env or {}).items():
+        os.environ[k] = v
+    _ks_ns["PRED_LOG_FILE"] = path
+    buf = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(buf):
+            killed, reason = _ks_fn(None)
+    finally:
+        for k in (env or {}):
+            os.environ.pop(k, None)
+    return killed, reason, buf.getvalue()
+
+def check15(name, got, want):
+    ok = got == want
+    print(f"15. {name:<52} got={str(got):<5} {'PASS' if ok else 'FAIL (want %s)' % want}")
+    if not ok:
+        fails.append(f"kill-switch fail-closed {name}: got={got} want={want}")
+
+if _ks_fn:
+    _ok_rows = [(f"2026-07-2{d} 15:{i:02d}:00+0000", f"T{d}{i}", "BUY", "True", "False")
+                for d in range(5) for i in range(4)]
+    _ok = ks_write("streak.csv", _ok_rows)
+    _win = ks_write("win.csv", _ok_rows + [("2026-07-27 15:00:00+0000", f"W{i}",
+                                            "BUY", "True", "True") for i in range(4)])
+    # Baseline: the happy paths still behave, so a PASS below is not vacuous.
+    _k, _r, _ = ks_call(_ok)
+    check15("real 5-losing-day streak still trips", _k, True)
+    check15("...and the reason says DAYS, not losses",
+            "consecutive losing days" in _r, True)
+    _k, _r, _ = ks_call(_win)
+    check15("newest day a winner -> no trip", _k, False)
+
+    # THE fix: a log the check cannot evaluate must HALT, loudly, not sail past.
+    _broken = ks_write("broken.csv", [("2026-07-20 15:00:00+0000", "AAA", "BUY", "True")],
+                       header=False)
+    _broken.write_text("pred_ts,ticker,action,scored\n2026-07-20,AAA,BUY,True\n")
+    _k, _r, _out = ks_call(_broken)
+    check15("unreadable log -> FAIL-CLOSED halt", _k, True)
+    check15("...reason names the fail-closed halt", "fail-closed" in _r, True)
+    check15("...reason names the exception type", "KeyError" in _r, True)
+    check15("...and it is LOUD (prints a traceback)", "Traceback" in _out, True)
+    check15("...and says why it halted", "FAIL-CLOSED" in _out, True)
+    # Escape hatch, for an incident where the brake itself is the problem.
+    _k, _r, _out = ks_call(_broken, {"QT_KILL_STREAK_FAILOPEN": "1"})
+    check15("QT_KILL_STREAK_FAILOPEN=1 restores fail-open", _k, False)
+    check15("...and warns it is running unprotected", "UNPROTECTED" in _out, True)
+
+    # Benign: no history yet is not a broken check. These must NOT halt, or a
+    # fresh clone / first run of a new era can never place a trade.
+    _k, _r, _out = ks_call(pathlib.Path(_ks_tmp) / "missing.csv")
+    check15("missing prediction log -> no halt", _k, False)
+    check15("...and is reported, not silent", "no usable prediction log" in _out, True)
+    _empty = pathlib.Path(_ks_tmp) / "empty.csv"; _empty.write_text("")
+    _k, _r, _out = ks_call(_empty)
+    check15("zero-byte prediction log -> no halt", _k, False)
+    # A header-only file needs no special case: it parses to an empty frame,
+    # yields an empty window, and cannot reach the trip condition.
+    _k, _r, _out = ks_call(ks_write("headeronly.csv", []))
+    check15("header-only log -> no halt, no error", _k, False)
+    check15("...and took the normal path, not the error path",
+            "streak check FAILED" in _out, False)
+
+    # The other checks in the function must be untouched by this edit.
+    _ks_ns["MACRO"] = {"vix": 55.0}
+    _k, _r, _ = ks_call(_win)
+    check15("VIX check still trips independently", _k, True)
+    check15("...with its own reason", "VIX" in _r, True)
+    _ks_ns["MACRO"] = {"vix": 15.0}
+
+# The anchor MUST carry the trailing comment: `except Exception:` alone appears
+# ~119x in the notebook, so a bare anchor would rewrite arbitrary handlers.
+_fc_pair = next(((o, n) for o, n in pairs if o.startswith("    except Exception:\n")), None)
+check15("fail-closed rewrite pair present", _fc_pair is not None, True)
+check15("...anchor appears exactly once in the notebook",
+        _nb_all.count(_fc_pair[0]) if _fc_pair else -1, 1)
+check15("...anchor is disambiguated by trailing context",
+        _fc_pair[0].strip().endswith("# 4. Daily P&L from Alpaca") if _fc_pair else False, True)
+check15("bare 'except Exception:' would NOT have been unique",
+        _nb_all.count("    except Exception:\n") > 1, True)
+
 
 print()
 if fails:
