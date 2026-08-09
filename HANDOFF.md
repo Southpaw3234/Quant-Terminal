@@ -79,11 +79,33 @@ milestones below are now DUE or PAST-DUE.
 | ~~**~Tue 2026-08-11**~~ → **re-pointed at v2, ~Thu 8/13** | **`beta_roll` identifiability — ✅ QUESTION ANSWERED 8/05, but NOT the way this row framed it: neither warm-up nor a window bug.** | **ANSWERED by 8/05 ledger ⑩:** `beta_roll` was regressing on the **execution flag**, not a ranking score — 97.5% of rows tied at 0.50 and zero names below 0.5 on 17 of 17 days, so the "short leg" was file order. `residual beta +1.78 (n=7)` / `+1.84 (n=8)` was a fit on a malformed input; **there was never anything to find in `analyze_rank_ic.py`, and the beta window must NOT be touched.** ⚠️ **The row is not closed, it MOVES:** the live question is now whether the **v2** series (`cross_sectional_ls_v2.csv`, first row ≈8/13) produces a sane residual beta in roughly −0.5…+0.5 once it has ~10 hedged rows. Until then **keep quoting Frame-1 as RAW L/S**, and note the legacy `residual beta` reading is meaningless rather than merely noisy. Original framing and the pre-answer 8/05 read preserved below. **8/05 read (ledger ⑤):** the full series is `7/21 −2.7726 · 7/22 −1.8288 · 7/23 +2.4760 · 7/24 +0.0327 · 7/27 −0.6239 · 7/28 −0.5970 · 7/29 −0.1169` — **the last three are sane and converging**; the ±2.7 sign-flipping is confined to the first four rows. `residual beta : +1.78 (hedged rows only, n=7) [FAIL]` is dominated by those early rows and should decay as they roll off. `days hedged 7/12` is still short of the double-digit threshold this check specifies. **Do NOT open the beta window in `analyze_rank_ic.py` yet — on this evidence there is probably nothing wrong with it.** Keep quoting Frame-1 as RAW L/S. Re-read when `days hedged` reaches ~10. Original framing below. The `ls_hedged` kill criterion — the single decisive Stage-1 gate — **is still not readable**, and the GO/NO-GO row's own trigger comes due here. Observed `beta_roll` (`data/shadow/cross_sectional_ls.csv`): `7/21 −2.7726 · 7/22 −1.8288 · 7/23 +2.4760 · 7/24 +0.0327` — sign-flipping across a ±2.7 range, and the 7/31 scorecard reads `residual beta : +1.73 (hedged rows only, n=4) [gate: |beta| < 0.2 -> FAIL]`. A long/short equity book cannot carry these betas; the estimates are unidentified on ~4 rows. **What to do:** read `days hedged` and `residual beta` off the morning log's rank-IC scorecard. **If `days hedged` is into double digits AND `residual beta` has settled into roughly −0.5…+0.5 → warm-up confirmed, `ls_hedged` becomes quotable and the Stage-1 hedged gate finally opens.** **If β is STILL wild at ~10 hedged rows → this is a REAL BUG, not warm-up: inspect the beta window length / regression in `analyze_rank_ic.py`** (prime suspect: window too short, or fitting on overlapping 5-day forward returns). Until one of those resolves, **quote Frame-1 as RAW L/S only** — and note the bias direction: with β large and negative, subtracting `β × spy_fwd` ADDS to the loss, so hedged reads are currently pessimistic; with β large and positive it flatters them. Do NOT let either sign drive a frame-retirement decision. |
 | ~~**Before any GO decision**~~ ✅ **RESOLVED 8/07 `77a7beb`** | ~~**DECIDE: the kill switch's "5 consecutive losses" is order-dependent within a day, not a temporal streak**~~ (found 7/31, parked in the 7/30 ledger ⑤ — **actioned 8/07 after it cost a SECOND zero-entry day; option (a) below was the one taken**) | **DECIDED AND SHIPPED (8/07 ledger ②): option (a) — aggregate to a per-day record and count consecutive losing DAYS in DATE order.** Thin days (< `QT_KILL_MIN_DAY_TRADES`, default 3) are skipped entirely; a day loses below `QT_KILL_DAY_HIT` (default 0.5). One synthetic row per day preserves the downstream `len(scored)==KILL_CONSECUTIVE_LOSSES and no wins` contract, so N now counts DAYS; a second pair rewords the message to `consecutive losing days`. Validate `31208495091` **158 checks / 0 fail**, section 5 rebuilt **6 → 24** — the old fixtures were one row per day and encoded the row-order semantics, so they were replaced. The 6/30 phantom-trip and 7/16 stale-era regressions are still pinned and still pass, and 5 genuine losing days still trip. ⚠️ **It does NOT unhalt the book** — 7 real consecutive losing days stand, so the halt continues for a defensible reason (first live proof: the Mon 8/10 row above). ⚠️ **NEVER "fix" this by sorting on `pred_ts`** — intra-day timestamps ARE the loop order, so that reproduces the bug while looking like a repair; validate's "file order is not time" check exists to catch exactly that. ~~**Still open, and NOT part of this fix:** the whole streak block sits in `try/except: pass` and therefore fails OPEN on any error.~~ ✅ **ALSO CLOSED 8/07 `dc04017`** (8/07 ledger ⑧): the streak check now halts **fail-closed** with the exception named and a traceback printed; missing / zero-byte logs stay benign; `QT_KILL_STREAK_FAILOPEN=1` is the one-run escape hatch. Safe because a trip is per-run and non-persistent (`activate_kill_switch()` is never called on this path, so no `KILL_FLAG_FILE` is written). Validate `31221494555` 179 checks / 0 fail, new section 15 replaying the whole function end to end. ⚠️ **Check 4, the Alpaca daily-loss brake, still fails open by design** — it wraps a network call, so it needs retry-then-halt rather than a straight copy; decide before real money. Original analysis kept below. All of a day's predictions share one pred_ts *date* and differ only by position in that day's generation loop, so sorting by pred_ts yields **loop order** — the check actually reads *"were the last 5 tickers processed on the most recent scored day all losers?"* **Evidence:** 7/23 scored **10 ❌ / 1 ✅ (91% loss rate)** and **tripped** the switch on 7/30; 7/24 scored **12 ❌ / 2 ✅ (86%)** and **did not trip** on 7/31 — the only material difference is that 7/23's single win sat before its ten losses while 7/24's second win (`T ✅ +4.27%`) happened to sort last. **This is not a safety regression** — it fails toward halting, and the VIX / daily-loss / manual-flag paths are untouched — but **both the trips and the non-trips carry less information than the label implies**, which matters because a halt costs a full trading day of entries (7/30 was a zero-entry day). **Options:** (a) aggregate to a per-day win/loss record and count consecutive losing *days*; (b) trip on the full scored-batch loss rate over a lookback (e.g. >75% over the last N scored predictions); (c) leave as-is and accept it as a crude circuit-breaker, documenting that the label is a misnomer. **Any change here is a dated MODEL-BEHAVIOUR change** (it alters which days place entries) — validate against the 6/30 phantom-trip and 7/16 stale-era regressions already pinned in the validate suite, and against the genuine 7/30 trip, which must still fire. ⚠️ Related but separate: the streak's root driver was an **energy-concentrated book** — a concentration cap is its own decision, not a fix for this. |
 | **~Aug 21 2026** | **Frame-2 GO/NO-GO read — ✅ INSTRUMENT AUDITED CLEAN 8/06, so this read is FINAL when it lands** | **The ranking-variable defect that invalidated Frame 1 is NOT present here** (8/06 ledger ⑦): `score` is captured pre-blend straight from the model, never touched by the execution gate. Measured over all 20 days — worst per-day modal share **6.2%** (Frame-1: 95.3–99.6%), **199–238 names below 0.5 every single day** (Frame-1: zero on all 17), decile legs churning at 37%/50% day-over-day (Frame-1's short leg: 96% frozen). It also cannot restate: maturation requires the target session strictly before today, and the IC series is append-only. **So the current `mean rank-IC -0.0030, t-stat -0.18` over 18 obs is a REAL null, and there is no measurement excuse left for Frame 2.** Treat the ~8/21 read as final in whichever direction it falls. Original criteria: ≥30 IC obs on the intraday shadow clock (started 7/10). Read from `data/shadow_intraday/rank_ic.csv` + `cross_sectional_ls.csv` via the morning log's `Frame-2 gate scorecard` block — same blind gates as Frame 1. ⚠️ 7/15 is a dated FRAME-2 model change (`0e0ef56`: attn_vol20 enters the feature set via the recency-windowed null check, 7/14 ledger ⑤) — the clock was only 3 rows old, so treat 7/15+ as the effective series; attribute any shift at 7/15 to the change. |
+| 🛑 **~Wed 2026-08-12** | **STOP CRITERION S1 — Frame 3 first decision-grade read (≥30 obs; 27/27 now)** | **RETIRE the frame if annualised SR < +0.5.** Currently **−0.84** (mean −0.019%/day, t −0.27, 41% days positive, cum −0.54%). Do NOT extend the window and do NOT rebuild pair selection — that is the deferral pattern §"STOPPING RULE" exists to stop. See that section before acting. |
+| 🛑 **~Fri 2026-08-21** | **STOP CRITERION S2 — Frame 2 GO/NO-GO (instrument audited clean 8/06, so FINAL when it lands)** | **RETIRE the frame if rank-IC t < 1.0.** Currently n=19, mean **−0.0008**, **t=−0.05**. The ranking variable was audited clean on 8/06, so the Frame-1 defect class cannot excuse a negative read here. |
+| 🛑 **~2026-09-24** | **STOP CRITERION S4 — Frame 1 v2 at 30 obs; the only genuinely unmeasured thing left** | **RETIRE Frame 1 if it misses the Stage-1 gate** (rank-IC ≥ +0.03 AND t ≥ 2.0). ⚠️ **Frame 1 has used BOTH its window restarts** (`b2a15f5` 7/14, v2 8/06) — **this read is FINAL whatever is discovered afterward.** |
+| 🛑 **2026-09-30 — TERMINAL** | **If S1-S4 all fail, the current architecture is FINISHED** | Price-derived features / 279 large-cap US / 5-day horizon / daily rebalance is done — **not "iterate again."** Three remaining options only: change the problem (small-mid cap, 20-60d, event-conditioned), change the inputs (paid/hard-to-get data, not more OHLCV transforms), or stop the alpha search and keep the harness. See §"STOPPING RULE". |
 | **~Aug 2026** | Build Frame 3 trading layer | If Frame 3's P2 scorecard passes its gate (~mid-late Aug, ≥30 obs), write the stat-arb trading layer (`stat_arb.py`: Kalman hedge, spread entry/exit). |
 | **8 wks after any frame starts** | Frame KILL check | If a frame's shadow rank-IC is flat/negative with no trend → retire it, reallocate. |
 
 **Step 4 — report.** Give the user: PASS/FAIL per due check, anything that regressed,
 and the ONE highest-priority action for today. Then wait for direction.
+
+> ### 🛑 BEFORE PROPOSING ANY WORK — READ §"STOPPING RULE" (pre-registered 2026-08-07)
+>
+> A **STOP** gate now exists alongside the GO gate, because 32 sessions produced
+> **13 dated changes and ZERO aimed at alpha**, and every negative read was
+> deferred by a genuine instrument defect. Four terminal criteria (S1-S4) are
+> pre-registered with dates and thresholds; **terminal date 2026-09-30.**
+>
+> **The anti-deferral rule binds you:** a defect found AFTER a read invalidates it
+> only if you demonstrate a specific mechanism biasing that read *negative* AND
+> produce the corrected read within 10 trading days. **Frame 1 has zero window
+> restarts left** — its late-September v2 read is final whatever turns up after.
+>
+> **Finding a new bug is no longer a reason to reset a clock, and it is not
+> progress.** If you are about to propose a fix, state your prior that it produces
+> tradeable alpha first — the recorded prior for the best candidate on the table is
+> **~10%**. Do not let "there is still one more thing to check" restart the loop
+> this rule exists to end.
 
 > 📌 Full reasoning for every item lives below: roadmap → §"FUTURE UPGRADES";
 > real-money rules → §"REAL-MONEY DEPLOYMENT GATE"; Monday verification → §"CHECKPOINT".
@@ -171,6 +193,14 @@ Only **3 of 13** qualifying fresh-era days cleared 50%. That is consistent with 
 **⑩ Repo hygiene — merged branches swept (28 refs: 13 remote + 15 local).** Every deleted branch was an ancestor of `master`, so no commit was lost; tips were recorded before deletion. ⚠️ **What was deliberately KEPT, and why it must stay:** **`origin/data`** is a **LIVE orphan data branch** — the cron writes to it every cycle (`data: intraday 2026-08-07 22:12 UTC` at the time of the sweep) and it is the persistence mechanism behind the 6/16 orphan-branch fix; **deleting it would be destructive, not hygiene.** `origin/main` is a stale v24.1 leftover but holds unique commits (unmerged). `feat/maximize-model` is unmerged and carries **open PR #21** — the GPU-validation branch the 6/14 result says explicitly NOT to merge for AUC; it was excluded automatically by the merged-only filter, so **no PR was closed by the sweep** (that is the thing to check before any future sweep). `claude/*` branches: one unmerged, one checked out in an active worktree.
 
 **⑪ ✅ POST-MERGE VALIDATE ON MASTER — `31228196857`, `feb472b`: ALL PASS, 197 checks, 0 fail.** Worth running and worth recording, because three green *branch* runs are not the same claim as one green *merge result* — each fix was validated against a master that did not yet contain the other two. Section counts match the branch runs **exactly**: §5 24, §15 21, §16 18, and §1-4 / §6-14 unchanged at their pre-existing totals (3/6/6/7 · 9/10/9/13/4/12/12/27/17). So the three fixes compose, and none disturbed the others or the ten earlier gates. (The stray `§24:1` in a per-section tally is a line inside §13's output that matches the section-prefix pattern — pre-existing, not a section.)
+
+**⑫ 🛑 A STOPPING RULE NOW EXISTS — pre-registered before the reads land (new §"STOPPING RULE", above the deployment gate).** Written in response to a direct and correct challenge from the user: *every* evaluation ends "the model is weak, here are changes", the changes ship, and **nothing moves**. That is not a misperception — it is the literal record.
+
+**The audit that prompted it.** Of 13 dated changes: ~6 measurement, ~5 risk, 1 sizing, **0 alpha**. The only alpha experiment ever run (6/14 GPU tuning) returned "not the lever." 🔑 **And the sharpest single data point in this file:** the stale-signal fix `5e96366` gave the model **current** features where it had used ones 5-10 sessions old — and on the consistent all-days basis walk-forward AUC went **0.4973 (7/14) → 0.4957 (8/07)**. Four weeks; fixing week-old inputs changed nothing. **If the features carried signal, that fix would have shown it.**
+
+**The structural diagnosis:** there was a binding GO gate and never a STOP gate, so the loop *cannot terminate* — find defect → fix → invalidate prior read → reset clock → defer verdict, each step individually correct. The rule closes it with four dated criteria (**S1** Frame 3 ~8/12, **S2** Frame 2 ~8/21, **S3** the label experiment, **S4** Frame 1 v2 ~9/24), a **terminal date of 2026-09-30**, and an **anti-deferral clause**: a defect found after a read invalidates it only if a specific *negative-biasing* mechanism is demonstrated AND the corrected read lands within 10 trading days. **Frame 1 has spent both its restarts (`b2a15f5`, v2) — its September read is final.** Priors are recorded in the section so they cannot be revised upward later (label experiment ≈10% to tradeable alpha).
+
+**Also recorded there, because it is true and gets lost:** the ten weeks were not wasted. They converted *"we cannot tell whether there is edge"* into *"there is approximately zero edge, on clean instruments, five independent ways"* — WRC p=0.505, SPA p=0.950, DSR<0 on 307/307, walk-forward 0.4957 over ~160k obs, Frame 2 t=−0.05. Unknown → decision-ready is real progress. **The open failure is that the decision has not been taken.**
 
 **⑦ Open items carried forward.**
 - 🔴 **Monday 8/10 carries THREE proofs, all pre-registered below** — the settled-rows stability check (d), the first live run of the temporal kill switch, and the first live run of the fail-closed handler. None is optional.
@@ -2433,6 +2463,99 @@ Stage-1 alpha gate AND the Stage-2 ramp to reach full size.
 > weekend. The *trading layers* for these frames are NOT built/live. §5 Phase 2
 > below describes the full stat-arb trading layer (Kalman hedge ratio, spread
 > entry/exit) which remains unbuilt.
+
+---
+
+## 🛑 STOPPING RULE — PRE-REGISTERED 2026-08-07, BEFORE THE READS LAND
+
+> **Read this before the DEPLOYMENT GATE below. They are counterparts: that section
+> says when to START risking money; this one says when to STOP spending time.**
+
+### Why this exists
+
+There has been a binding **GO** gate since 6/07 and never a **STOP** gate. The
+consequence is structural, not a matter of discipline: every negative read so far
+has been met with a *genuine* instrument defect, which invalidated the read and
+restarted the clock. Find defect → fix → declare prior measurement invalid → reset →
+defer verdict. Each step was individually correct; the composition **cannot
+terminate**, and it has run for 32 sessions.
+
+**Evidence that the loop is real, not a feeling.** Of the 13 dated changes shipped
+to date: ~6 measurement/instrumentation, ~5 risk controls, 1 execution sizing,
+**0 alpha**. The single alpha experiment ever run (6/14 GPU tuning) correctly
+returned "not the lever."
+
+🔑 **The most decision-relevant number in this file:** the stale-signal fix
+(`5e96366`, 7/13) gave the model **current** features where it had been using ones
+5-10 sessions old — about as clean a signal-quality improvement as exists. On the
+consistent all-days basis, walk-forward AUC was **0.4973 (7/14)** and is **0.4957
+(8/07)**. Four weeks; fixing week-old inputs changed **nothing**. If the features
+carried signal, that fix would have shown it.
+
+### What has actually been achieved (so this is not read as failure)
+
+Ten weeks ago: *"we cannot tell whether there is edge"* — dead scorer, stale
+signals, ranking column was an execution flag, P&L mislabelled by a day.
+Today: *"there is approximately zero edge, on clean instruments, confirmed five
+independent ways"* — WRC **p=0.505**, SPA **p=0.950**, DSR **<0 on 307/307**
+models, walk-forward **0.4957** over 2 years / ~160k obs, Frame 2 **t=−0.05**.
+That is a real conversion from *unknown* to *decision-ready*. The open failure is
+that the decision the evidence supports has not been taken.
+
+### ⚖️ THE ANTI-DEFERRAL RULE (the one that makes the rest binding)
+
+**From 2026-08-07, a defect discovered AFTER a read does NOT automatically
+invalidate that read.** It invalidates it only if BOTH are true, written down at
+the time:
+
+1. a **specific mechanism** is demonstrated by which the defect could bias the
+   result toward the *negative*, and
+2. the corrected read is produced **within 10 trading days**, not by starting a
+   fresh 30-observation window.
+
+A defect that is neutral, or that could only bias *toward* a positive, leaves the
+negative read standing. **Each frame gets at most ONE further window restart, ever.**
+Frame 1 has already used two (`b2a15f5` 7/14, `deae90e`/v2 8/06) — **it has none
+left; the v2 read in late September is final whatever is found afterward.**
+
+### The four terminal criteria
+
+| # | Test | Due | Current | **STOP if** |
+|---|---|-----|---------|-------------|
+| **S1** | **Frame 3 (stat-arb)** first decision-grade read at ≥30 obs | **~Wed 2026-08-12** (27/27 now, ~3 sessions) | ann SR **−0.84**, mean −0.019%/day, t −0.27, 41% days positive, cum −0.54% | annualised SR **< +0.5** → **RETIRE the frame.** Do NOT extend the window, do NOT rebuild the pair selection. |
+| **S2** | **Frame 2 (intraday)** GO/NO-GO — instrument audited clean 8/06, so this read is FINAL when it lands | **~Fri 2026-08-21** | n=19, mean rank-IC **−0.0008**, **t=−0.05**, 58% days positive | rank-IC **t < 1.0** → **RETIRE the frame.** |
+| **S3** | **The label/panel experiment** (below) — one bounded attempt | **within 2 weeks of build** | not built | walk-forward mean OOS rank-IC **< +0.02**, or consistent sign in **< 8 of 12 folds** → **the FEATURES are the binding constraint. Stop adding features.** No second attempt at re-specifying the label. |
+| **S4** | **Frame 1 v2** at 30 obs — the only genuinely unmeasured thing left | **~2026-09-24** | **0 rows** | fails the Stage-1 gate (rank-IC ≥ +0.03 **and** t ≥ 2.0) → **RETIRE Frame 1.** |
+
+### 🔚 If all four fail — terminal date 2026-09-30
+
+**The current architecture — price-derived features, 279 large-cap US equities,
+5-day horizon, daily rebalance — is FINISHED. Not "iterate again."** At that point
+exactly three options remain, and "try more features" is not among them:
+
+1. **Change the problem.** Small/mid-cap, 20-60 day horizon, or event-conditioned
+   (post-earnings drift, index add/delete) instead of an always-on 279-name book.
+   Different competitive density, same harness.
+2. **Change the inputs.** The only lever with a high ceiling, and it means paid or
+   genuinely hard-to-get data — short interest, borrow cost, revision breadth,
+   options skew — not more OHLCV transforms.
+3. **Stop the alpha search and keep the harness.** The risk controls, the 197-check
+   validate suite and the pre-registration discipline are good engineering and are
+   portable to any future strategy. **Calling the search finished is a correct read
+   of five independent nulls, not a loss.**
+
+⚠️ **Honest prior, recorded so it cannot be revised upward after the fact:** P(the
+label/panel experiment reaches a sustained ≥+0.02 rank-IC) ≈ **20-25%**;
+P(that survives costs into something tradeable | it passes) ≈ **40%**; **combined
+≈10%.** Anyone proposing work here should state a comparable prior first.
+
+⚠️ **The base rate this all sits on:** 279 US large-caps at a 5-day horizon is the
+most efficiently-priced, most-competed cell in global equities. Public OHLCV plus
+standard technicals plus scraped sentiment is the exact toolkit the best-capitalised
+quant funds saturated decades ago. **The measurements are consistent with that prior,
+not in tension with it.** Treat a positive result as the surprise requiring
+extraordinary evidence — that is what the WRC exists for, and it currently reads
+p=0.505.
 
 ---
 
