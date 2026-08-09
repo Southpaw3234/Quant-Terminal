@@ -31,7 +31,15 @@ jobs:
         run: pip install pandas numpy lightgbm scikit-learn yfinance
 
       - name: Run the S3 experiment
-        run: python scripts/experiment_xs_label.py 2>&1 | tee s3_result.log
+        # `set -o pipefail` is load-bearing: without it the step takes tee's
+        # exit code, so a crashed script reports SUCCESS with an empty log.
+        # That happened on the first dispatch (run 31335981560, 182-byte
+        # artifact, green tick) — the same fail-open class as the kill-switch
+        # bugs fixed on 8/07. A failed experiment must fail the build.
+        shell: bash
+        run: |
+          set -o pipefail
+          python scripts/experiment_xs_label.py 2>&1 | tee s3_result.log
 
       - name: Upload result
         if: always()

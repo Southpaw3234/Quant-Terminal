@@ -57,23 +57,37 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 # ── universe ────────────────────────────────────────────────────────────────
-def load_sector_map():
-    """Pull SECTOR_MAP out of quant_runner.py WITHOUT importing it (that file
-    executes a full trading cycle on import).  Same ast trick validate uses."""
-    tree = ast.parse(open(os.path.join(REPO, "quant_runner.py"),
-                          encoding="utf-8-sig").read())
-    found = []
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Assign):
-            for t in node.targets:
-                if isinstance(t, ast.Name) and t.id == "SECTOR_MAP":
-                    try:
-                        found.append(ast.literal_eval(node.value))
-                    except Exception:
-                        pass
-    if not found:
-        sys.exit("SECTOR_MAP not found in quant_runner.py")
-    return max(found, key=len)          # the override, not the notebook stub
+# Crypto and ETFs are excluded for the same reason analyze_rank_ic.py excludes
+# them (:125): one DOGE candle or a sector-ETF move must not masquerade as
+# stock-picking alpha. SPY is fetched separately for beta, never in the panel.
+_ETFS = {'ARKK', 'DIA', 'GLD', 'HYG', 'IWM', 'LQD', 'QQQ', 'SLV', 'SMH', 'SOXX',
+         'SPY', 'TLT', 'VNQ', 'XLB', 'XLC', 'XLE', 'XLF', 'XLI', 'XLK', 'XLP',
+         'XLRE', 'XLU', 'XLV', 'XLY'}
+
+
+def _is_equity(tk):
+    return not tk.endswith("-USD") and tk not in _ETFS and 1 <= len(tk) <= 6
+
+
+def load_universe():
+    """The live traded universe, taken from predictions.csv.
+
+    NOT parsed out of quant_runner.py. The obvious-looking `SECTOR_MAP = {...}`
+    at quant_runner.py:3037 is NOT module-level code — it lives inside the
+    CELL_13_PREPATCH triple-quoted string opened at :2957, so it is injected
+    text and ast.walk correctly finds no Assign node for it. A first pass here
+    tried exactly that and came back empty. predictions.csv is the authoritative
+    list anyway: it is what actually gets scored and traded.
+    """
+    p = os.path.join(REPO, "data", "predictions", "predictions.csv")
+    if not os.path.exists(p):
+        sys.exit(f"universe source missing: {p}")
+    tk = pd.read_csv(p, usecols=["ticker"])["ticker"].astype(str).str.strip()
+    out = sorted({t for t in tk.unique() if _is_equity(t)})
+    if len(out) < 100:
+        sys.exit(f"universe too small ({len(out)}) — refusing to run a "
+                 f"cross-sectional experiment on it")
+    return out
 
 
 # ── data ────────────────────────────────────────────────────────────────────
@@ -274,9 +288,8 @@ def run_arm(name, desc, panel, cols, mode):
 
 
 def main():
-    sector = load_sector_map()
-    tickers = sorted(sector)
-    print(f"universe: {len(tickers)} tickers from SECTOR_MAP", flush=True)
+    tickers = load_universe()
+    print(f"universe: {len(tickers)} equities (crypto/ETFs excluded)", flush=True)
 
     import yfinance as yf
     spy = yf.download("SPY", start=START, auto_adjust=True, progress=False)
