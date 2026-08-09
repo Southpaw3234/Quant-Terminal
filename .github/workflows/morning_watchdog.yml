@@ -57,6 +57,19 @@ jobs:
           # ET. ubuntu-latest ships tzdata, so this resolves properly here even
           # though it does not in Git Bash on the dev box.
           TODAY_ET=$(TZ=America/New_York date +%Y-%m-%d)
+
+          # ── SUNSET (2026-08-09 wind-down) ─────────────────────────────────
+          # MUST match QT_SUNSET_DATE in quant_daily.yml. Once the trading
+          # crons stop, no morning run advances the marker, so this watchdog
+          # would page Discord EVERY WEEKDAY FOREVER over an expected absence.
+          # A permanently-crying alarm is worse than no alarm: it trains the
+          # reader to ignore the channel that also carries real pages.
+          QT_SUNSET_DATE='2026-09-25'
+          if [[ "$TODAY_ET" > "$QT_SUNSET_DATE" || "$TODAY_ET" == "$QT_SUNSET_DATE" ]]; then
+            echo "SUNSET: ${TODAY_ET} >= ${QT_SUNSET_DATE} — trading crons are"
+            echo "retired by design, so a stale marker is EXPECTED. Not alerting."
+            exit 0
+          fi
           MARKER=$(tr -d ' \t\r\n' < data/last_morning_run.txt 2>/dev/null || echo "")
 
           echo "marker='${MARKER}' today_et='${TODAY_ET}'"

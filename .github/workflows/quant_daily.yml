@@ -43,7 +43,51 @@ concurrency:
   cancel-in-progress: false   # never cancel a live trading run mid-flight
 
 jobs:
+  # ── SUNSET GATE (2026-08-09 wind-down) ──────────────────────────────────────
+  # The alpha search is closed (HANDOFF §"🏁 THE ALPHA SEARCH IS OVER"). Crons
+  # stay up only until S4, the last pre-registered read, lands ~2026-09-24 —
+  # after that this workflow must stop on its own.
+  #
+  # Why a gate job and not "delete the schedule block later": that needs a human
+  # to remember, six weeks after the project went quiet. This repo already
+  # learned that lesson — the 2026-06-04 morning self-heal was fixed in-repo
+  # precisely so it needed no PC, no PAT and no external dependency. Same rule.
+  #
+  # Why a separate job rather than a job-level `if:`: GitHub expressions have no
+  # "now", so the date has to be computed in a shell. This costs ~5s per tick
+  # instead of ~2h, and after sunset `trade` reports SKIPPED (not failed), so it
+  # generates no false alarms.
+  #
+  # Reversible: change QT_SUNSET_DATE. Final cleanup once it has fired is
+  # `gh workflow disable quant_daily.yml` — the gate makes that cosmetic.
+  sunset:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      go: ${{ steps.check.outputs.go }}
+    env:
+      QT_SUNSET_DATE: '2026-09-25'   # day AFTER S4's expected read (~2026-09-24)
+    steps:
+      - id: check
+        run: |
+          set -u
+          # ET, not UTC — same reasoning as the watchdog and the marker (8d3e9df).
+          TODAY_ET=$(TZ=America/New_York date +%Y-%m-%d)
+          # ISO dates compare correctly as strings; verified 09-24 RUN / 09-25 SUNSET.
+          if [[ "$TODAY_ET" < "$QT_SUNSET_DATE" ]]; then
+            echo "go=true" >> "$GITHUB_OUTPUT"
+            echo "pre-sunset (${TODAY_ET} < ${QT_SUNSET_DATE}) — running normally."
+          else
+            echo "go=false" >> "$GITHUB_OUTPUT"
+            echo "SUNSET: ${TODAY_ET} >= ${QT_SUNSET_DATE}. The alpha search is closed"
+            echo "and S4, the last pre-registered read, has landed. Skipping the cycle."
+            echo "This is the wind-down working as designed, NOT a failure."
+          fi
+        shell: bash
+
   trade:
+    needs: sunset
+    if: needs.sunset.outputs.go == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 350
     env:
