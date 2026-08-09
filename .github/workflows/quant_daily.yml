@@ -221,6 +221,18 @@ jobs:
         env:
           GH_ACTIONS: 'true'
           RUN_TYPE:              ${{ steps.run_type.outputs.type }}
+          # ── WIND-DOWN 2026-08-09: alpha search STOPPED, coast to flat ──────
+          # The user's decision after S3 failed (HANDOFF §"STOPPING RULE",
+          # 8/09 ledger). NO NEW ENTRIES, ever — not "until the kill switch
+          # untrips". Implemented by reusing the gross-cap gate rather than
+          # adding code: room = ratio*equity - gross, so ratio 0 makes room
+          # negative and every BUY is pre-blocked. The gate is BUY-ONLY
+          # (quant_runner.py:5723); SELLs run through _oversell_cap
+          # (:5726), so EXITS STILL WORK and the 24-position book closes out
+          # naturally. That is the whole "coast to flat" mechanism.
+          # Backed by 7 validated scenarios in validate §3 — no new anchors,
+          # no new failure surface, and reversible by changing this one line.
+          QT_MAX_GROSS:          '0'
           GDRIVE_RCLONE_CONF:    ${{ secrets.GDRIVE_RCLONE_CONF }}
           ALPACA_API_KEY:        ${{ secrets.ALPACA_API_KEY }}
           ALPACA_SECRET_KEY:     ${{ secrets.ALPACA_SECRET_KEY }}
