@@ -70,6 +70,36 @@ jobs:
             echo "retired by design, so a stale marker is EXPECTED. Not alerting."
             exit 0
           fi
+
+          # ── No-session guard (2026-08-09) ─────────────────────────────────
+          # This watchdog compares the marker against TODAY, so it alarms on
+          # any day the market was shut — the marker is correctly still on the
+          # last SESSION. Two cases, and only one of them was theoretical:
+          #
+          #  * Weekend — the cron is '30 17 * * 1-5' so it never self-fires,
+          #    but a MANUAL dispatch does. Demonstrated 2026-08-09: a Sunday
+          #    dispatch compared Friday's marker to Sunday and paged Discord
+          #    for real. Harmless day, real page.
+          #  * Market holiday — this one DOES fire on the weekday cron and is
+          #    the costlier gap. Between now and QT_SUNSET_DATE there is
+          #    exactly one: Labor Day, Monday 2026-09-07 (verified: first
+          #    Monday of September 2026). A full holiday calendar would be
+          #    over-engineering for a workflow retiring on 2026-09-25 — if
+          #    that date ever moves out, extend this list rather than trusting
+          #    it to stay complete.
+          DOW=$(TZ=America/New_York date +%u)      # 1=Mon .. 6=Sat, 7=Sun
+          if [ "$DOW" -ge 6 ]; then
+            echo "Weekend (${TODAY_ET}, dow=${DOW}) — no morning run expected."
+            echo "Marker is correctly still on the last session. Not alerting."
+            exit 0
+          fi
+          case "$TODAY_ET" in
+            2026-09-07)
+              echo "US market holiday (${TODAY_ET}, Labor Day) — market shut, no"
+              echo "morning run expected. Not alerting."
+              exit 0
+              ;;
+          esac
           MARKER=$(tr -d ' \t\r\n' < data/last_morning_run.txt 2>/dev/null || echo "")
 
           echo "marker='${MARKER}' today_et='${TODAY_ET}'"
