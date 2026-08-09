@@ -1,0 +1,42 @@
+name: S3 — label/panel experiment (research only, read-only)
+
+# HANDOFF §"STOPPING RULE" criterion S3. ONE bounded attempt against a
+# pre-registered threshold (mean OOS rank-IC >= +0.02, >= 8/12 folds positive).
+#
+# Research only: no broker keys, no orders, no writes to the live trading path.
+# Deliberately NOT on the `quant-terminal` concurrency group — it touches no
+# shared state, so it must never queue behind or cancel a live trading run.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'exp/xs-label-panel'
+    paths:
+      - 'scripts/experiment_xs_label.py'
+      - '.github/workflows/experiment_xs_label.yml'
+
+jobs:
+  experiment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: pip install pandas numpy lightgbm scikit-learn yfinance
+
+      - name: Run the S3 experiment
+        run: python scripts/experiment_xs_label.py 2>&1 | tee s3_result.log
+
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s3-label-panel-result
+          path: s3_result.log
+          retention-days: 90
