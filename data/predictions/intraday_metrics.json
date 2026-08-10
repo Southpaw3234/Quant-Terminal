@@ -1,507 +1,507 @@
 {
   "A": {
-    "auc": 0.875,
-    "ic": 0.7545,
+    "auc": 0.55,
+    "ic": 0.0636,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "AAPL": {
-    "auc": 0.875,
-    "ic": 0.3364,
+    "auc": 0.5417,
+    "ic": 0.0455,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "ABBV": {
-    "auc": 0.375,
-    "ic": 0.1182,
+    "auc": 0.875,
+    "ic": 0.7364,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "ABNB": {
-    "auc": 0.05,
-    "ic": -0.6455,
+    "auc": 0.125,
+    "ic": -0.7909,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "ABT": {
-    "auc": 0.65,
-    "ic": 0.3989,
+    "auc": 0.4167,
+    "ic": 0.309,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "ACN": {
-    "auc": 0.5833,
-    "ic": 0.2913,
+    "auc": 0.5417,
+    "ic": 0.1595,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "ADBE": {
     "auc": 0.5833,
-    "ic": 0.1071,
+    "ic": 0.0357,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "ADI": {
-    "auc": 0.375,
+    "auc": 0.25,
     "ic": -0.3545,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "AEP": {
-    "auc": 0.5833,
-    "ic": -0.1182,
+    "auc": 0.25,
+    "ic": -0.5909,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "AFL": {
     "auc": 0.5,
     "ic": NaN,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "AFRM": {
     "auc": 0.6667,
-    "ic": 0.1786,
+    "ic": -0.0357,
     "n_oos": 7,
-    "n_train": 42
+    "n_train": 43
   },
   "AIG": {
-    "auc": 0.375,
-    "ic": -0.0818,
+    "auc": 0.625,
+    "ic": 0.4091,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "ALB": {
-    "auc": 0.8,
-    "ic": 0.7727,
+    "auc": 0.8333,
+    "ic": 0.8818,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "ALGN": {
-    "auc": 1.0,
-    "ic": 0.8636,
+    "auc": 0.6667,
+    "ic": 0.1,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "ALL": {
     "auc": 1.0,
-    "ic": 0.0636,
+    "ic": 0.1364,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "AMAT": {
-    "auc": 0.2,
-    "ic": -0.25,
+    "auc": 0.0,
+    "ic": -0.5357,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "AMD": {
-    "auc": 0.5417,
-    "ic": 0.3162,
+    "auc": 0.5833,
+    "ic": 0.1443,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "AMGN": {
-    "auc": 0.6,
-    "ic": 0.6124,
+    "auc": 0.25,
+    "ic": -0.1581,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "AMT": {
-    "auc": 0.75,
-    "ic": 0.3182,
+    "auc": 0.6,
+    "ic": 0.2273,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "AMZN": {
     "auc": 0.5,
     "ic": NaN,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "ANET": {
-    "auc": 0.0,
-    "ic": -0.5545,
+    "auc": 0.1667,
+    "ic": 0.0636,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "AON": {
-    "auc": 0.7917,
-    "ic": 0.2818,
+    "auc": 0.9583,
+    "ic": 0.4818,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "APA": {
-    "auc": 0.6667,
-    "ic": 0.5364,
+    "auc": 0.75,
+    "ic": 0.6273,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "APD": {
-    "auc": 0.65,
-    "ic": 0.5,
+    "auc": 0.55,
+    "ic": 0.5364,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "APTV": {
-    "auc": 0.3333,
-    "ic": -0.4119,
+    "auc": 0.25,
+    "ic": -0.6179,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "ARKK": {
-    "auc": 0.5,
-    "ic": 0.0273,
+    "auc": 0.3,
+    "ic": -0.4091,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "ASML": {
     "auc": 0.5,
     "ic": NaN,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "ATO": {
     "auc": 0.5,
-    "ic": -0.1,
+    "ic": -0.1727,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "AVB": {
-    "auc": 0.5,
+    "auc": 0.3333,
     "ic": 0.0,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "AVGO": {
-    "auc": 0.125,
-    "ic": -0.3545,
+    "auc": 0.2917,
+    "ic": -0.2455,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "AWK": {
-    "auc": 0.625,
-    "ic": 0.1727,
+    "auc": 0.375,
+    "ic": -0.1182,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "AXP": {
-    "auc": 1.0,
-    "ic": 0.1,
+    "auc": 0.5,
+    "ic": -0.2818,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "BA": {
-    "auc": 0.625,
-    "ic": -0.0636,
+    "auc": 0.7083,
+    "ic": 0.2636,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "BAC": {
-    "auc": 0.5,
-    "ic": -0.2091,
+    "auc": 0.6,
+    "ic": 0.0455,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "BAX": {
-    "auc": 0.7917,
-    "ic": 0.5727,
+    "auc": 0.875,
+    "ic": 0.7545,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "BKNG": {
-    "auc": 0.625,
-    "ic": 0.0273,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "BKR": {
-    "auc": 0.15,
-    "ic": -0.8818,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "BLK": {
-    "auc": 0.3333,
+    "auc": 0.4583,
     "ic": -0.2273,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
+  },
+  "BKR": {
+    "auc": 0.35,
+    "ic": -0.3182,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "BLK": {
+    "auc": 0.5,
+    "ic": 0.1545,
+    "n_oos": 7,
+    "n_train": 44
   },
   "BMY": {
     "auc": 0.5833,
     "ic": 0.0728,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "BSX": {
     "auc": 0.5,
     "ic": NaN,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "BTC-USD": {
-    "auc": 0.5,
-    "ic": NaN,
+    "auc": 0.1667,
+    "ic": -0.2886,
     "n_oos": 8,
-    "n_train": 45
+    "n_train": 46
   },
   "C": {
-    "auc": 0.8333,
-    "ic": 0.5909,
+    "auc": 1.0,
+    "ic": 0.7182,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "CAG": {
-    "auc": 0.625,
-    "ic": 0.5182,
+    "auc": 0.55,
+    "ic": 0.0818,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "CAT": {
     "auc": 0.5,
     "ic": NaN,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "CB": {
-    "auc": 0.2083,
-    "ic": -0.3727,
+    "auc": 0.2917,
+    "ic": -0.2818,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "CCI": {
-    "auc": 0.55,
-    "ic": -0.1,
+    "auc": 0.7083,
+    "ic": 0.4636,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "CCL": {
-    "auc": 0.5,
-    "ic": -0.2091,
+    "auc": 1.0,
+    "ic": 0.7,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "CDNS": {
     "auc": 0.5,
     "ic": NaN,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "CE": {
-    "auc": 0.625,
+    "auc": 0.6667,
     "ic": 0.309,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "CF": {
     "auc": 0.4583,
     "ic": 0.1545,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "CHD": {
     "auc": 0.3,
-    "ic": -0.1909,
+    "ic": -0.4636,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "CHRW": {
-    "auc": 0.3,
-    "ic": -0.4818,
+    "auc": 0.3333,
+    "ic": -0.3545,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "CHTR": {
     "auc": 0.2083,
-    "ic": -0.5909,
+    "ic": -0.5,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "CI": {
-    "auc": 0.125,
-    "ic": -0.6273,
+    "auc": 0.35,
+    "ic": -0.6091,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "CL": {
-    "auc": 0.75,
-    "ic": 0.4455,
+    "auc": 0.5833,
+    "ic": 0.0091,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "CLX": {
-    "auc": 0.55,
-    "ic": 0.2342,
+    "auc": 0.625,
+    "ic": 0.3424,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "CMCSA": {
-    "auc": 0.4167,
-    "ic": -0.1429,
+    "auc": 0.3333,
+    "ic": -0.1071,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "CME": {
-    "auc": 0.8,
-    "ic": 0.7027,
+    "auc": 0.6667,
+    "ic": 0.0541,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "CMG": {
-    "auc": 0.9,
+    "auc": 0.6,
     "ic": 0.3364,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "CMI": {
-    "auc": 0.5417,
-    "ic": -0.2091,
+    "auc": 0.7083,
+    "ic": 0.1,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "CMS": {
-    "auc": 0.2917,
-    "ic": -0.5098,
+    "auc": 0.5,
+    "ic": NaN,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "CNP": {
-    "auc": 0.45,
-    "ic": 0.1545,
+    "auc": 0.5417,
+    "ic": 0.1182,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "COF": {
     "auc": 0.5,
     "ic": NaN,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "COIN": {
-    "auc": 0.25,
-    "ic": -0.3929,
+    "auc": 0.0833,
+    "ic": -0.7857,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "COP": {
-    "auc": 1.0,
-    "ic": 0.9364,
+    "auc": 0.6,
+    "ic": -0.0273,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "COR": {
-    "auc": 0.3333,
-    "ic": -0.422,
+    "auc": 0.5833,
+    "ic": 0.0477,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "COST": {
-    "auc": 0.85,
-    "ic": 0.1,
+    "auc": 0.95,
+    "ic": 0.3909,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "CRM": {
-    "auc": 0.4583,
-    "ic": -0.1,
+    "auc": 0.65,
+    "ic": 0.1364,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "CRWD": {
-    "auc": 0.5,
-    "ic": -0.2273,
+    "auc": 0.1667,
+    "ic": -0.3727,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "CSCO": {
-    "auc": 0.3333,
-    "ic": -0.4119,
+    "auc": 0.2917,
+    "ic": -0.3641,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "CSX": {
     "auc": 0.5833,
-    "ic": -0.1988,
+    "ic": 0.4119,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "CTAS": {
     "auc": 0.9583,
-    "ic": 0.8455,
+    "ic": 0.7182,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "CVS": {
-    "auc": 0.625,
-    "ic": 0.2091,
+    "auc": 0.4583,
+    "ic": -0.1,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "CVX": {
-    "auc": 0.4583,
-    "ic": 0.0636,
+    "auc": 0.5417,
+    "ic": -0.0091,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "D": {
     "auc": 0.25,
-    "ic": -0.2818,
+    "ic": -0.7,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "DD": {
     "auc": 0.25,
-    "ic": 0.0091,
+    "ic": 0.1727,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "DDOG": {
-    "auc": 1.0,
-    "ic": 0.6636,
+    "auc": 0.8333,
+    "ic": 0.4636,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "DE": {
     "auc": 0.0833,
     "ic": -0.6636,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "DG": {
-    "auc": 0.05,
-    "ic": -0.2636,
+    "auc": 0.0417,
+    "ic": -0.4818,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "DHR": {
-    "auc": 0.55,
-    "ic": 0.2455,
+    "auc": 0.625,
+    "ic": 0.5,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "DIA": {
-    "auc": 0.875,
-    "ic": 0.5545,
+    "auc": 0.7917,
+    "ic": 0.6091,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "DIS": {
-    "auc": 0.4583,
-    "ic": 0.2455,
+    "auc": 0.2917,
+    "ic": -0.0091,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "DLR": {
-    "auc": 0.2083,
-    "ic": -0.3727,
+    "auc": 0.4583,
+    "ic": -0.0636,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "DLTR": {
-    "auc": 0.4,
-    "ic": -0.2883,
+    "auc": 0.5,
+    "ic": 0.0,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "DOGE-USD": {
     "auc": 0.5,
@@ -510,34 +510,34 @@
     "n_train": 26
   },
   "DOW": {
-    "auc": 0.2083,
-    "ic": -0.5909,
+    "auc": 0.0417,
+    "ic": -0.6091,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "DPZ": {
-    "auc": 0.3,
-    "ic": -0.2057,
+    "auc": 0.375,
+    "ic": -0.2636,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "DUK": {
-    "auc": 0.6667,
-    "ic": 0.5,
+    "auc": 0.5,
+    "ic": 0.3,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "DVN": {
-    "auc": 0.2083,
-    "ic": -0.1727,
+    "auc": 0.5417,
+    "ic": 0.4091,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "DXCM": {
-    "auc": 0.65,
-    "ic": 0.0818,
+    "auc": 0.7917,
+    "ic": 0.2091,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "EA": {
     "auc": 0.1667,
@@ -546,1287 +546,1287 @@
     "n_train": 42
   },
   "ECL": {
-    "auc": 0.1667,
-    "ic": -0.4455,
+    "auc": 0.0,
+    "ic": -0.5,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "ED": {
     "auc": 0.45,
-    "ic": -0.0636,
+    "ic": -0.2091,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "EL": {
     "auc": 0.5,
     "ic": NaN,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "ELV": {
     "auc": 0.3333,
-    "ic": -0.2091,
+    "ic": 0.1,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "EMR": {
-    "auc": 0.8333,
-    "ic": -0.1182,
+    "auc": 0.3333,
+    "ic": -0.0455,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "ENPH": {
-    "auc": 0.35,
-    "ic": -0.3182,
+    "auc": 0.2917,
+    "ic": -0.6273,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "EOG": {
-    "auc": 0.3333,
-    "ic": -0.4538,
+    "auc": 0.4583,
+    "ic": -0.2077,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "EQIX": {
-    "auc": 0.7,
-    "ic": 0.3727,
+    "auc": 0.8333,
+    "ic": 0.5909,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "EQR": {
-    "auc": 0.5,
-    "ic": 0.0,
+    "auc": 0.1667,
+    "ic": -0.1182,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "ESS": {
-    "auc": 0.8333,
-    "ic": -0.1909,
+    "auc": 0.4,
+    "ic": -0.5364,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "ETH-USD": {
-    "auc": 0.0,
-    "ic": -0.259,
+    "auc": 0.2857,
+    "ic": -0.5361,
     "n_oos": 8,
-    "n_train": 47
+    "n_train": 48
   },
   "ETN": {
-    "auc": 0.875,
-    "ic": 0.5182,
+    "auc": 0.5417,
+    "ic": 0.2636,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "ETR": {
-    "auc": 0.2917,
-    "ic": -0.7,
+    "auc": 0.3333,
+    "ic": -0.5225,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "EW": {
     "auc": 0.8333,
-    "ic": -0.2636,
+    "ic": 0.1,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "EXC": {
-    "auc": 0.4167,
-    "ic": -0.4091,
+    "auc": 0.3333,
+    "ic": -0.5182,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "EXPD": {
-    "auc": 0.1667,
-    "ic": -0.1727,
+    "auc": 0.8333,
+    "ic": -0.0273,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "EXPE": {
     "auc": 0.4583,
-    "ic": -0.2273,
+    "ic": -0.0273,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "EXR": {
-    "auc": 0.5,
-    "ic": NaN,
+    "auc": 0.125,
+    "ic": -0.6091,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "F": {
     "auc": 0.5,
     "ic": NaN,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "FANG": {
-    "auc": 0.75,
-    "ic": 0.5545,
+    "auc": 0.4583,
+    "ic": 0.0091,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "FAST": {
-    "auc": 0.8333,
-    "ic": 0.7,
+    "auc": 0.8,
+    "ic": 0.5,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "FCX": {
-    "auc": 0.6,
-    "ic": 0.0636,
+    "auc": 0.7,
+    "ic": 0.0818,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "FDX": {
-    "auc": 0.375,
-    "ic": -0.6273,
+    "auc": 0.4583,
+    "ic": -0.4818,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "FE": {
-    "auc": 0.5,
-    "ic": -0.1364,
+    "auc": 0.8,
+    "ic": 0.4273,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "FSLR": {
-    "auc": 0.2917,
-    "ic": -0.0455,
+    "auc": 0.0417,
+    "ic": -0.6455,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "FTNT": {
-    "auc": 0.1667,
-    "ic": -0.3727,
+    "auc": 0.5,
+    "ic": 0.0,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "FTV": {
     "auc": 0.5,
     "ic": NaN,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "GD": {
-    "auc": 0.0,
-    "ic": -0.5545,
+    "auc": 0.5,
+    "ic": 0.2455,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "GE": {
-    "auc": 0.4,
-    "ic": -0.3364,
+    "auc": 0.75,
+    "ic": 0.2455,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "GILD": {
     "auc": 0.5,
-    "ic": 0.0,
+    "ic": 0.0818,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "GIS": {
-    "auc": 0.05,
-    "ic": -0.7,
+    "auc": 0.125,
+    "ic": -0.7364,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "GLD": {
-    "auc": 0.5,
-    "ic": 0.1545,
+    "auc": 0.9,
+    "ic": 0.2091,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "GM": {
-    "auc": 0.7,
-    "ic": 0.5727,
+    "auc": 0.5,
+    "ic": 0.3182,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "GOOGL": {
-    "auc": 0.5,
-    "ic": 0.0,
+    "auc": 0.7,
+    "ic": 0.3819,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "GS": {
     "auc": 0.5,
     "ic": NaN,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "GWW": {
-    "auc": 0.5417,
-    "ic": 0.2455,
+    "auc": 0.25,
+    "ic": -0.1182,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "HAL": {
     "auc": 0.75,
-    "ic": -0.2273,
+    "ic": -0.0636,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "HD": {
-    "auc": 0.75,
-    "ic": 0.8455,
+    "auc": 0.4583,
+    "ic": 0.2818,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "HIG": {
     "auc": 0.1667,
-    "ic": 0.2091,
+    "ic": -0.1545,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "HLT": {
-    "auc": 0.25,
-    "ic": -0.0273,
+    "auc": 0.2917,
+    "ic": 0.1182,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "HON": {
-    "auc": 0.7917,
-    "ic": 0.5225,
+    "auc": 0.625,
+    "ic": 0.3063,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "HOOD": {
-    "auc": 0.8333,
-    "ic": 0.8214,
+    "auc": 0.6,
+    "ic": 0.4286,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "HRL": {
-    "auc": 0.625,
-    "ic": -0.0636,
+    "auc": 0.5417,
+    "ic": -0.1727,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "HSY": {
     "auc": 0.5,
-    "ic": NaN,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "HUM": {
-    "auc": 0.0,
-    "ic": -0.6091,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "HWM": {
-    "auc": 0.9,
-    "ic": 0.8929,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "HYG": {
-    "auc": 0.5,
     "ic": 0.0,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
+  },
+  "HUM": {
+    "auc": 0.2,
+    "ic": -0.3545,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "HWM": {
+    "auc": 0.5,
+    "ic": 0.3929,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "HYG": {
+    "auc": 0.8333,
+    "ic": 0.0273,
+    "n_oos": 7,
+    "n_train": 44
   },
   "IBM": {
-    "auc": 0.65,
-    "ic": 0.2273,
+    "auc": 0.625,
+    "ic": 0.0091,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "ICE": {
-    "auc": 0.0,
-    "ic": -0.5545,
+    "auc": 0.1667,
+    "ic": -0.2091,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "IDXX": {
-    "auc": 0.45,
-    "ic": -0.2636,
+    "auc": 0.625,
+    "ic": 0.0818,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "IFF": {
-    "auc": 0.75,
-    "ic": 0.1,
+    "auc": 0.5833,
+    "ic": -0.1364,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "INTC": {
-    "auc": 0.5417,
-    "ic": -0.1,
+    "auc": 0.625,
+    "ic": 0.0636,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "INTU": {
-    "auc": 0.4167,
-    "ic": 0.018,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "IQV": {
-    "auc": 1.0,
-    "ic": 0.6636,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "ISRG": {
-    "auc": 0.375,
-    "ic": -0.3182,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "IT": {
-    "auc": 0.7917,
-    "ic": 0.3727,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "ITW": {
-    "auc": 0.4167,
-    "ic": -0.1909,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "IWM": {
-    "auc": 0.4,
-    "ic": -0.5545,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "JNJ": {
-    "auc": 0.5,
-    "ic": 0.2342,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "JPM": {
-    "auc": 1.0,
-    "ic": 0.7143,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "KLAC": {
-    "auc": 0.5833,
-    "ic": 0.0728,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "KMI": {
-    "auc": 0.0,
-    "ic": -0.9364,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "KO": {
-    "auc": 0.125,
-    "ic": -0.4091,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "LIN": {
     "auc": 0.3333,
     "ic": -0.2703,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
-  "LLY": {
+  "IQV": {
+    "auc": 0.75,
+    "ic": 0.2273,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "ISRG": {
     "auc": 0.4583,
+    "ic": -0.3545,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "IT": {
+    "auc": 0.9583,
+    "ic": 0.4636,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "ITW": {
+    "auc": 0.3333,
+    "ic": -0.3909,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "IWM": {
+    "auc": 0.5,
     "ic": -0.3727,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
+  },
+  "JNJ": {
+    "auc": 0.3,
+    "ic": -0.4324,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "JPM": {
+    "auc": 0.9,
+    "ic": 0.7857,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "KLAC": {
+    "auc": 0.55,
+    "ic": -0.2185,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "KMI": {
+    "auc": 0.3333,
+    "ic": -0.5727,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "KO": {
+    "auc": 0.2083,
+    "ic": -0.3182,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "LIN": {
+    "auc": 0.4167,
+    "ic": 0.1071,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "LLY": {
+    "auc": 0.375,
+    "ic": -0.4455,
+    "n_oos": 7,
+    "n_train": 44
   },
   "LMT": {
-    "auc": 0.75,
-    "ic": 0.0636,
+    "auc": 0.25,
+    "ic": -0.5364,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "LNG": {
     "auc": 0.375,
-    "ic": -0.4636,
+    "ic": -0.4455,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "LOW": {
     "auc": 0.3333,
-    "ic": -0.2091,
+    "ic": -0.3,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "LQD": {
-    "auc": 0.25,
-    "ic": 0.0091,
+    "auc": 0.05,
+    "ic": -0.4636,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "LRCX": {
-    "auc": 0.3333,
-    "ic": -0.309,
+    "auc": 0.25,
+    "ic": -0.5149,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "LVS": {
-    "auc": 0.5,
-    "ic": 0.1545,
+    "auc": 0.375,
+    "ic": -0.3578,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "LYV": {
     "auc": 0.4583,
-    "ic": -0.2455,
+    "ic": -0.3727,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "MA": {
-    "auc": 0.7083,
-    "ic": -0.0091,
+    "auc": 0.4583,
+    "ic": -0.1364,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "MAR": {
-    "auc": 0.75,
-    "ic": 0.6455,
+    "auc": 0.7,
+    "ic": 0.5364,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "MCD": {
-    "auc": 0.45,
-    "ic": -0.0636,
+    "auc": 0.55,
+    "ic": 0.0091,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "MCHP": {
-    "auc": 0.125,
-    "ic": -0.3545,
+    "auc": 0.2917,
+    "ic": -0.3364,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "MCK": {
-    "auc": 0.5,
-    "ic": NaN,
+    "auc": 0.625,
+    "ic": 0.3618,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "MCO": {
     "auc": 0.5,
     "ic": NaN,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "MDLZ": {
-    "auc": 0.1667,
-    "ic": -0.3182,
+    "auc": 0.1,
+    "ic": -0.4455,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "MDT": {
     "auc": 0.625,
-    "ic": 0.3909,
+    "ic": 0.4818,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "MET": {
     "auc": 0.2917,
     "ic": -0.2091,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "META": {
-    "auc": 0.6,
-    "ic": 0.25,
+    "auc": 0.1667,
+    "ic": -0.0357,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "MGM": {
     "auc": 0.375,
-    "ic": -0.2636,
+    "ic": -0.2091,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "MMM": {
-    "auc": 0.4167,
-    "ic": -0.2185,
+    "auc": 0.5,
+    "ic": NaN,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "MO": {
-    "auc": 0.2917,
-    "ic": -0.5727,
+    "auc": 0.2083,
+    "ic": -0.6273,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "MOS": {
-    "auc": 0.75,
-    "ic": 0.2273,
+    "auc": 0.7,
+    "ic": -0.0273,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "MPC": {
-    "auc": 0.4167,
-    "ic": 0.0636,
+    "auc": 0.6667,
+    "ic": 0.3545,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "MPWR": {
-    "auc": 0.35,
-    "ic": -0.4818,
+    "auc": 0.4583,
+    "ic": -0.2818,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "MRK": {
     "auc": 0.375,
-    "ic": -0.3,
+    "ic": -0.4818,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "MRVL": {
-    "auc": 0.4,
-    "ic": -0.5149,
+    "auc": 0.5,
+    "ic": NaN,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "MS": {
     "auc": 0.625,
-    "ic": 0.5364,
+    "ic": 0.3,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "MSFT": {
     "auc": 0.5,
     "ic": NaN,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "MTD": {
-    "auc": 0.8,
-    "ic": 0.4274,
+    "auc": 0.5833,
+    "ic": 0.2883,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "MU": {
-    "auc": 0.25,
-    "ic": -0.4743,
+    "auc": 0.2917,
+    "ic": -0.433,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "NCLH": {
-    "auc": 0.2917,
-    "ic": -0.0455,
+    "auc": 0.125,
+    "ic": -0.4455,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "NEE": {
     "auc": 0.125,
-    "ic": -0.5545,
+    "ic": -0.5364,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "NEM": {
-    "auc": 0.375,
-    "ic": -0.1909,
+    "auc": 0.4583,
+    "ic": -0.0455,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "NET": {
-    "auc": 0.8333,
-    "ic": 0.1364,
+    "auc": 1.0,
+    "ic": 0.3,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "NFLX": {
-    "auc": 0.7083,
-    "ic": 0.0728,
+    "auc": 0.7917,
+    "ic": 0.2636,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "NKE": {
-    "auc": 0.4167,
-    "ic": 0.0818,
+    "auc": 0.25,
+    "ic": -0.3727,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "NOC": {
     "auc": 0.1667,
-    "ic": -0.6455,
+    "ic": -0.4455,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "NOW": {
     "auc": 0.55,
-    "ic": -0.0636,
+    "ic": 0.1545,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "NSC": {
-    "auc": 1.0,
-    "ic": 0.5287,
+    "auc": 0.5,
+    "ic": 0.0,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "NUE": {
-    "auc": 0.5,
-    "ic": -0.1206,
+    "auc": 0.6667,
+    "ic": 0.206,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "NVDA": {
-    "auc": 0.65,
-    "ic": 0.0818,
+    "auc": 0.375,
+    "ic": -0.1364,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "NXPI": {
-    "auc": 0.4583,
-    "ic": -0.1581,
+    "auc": 0.45,
+    "ic": 0.0,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "O": {
     "auc": 0.65,
-    "ic": 0.5,
+    "ic": 0.7364,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "OMC": {
-    "auc": 0.9,
-    "ic": 0.3545,
+    "auc": 0.6667,
+    "ic": -0.3727,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "ON": {
-    "auc": 0.1667,
-    "ic": -0.7143,
+    "auc": 0.4583,
+    "ic": -0.1982,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "ORCL": {
     "auc": 0.5,
     "ic": NaN,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "OXY": {
-    "auc": 0.8,
-    "ic": 0.5946,
+    "auc": 0.75,
+    "ic": 0.4505,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "PANW": {
-    "auc": 0.3333,
-    "ic": 0.1182,
+    "auc": 0.6667,
+    "ic": 0.4273,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "PCAR": {
-    "auc": 0.5,
-    "ic": -0.1727,
+    "auc": 0.3333,
+    "ic": -0.3545,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "PEG": {
     "auc": 0.85,
-    "ic": 0.3364,
+    "ic": 0.4818,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "PEP": {
     "auc": 0.4583,
-    "ic": -0.2091,
+    "ic": -0.4636,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "PFE": {
     "auc": 0.6667,
     "ic": 0.0455,
     "n_oos": 7,
-    "n_train": 40
+    "n_train": 41
   },
   "PG": {
-    "auc": 0.7917,
-    "ic": 0.3727,
+    "auc": 0.7083,
+    "ic": 0.3364,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "PGR": {
-    "auc": 0.3333,
-    "ic": 0.0721,
+    "auc": 0.4167,
+    "ic": -0.018,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "PH": {
-    "auc": 0.5417,
-    "ic": 0.1364,
+    "auc": 0.65,
+    "ic": 0.0455,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "PKG": {
-    "auc": 0.6,
-    "ic": 0.4119,
+    "auc": 0.6667,
+    "ic": 0.4786,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "PLD": {
-    "auc": 0.4,
-    "ic": -0.402,
+    "auc": 0.6667,
+    "ic": 0.2485,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "PLTR": {
-    "auc": 0.25,
-    "ic": -0.2455,
+    "auc": 0.5,
+    "ic": -0.1,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "PM": {
-    "auc": 0.8,
-    "ic": 0.4636,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "PNC": {
-    "auc": 0.3333,
-    "ic": -0.5364,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "PODD": {
-    "auc": 0.5417,
-    "ic": 0.0818,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "PPG": {
-    "auc": 0.8,
-    "ic": 0.7727,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "PRU": {
-    "auc": 0.5417,
-    "ic": -0.2636,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "PSA": {
-    "auc": 0.5,
-    "ic": 0.1491,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "PSX": {
-    "auc": 0.75,
+    "auc": 0.6,
     "ic": 0.2091,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
+  },
+  "PNC": {
+    "auc": 0.3,
+    "ic": -0.5909,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "PODD": {
+    "auc": 0.625,
+    "ic": 0.2091,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "PPG": {
+    "auc": 0.6,
+    "ic": 0.5545,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "PRU": {
+    "auc": 0.625,
+    "ic": -0.1182,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "PSA": {
+    "auc": 0.3,
+    "ic": 0.0189,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "PSX": {
+    "auc": 0.625,
+    "ic": 0.3,
+    "n_oos": 7,
+    "n_train": 44
   },
   "PYPL": {
-    "auc": 0.1,
-    "ic": -0.2455,
+    "auc": 0.4,
+    "ic": 0.0818,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "QCOM": {
-    "auc": 0.2917,
-    "ic": -0.2455,
+    "auc": 0.375,
+    "ic": -0.3545,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "QQQ": {
     "auc": 0.5,
     "ic": NaN,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "RCL": {
     "auc": 0.0,
-    "ic": -0.1727,
+    "ic": -0.1545,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "REGN": {
     "auc": 0.0,
-    "ic": -0.6636,
+    "ic": -0.5909,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "RMD": {
-    "auc": 0.2917,
-    "ic": -0.1545,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "ROP": {
-    "auc": 0.7083,
+    "auc": 0.25,
     "ic": -0.0273,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
+  },
+  "ROP": {
+    "auc": 0.5417,
+    "ic": -0.2636,
+    "n_oos": 7,
+    "n_train": 44
   },
   "ROST": {
     "auc": 0.5,
     "ic": NaN,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "RTX": {
     "auc": 0.15,
     "ic": -0.1,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "SBUX": {
     "auc": 0.5,
     "ic": 0.0,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "SCHW": {
-    "auc": 0.4583,
-    "ic": 0.2636,
+    "auc": 0.625,
+    "ic": 0.5364,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "SHOP": {
-    "auc": 0.875,
-    "ic": 0.7364,
+    "auc": 0.625,
+    "ic": 0.0455,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "SHW": {
-    "auc": 0.2,
-    "ic": -0.8442,
+    "auc": 0.25,
+    "ic": -0.809,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "SJM": {
     "auc": 0.3333,
     "ic": -0.3191,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "SLB": {
     "auc": 0.5,
     "ic": NaN,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "SLV": {
     "auc": 0.5,
     "ic": NaN,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "SMH": {
-    "auc": 0.25,
-    "ic": -0.3989,
+    "auc": 0.1667,
+    "ic": -0.5584,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "SNOW": {
-    "auc": 0.3333,
-    "ic": -0.6455,
+    "auc": 0.6,
+    "ic": 0.1182,
     "n_oos": 7,
-    "n_train": 42
+    "n_train": 43
   },
   "SNPS": {
     "auc": 0.6,
     "ic": 0.5,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "SO": {
-    "auc": 0.5417,
-    "ic": -0.0798,
+    "auc": 0.5,
+    "ic": NaN,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "SOL-USD": {
-    "auc": 0.1429,
-    "ic": -0.0301,
+    "auc": 0.25,
+    "ic": -0.1627,
     "n_oos": 8,
-    "n_train": 45
+    "n_train": 46
   },
   "SOXX": {
-    "auc": 0.25,
-    "ic": -0.3989,
+    "auc": 0.1667,
+    "ic": -0.5584,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "SPG": {
-    "auc": 0.35,
+    "auc": 0.1667,
     "ic": -0.4786,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "SPGI": {
-    "auc": 0.05,
-    "ic": -0.6091,
+    "auc": 0.0417,
+    "ic": -0.7909,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "SPY": {
-    "auc": 0.2,
-    "ic": -0.7,
+    "auc": 0.6,
+    "ic": -0.0091,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "SRE": {
-    "auc": 0.7083,
-    "ic": 0.1,
+    "auc": 0.7917,
+    "ic": 0.1909,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "STZ": {
     "auc": 0.1,
-    "ic": -0.4455,
+    "ic": -0.5182,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "SWKS": {
     "auc": 0.3,
-    "ic": -0.6382,
+    "ic": -0.7977,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "SYK": {
-    "auc": 0.875,
-    "ic": 0.5,
+    "auc": 0.7083,
+    "ic": 0.0818,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "T": {
     "auc": 0.4583,
-    "ic": 0.0273,
+    "ic": 0.2273,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "TDG": {
-    "auc": 0.4583,
-    "ic": -0.2636,
+    "auc": 0.2083,
+    "ic": -0.4636,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "TEAM": {
-    "auc": 0.4583,
-    "ic": -0.3,
+    "auc": 0.375,
+    "ic": -0.4273,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "TER": {
     "auc": 0.2917,
-    "ic": -0.0636,
+    "ic": -0.4091,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "TFC": {
-    "auc": 0.3,
-    "ic": -0.3909,
+    "auc": 0.6667,
+    "ic": 0.3182,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "TGT": {
-    "auc": 0.85,
-    "ic": 0.5545,
+    "auc": 0.7917,
+    "ic": 0.6455,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "TJX": {
-    "auc": 0.625,
-    "ic": 0.1,
+    "auc": 0.375,
+    "ic": -0.1727,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "TLT": {
-    "auc": 0.5,
-    "ic": 0.4091,
+    "auc": 0.2,
+    "ic": -0.1364,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "TMO": {
     "auc": 0.4583,
-    "ic": 0.0273,
+    "ic": 0.0818,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "TMUS": {
-    "auc": 0.55,
-    "ic": 0.5046,
+    "auc": 0.2917,
+    "ic": 0.0189,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "TRV": {
     "auc": 0.5,
     "ic": 0.0,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "TSLA": {
-    "auc": 0.5,
+    "auc": 0.6,
     "ic": -0.2143,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "TSM": {
-    "auc": 0.1667,
-    "ic": -0.4495,
+    "auc": 0.4583,
+    "ic": 0.3191,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "TSN": {
-    "auc": 0.2917,
-    "ic": -0.4091,
+    "auc": 0.2083,
+    "ic": -0.5364,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "TTWO": {
     "auc": 0.6667,
-    "ic": 0.5,
+    "ic": 0.2091,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "TXN": {
-    "auc": 0.625,
+    "auc": 0.5417,
     "ic": 0.1182,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "TYL": {
-    "auc": 0.5417,
-    "ic": 0.3364,
+    "auc": 0.7917,
+    "ic": 0.5364,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "UBER": {
-    "auc": 0.6667,
-    "ic": -0.4818,
+    "auc": 0.3,
+    "ic": -0.5545,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "UNH": {
-    "auc": 0.6667,
-    "ic": 0.0818,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "UNP": {
-    "auc": 0.35,
-    "ic": 0.1182,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "UPS": {
-    "auc": 0.2083,
-    "ic": -0.3909,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "USB": {
-    "auc": 0.0,
-    "ic": -0.6126,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "V": {
-    "auc": 0.5417,
-    "ic": -0.0455,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "VICI": {
-    "auc": 0.65,
-    "ic": 0.3182,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "VLO": {
-    "auc": 0.5,
+    "auc": 0.8,
     "ic": -0.1,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
-  "VNQ": {
-    "auc": 0.9167,
-    "ic": -0.2818,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "VRTX": {
-    "auc": 0.625,
-    "ic": 0.1,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "VTR": {
-    "auc": 0.2917,
-    "ic": -0.4636,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "VZ": {
+  "UNP": {
     "auc": 0.4167,
-    "ic": -0.1009,
+    "ic": 0.1545,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
-  "WAT": {
-    "auc": 0.625,
-    "ic": 0.0273,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "WBD": {
-    "auc": 0.9444,
-    "ic": 0.6324,
-    "n_oos": 6,
-    "n_train": 36
-  },
-  "WDAY": {
-    "auc": 0.625,
-    "ic": 0.4091,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "WEC": {
-    "auc": 0.75,
-    "ic": 0.6382,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "WELL": {
-    "auc": 0.875,
-    "ic": 0.5182,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "WFC": {
-    "auc": 0.5417,
-    "ic": 0.1182,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "WMB": {
-    "auc": 0.375,
-    "ic": -0.0273,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "WMT": {
-    "auc": 0.4,
-    "ic": 0.0,
-    "n_oos": 7,
-    "n_train": 43
-  },
-  "WY": {
+  "UPS": {
     "auc": 0.5,
     "ic": NaN,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
+  },
+  "USB": {
+    "auc": 0.2,
+    "ic": 0.018,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "V": {
+    "auc": 0.375,
+    "ic": -0.5,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "VICI": {
+    "auc": 0.375,
+    "ic": -0.2273,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "VLO": {
+    "auc": 0.2,
+    "ic": -0.2091,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "VNQ": {
+    "auc": 0.9167,
+    "ic": -0.2455,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "VRTX": {
+    "auc": 0.7917,
+    "ic": 0.3,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "VTR": {
+    "auc": 0.2917,
+    "ic": -0.1545,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "VZ": {
+    "auc": 0.4,
+    "ic": -0.0734,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "WAT": {
+    "auc": 0.65,
+    "ic": 0.1545,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "WBD": {
+    "auc": 0.9375,
+    "ic": 0.6618,
+    "n_oos": 6,
+    "n_train": 37
+  },
+  "WDAY": {
+    "auc": 0.55,
+    "ic": -0.1909,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "WEC": {
+    "auc": 0.625,
+    "ic": 0.4119,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "WELL": {
+    "auc": 0.875,
+    "ic": 0.6455,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "WFC": {
+    "auc": 0.5417,
+    "ic": 0.1727,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "WMB": {
+    "auc": 0.5417,
+    "ic": 0.0818,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "WMT": {
+    "auc": 0.3,
+    "ic": 0.0,
+    "n_oos": 7,
+    "n_train": 44
+  },
+  "WY": {
+    "auc": 0.75,
+    "ic": 0.7545,
+    "n_oos": 7,
+    "n_train": 44
   },
   "XEL": {
     "auc": 0.5,
     "ic": NaN,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "XLB": {
-    "auc": 1.0,
-    "ic": 0.6455,
+    "auc": 0.75,
+    "ic": 0.2818,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "XLC": {
     "auc": 0.0417,
     "ic": -0.5364,
     "n_oos": 7,
-    "n_train": 39
+    "n_train": 40
   },
   "XLE": {
-    "auc": 0.5417,
-    "ic": -0.3182,
+    "auc": 0.4583,
+    "ic": -0.2636,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "XLF": {
-    "auc": 1.0,
-    "ic": 0.7857,
+    "auc": 0.7083,
+    "ic": 0.1622,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "XLI": {
-    "auc": 0.5833,
-    "ic": -0.0818,
+    "auc": 0.4167,
+    "ic": -0.4273,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "XLK": {
     "auc": 0.5,
     "ic": NaN,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "XLP": {
     "auc": 0.5,
     "ic": NaN,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "XLRE": {
-    "auc": 0.4167,
-    "ic": -0.3909,
+    "auc": 0.5833,
+    "ic": -0.1545,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "XLU": {
     "auc": 0.5,
     "ic": NaN,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "XLV": {
-    "auc": 0.7083,
-    "ic": 0.2091,
+    "auc": 0.625,
+    "ic": 0.3909,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "XLY": {
-    "auc": 0.5,
-    "ic": NaN,
+    "auc": 0.5833,
+    "ic": 0.5669,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "XOM": {
-    "auc": 0.55,
-    "ic": -0.1727,
+    "auc": 0.45,
+    "ic": -0.3182,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "XRP-USD": {
-    "auc": 0.2857,
-    "ic": -0.6446,
+    "auc": 0.5714,
+    "ic": -0.1747,
     "n_oos": 8,
-    "n_train": 46
+    "n_train": 47
   },
   "XYL": {
     "auc": 0.75,
-    "ic": 0.7364,
+    "ic": 0.5727,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "YUM": {
     "auc": 0.5,
     "ic": NaN,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "ZBH": {
-    "auc": 0.55,
-    "ic": 0.0091,
+    "auc": 0.5417,
+    "ic": 0.2818,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   },
   "ZS": {
-    "auc": 0.45,
-    "ic": -0.0273,
+    "auc": 0.35,
+    "ic": -0.3727,
     "n_oos": 7,
-    "n_train": 43
+    "n_train": 44
   }
 }
