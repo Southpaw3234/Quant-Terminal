@@ -3772,44 +3772,96 @@ try:
 except Exception:
     pass
 
-# ── Execute close_long for SELL-labelled tickers ──────────────────────────────
-# CELL_13_PREPATCH marks signals[tk]["close_long"] = True for ternary SELL tickers.
-# Here we actually close the Alpaca paper position for those tickers.
+# ── Execute close_long: drive from the HELD BOOK, not the signal universe ─────
+# CELL_13_PREPATCH marks signals[tk]["close_long"] = True for ternary SELL
+# tickers. Rewritten 2026-08-10 — the previous version walked signals[] and
+# called get_open_position() per name under a bare `except: pass`. Two defects:
+#
+#   1. WRONG DRIVER. The SELL set is computed over the whole ~307-name universe
+#      with no reference to holdings, so "held AND SELL-labelled" is empty by
+#      construction. Over the whole wind-down window (8/06, 8/07, 8/10) it
+#      produced 34 SELL labels and ZERO overlap with the 24-name book; the only
+#      exit in that window (HON) came from stops/expiry, not from here. The
+#      SELL label is itself a clamp artifact: the net-of-cost bar (avg cost
+#      0.33% -> requires |conf-0.5| > 0.165, i.e. conf < 0.335) admits only
+#      names pinned at the 0.10 LOWER CLAMP of np.clip(conf * _fi_scalar, 0.10,
+#      0.92), because the confidence distribution is empty between 0.15 and
+#      0.40. So the old driver could only ever fire on saturated names, which
+#      are exactly the names the book does not hold.
+#
+#   2. SILENT FAILURE. `except Exception: pass` printed an identical
+#      "closed 0/4" whether the names were merely not held or Alpaca refused
+#      every call — the same blind spot that hid the disabled streak brake
+#      until dc04017. Every outcome is now counted and named, and a failed
+#      position read is reported as a failure instead of as "nothing to do".
+#
+# QT_WIND_DOWN=1 additionally selects EVERY held long, which is what actually
+# takes the book to flat before the 2026-09-25 sunset. Default off: unset, this
+# block is the old policy with correct enumeration and honest logging.
 try:
-    import requests as _req13cl
-    _close_long_tickers = [
-        _tk13cl for _tk13cl, _sig13cl in (signals.items() if "signals" in dir() else {}.items())
-        if _sig13cl.get("close_long")
-    ]
-    if _close_long_tickers and ALPACA_API_KEY and ALPACA_SECRET_KEY:
+    import os as _os13cl
+    _WIND_DOWN13 = _os13cl.environ.get("QT_WIND_DOWN", "").strip().lower() in ("1", "true", "yes")
+    _sigs13cl = signals if "signals" in dir() else {}
+    _sell_labelled13 = set(
+        _tk13cl for _tk13cl, _sig13cl in _sigs13cl.items() if _sig13cl.get("close_long")
+    )
+    if not (ALPACA_API_KEY and ALPACA_SECRET_KEY):
+        print(f"  [patch] close_long: {len(_sell_labelled13)} SELL tickers, "
+              f"wind_down={_WIND_DOWN13} — Alpaca keys not set, skipped")
+    else:
         from alpaca.trading.client import TradingClient as _TC13
         from alpaca.trading.requests import MarketOrderRequest as _MOR13
         from alpaca.trading.enums import OrderSide as _OS13, TimeInForce as _TIF13
         _tc13 = _TC13(ALPACA_API_KEY, ALPACA_SECRET_KEY, paper=True)
-        _n_closed = 0
-        for _cl_tk in _close_long_tickers:
+        # ONE authoritative read of the book, at close time. If this raises,
+        # the outer handler reports it — a broker outage must never render as
+        # "nothing to close".
+        _held13 = {}
+        for _p13 in _tc13.get_all_positions():
+            _held13[str(_p13.symbol)] = float(_p13.qty)   # signed: shorts NEGATIVE
+        _n_closed13 = 0
+        _n_err13 = 0
+        _skip13 = {"short": [], "already-flat": []}
+        for _cl_tk in sorted(_held13):
+            if not (_WIND_DOWN13 or _cl_tk in _sell_labelled13):
+                continue
+            if _held13[_cl_tk] < 0:
+                # Never touch a short here. The 7/15 short-book incident was an
+                # abs() in this block DOUBLING an existing short every SELL day.
+                _skip13["short"].append(_cl_tk)
+                continue
+            # Net out SELLs execute_trade already submitted this run — unfilled
+            # orders are not reflected in the position read yet.
+            _qty13 = int(_held13[_cl_tk])
+            if "_OVERSELL" in globals():
+                _qty13 -= int(float(_OVERSELL["sold"].get(_cl_tk, 0)))
+            if _qty13 <= 0:
+                _skip13["already-flat"].append(_cl_tk)
+                continue
             try:
-                _pos = _tc13.get_open_position(_cl_tk)
-                # Signed qty — shorts are NEGATIVE. The old abs() here DOUBLED
-                # an existing short every SELL-labelled day (7/15 short-book
-                # incident, e.g. CTAS -160). Also net out SELLs execute_trade
-                # already submitted this run — unfilled orders aren't in the
-                # position read yet.
-                _qty = int(float(_pos.qty))
-                if "_OVERSELL" in globals():
-                    _qty -= int(float(_OVERSELL["sold"].get(_cl_tk, 0)))
-                if _qty > 0:
-                    _req13 = _MOR13(symbol=_cl_tk, qty=_qty,
-                                    side=_OS13.SELL, time_in_force=_TIF13.DAY)
-                    _tc13.submit_order(_req13)
-                    _n_closed += 1
-            except Exception:
-                pass  # no open position or API error — skip
-        print(f"  [patch] close_long: closed {_n_closed}/{len(_close_long_tickers)} SELL positions")
-    elif _close_long_tickers:
-        print(f"  [patch] close_long: {len(_close_long_tickers)} SELL tickers — Alpaca keys not set, skipped")
+                _tc13.submit_order(_MOR13(symbol=_cl_tk, qty=_qty13,
+                                          side=_OS13.SELL, time_in_force=_TIF13.DAY))
+                _n_closed13 += 1
+            except Exception as _cl_one_e:
+                _n_err13 += 1
+                print(f"    [close_long] FAILED {_cl_tk} x{_qty13}: {_cl_one_e}")
+        _orphans13 = sorted(_sell_labelled13 - set(_held13))
+        _mode13 = "WIND-DOWN all longs" if _WIND_DOWN13 else "SELL-labelled only"
+        print(f"  [patch] close_long [{_mode13}]: closed {_n_closed13} | errors "
+              f"{_n_err13} | book {len(_held13)} | SELL-labelled "
+              f"{len(_sell_labelled13)}, of which not held {len(_orphans13)}")
+        if _orphans13:
+            print(f"    [close_long] SELL-labelled but not held (no-ops): "
+                  f"{', '.join(_orphans13[:12])}")
+        for _why13 in sorted(_skip13):
+            if _skip13[_why13]:
+                print(f"    [close_long] skipped {_why13}: "
+                      f"{', '.join(sorted(_skip13[_why13])[:12])}")
+        if _n_err13:
+            print(f"    [close_long] {_n_err13} order(s) FAILED — the book did "
+                  f"NOT wind down as intended this run")
 except Exception as _cl13e:
-    print(f"  [patch] close_long error (non-fatal): {_cl13e}")
+    print(f"  [patch] close_long BLOCKED (non-fatal, nothing closed): {_cl13e}")
 
 
 # Conformal-Kelly post-scale REMOVED 2026-07-11 (ledger-qty corruption, fill
