@@ -1491,6 +1491,23 @@ check17("no broker keys: skipped, nothing sent", len(_sent), 0)
 check17("...and the skip names the count", "1 SELL tickers" in _out, True)
 os.environ.pop("QT_WIND_DOWN", None)
 
+# (i) The lever is wired in the workflow — an unset env is inert, and the two
+#     flags are a PAIR: entries off without wind-down freezes the book (the
+#     8/06-8/10 state), wind-down without entries off would re-buy what it just
+#     sold. Both must be present, in the same env block, or this fails.
+_wf17 = open(WF13, encoding="utf-8").read()
+check17("workflow sets QT_WIND_DOWN=1", "QT_WIND_DOWN:          '1'" in _wf17, True)
+check17("...alongside QT_MAX_GROSS=0 (no re-entry)",
+        "QT_MAX_GROSS:          '0'" in _wf17, True)
+_env17 = _wf17[_wf17.index("      - name: Run trading cycle"):]
+_env17 = _env17[:_env17.index("GIT_USER_EMAIL")]
+check17("...both inside the trading-cycle env block",
+        "QT_WIND_DOWN" in _env17 and "QT_MAX_GROSS" in _env17, True)
+# The stale "closes out naturally" rationale is what made the frozen book
+# invisible for four sessions. Pinned so it cannot come back.
+check17("stale 'closes out naturally' claim is gone",
+        "closes out" in _wf17 and "naturally" in _wf17, False)
+
 print()
 if fails:
     print("VALIDATION FAILED:")
