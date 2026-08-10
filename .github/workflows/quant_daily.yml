@@ -272,11 +272,27 @@ jobs:
           # adding code: room = ratio*equity - gross, so ratio 0 makes room
           # negative and every BUY is pre-blocked. The gate is BUY-ONLY
           # (quant_runner.py:5723); SELLs run through _oversell_cap
-          # (:5726), so EXITS STILL WORK and the 24-position book closes out
-          # naturally. That is the whole "coast to flat" mechanism.
+          # (:5726), so exits still work.
           # Backed by 7 validated scenarios in validate §3 — no new anchors,
           # no new failure surface, and reversible by changing this one line.
           QT_MAX_GROSS:          '0'
+          # ── 2026-08-10: the book does NOT close out "naturally" ────────────
+          # The line above used to claim it would. The 8/10 weekly review
+          # disproved that. close_long was driven by the SELL-labelled signal
+          # universe, which never intersects the book: 34 SELL labels over
+          # 8/06-8/10, ZERO of them held, because the net-of-cost bar admits
+          # only names pinned at the 0.10 confidence clamp and the book holds
+          # nothing near it (all 24 names sit at rank_score >= 0.54). The only
+          # exit in the window (HON) came from stops/expiry. At that rate —
+          # one exit in four sessions — roughly 16 positions would still be
+          # open when the crons retire on QT_SUNSET_DATE.
+          # So flat has to be asked for. With this set, the next run that
+          # reaches Cell 13 submits market SELLs for every held LONG (shorts
+          # are skipped, never doubled — the 7/15 incident). It is idempotent:
+          # once the book is empty, later runs close 0 and say so. Reversible
+          # by removing this line, though fills are not.
+          # Validated: validate §17, 22 scenarios (run 31417929408).
+          QT_WIND_DOWN:          '1'
           GDRIVE_RCLONE_CONF:    ${{ secrets.GDRIVE_RCLONE_CONF }}
           ALPACA_API_KEY:        ${{ secrets.ALPACA_API_KEY }}
           ALPACA_SECRET_KEY:     ${{ secrets.ALPACA_SECRET_KEY }}

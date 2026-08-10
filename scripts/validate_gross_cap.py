@@ -1367,6 +1367,147 @@ check16("...and the REAL brake is the Alpaca/pnl_history block",
         "[KILL SWITCH · Alpaca]" in src and "_ks_pnl_fallback(" in src, True)
 
 
+# ── 17. close_long: driven by the held book, and never silent ────────────────
+# The 8/10 review found `close_long: closed 0/4` was indistinguishable from a
+# total broker outage. Root cause was two-fold: the loop was driven by the
+# SELL-labelled *signal universe* (which never intersects the book, because the
+# net-of-cost bar admits only names pinned at the 0.10 confidence clamp), and
+# every per-name failure was swallowed by `except Exception: pass`. These
+# scenarios pin both the new driver and the new logging.
+_postpatch = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.Assign):
+        for t in node.targets:
+            if isinstance(t, ast.Name) and t.id == "CELL_13_POSTPATCH":
+                if _postpatch is None and isinstance(node.value, ast.Constant):
+                    _postpatch = node.value.value
+_cl_src = _postpatch[_postpatch.index("# ── Execute close_long"):]
+
+def _stub_alpaca_cl(book, boom_read=False, boom_syms=()):
+    """book: {symbol: signed qty}. Returns the list submitted orders land in."""
+    sent = []
+    class _Pos: pass
+    class _Req:
+        def __init__(self, **kw):
+            self.symbol = kw["symbol"]; self.qty = kw["qty"]
+    class _TC:
+        def __init__(self, *a, **k): pass
+        def get_all_positions(self):
+            if boom_read:
+                raise RuntimeError("alpaca 503")
+            out = []
+            for _s, _q in book.items():
+                p = _Pos(); p.symbol = _s; p.qty = _q; out.append(p)
+            return out
+        def submit_order(self, req):
+            if req.symbol in boom_syms:
+                raise RuntimeError("order rejected")
+            sent.append((req.symbol, req.qty))
+    mod_a = types.ModuleType("alpaca")
+    mod_t = types.ModuleType("alpaca.trading")
+    mod_c = types.ModuleType("alpaca.trading.client");   mod_c.TradingClient = _TC
+    mod_r = types.ModuleType("alpaca.trading.requests"); mod_r.MarketOrderRequest = _Req
+    mod_e = types.ModuleType("alpaca.trading.enums")
+    mod_e.OrderSide = types.SimpleNamespace(SELL="sell")
+    mod_e.TimeInForce = types.SimpleNamespace(DAY="day")
+    mod_a.trading = mod_t
+    mod_t.client, mod_t.requests, mod_t.enums = mod_c, mod_r, mod_e
+    for _n, _m in (("alpaca", mod_a), ("alpaca.trading", mod_t),
+                   ("alpaca.trading.client", mod_c),
+                   ("alpaca.trading.requests", mod_r),
+                   ("alpaca.trading.enums", mod_e)):
+        sys.modules[_n] = _m
+    return sent
+
+def run_cl(book, sell_labelled=(), wind_down=False, sold=None, keys=True,
+           boom_read=False, boom_syms=()):
+    sent = _stub_alpaca_cl(book, boom_read, boom_syms)
+    os.environ["QT_WIND_DOWN"] = "1" if wind_down else ""
+    ns = {
+        "ALPACA_API_KEY":    "key" if keys else "",
+        "ALPACA_SECRET_KEY": "sec" if keys else "",
+        "signals":  {t: {"close_long": True} for t in sell_labelled},
+        "_OVERSELL": {"sold": dict(sold or {})},
+    }
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        exec(compile(_cl_src, "<close_long>", "exec"), ns)
+    return sent, buf.getvalue()
+
+def check17(name, got, want):
+    ok = got == want
+    print(f"17. {name:<52} got={str(got):<5} {'PASS' if ok else 'FAIL (want %s)' % want}")
+    if not ok:
+        fails.append(f"close_long {name}: got={got} want={want}")
+
+# (a) The 8/10 reality: 4 SELL labels, none of them held. Still closes nothing —
+#     that is correct — but the log must now say WHY, and name the book size.
+_BOOK_0810 = {t: 10.0 for t in ("IQV HSY ELV SNOW TMO MSFT EL NUE DLTR SJM ARKK ZBH "
+                                "SLV CME BA GIS ETN SMH MRVL TDG AMZN DPZ CTAS RCL").split()}
+_sent, _out = run_cl(_BOOK_0810, sell_labelled=("AMAT", "CSCO", "SPG", "TTWO"))
+check17("8/10 replay: no held name selected", len(_sent), 0)
+check17("...reports the book size, not a bare 0/N", "book 24" in _out, True)
+check17("...and names the SELL-labelled misses", "not held 4" in _out, True)
+check17("...listing them explicitly", "AMAT, CSCO, SPG, TTWO" in _out, True)
+
+# (b) A SELL label that IS held must actually close, unchanged from old intent.
+_sent, _out = run_cl(dict(_BOOK_0810, CSCO=7.0), sell_labelled=("CSCO", "SPG"))
+check17("held SELL-labelled name closes", _sent, [("CSCO", 7)])
+check17("...and the unheld one is still reported", "not held 1" in _out, True)
+
+# (c) QT_WIND_DOWN=1 selects the whole long book — the lever that reaches flat.
+_sent, _out = run_cl(_BOOK_0810, wind_down=True)
+check17("wind-down closes every held long", len(_sent), 24)
+check17("...and says so in the mode banner", "WIND-DOWN all longs" in _out, True)
+check17("default (unset) does NOT liquidate", len(run_cl(_BOOK_0810)[0]), 0)
+
+# (d) 7/15 short-book incident: a short must never be "closed" by a fresh SELL.
+_sent, _out = run_cl({"CTAS": -160.0, "MSFT": 5.0}, wind_down=True)
+check17("short is skipped, never doubled", _sent, [("MSFT", 5)])
+check17("...and the skip is named", "skipped short: CTAS" in _out, True)
+
+# (e) Qty already sold this run nets out — no oversell, and it is reported.
+_sent, _out = run_cl({"MSFT": 5.0}, sell_labelled=("MSFT",), sold={"MSFT": 5})
+check17("already-flat name is not re-sold", _sent, [])
+check17("...and the skip is named", "skipped already-flat: MSFT" in _out, True)
+_sent, _ = run_cl({"MSFT": 5.0}, sell_labelled=("MSFT",), sold={"MSFT": 2})
+check17("partial fill sells only the remainder", _sent, [("MSFT", 3)])
+
+# (f) THE REGRESSION THAT MOTIVATED THIS: a rejected order must be loud.
+_sent, _out = run_cl(_BOOK_0810, wind_down=True, boom_syms=("MSFT", "BA"))
+check17("rejected orders are counted", "errors 2" in _out, True)
+check17("...named individually", "FAILED MSFT" in _out and "FAILED BA" in _out, True)
+check17("...and flagged as a failed wind-down", "did" in _out and "NOT wind down" in _out, True)
+check17("...while the rest of the book still closes", len(_sent), 22)
+
+# (g) A broker outage must not render as "nothing to close".
+_sent, _out = run_cl(_BOOK_0810, wind_down=True, boom_read=True)
+check17("position-read failure closes nothing", len(_sent), 0)
+check17("...and is reported as BLOCKED, not as 0", "BLOCKED" in _out, True)
+
+# (h) No keys: inert, and says how many it would have considered.
+_sent, _out = run_cl(_BOOK_0810, sell_labelled=("AMAT",), keys=False)
+check17("no broker keys: skipped, nothing sent", len(_sent), 0)
+check17("...and the skip names the count", "1 SELL tickers" in _out, True)
+os.environ.pop("QT_WIND_DOWN", None)
+
+# (i) The lever is wired in the workflow — an unset env is inert, and the two
+#     flags are a PAIR: entries off without wind-down freezes the book (the
+#     8/06-8/10 state), wind-down without entries off would re-buy what it just
+#     sold. Both must be present, in the same env block, or this fails.
+_wf17 = open(WF13, encoding="utf-8").read()
+check17("workflow sets QT_WIND_DOWN=1", "QT_WIND_DOWN:          '1'" in _wf17, True)
+check17("...alongside QT_MAX_GROSS=0 (no re-entry)",
+        "QT_MAX_GROSS:          '0'" in _wf17, True)
+_env17 = _wf17[_wf17.index("      - name: Run trading cycle"):]
+_env17 = _env17[:_env17.index("GIT_USER_EMAIL")]
+check17("...both inside the trading-cycle env block",
+        "QT_WIND_DOWN" in _env17 and "QT_MAX_GROSS" in _env17, True)
+# The stale "closes out naturally" rationale is what made the frozen book
+# invisible for four sessions. Pinned so it cannot come back.
+check17("stale 'closes out naturally' claim is gone",
+        "closes out" in _wf17 and "naturally" in _wf17, False)
+
 print()
 if fails:
     print("VALIDATION FAILED:")
