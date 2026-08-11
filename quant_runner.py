@@ -3761,67 +3761,57 @@ else:
     print("  [Tier3] White Reality Check: intraday run — skipped")
 """
 
-# ── CELL 13 POSTPATCH: restore MAX_POSITION_PCT after trade execution ──────────
-CELL_13_POSTPATCH = """
-# Restore MAX_POSITION_PCT to its original value after Cell 13 completes.
-# The regime-scaled version only needed to be active during kelly_qty calls.
-try:
-    if "_orig_max_pos13" in dir():
-        MAX_POSITION_PCT = _orig_max_pos13
-        print(f"  [patch] MAX_POSITION_PCT restored to {MAX_POSITION_PCT:.1%}")
-except Exception:
-    pass
+# ── close_long as a CALLABLE, so it survives the intraday SystemExit ──────────
+# 2026-08-11. This logic used to live only in CELL_13_POSTPATCH, which is
+# appended to the END of Cell 13's source and exec'd as ONE unit. On intraday
+# runs Cell 13 hits `if INTRADAY_STOPS_ONLY: sys.exit(0)` partway through, so
+# the entire postpatch — close_long AND the MAX_POSITION_PCT restore — never
+# ran. Proven 8/10: run `31426032814` carried `QT_WIND_DOWN=1` with Cell 13
+# NOT in SKIP_CELLS and printed no close_long line at all, while the morning
+# run `31393633387` printed both. The wind-down was therefore limited to one
+# shot per day, at the morning run.
+#
+# Fix: define it here (the prepatch is prepended, so this runs BEFORE the cell
+# body), call it from the intraday branch just above the exit via _SRC_REPLACE,
+# and call it again from the postpatch for every other run type.
+# `_QT_CLOSE_LONG_DONE` makes the second call a no-op, so a morning run cannot
+# close the same book twice.
+_CELL_13_CLOSE_LONG = """
+_QT_CLOSE_LONG_DONE = False
 
-# ── Execute close_long: drive from the HELD BOOK, not the signal universe ─────
-# CELL_13_PREPATCH marks signals[tk]["close_long"] = True for ternary SELL
-# tickers. Rewritten 2026-08-10 — the previous version walked signals[] and
-# called get_open_position() per name under a bare `except: pass`. Two defects:
-#
-#   1. WRONG DRIVER. The SELL set is computed over the whole ~307-name universe
-#      with no reference to holdings, so "held AND SELL-labelled" is empty by
-#      construction. Over the whole wind-down window (8/06, 8/07, 8/10) it
-#      produced 34 SELL labels and ZERO overlap with the 24-name book; the only
-#      exit in that window (HON) came from stops/expiry, not from here. The
-#      SELL label is itself a clamp artifact: the net-of-cost bar (avg cost
-#      0.33% -> requires |conf-0.5| > 0.165, i.e. conf < 0.335) admits only
-#      names pinned at the 0.10 LOWER CLAMP of np.clip(conf * _fi_scalar, 0.10,
-#      0.92), because the confidence distribution is empty between 0.15 and
-#      0.40. So the old driver could only ever fire on saturated names, which
-#      are exactly the names the book does not hold.
-#
-#   2. SILENT FAILURE. `except Exception: pass` printed an identical
-#      "closed 0/4" whether the names were merely not held or Alpaca refused
-#      every call — the same blind spot that hid the disabled streak brake
-#      until dc04017. Every outcome is now counted and named, and a failed
-#      position read is reported as a failure instead of as "nothing to do".
-#
-# QT_WIND_DOWN=1 additionally selects EVERY held long, which is what actually
-# takes the book to flat before the 2026-09-25 sunset. Default off: unset, this
-# block is the old policy with correct enumeration and honest logging.
-try:
-    import os as _os13cl
-    _WIND_DOWN13 = _os13cl.environ.get("QT_WIND_DOWN", "").strip().lower() in ("1", "true", "yes")
-    _sigs13cl = signals if "signals" in dir() else {}
-    _sell_labelled13 = set(
-        _tk13cl for _tk13cl, _sig13cl in _sigs13cl.items() if _sig13cl.get("close_long")
-    )
-    if not (ALPACA_API_KEY and ALPACA_SECRET_KEY):
-        print(f"  [patch] close_long: {len(_sell_labelled13)} SELL tickers, "
-              f"wind_down={_WIND_DOWN13} — Alpaca keys not set, skipped")
-    else:
+def _qt_close_long_run(_where="postpatch"):
+    global _QT_CLOSE_LONG_DONE
+    if _QT_CLOSE_LONG_DONE:
+        return
+    _QT_CLOSE_LONG_DONE = True
+    _g = globals()
+    try:
+        import os as _os13cl
+        _WIND_DOWN13 = _os13cl.environ.get("QT_WIND_DOWN", "").strip().lower() in ("1", "true", "yes")
+        _sigs13cl = _g.get("signals") or {}
+        _sell_labelled13 = set(
+            _tk13cl for _tk13cl, _sig13cl in _sigs13cl.items() if _sig13cl.get("close_long")
+        )
+        _key13 = _g.get("ALPACA_API_KEY")
+        _sec13 = _g.get("ALPACA_SECRET_KEY")
+        if not (_key13 and _sec13):
+            print(f"  [patch] close_long [{_where}]: {len(_sell_labelled13)} SELL tickers, "
+                  f"wind_down={_WIND_DOWN13} — Alpaca keys not set, skipped")
+            return
         from alpaca.trading.client import TradingClient as _TC13
         from alpaca.trading.requests import MarketOrderRequest as _MOR13
         from alpaca.trading.enums import OrderSide as _OS13, TimeInForce as _TIF13
-        _tc13 = _TC13(ALPACA_API_KEY, ALPACA_SECRET_KEY, paper=True)
-        # ONE authoritative read of the book, at close time. If this raises,
-        # the outer handler reports it — a broker outage must never render as
-        # "nothing to close".
+        _tc13 = _TC13(_key13, _sec13, paper=True)
+        # ONE authoritative read of the book. If this raises, the handler below
+        # reports it — a broker outage must never render as "nothing to close".
         _held13 = {}
         for _p13 in _tc13.get_all_positions():
             _held13[str(_p13.symbol)] = float(_p13.qty)   # signed: shorts NEGATIVE
         _n_closed13 = 0
         _n_err13 = 0
         _skip13 = {"short": [], "already-flat": []}
+        _oversell13 = _g.get("_OVERSELL") or {}
+        _sold13 = _oversell13.get("sold", {}) if isinstance(_oversell13, dict) else {}
         for _cl_tk in sorted(_held13):
             if not (_WIND_DOWN13 or _cl_tk in _sell_labelled13):
                 continue
@@ -3832,9 +3822,7 @@ try:
                 continue
             # Net out SELLs execute_trade already submitted this run — unfilled
             # orders are not reflected in the position read yet.
-            _qty13 = int(_held13[_cl_tk])
-            if "_OVERSELL" in globals():
-                _qty13 -= int(float(_OVERSELL["sold"].get(_cl_tk, 0)))
+            _qty13 = int(_held13[_cl_tk]) - int(float(_sold13.get(_cl_tk, 0)))
             if _qty13 <= 0:
                 _skip13["already-flat"].append(_cl_tk)
                 continue
@@ -3847,7 +3835,7 @@ try:
                 print(f"    [close_long] FAILED {_cl_tk} x{_qty13}: {_cl_one_e}")
         _orphans13 = sorted(_sell_labelled13 - set(_held13))
         _mode13 = "WIND-DOWN all longs" if _WIND_DOWN13 else "SELL-labelled only"
-        print(f"  [patch] close_long [{_mode13}]: closed {_n_closed13} | errors "
+        print(f"  [patch] close_long [{_mode13}, {_where}]: closed {_n_closed13} | errors "
               f"{_n_err13} | book {len(_held13)} | SELL-labelled "
               f"{len(_sell_labelled13)}, of which not held {len(_orphans13)}")
         if _orphans13:
@@ -3860,8 +3848,34 @@ try:
         if _n_err13:
             print(f"    [close_long] {_n_err13} order(s) FAILED — the book did "
                   f"NOT wind down as intended this run")
-except Exception as _cl13e:
-    print(f"  [patch] close_long BLOCKED (non-fatal, nothing closed): {_cl13e}")
+    except Exception as _cl13e:
+        print(f"  [patch] close_long BLOCKED (non-fatal, nothing closed): {_cl13e}")
+"""
+
+CELL_13_PREPATCH += "\n\n" + _CELL_13_CLOSE_LONG
+
+# ── CELL 13 POSTPATCH: restore MAX_POSITION_PCT after trade execution ──────────
+CELL_13_POSTPATCH = """
+# Restore MAX_POSITION_PCT to its original value after Cell 13 completes.
+# The regime-scaled version only needed to be active during kelly_qty calls.
+try:
+    if "_orig_max_pos13" in dir():
+        MAX_POSITION_PCT = _orig_max_pos13
+        print(f"  [patch] MAX_POSITION_PCT restored to {MAX_POSITION_PCT:.1%}")
+except Exception:
+    pass
+
+# ── Execute close_long — the body now lives in _CELL_13_CLOSE_LONG (prepatch) ─
+# It is a CALLABLE rather than inline code so that the intraday branch can call
+# it before `sys.exit(0)`; see that block for the full rationale. Idempotent:
+# whichever call site runs first does the work, the other becomes a no-op.
+try:
+    _qt_close_long_run("postpatch")
+except NameError:
+    # The prepatch failed to define it — say so instead of closing nothing
+    # silently, which is the exact failure mode this whole fix exists to kill.
+    print("  [patch] close_long BLOCKED: _qt_close_long_run undefined "
+          "(CELL_13_PREPATCH did not run) — nothing closed")
 
 
 # Conformal-Kelly post-scale REMOVED 2026-07-11 (ledger-qty corruption, fill
@@ -5725,6 +5739,21 @@ _SRC_REPLACE = [
     ('        "confidence":   sig["confidence"],\n',
      '        "confidence":   sig["confidence"],\n'
      '        "rank_score":   sig.get("rank_score", None),\n'),
+    # Intraday runs exit Cell 13 early (Fix #6: stops checked, no new entries),
+    # and CELL_13_POSTPATCH is appended to the END of that same cell — so the
+    # SystemExit skipped close_long entirely and the wind-down could only fire
+    # on a morning run. Proven 8/10 by run `31426032814`. Call the callable
+    # defined in _CELL_13_CLOSE_LONG immediately BEFORE the exit. Anchored on
+    # the ASCII exit line, not the em-dashed print above it, so the anchor
+    # cannot be broken by an encoding round-trip. Kept ABOVE the gross-cap trio
+    # for the _SRC_REPLACE[-3:] reason noted above.
+    ('    import sys as _isys; _isys.exit(0)',
+     '    try:\n'
+     '        _qt_close_long_run("intraday")\n'
+     '    except NameError:\n'
+     '        print("  [patch] close_long BLOCKED: _qt_close_long_run undefined "\n'
+     '              "(CELL_13_PREPATCH did not run) — nothing closed")\n'
+     '    import sys as _isys; _isys.exit(0)'),
     # Gross-cap hard gate (2026-07-08), 3 anchors into Cell 13 — see the
     # CELL_13_PREPATCH gross-cap block for the full rationale. The old cash
     # guard mutated signals[tk]["confidence"], which nothing in the execution

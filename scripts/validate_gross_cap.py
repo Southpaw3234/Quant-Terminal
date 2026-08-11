@@ -1374,14 +1374,20 @@ check16("...and the REAL brake is the Alpaca/pnl_history block",
 # net-of-cost bar admits only names pinned at the 0.10 confidence clamp), and
 # every per-name failure was swallowed by `except Exception: pass`. These
 # scenarios pin both the new driver and the new logging.
-_postpatch = None
-for node in ast.walk(tree):
-    if isinstance(node, ast.Assign):
-        for t in node.targets:
-            if isinstance(t, ast.Name) and t.id == "CELL_13_POSTPATCH":
-                if _postpatch is None and isinstance(node.value, ast.Constant):
-                    _postpatch = node.value.value
-_cl_src = _postpatch[_postpatch.index("# ── Execute close_long"):]
+def _patch_const(name):
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign):
+            for t in node.targets:
+                if isinstance(t, ast.Name) and t.id == name:
+                    if isinstance(node.value, ast.Constant):
+                        return node.value.value
+    return None
+
+# The body is a CALLABLE in the prepatch now (2026-08-11), so that the intraday
+# branch can invoke it before Cell 13's SystemExit. Exec the definition, then
+# call it — the scenarios below drive the real function, not a copy.
+_cl_src = _patch_const("_CELL_13_CLOSE_LONG")
+_postpatch = _patch_const("CELL_13_POSTPATCH")
 
 def _stub_alpaca_cl(book, boom_read=False, boom_syms=()):
     """book: {symbol: signed qty}. Returns the list submitted orders land in."""
@@ -1420,7 +1426,7 @@ def _stub_alpaca_cl(book, boom_read=False, boom_syms=()):
     return sent
 
 def run_cl(book, sell_labelled=(), wind_down=False, sold=None, keys=True,
-           boom_read=False, boom_syms=()):
+           boom_read=False, boom_syms=(), where="postpatch", calls=1):
     sent = _stub_alpaca_cl(book, boom_read, boom_syms)
     os.environ["QT_WIND_DOWN"] = "1" if wind_down else ""
     ns = {
@@ -1432,6 +1438,8 @@ def run_cl(book, sell_labelled=(), wind_down=False, sold=None, keys=True,
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
         exec(compile(_cl_src, "<close_long>", "exec"), ns)
+        for _ in range(calls):
+            ns["_qt_close_long_run"](where)
     return sent, buf.getvalue()
 
 def check17(name, got, want):
@@ -1507,6 +1515,48 @@ check17("...both inside the trading-cycle env block",
 # invisible for four sessions. Pinned so it cannot come back.
 check17("stale 'closes out naturally' claim is gone",
         "closes out" in _wf17 and "naturally" in _wf17, False)
+
+# (j) 2026-08-11 — THE INTRADAY SystemExit. CELL_13_POSTPATCH is appended to the
+#     END of Cell 13, and intraday runs sys.exit(0) partway through, so the
+#     postpatch never ran (proven by run 31426032814: QT_WIND_DOWN=1, cell 13
+#     unskipped, zero close_long lines). The body is now a callable invoked from
+#     BOTH sides. These checks pin the wiring, the anchor, and idempotence.
+check17("body is a callable in the prepatch", _cl_src is not None, True)
+check17("...appended onto CELL_13_PREPATCH",
+        'CELL_13_PREPATCH += "\\n\\n" + _CELL_13_CLOSE_LONG' in src, True)
+check17("postpatch calls it, does not inline it",
+        "_qt_close_long_run(\"postpatch\")" in (_postpatch or ""), True)
+check17("...and the postpatch no longer submits orders itself",
+        "submit_order" in (_postpatch or ""), False)
+# The intraday anchor must exist exactly once in the notebook, or the rewrite is
+# a silent no-op — the same failure class as the kill-switch message anchor.
+_EXIT_ANCHOR = "    import sys as _isys; _isys.exit(0)"
+check17("intraday exit anchor appears exactly once", _nb_all.count(_EXIT_ANCHOR), 1)
+_cl_pair = next(((o, n) for o, n in pairs if o == _EXIT_ANCHOR), None)
+check17("...and _SRC_REPLACE targets it", _cl_pair is not None, True)
+check17("...calling close_long BEFORE the exit",
+        _cl_pair[1].index("_qt_close_long_run")
+        < _cl_pair[1].index("_isys.exit(0)") if _cl_pair else False, True)
+# End-to-end: build the intraday Cell 13 the way quant_runner does and confirm
+# the rewritten source still compiles.
+if _cl_pair:
+    _nb13 = next((c for c in nb["cells"]
+                  if c["cell_type"] == "code"
+                  and _EXIT_ANCHOR in "".join(c["source"])), None)
+    _s13 = "".join(_nb13["source"]).replace(_cl_pair[0], _cl_pair[1]) if _nb13 else ""
+    try:
+        compile(_s13, "<cell13-intraday>", "exec")
+        check17("patched intraday Cell 13 compiles", True, True)
+    except SyntaxError as _e13:
+        check17("patched intraday Cell 13 compiles", f"SyntaxError {_e13.lineno}", True)
+# Idempotence: whichever site fires first does the work; the second is a no-op.
+# Without this a morning run would close the book twice and go short.
+_sent, _out = run_cl(_BOOK_0810, wind_down=True, calls=2)
+check17("two call sites close the book ONCE", len(_sent), 24)
+check17("...and the second call prints nothing", _out.count("close_long ["), 1)
+_sent, _out = run_cl(_BOOK_0810, wind_down=True, where="intraday")
+check17("intraday call site closes the book", len(_sent), 24)
+check17("...and names itself in the log", "intraday]" in _out, True)
 
 print()
 if fails:
