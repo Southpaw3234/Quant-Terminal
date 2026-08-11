@@ -3840,7 +3840,13 @@ def _qt_close_long_run(_where="postpatch"):
                 and _held13 and _stale_enough13):
             _breach13 = True
             _open13 = ", ".join(sorted(_held13)[:20])
-            print("\n" + "!" * 68)
+            # chr(10), not a backslash escape: this whole block is the body of
+            # a non-raw triple-quoted string, so an escape here would be
+            # interpreted when quant_runner itself is parsed and would emit a
+            # literal newline INSIDE the string literal — an unterminated
+            # string at exec time. Caught by validate 1c (patch strings must
+            # ast.parse).
+            print(chr(10) + "!" * 68)
             print("FLAT INVARIANT BREACHED — the book should be empty and is NOT.")
             print(f"  a previous run armed the wind-down at "
                   f"{_wd_state13.get('armed_at_iso', '?')} (closed "
@@ -3850,7 +3856,7 @@ def _qt_close_long_run(_where="postpatch"):
             print("  Causes to check, in order: orders rejected or never filled;"
                   " get_all_positions() omitting a held name (see HANDOFF 8/11 "
                   "ledger ②); or a re-entry path outside Cell 13's BUY funnel.")
-            print("!" * 68 + "\n")
+            print("!" * 68 + chr(10))
             _disc13 = _os13cl.environ.get("DISCORD_WEBHOOK_URL", "")
             if _disc13:
                 try:
