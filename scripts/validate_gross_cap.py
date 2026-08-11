@@ -1558,6 +1558,74 @@ _sent, _out = run_cl(_BOOK_0810, wind_down=True, where="intraday")
 check17("intraday call site closes the book", len(_sent), 24)
 check17("...and names itself in the log", "intraday]" in _out, True)
 
+# (k) 2026-08-11 — THE FLAT INVARIANT. "closed N" is not proof of flat: orders
+#     can be rejected, and get_all_positions() has been observed to OMIT a held
+#     name (HON, five consecutive 8/10 reads). A name the broker never returns
+#     cannot appear in `errors`. So once armed, a non-empty book must page.
+_WD_JSON = "data/predictions/wind_down_state.json"
+
+def run_wd(book, state=None, wind_down=True, armed_age=99999):
+    """Run close_long inside a temp cwd with a seeded wind_down_state.json."""
+    cwd0, tmp = os.getcwd(), tempfile.mkdtemp()
+    os.makedirs(os.path.join(tmp, "data", "predictions"))
+    if state is not None:
+        st = dict(state)
+        if st.get("armed"):
+            st.setdefault("armed_at", __import__("time").time() - armed_age)
+            st.setdefault("armed_at_iso", "2026-08-11T15:48:00Z")
+        with open(os.path.join(tmp, _WD_JSON), "w") as fh:
+            json.dump(st, fh)
+    os.chdir(tmp)
+    try:
+        sent, out = run_cl(book, wind_down=wind_down)
+        after = {}
+        if os.path.exists(_WD_JSON):
+            after = json.load(open(_WD_JSON))
+    finally:
+        os.chdir(cwd0)
+    return sent, out, after
+
+# First wind-down run: nothing armed yet, so a full book is NOT a breach.
+_s, _o, _st = run_wd(_BOOK_0810, state=None)
+check17("first wind-down run is not a breach", _st.get("breach"), False)
+check17("...and it ARMS the invariant", _st.get("armed"), True)
+check17("...recording what it closed", _st.get("last_closed"), 24)
+
+# Armed, and the next run still sees a full book → BREACH.
+_s, _o, _st = run_wd(_BOOK_0810, state={"armed": True, "closed": 24})
+check17("armed + non-empty book = BREACH", _st.get("breach"), True)
+check17("...prints the banner", "FLAT INVARIANT BREACHED" in _o, True)
+check17("...names the open positions", "still open" in _o or "MSFT" in _o, True)
+check17("...and records them for the gate", len(_st.get("still_open") or []), 24)
+
+# Armed and genuinely flat → clean, and the breach flag CLEARS (never latches).
+_s, _o, _st = run_wd({}, state={"armed": True, "closed": 24, "breach": True})
+check17("armed + empty book = no breach", _st.get("breach"), False)
+check17("...breach does NOT latch", "FLAT INVARIANT BREACHED" in _o, False)
+check17("...and stays armed", _st.get("armed"), True)
+
+# Grace window: a run moments after arming must not page on unfilled orders.
+_s, _o, _st = run_wd(_BOOK_0810, state={"armed": True, "closed": 24}, armed_age=60)
+check17("no breach inside the 15-min fill grace", _st.get("breach"), False)
+
+# Wind-down off: the invariant must be inert, not page on a normal book.
+_s, _o, _st = run_wd(_BOOK_0810, state={"armed": True, "closed": 24},
+                     wind_down=False)
+check17("inert when QT_WIND_DOWN is unset", "FLAT INVARIANT BREACHED" in _o, False)
+
+# The workflow must actually enforce it, and only after the state is committed.
+check17("workflow has the flat-invariant gate",
+        "Flat-invariant gate" in _wf17, True)
+_i_gate = _wf17.index("Flat-invariant gate")
+check17("...placed AFTER the state commit (clocks safe)",
+        _wf17.index("Commit updated state files") < _i_gate, True)
+check17("...and AFTER the data-branch push",
+        _wf17.index("Push dashboard data to orphan data branch") < _i_gate, True)
+check17("...it is the LAST step in the trade job",
+        _wf17.index("notify_failure:") > _i_gate
+        and "- name:" not in _wf17[_i_gate:_wf17.index("notify_failure:")]
+            .split("Flat-invariant gate", 1)[1], True)
+
 print()
 if fails:
     print("VALIDATION FAILED:")

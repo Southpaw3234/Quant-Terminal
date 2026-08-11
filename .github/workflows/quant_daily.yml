@@ -541,6 +541,46 @@ jobs:
           path: cycle_output.log
           retention-days: 60
 
+      # ── FLAT INVARIANT GATE (2026-08-11) ───────────────────────────────────
+      # `closed N` is not proof of flat. Once a wind-down run has submitted
+      # closes, every later wind-down run must observe an empty book; Cell 13
+      # records that observation in wind_down_state.json and pages Discord on
+      # the spot. This step turns it into a RED RUN as well, so a breach cannot
+      # be missed by anyone not watching Discord.
+      #
+      # Placement is deliberate and load-bearing:
+      #   * AFTER "Commit updated state files" and the data-branch push, so
+      #     failing here can never cost an evidence commit or stall a clock —
+      #     the thing the 6/09-6/16 freeze taught us to protect.
+      #   * LAST in the job, so a non-zero exit skips nothing downstream.
+      #   * `breach` is recomputed every run and never latches, so the gate goes
+      #     green again on its own once the book is actually flat.
+      # The `notify_failure` job below fires on this too, which is intended.
+      - name: Flat-invariant gate (fails the run if the book is not empty)
+        if: always()
+        run: |
+          set -u
+          f=data/predictions/wind_down_state.json
+          if [ ! -f "$f" ]; then
+            echo "No wind-down state file — invariant not armed. Nothing to check."
+            exit 0
+          fi
+          python - <<'PY'
+          import json, sys, pathlib
+          s = json.loads(pathlib.Path("data/predictions/wind_down_state.json").read_text() or "{}")
+          armed, breach = s.get("armed"), s.get("breach")
+          book, still = s.get("last_seen_book"), s.get("still_open") or []
+          print(f"armed={armed} breach={breach} last_seen_book={book} "
+                f"last_closed={s.get('last_closed')} errors={s.get('last_errors')}")
+          if not armed:
+              print("Wind-down not armed yet — nothing to enforce."); sys.exit(0)
+          if breach:
+              print("::error::FLAT INVARIANT BREACHED — wind-down armed but "
+                    f"{book} position(s) still open: {', '.join(still[:20])}")
+              sys.exit(1)
+          print(f"OK — armed and flat (book={book}).")
+          PY
+
   # ── FAILURE ALERTING (added 2026-08-06) ─────────────────────────────────────
   # The INNER of two alarms; morning_watchdog.yml is the outer one and asserts
   # the outcome instead of the process. This job fires whenever `trade` fails,

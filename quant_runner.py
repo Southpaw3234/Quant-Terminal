@@ -3807,6 +3807,62 @@ def _qt_close_long_run(_where="postpatch"):
         _held13 = {}
         for _p13 in _tc13.get_all_positions():
             _held13[str(_p13.symbol)] = float(_p13.qty)   # signed: shorts NEGATIVE
+
+        # ── FLAT INVARIANT (2026-08-11) ──────────────────────────────────────
+        # `closed N` is NOT proof of flat. Two ways it lies: orders can be
+        # rejected or never fill, and get_all_positions() has been observed to
+        # OMIT a position we genuinely held — HON was missing from five
+        # consecutive 8/10 reads while its order history shows only sells and
+        # one canceled buy, so it never left. A name the broker does not return
+        # is never a close candidate and therefore cannot show up in `errors`.
+        # So: once a wind-down run has submitted closes, EVERY later wind-down
+        # run must observe an empty book. If it does not, page loudly.
+        # Deliberately NOT sticky — `breach` is recomputed from this run's own
+        # observation, so a later flat run clears it. A latching flag would
+        # page forever, and SKIP_CELLS would stall the evidence clocks.
+        _wd_state13 = {}
+        _wd_path13 = "data/predictions/wind_down_state.json"
+        try:
+            import json as _js13
+            from pathlib import Path as _P13
+            if _P13(_wd_path13).exists():
+                _wd_state13 = _js13.loads(_P13(_wd_path13).read_text() or "{}")
+        except Exception:
+            _wd_state13 = {}
+        _breach13 = False
+        _armed_at13 = float(_wd_state13.get("armed_at") or 0)
+        import time as _t13
+        # Grace window: market orders submitted seconds before a run starts are
+        # legitimately still unfilled. Only a book that is still populated well
+        # after the arming run is evidence of a real failure.
+        _stale_enough13 = (_t13.time() - _armed_at13) > 900
+        if (_WIND_DOWN13 and _wd_state13.get("armed")
+                and _held13 and _stale_enough13):
+            _breach13 = True
+            _open13 = ", ".join(sorted(_held13)[:20])
+            print("\n" + "!" * 68)
+            print("FLAT INVARIANT BREACHED — the book should be empty and is NOT.")
+            print(f"  a previous run armed the wind-down at "
+                  f"{_wd_state13.get('armed_at_iso', '?')} (closed "
+                  f"{_wd_state13.get('closed', '?')}), yet {len(_held13)} "
+                  f"position(s) are still open:")
+            print(f"  {_open13}")
+            print("  Causes to check, in order: orders rejected or never filled;"
+                  " get_all_positions() omitting a held name (see HANDOFF 8/11 "
+                  "ledger ②); or a re-entry path outside Cell 13's BUY funnel.")
+            print("!" * 68 + "\n")
+            _disc13 = _os13cl.environ.get("DISCORD_WEBHOOK_URL", "")
+            if _disc13:
+                try:
+                    import requests as _rq13
+                    _rq13.post(_disc13, json={"embeds": [{
+                        "title": "🚨 Quant-Terminal: FLAT INVARIANT BREACHED",
+                        "color": 15158332,
+                        "description": (
+                            f"Wind-down armed, but {len(_held13)} position(s) "
+                            f"are still open: {_open13}")}]}, timeout=10)
+                except Exception:
+                    pass
         _n_closed13 = 0
         _n_err13 = 0
         _skip13 = {"short": [], "already-flat": []}
@@ -3848,6 +3904,41 @@ def _qt_close_long_run(_where="postpatch"):
         if _n_err13:
             print(f"    [close_long] {_n_err13} order(s) FAILED — the book did "
                   f"NOT wind down as intended this run")
+
+        # Persist the invariant state. `armed` latches ON at the first wind-down
+        # run that submits closes and stays on — that is the whole point, it is
+        # the memory of "we have asked for flat". `breach` does NOT latch: it is
+        # this run's own observation, so a later flat run clears it and the
+        # workflow gate goes green again. The workflow reads `breach` AFTER the
+        # state commit, so the clocks and evidence files are never at risk.
+        if _WIND_DOWN13:
+            try:
+                import json as _js13w
+                from pathlib import Path as _P13w
+                _prev_armed13 = bool(_wd_state13.get("armed"))
+                _P13w("data/predictions").mkdir(parents=True, exist_ok=True)
+                _P13w(_wd_path13).write_text(_js13w.dumps({
+                    "armed": _prev_armed13 or _n_closed13 > 0,
+                    "armed_at": (_wd_state13.get("armed_at")
+                                 if _prev_armed13 else _t13.time()),
+                    "armed_at_iso": (_wd_state13.get("armed_at_iso")
+                                     if _prev_armed13
+                                     else _t13.strftime("%Y-%m-%dT%H:%M:%SZ",
+                                                        _t13.gmtime())),
+                    "last_seen_book": len(_held13),
+                    "last_closed": _n_closed13,
+                    "last_errors": _n_err13,
+                    "breach": bool(_breach13),
+                    "still_open": sorted(_held13)[:40],
+                    "updated_iso": _t13.strftime("%Y-%m-%dT%H:%M:%SZ",
+                                                 _t13.gmtime()),
+                }, indent=2))
+                print(f"  [close_long] flat-invariant state: armed="
+                      f"{_prev_armed13 or _n_closed13 > 0} breach={_breach13} "
+                      f"book={len(_held13)} -> {_wd_path13}")
+            except Exception as _wd_e13:
+                print(f"  [close_long] could not persist flat-invariant state "
+                      f"({_wd_e13}) — the next run cannot check it")
     except Exception as _cl13e:
         print(f"  [patch] close_long BLOCKED (non-fatal, nothing closed): {_cl13e}")
 """
