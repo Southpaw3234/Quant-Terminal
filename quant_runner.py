@@ -3948,7 +3948,17 @@ def _qt_close_long_run(_where="postpatch"):
                 _prev_armed13 = bool(_wd_state13.get("armed"))
                 _P13w("data/predictions").mkdir(parents=True, exist_ok=True)
                 _P13w(_wd_path13).write_text(_js13w.dumps({
-                    "armed": _prev_armed13 or _n_closed13 > 0,
+                    # Arm on ANY wind-down run, not only one that closed
+                    # something. QT_WIND_DOWN being set IS the declaration that
+                    # flat is the intended state, so the invariant must hold
+                    # from then on. Gating on `_n_closed13 > 0` would have left
+                    # it permanently disarmed in the situation we are actually
+                    # in — the book went flat on 8/11 BEFORE this code existed,
+                    # so no later run will ever close anything, and a
+                    # re-entry would then go uncaught. The first run's own full
+                    # book is not a false positive: it arms at the END of the
+                    # run, and the next run gets the 900s fill grace.
+                    "armed": True,
                     "armed_at": (_wd_state13.get("armed_at")
                                  if _prev_armed13 else _t13.time()),
                     "armed_at_iso": (_wd_state13.get("armed_at_iso")

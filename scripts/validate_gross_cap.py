@@ -1593,6 +1593,15 @@ check17("first wind-down run is not a breach", _st.get("breach"), False)
 check17("...and it ARMS the invariant", _st.get("armed"), True)
 check17("...recording what it closed", _st.get("last_closed"), 24)
 
+# 🔑 A wind-down run that closes NOTHING must still arm. The book went flat on
+# 8/11 before this code existed, so no later run will ever close anything —
+# gating arming on `closed > 0` would leave the invariant permanently disarmed
+# in exactly the state the account is in, and a re-entry would go uncaught.
+_s, _o, _st = run_wd({}, state=None)
+check17("a wind-down run closing NOTHING still arms", _st.get("armed"), True)
+check17("...on an already-flat book", _st.get("last_seen_book"), 0)
+check17("...and that is not itself a breach", _st.get("breach"), False)
+
 # Armed, and the next run still sees a full book → BREACH.
 _s, _o, _st = run_wd(_BOOK_0810, state={"armed": True, "closed": 24})
 check17("armed + non-empty book = BREACH", _st.get("breach"), True)
