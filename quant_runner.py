@@ -3965,7 +3965,11 @@ def _qt_close_long_run(_where="postpatch"):
                                      if _prev_armed13
                                      else _t13.strftime("%Y-%m-%dT%H:%M:%SZ",
                                                         _t13.gmtime())),
-                    "last_seen_book": len(_held13),
+                    # The INVARIANT's book, which equals the real book except
+                    # under a drill. Was len(_held13), which made the gate
+                    # print the self-contradicting "0 position(s) still open:
+                    # DRILL1, DRILL2" — the count and the list disagreed.
+                    "last_seen_book": len(_inv_book13),
                     "last_closed": _n_closed13,
                     "last_errors": _n_err13,
                     "breach": bool(_breach13),

@@ -1643,6 +1643,11 @@ check17("...yet still trips the breach", _st.get("breach"), True)
 check17("...labelled DRILL in the banner", "BREACHED [DRILL]" in _o, True)
 check17("...and stamped in the state file", _st.get("drill"), ["DRILL1", "DRILL2"])
 check17("...recording the REAL book separately", _st.get("real_book"), [])
+# The gate prints "<last_seen_book> position(s) still open: <still_open>". If
+# these disagree the operator reads a self-contradicting page — the live 19:02Z
+# drill printed "0 position(s) still open: DRILL1, DRILL2".
+check17("...count matches the list it prints",
+        _st.get("last_seen_book"), len(_st.get("still_open") or []))
 # The drill must never displace a real close: with a real book present, every
 # real name is still closed and no drill symbol is ever ordered.
 _s, _o, _st = run_wd({"MSFT": 5.0, "BA": 3.0}, state={"armed": True},
