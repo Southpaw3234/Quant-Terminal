@@ -1686,6 +1686,68 @@ check17("...it is the LAST step in the trade job",
         and "- name:" not in _wf17[_i_gate:_wf17.index("notify_failure:")]
             .split("Flat-invariant gate", 1)[1], True)
 
+# ── 18. rank-IC series is append-only (2026-08-11) ──────────────────────────
+# The analyzer is a full overwrite and written rows moved: 2026-07-15 went
+# 278,0.0959 -> 279,0.0955 on the 8/10 run, and cross_sectional_ls.csv had all
+# 13 rows rewritten. rank_ic_v2.csv — the S4 input due ~9/24 — is written by
+# this same script, so the decision-day read has to be an accumulated ledger,
+# not a recompute. First write wins.
+def check18(name, got, want):
+    ok = got == want
+    print(f"18. {name:<52} got={str(got):<7} {'PASS' if ok else 'FAIL (want %s)' % want}")
+    if not ok:
+        fails.append(f"section18 {name}: got={got} want={want}")
+
+_frz = getattr(_ric14, "_freeze_first_write", None)
+check18("analyzer exposes the freeze", callable(_frz), True)
+if _frz:
+    _t18 = tempfile.mkdtemp()
+    _p18 = pathlib.Path(_t18) / "rank_ic.csv"
+
+    # No file yet -> the first computation passes through untouched.
+    _new = pd.DataFrame([{"date": "2026-08-13", "n": 279, "rank_ic": 0.011}])
+    check18("no existing file: passes through", len(_frz(_new, _p18, "t")), 1)
+    _frz(_new, _p18, "t").to_csv(_p18, index=False)
+
+    # THE REGRESSION: a recompute that changes a written row must be REFUSED.
+    _recomp = pd.DataFrame([{"date": "2026-08-13", "n": 280, "rank_ic": 0.099}])
+    _buf18 = io.StringIO()
+    with contextlib.redirect_stdout(_buf18):
+        _out18 = _frz(_recomp, _p18, "t")
+    check18("recomputed row is REFUSED", float(_out18.iloc[0]["rank_ic"]), 0.011)
+    check18("...including its n", int(_out18.iloc[0]["n"]), 279)
+    check18("...and the drift is reported, not hidden",
+            "FROZE" in _buf18.getvalue(), True)
+
+    # New dates still append — freezing must not stall the clock.
+    _mixed = pd.DataFrame([{"date": "2026-08-13", "n": 280, "rank_ic": 0.099},
+                           {"date": "2026-08-14", "n": 279, "rank_ic": -0.02}])
+    _out18 = _frz(_mixed, _p18, "t")
+    check18("new dates still append", len(_out18), 2)
+    check18("...old row still frozen", float(_out18.iloc[0]["rank_ic"]), 0.011)
+    check18("...new row takes the fresh value",
+            float(_out18.iloc[1]["rank_ic"]), -0.02)
+
+    # The escape hatch must be explicit and off by default.
+    os.environ["QT_RANK_IC_MUTABLE"] = "1"
+    _out18 = _frz(_recomp, _p18, "t")
+    check18("QT_RANK_IC_MUTABLE=1 restores recompute",
+            float(_out18.iloc[0]["rank_ic"]), 0.099)
+    os.environ.pop("QT_RANK_IC_MUTABLE", None)
+    check18("...and is off when unset",
+            float(_frz(_recomp, _p18, "t").iloc[0]["rank_ic"]), 0.011)
+
+    # Both write sites must use it — the L/S file drifted worst (22% on a
+    # three-week-old row), and the gate reads the frozen frame, not the
+    # throwaway recompute.
+    _ric_src = open(RIC, encoding="utf-8").read()
+    check18("rank_ic write site is frozen",
+            "res = _freeze_first_write(res, OUT_CSV" in _ric_src, True)
+    check18("L/S write site is frozen",
+            "lsdf = _freeze_first_write(lsdf, LS_CSV" in _ric_src, True)
+    check18("no bare full-overwrite left",
+            _ric_src.count("to_csv(OUT_CSV") + _ric_src.count("to_csv(LS_CSV"), 2)
+
 print()
 if fails:
     print("VALIDATION FAILED:")

@@ -129,6 +129,82 @@ _ETF_TICKERS = {
 }
 
 
+def _freeze_first_write(new_df: "pd.DataFrame", path: Path, label: str) -> "pd.DataFrame":
+    """First write wins: a row that already exists is NEVER recomputed.
+
+    Added 2026-08-11. This analyzer is a FULL OVERWRITE — it rebuilds every
+    historical row on every run from freshly downloaded prices — so written
+    rows moved even though the code printed "Rows already written never move."
+    Proven on the 8/10 morning run: `2026-07-15` went `278,0.0959` ->
+    `279,0.0955`, and cross_sectional_ls.csv had all 13 rows rewritten
+    (2026-07-16 long_short 0.05304 -> 0.04148, a 22% move on a three-week-old
+    row). `41c7d17` only DEFERRED a row's first write until its exit bar
+    settled; it never made written rows immutable, so it could not have
+    prevented this.
+
+    Why it matters beyond tidiness: rank_ic_v2.csv is written by this same
+    script (QT_RANK_IC_OUT) and is the S4 decision input due ~2026-09-24. A
+    recomputed series means the number read on decision day is not the 30
+    observations that were accumulated — it is whatever today's price
+    download implies. Freezing makes the window an append-only ledger.
+
+    Timing note: v2 does not exist yet (first row due ~2026-08-13), so it is
+    frozen from its very first row. The legacy series inherits whatever has
+    already drifted, which is harmless — it is documented as INVALID and is
+    not a gate input.
+
+    Drift is REPORTED rather than discarded: knowing how far a recompute
+    would have moved a written row is evidence about price-source stability,
+    and silently dropping it would trade one blind spot for another.
+
+    QT_RANK_IC_MUTABLE=1 restores the old full-overwrite behaviour for
+    debugging. It must never be set on a scheduled run.
+    """
+    if os.environ.get("QT_RANK_IC_MUTABLE", "").strip() == "1":
+        print(f"[rank-ic] {label}: QT_RANK_IC_MUTABLE=1 — full recompute, "
+              f"written rows MAY MOVE. Not for scheduled runs.")
+        return new_df
+    if not path.exists():
+        return new_df
+    try:
+        old = pd.read_csv(path)
+    except Exception as exc:                       # unreadable/truncated file
+        print(f"[rank-ic] {label}: existing {path} unreadable ({exc}) — "
+              f"writing the fresh computation")
+        return new_df
+    if old.empty or "date" not in old.columns or "date" not in new_df.columns:
+        return new_df
+
+    new_by_date = {str(r["date"]): r for _, r in new_df.iterrows()}
+    moved = []
+    for _, orow in old.iterrows():
+        nrow = new_by_date.get(str(orow["date"]))
+        if nrow is None:
+            continue
+        for col in old.columns:
+            if col == "date" or col not in new_df.columns:
+                continue
+            ov, nv = orow[col], nrow[col]
+            try:
+                if pd.isna(ov) and pd.isna(nv):
+                    continue
+                same = float(ov) == float(nv)
+            except (TypeError, ValueError):
+                same = str(ov) == str(nv)
+            if not same:
+                moved.append(f"{orow['date']}.{col} {ov}->{nv}")
+    if moved:
+        print(f"[rank-ic] {label}: FROZE {len(moved)} recomputed value(s) that "
+              f"would have changed already-written rows — kept the originals: "
+              f"{'; '.join(moved[:8])}{' ...' if len(moved) > 8 else ''}")
+
+    fresh = new_df[~new_df["date"].astype(str).isin(set(old["date"].astype(str)))]
+    if len(fresh):
+        print(f"[rank-ic] {label}: appending {len(fresh)} new row(s): "
+              f"{', '.join(fresh['date'].astype(str).tolist()[:5])}")
+    return pd.concat([old, fresh], ignore_index=True).sort_values("date")
+
+
 def _is_equity(tk) -> bool:
     tk = str(tk)
     return not tk.endswith('-USD') and tk not in _ETF_TICKERS
@@ -291,6 +367,11 @@ def main() -> None:
 
     res = pd.DataFrame(rows).sort_values("date")
     OUT_CSV.parent.mkdir(parents=True, exist_ok=True)
+    # Freeze BEFORE writing, and keep the frozen frame — every statistic and
+    # gate read below must come from the series that is actually on disk, not
+    # from the throwaway recompute. This is the whole point: the gate and the
+    # ledger have to agree.
+    res = _freeze_first_write(res, OUT_CSV, "rank_ic")
     res.to_csv(OUT_CSV, index=False)
 
     def _stats(ic_series: pd.Series) -> dict:
@@ -391,6 +472,13 @@ def main() -> None:
         lsdf["ls_hedged"] = (_ls_v - (_beta_roll * _spy_v).fillna(0.0)).round(5)
 
         LS_CSV.parent.mkdir(parents=True, exist_ok=True)
+        # ⚠️ Caveat specific to this file: beta_roll and ls_hedged are TRAILING
+        # rolling columns, so a newly appended row's values come from the fresh
+        # recompute while the rows above it are frozen. Second-order, and on a
+        # column the handoff already flags as unidentified and not to be quoted
+        # (see [[frame1-beta-roll-warmup]]). The per-day columns that feed the
+        # gate — long_ret, short_ret, long_short — are exact under the freeze.
+        lsdf = _freeze_first_write(lsdf, LS_CSV, "cross_sectional_ls")
         lsdf.to_csv(LS_CSV, index=False)
 
         ls = lsdf["long_short"].astype(float)
