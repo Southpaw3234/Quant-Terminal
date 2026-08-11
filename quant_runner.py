@@ -3829,6 +3829,25 @@ def _qt_close_long_run(_where="postpatch"):
                 _wd_state13 = _js13.loads(_P13(_wd_path13).read_text() or "{}")
         except Exception:
             _wd_state13 = {}
+        # ── DRILL (QT_WIND_DOWN_DRILL) ───────────────────────────────────────
+        # Fire-drill for the invariant on REAL infrastructure. A true breach
+        # needs genuinely unsold positions, which can only be manufactured by
+        # buying stock — so instead this injects a synthetic book into the
+        # INVARIANT CHECK ONLY. It is structurally incapable of trading: the
+        # closing loop below iterates `_held13`, which this never touches, so
+        # the drill cannot add a single order. Manual dispatch only; scheduled
+        # runs pass an empty string and it is inert.
+        _drill13 = [s.strip().upper() for s in
+                    _os13cl.environ.get("QT_WIND_DOWN_DRILL", "").split(",")
+                    if s.strip()]
+        _inv_book13 = dict(_held13)
+        if _drill13:
+            for _d13 in _drill13:
+                _inv_book13.setdefault(_d13, 1.0)
+            print(f"  [close_long] *** DRILL *** injecting {len(_drill13)} "
+                  f"synthetic position(s) into the INVARIANT CHECK ONLY: "
+                  f"{', '.join(_drill13)}. Real book is {len(_held13)}; "
+                  f"no order can be placed for a drill symbol.")
         _breach13 = False
         _armed_at13 = float(_wd_state13.get("armed_at") or 0)
         import time as _t13
@@ -3837,9 +3856,10 @@ def _qt_close_long_run(_where="postpatch"):
         # after the arming run is evidence of a real failure.
         _stale_enough13 = (_t13.time() - _armed_at13) > 900
         if (_WIND_DOWN13 and _wd_state13.get("armed")
-                and _held13 and _stale_enough13):
+                and _inv_book13 and _stale_enough13):
             _breach13 = True
-            _open13 = ", ".join(sorted(_held13)[:20])
+            _open13 = ", ".join(sorted(_inv_book13)[:20])
+            _tag13 = " [DRILL]" if _drill13 else ""
             # chr(10), not a backslash escape: this whole block is the body of
             # a non-raw triple-quoted string, so an escape here would be
             # interpreted when quant_runner itself is parsed and would emit a
@@ -3847,10 +3867,11 @@ def _qt_close_long_run(_where="postpatch"):
             # string at exec time. Caught by validate 1c (patch strings must
             # ast.parse).
             print(chr(10) + "!" * 68)
-            print("FLAT INVARIANT BREACHED — the book should be empty and is NOT.")
+            print(f"FLAT INVARIANT BREACHED{_tag13} — the book should be empty "
+                  f"and is NOT.")
             print(f"  a previous run armed the wind-down at "
                   f"{_wd_state13.get('armed_at_iso', '?')} (closed "
-                  f"{_wd_state13.get('closed', '?')}), yet {len(_held13)} "
+                  f"{_wd_state13.get('closed', '?')}), yet {len(_inv_book13)} "
                   f"position(s) are still open:")
             print(f"  {_open13}")
             print("  Causes to check, in order: orders rejected or never filled;"
@@ -3862,11 +3883,14 @@ def _qt_close_long_run(_where="postpatch"):
                 try:
                     import requests as _rq13
                     _rq13.post(_disc13, json={"embeds": [{
-                        "title": "🚨 Quant-Terminal: FLAT INVARIANT BREACHED",
-                        "color": 15158332,
+                        "title": (f"🧪 Quant-Terminal: FLAT INVARIANT DRILL "
+                                  f"(not a real breach)" if _drill13 else
+                                  "🚨 Quant-Terminal: FLAT INVARIANT BREACHED"),
+                        "color": 16776960 if _drill13 else 15158332,
                         "description": (
-                            f"Wind-down armed, but {len(_held13)} position(s) "
-                            f"are still open: {_open13}")}]}, timeout=10)
+                            f"Wind-down armed, but {len(_inv_book13)} "
+                            f"position(s) are still open: {_open13}")}]},
+                        timeout=10)
                 except Exception:
                     pass
         _n_closed13 = 0
@@ -3935,7 +3959,11 @@ def _qt_close_long_run(_where="postpatch"):
                     "last_closed": _n_closed13,
                     "last_errors": _n_err13,
                     "breach": bool(_breach13),
-                    "still_open": sorted(_held13)[:40],
+                    # Stamped so a red run in the history is never mistaken for
+                    # a real breach months later. A drill NEVER places an order.
+                    "drill": sorted(_drill13),
+                    "still_open": sorted(_inv_book13)[:40],
+                    "real_book": sorted(_held13)[:40],
                     "updated_iso": _t13.strftime("%Y-%m-%dT%H:%M:%SZ",
                                                  _t13.gmtime()),
                 }, indent=2))

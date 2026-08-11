@@ -34,6 +34,10 @@ on:
         required: false
         default: false
         type: boolean
+      wind_down_drill:
+        description: 'FIRE DRILL: comma-separated fake symbols to inject into the flat-invariant CHECK ONLY (e.g. DRILL1). Places no orders; deliberately reds the run.'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -293,6 +297,12 @@ jobs:
           # by removing this line, though fills are not.
           # Validated: validate §17, 22 scenarios (run 31417929408).
           QT_WIND_DOWN:          '1'
+          # Fire-drill for the flat invariant. Empty on every scheduled run, so
+          # this is inert unless a human types symbols into the dispatch form.
+          # Injects into the invariant CHECK ONLY — the closing loop iterates
+          # the real broker book, which the drill never touches, so it cannot
+          # place an order. Validated in §17.
+          QT_WIND_DOWN_DRILL:    ${{ inputs.wind_down_drill }}
           GDRIVE_RCLONE_CONF:    ${{ secrets.GDRIVE_RCLONE_CONF }}
           ALPACA_API_KEY:        ${{ secrets.ALPACA_API_KEY }}
           ALPACA_SECRET_KEY:     ${{ secrets.ALPACA_SECRET_KEY }}
@@ -575,7 +585,9 @@ jobs:
           if not armed:
               print("Wind-down not armed yet — nothing to enforce."); sys.exit(0)
           if breach:
-              print("::error::FLAT INVARIANT BREACHED — wind-down armed but "
+              drill = s.get("drill") or []
+              tag = " [DRILL — synthetic, no order was ever placed]" if drill else ""
+              print(f"::error::FLAT INVARIANT BREACHED{tag} — wind-down armed but "
                     f"{book} position(s) still open: {', '.join(still[:20])}")
               sys.exit(1)
           print(f"OK — armed and flat (book={book}).")

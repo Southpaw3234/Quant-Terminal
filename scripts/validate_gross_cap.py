@@ -1564,7 +1564,7 @@ check17("...and names itself in the log", "intraday]" in _out, True)
 #     cannot appear in `errors`. So once armed, a non-empty book must page.
 _WD_JSON = "data/predictions/wind_down_state.json"
 
-def run_wd(book, state=None, wind_down=True, armed_age=99999):
+def run_wd(book, state=None, wind_down=True, armed_age=99999, drill=""):
     """Run close_long inside a temp cwd with a seeded wind_down_state.json."""
     cwd0, tmp = os.getcwd(), tempfile.mkdtemp()
     os.makedirs(os.path.join(tmp, "data", "predictions"))
@@ -1576,6 +1576,7 @@ def run_wd(book, state=None, wind_down=True, armed_age=99999):
         with open(os.path.join(tmp, _WD_JSON), "w") as fh:
             json.dump(st, fh)
     os.chdir(tmp)
+    os.environ["QT_WIND_DOWN_DRILL"] = drill
     try:
         sent, out = run_cl(book, wind_down=wind_down)
         after = {}
@@ -1583,6 +1584,7 @@ def run_wd(book, state=None, wind_down=True, armed_age=99999):
             after = json.load(open(_WD_JSON))
     finally:
         os.chdir(cwd0)
+        os.environ.pop("QT_WIND_DOWN_DRILL", None)
     return sent, out, after
 
 # First wind-down run: nothing armed yet, so a full book is NOT a breach.
@@ -1621,6 +1623,33 @@ check17("...placed AFTER the state commit (clocks safe)",
         _wf17.index("Commit updated state files") < _i_gate, True)
 check17("...and AFTER the data-branch push",
         _wf17.index("Push dashboard data to orphan data branch") < _i_gate, True)
+# (l) THE DRILL. A real breach needs genuinely unsold positions, which can only
+#     be manufactured by buying stock — so the drill injects a synthetic book
+#     into the CHECK ONLY. The load-bearing property is that it CANNOT TRADE:
+#     the closing loop iterates the real broker book, which the drill never
+#     touches. Everything else about it is cosmetic; this is not.
+_s, _o, _st = run_wd({}, state={"armed": True, "closed": 24}, drill="DRILL1,DRILL2")
+check17("DRILL on an empty book places NO order", _s, [])
+check17("...yet still trips the breach", _st.get("breach"), True)
+check17("...labelled DRILL in the banner", "BREACHED [DRILL]" in _o, True)
+check17("...and stamped in the state file", _st.get("drill"), ["DRILL1", "DRILL2"])
+check17("...recording the REAL book separately", _st.get("real_book"), [])
+# The drill must never displace a real close: with a real book present, every
+# real name is still closed and no drill symbol is ever ordered.
+_s, _o, _st = run_wd({"MSFT": 5.0, "BA": 3.0}, state={"armed": True},
+                     drill="DRILL1")
+check17("DRILL does not suppress real closes", sorted(_s), [("BA", 3), ("MSFT", 5)])
+check17("...and never orders the drill symbol",
+        any(t == "DRILL1" for t, _ in _s), False)
+# Inert unless a human types into the dispatch form.
+_s, _o, _st = run_wd({}, state={"armed": True, "closed": 24}, drill="")
+check17("DRILL inert when unset", _st.get("breach"), False)
+check17("workflow wires the drill input, defaulting empty",
+        "QT_WIND_DOWN_DRILL:    ${{ inputs.wind_down_drill }}" in _wf17
+        and "wind_down_drill:" in _wf17, True)
+check17("...and the gate labels a drill failure as such",
+        "DRILL — synthetic, no order was ever placed" in _wf17, True)
+
 check17("...it is the LAST step in the trade job",
         _wf17.index("notify_failure:") > _i_gate
         and "- name:" not in _wf17[_i_gate:_wf17.index("notify_failure:")]
