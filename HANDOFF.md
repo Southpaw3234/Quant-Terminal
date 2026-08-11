@@ -228,6 +228,40 @@ Design points, each pinned by a test:
 
 ⚠️ Trap re-encountered while writing it: the banner used `print("\n" …)` **inside** `_CELL_13_CLOSE_LONG`, a non-raw triple-quoted string, so the escape was interpreted when `quant_runner.py` was parsed and emitted a literal newline *inside* a string literal — unparseable at exec time. Use `chr(10)`. Caught by **validate 1c** (`40 patch strings ast.parse`), which is precisely what that check exists for.
 
+**⑥ ✅ THE INVARIANT WAS FIRE-DRILLED ON REAL INFRASTRUCTURE — and the drill found three defects the unit scenarios could not.** A true breach needs genuinely unsold positions, which can only be manufactured by buying stock, so `QT_WIND_DOWN_DRILL` injects synthetic symbols into the **invariant check only**. It is structurally incapable of trading: the closing loop iterates the real broker book, which the drill never touches. Manual dispatch only; scheduled runs pass empty and it is inert.
+
+**Drill result — run `31525866788`, failed at step 24 `Flat-invariant gate`, which is the pass condition:**
+
+```
+[close_long] *** DRILL *** injecting 2 synthetic position(s) into the INVARIANT CHECK ONLY:
+             DRILL1, DRILL2. Real book is 0; no order can be placed for a drill symbol.
+FLAT INVARIANT BREACHED [DRILL] — the book should be empty and is NOT.
+[patch] close_long [WIND-DOWN all longs, intraday]: closed 0 | errors 0 | book 0
+##[error]FLAT INVARIANT BREACHED [DRILL — synthetic, no order was ever placed]
+```
+
+`notify_failure` fired as intended. ✅ **Non-latching CLEAR also proven live**: the next run (`31529886913`) wrote `armed=True breach=False book=0 drill=0` and went green with `OK — armed and flat` — no manual reset.
+
+🔑 **Three defects surfaced, none of which the scenarios could reach:**
+1. **The invariant could never arm.** `armed` latched only when a run *closed* something, but the book went flat on 8/11 *before* this code existed, so no future run would ever close anything — it would have sat permanently disarmed in exactly the state the account is in. Arming now follows from `QT_WIND_DOWN` being set, which is the declaration that flat is intended.
+2. **The log contradicted its own artifact** — printed `armed=False` over a state file saying `armed:true`.
+3. **The gate printed a self-contradiction** — `0 position(s) still open: DRILL1, DRILL2`, because `last_seen_book` counted the real book while `still_open` listed the invariant's. Under a real breach the number would have been right, so *only a drill could expose it*.
+
+**⑦ 🔴 THE STATE COMMIT WAS BEING DROPPED SILENTLY — pre-existing, unrelated to the invariant, and the most consequential thing found today.** The drill run's own commit was discarded:
+
+```
+CONFLICT (content): Merge conflict in data/predictions/wind_down_state.json
+CONFLICT (content): Merge conflict in data/weights/river_model.pkl
+error: could not apply 470975f
+ ! [rejected]  master -> master (non-fast-forward)
+```
+
+`git pull --rebase || git rebase --abort || true` then `git push origin master || true` **threw away the entire state commit and reported success.** Run `31525866788` was dispatched 19:02 (checkout then), the 19:00 cron pushed at 19:14, this run committed at 19:28 onto the stale base, conflicted, aborted, and was rejected — **every state file it produced (predictions, weights, shadow, stat_arb, the evidence clocks) was lost, invisibly.** That is the **6/09–6/16 clock-freeze shape**, and queued/overlapping runs are routine here, so this is a live path for silently losing a day of evidence.
+
+**FIXED.** (a) Rebase with **`-X theirs`** — in a rebase the upstream is HEAD ("ours") and the replayed commit is "theirs", so this means *our run's file wins*, which is correct for every staged path: they are **regenerated wholesale each run and never merged** (a textual merge of two runs' `predictions.csv`, or of a binary `.pkl`, is corruption, not reconciliation). (b) **Retry ×3, then fail loudly** — a lost commit writes `.qt_state_push_failed`, which the final gate turns into a red run, **checked after the data-branch push** so redness never costs the evidence commit it protects. ✅ Happy path verified live on run `31529886913`: `State commit pushed: 9fe07ec`, and master advanced to `9fe07ec`.
+
+⚠️ **Not verified live: the conflict-resolution path itself.** The race window is seconds wide (the 19:00 push landed at 19:14:05, the drill's checkout within seconds of it) and cannot be forced reliably. It rests on git's rebase semantics plus validate's static assertions — **treat the next real overlap as the proof, and check for `push attempt N rejected` in the log.**
+
 **④ Where this leaves the account.** Flat: 0 positions, `gross $0 (0.00x)`, equity ~$116.6k. Entries stay blocked (`pre-blocked 4/4` today) and both flags remain set, so the intended steady state to `QT_SUNSET_DATE` is an empty book with the evidence clocks still running. The one thing that would change that is a re-entry path outside Cell 13's BUY funnel — **`stat_arb` is not one** (verified: it writes `shadow_positions.json`, and the only `submit_order` in `quant_runner.py` is the close_long block itself).
 
 ---
