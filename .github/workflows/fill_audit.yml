@@ -12,6 +12,11 @@ name: Fill Audit (read-only)
 
 on:
   workflow_dispatch:
+    inputs:
+      symbol:
+        description: 'Optional: dump every broker order AND account activity for one symbol (e.g. HON)'
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -37,4 +42,5 @@ jobs:
           ALPACA_API_KEY:    ${{ secrets.ALPACA_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
           ALPACA_BASE_URL:   'https://paper-api.alpaca.markets'
+          QT_AUDIT_SYMBOL:   ${{ inputs.symbol }}
         run: python fill_audit.py

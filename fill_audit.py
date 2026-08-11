@@ -160,6 +160,40 @@ def main():
     n_ok = (audit["class"] == "OK").sum()
     print(f"\nVERDICT: {n_ok}/{len(audit)} ledger rows are broker-confirmed fills; "
           f"{len(bad)} rows (${bad['notional'].sum():,.0f}) are phantom/partial/unverifiable.")
+
+    # ── Optional single-symbol probe (QT_AUDIT_SYMBOL) ────────────────────────
+    # Added 2026-08-11 for the HON question: the broker position count stepped
+    # 24 -> 25 overnight with no fill on 8/06, 8/07 or 8/10, and the per-day
+    # tables above cannot show a symbol's full history. Orders alone cannot
+    # answer "how did this position appear", so this also reads
+    # /v2/account/activities — the feed that carries NON-TRADE position changes
+    # (SPLIT, MRGR, SPIN, CSD/CSW journals) which never show up as orders.
+    # GETs only, like everything else in this file.
+    sym = _clean(os.environ.get("QT_AUDIT_SYMBOL", "")).upper()
+    if sym:
+        print(f"\n=== symbol probe: {sym} ===")
+        hits = [o for o in orders if o.get("symbol") == sym]
+        print(f"  orders in window: {len(hits)}")
+        for o in hits:
+            fq = float(o.get("filled_qty") or 0)
+            px = float(o.get("filled_avg_price") or 0)
+            print(f"  {o['submitted_at'][:19]}Z  {o['side']:<4} qty={o.get('qty')}"
+                  f"  status={o['status']:<10} filled_qty={fq:g} @ {px:,.2f}")
+        try:
+            acts = api(f"/v2/account/activities?after={start[:10]}&page_size=100")
+            mine = [a for a in acts if a.get("symbol") == sym]
+            print(f"  account activities mentioning {sym}: {len(mine)} "
+                  f"(of {len(acts)} in window)")
+            for a in mine:
+                print(f"    {a.get('date') or a.get('transaction_time','')[:10]}  "
+                      f"type={a.get('activity_type')}  qty={a.get('qty')}  "
+                      f"side={a.get('side','')}  desc={a.get('description','')}")
+            kinds = {}
+            for a in acts:
+                kinds[a.get("activity_type")] = kinds.get(a.get("activity_type"), 0) + 1
+            print(f"  activity types in window: {kinds}")
+        except Exception as e:
+            print(f"  [activities] unavailable ({e}) — orders only")
     return 0
 
 
