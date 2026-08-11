@@ -1625,6 +1625,23 @@ _s, _o, _st = run_wd(_BOOK_0810, state={"armed": True, "closed": 24},
 check17("inert when QT_WIND_DOWN is unset", "FLAT INVARIANT BREACHED" in _o, False)
 
 # The workflow must actually enforce it, and only after the state is committed.
+# (m) 2026-08-11 — the state commit must never be dropped silently again.
+#     Run 31525866788 lost every state file it produced to a rebase conflict
+#     and still reported success.
+check17("push retries instead of `push || true`",
+        "git push origin master || true" in _wf17, False)
+check17("...rebases with -X theirs (our run's file wins)",
+        "git rebase -X theirs origin/master" in _wf17, True)
+check17("...retries the push", "for attempt in 1 2 3" in _wf17, True)
+check17("...and errors loudly when it cannot",
+        "STATE COMMIT LOST" in _wf17, True)
+check17("...leaving a sentinel the gate reads",
+        _wf17.count(".qt_state_push_failed"), 2)
+_i_sent = _wf17.index("touch .qt_state_push_failed")
+check17("...checked AFTER the data-branch push (never costs it)",
+        _wf17.index("Push dashboard data to orphan data branch") <
+        _wf17.index("if [ -f .qt_state_push_failed ]"), True)
+
 check17("workflow has the flat-invariant gate",
         "Flat-invariant gate" in _wf17, True)
 _i_gate = _wf17.index("Flat-invariant gate")

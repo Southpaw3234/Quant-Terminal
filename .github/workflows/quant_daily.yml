@@ -473,8 +473,48 @@ jobs:
             echo "No state changes to commit."
           else
             git commit -m "Auto: ${{ steps.run_type.outputs.type }} cycle $(date -u +'%Y-%m-%d %H:%M UTC')"
-            git pull --rebase --autostash origin master || git rebase --abort || true
-            git push origin master || true
+            # ── Conflict-tolerant, non-silent push (2026-08-11) ───────────────
+            # The old two-liner was `pull --rebase || rebase --abort || true`
+            # then `push || true`, which DROPPED THE ENTIRE STATE COMMIT on a
+            # conflict, silently. Observed live on run 31525866788: dispatched
+            # 19:02 (checkout of master at that moment), the 19:00 cron pushed
+            # at 19:14, this run committed at 19:28 onto the now-stale base,
+            # hit `CONFLICT (content)` on wind_down_state.json and
+            # river_model.pkl, aborted the rebase, and had its push rejected —
+            # every state file that run produced was lost, and the step still
+            # reported success. That is the 6/09-6/16 clock-freeze shape, and
+            # queued/overlapping runs are routine here.
+            #
+            # Two changes:
+            #  1. `-X theirs` during the rebase. In a rebase the upstream is
+            #     HEAD ("ours") and OUR replayed commit is "theirs", so this
+            #     means "our run's file wins". Correct for every path staged
+            #     above: they are REGENERATED WHOLESALE each run, never merged.
+            #     A textual merge of two runs' predictions.csv or a binary
+            #     .pkl would be corruption, not reconciliation.
+            #  2. Retry, then FAIL LOUDLY. Losing state must never again look
+            #     like success. The sentinel is read by the final gate step so
+            #     the run goes red AFTER the data-branch push, never before.
+            pushed=""
+            for attempt in 1 2 3; do
+              if git push origin master 2>&1; then pushed=1; break; fi
+              echo "push attempt ${attempt} rejected — rebasing onto origin/master (ours-wins) and retrying"
+              git fetch -q origin master || true
+              if ! git rebase -X theirs origin/master; then
+                echo "::warning::rebase -X theirs still conflicted on attempt ${attempt}; aborting and retrying"
+                git rebase --abort || true
+                sleep 5
+              fi
+            done
+            if [ -z "$pushed" ]; then
+              echo "::error::STATE COMMIT LOST — could not push after 3 attempts. \
+              Every state file this run produced (predictions, weights, shadow, \
+              stat_arb, evidence clocks) is NOT on master. This is the \
+              6/09-6/16 clock-freeze failure mode."
+              touch .qt_state_push_failed
+            else
+              echo "State commit pushed: $(git rev-parse --short HEAD)"
+            fi
           fi
 
       - name: Push dashboard data to orphan data branch
@@ -570,6 +610,15 @@ jobs:
         if: always()
         run: |
           set -u
+          # A dropped state commit reds the run here rather than in the commit
+          # step itself, so the data-branch push still happens first. Checked
+          # BEFORE the invariant: if the state file never reached master, the
+          # invariant's own inputs are untrustworthy anyway.
+          if [ -f .qt_state_push_failed ]; then
+            echo "::error::STATE COMMIT LOST this run — see the commit step. \
+            Evidence files are not on master; the clocks did not advance."
+            exit 1
+          fi
           f=data/predictions/wind_down_state.json
           if [ ! -f "$f" ]; then
             echo "No wind-down state file — invariant not armed. Nothing to check."
