@@ -76,15 +76,36 @@ falling out in file order. `rank_score` / the v2 series replaced it. The
 analyzer prints a `*** WARNING: this series is NOT a valid cross-sectional
 rank-IC ***` banner on the legacy read — **that banner is expected and healthy.**
 
-**5. Settled rows.** Since `41c7d17` the analyzer withholds any day whose exit
-bar is not yet settled, printing `[rank-ic] withholding <date>`. **Previously
-written rows must never change.** If a row that existed last week has a
-different value this week, that is a real regression — say so loudly.
+**5. Settled rows — and the freeze.** Since `41c7d17` the analyzer withholds any
+day whose exit bar is not yet settled, printing `[rank-ic] withholding <date>`.
+That only ever **deferred a row's first write**; it never made written rows
+immutable, and on 8/10 they demonstrably moved (`2026-07-15` `278,0.0959` →
+`279,0.0955`; all 13 rows of `cross_sectional_ls.csv` rewritten).
 
-**6. Attribution.** Dated changes are listed in the checkpoint table. The 8th
-and most recent **model-behaviour** change is `fafd4d6` (sector cap, effective
-8/03); everything since is measurement-only. Attribute shifts to a dated change
+Since **`29c92da` (8/11) the series is append-only** — first write wins, so a
+previously written row *cannot* change. What to check now is the new log line:
+
+```
+[rank-ic] rank_ic: FROZE N recomputed value(s) that would have changed already-written rows
+```
+
+That line is **healthy** — it is the freeze doing its job — but the *magnitude*
+is evidence about price-source stability, so quote it if N is large or a value
+moved a lot. A row that changes anyway is a real regression: say so loudly.
+`QT_RANK_IC_MUTABLE=1` disables the freeze and must never appear on a cron run.
+
+**6. Attribution.** Dated changes are listed in the checkpoint table. The 9th
+and most recent **model-behaviour** change is `65be103` (**`WYFI` added to
+`WATCHLIST`**, effective from the first morning retrain on/after **2026-08-12**);
+the 8th was `fafd4d6` (sector cap, 8/03). Attribute shifts to a dated change
 where one exists, and never read a measurement change as alpha.
+
+⚠️ **`WYFI` moves the equity cross-section 279 → 280.** A rank-IC row with
+`n=280` is that change, not a data problem. Rows written before the retrain keep
+`n=279` — see §5, the series is append-only as of `29c92da` and old rows no
+longer move. If `WYFI` is *absent* from `predictions.csv`, the symbol is
+probably not tradeable and was dropped by the delisted filter or `MIN_ROWS`;
+that is expected behaviour, not a fault.
 
 ## Output
 
