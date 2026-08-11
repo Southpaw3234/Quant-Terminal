@@ -1,12 +1,12 @@
 {
-  "as_of": "2026-08-10",
-  "predictions_60d": 31606,
-  "scored_60d": 30378,
-  "accuracy_60d": 0.4808,
-  "avg_return_60d": 0.0087,
-  "buy_accuracy_60d": 0.4859,
+  "as_of": "2026-08-11",
+  "predictions_60d": 30378,
+  "scored_60d": 29150,
+  "accuracy_60d": 0.4847,
+  "avg_return_60d": 0.0091,
+  "buy_accuracy_60d": 0.4879,
   "best_ticker": "DD",
   "best_return": 2.1072,
-  "worst_ticker": "KLAC",
-  "worst_return": -0.8883
+  "worst_ticker": "CRWD",
+  "worst_return": -0.7148
 }
