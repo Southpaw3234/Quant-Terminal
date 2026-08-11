@@ -3977,9 +3977,14 @@ def _qt_close_long_run(_where="postpatch"):
                     "updated_iso": _t13.strftime("%Y-%m-%dT%H:%M:%SZ",
                                                  _t13.gmtime()),
                 }, indent=2))
-                print(f"  [close_long] flat-invariant state: armed="
-                      f"{_prev_armed13 or _n_closed13 > 0} breach={_breach13} "
-                      f"book={len(_held13)} -> {_wd_path13}")
+                # Print what was actually WRITTEN. This said
+                # `_prev_armed13 or _n_closed13 > 0` while the file recorded
+                # True, so the 18:47Z arming run logged "armed=False" over a
+                # state file saying armed:true — a log that contradicts the
+                # artifact is worse than no log.
+                print(f"  [close_long] flat-invariant state: armed=True "
+                      f"breach={_breach13} book={len(_held13)} "
+                      f"drill={len(_drill13)} -> {_wd_path13}")
             except Exception as _wd_e13:
                 print(f"  [close_long] could not persist flat-invariant state "
                       f"({_wd_e13}) — the next run cannot check it")
