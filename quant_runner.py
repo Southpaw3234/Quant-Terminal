@@ -4061,7 +4061,11 @@ def _qt_close_long_run(_where="postpatch"):
         # off froze this file, while the workflow gate went on reading it — a
         # permanent, confident "OK — armed and flat" off a stale snapshot. The
         # observation must be as fresh as the gate that consumes it.
-        if _armed13 or _WIND_DOWN13:
+        # `_prev_armed13`, not `_armed13`: a DISARM run sets _armed13 False, and
+        # gating on it would skip the write and leave `armed: true` frozen in
+        # the file — the very stale-state failure this change exists to remove.
+        # Standing down must be RECORDED, not merely not-enforced.
+        if _prev_armed13 or _WIND_DOWN13:
             try:
                 import json as _js13w
                 from pathlib import Path as _P13w
