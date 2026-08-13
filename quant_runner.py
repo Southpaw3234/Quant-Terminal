@@ -3848,17 +3848,58 @@ def _qt_close_long_run(_where="postpatch"):
                   f"synthetic position(s) into the INVARIANT CHECK ONLY: "
                   f"{', '.join(_drill13)}. Real book is {len(_held13)}; "
                   f"no order can be placed for a drill symbol.")
-        _breach13 = False
+        # ── LONGS vs SHORTS (2026-08-12) ─────────────────────────────────────
+        # The closing loop below REFUSES to touch a short by design (7/15 abs()
+        # doubler). So a short in the book is a state the wind-down is
+        # structurally incapable of clearing: covering it is a BUY, and
+        # QT_MAX_GROSS=0 blocks every BUY through Cell 13. Reporting it as a
+        # generic breach is what pinned the gate red for five consecutive runs
+        # on 8/12 — and a permanently red gate cannot signal a NEW long
+        # re-entry, which is the one thing this invariant exists to catch.
+        # The two are therefore tracked, and failed, separately.
+        _open_long13 = sorted(_sy13 for _sy13, _qq13 in _inv_book13.items()
+                              if float(_qq13) > 0)
+        _open_short13 = sorted(_sy13 for _sy13, _qq13 in _inv_book13.items()
+                               if float(_qq13) < 0)
+        # QT_FLAT_ACK_SHORT: "HON" or "HON:13". Acknowledging silences the
+        # short-book failure for THAT symbol up to THAT size. A short that
+        # grows past the acked qty — the 7/15 doubler's exact signature — still
+        # pages, and so does any symbol that was never acked. Longs are NEVER
+        # acknowledgeable: they are self-healable, so a red run means the
+        # closer genuinely failed and that must stay loud.
+        _ack13 = {}
+        for _a13 in _os13cl.environ.get("QT_FLAT_ACK_SHORT", "").split(","):
+            _a13 = _a13.strip().upper()
+            if not _a13:
+                continue
+            _asym13, _, _acap13 = _a13.partition(":")
+            try:
+                _ack13[_asym13.strip()] = (abs(float(_acap13))
+                                           if _acap13.strip() else float("inf"))
+            except ValueError:
+                _ack13[_asym13.strip()] = float("inf")
+        # Default -1.0 for an unacked symbol: abs(qty) > -1 is always True, so
+        # anything not named in the env is unacknowledged.
+        _short_unacked13 = [_sy13 for _sy13 in _open_short13
+                            if abs(float(_inv_book13[_sy13]))
+                            > _ack13.get(_sy13, -1.0)]
+        _breach13 = False        # LONGS — self-healable, the re-entry detector
+        _short_breach13 = False  # SHORTS — needs a manual BUY-to-cover
         _armed_at13 = float(_wd_state13.get("armed_at") or 0)
         import time as _t13
         # Grace window: market orders submitted seconds before a run starts are
         # legitimately still unfilled. Only a book that is still populated well
         # after the arming run is evidence of a real failure.
         _stale_enough13 = (_t13.time() - _armed_at13) > 900
-        if (_WIND_DOWN13 and _wd_state13.get("armed")
-                and _inv_book13 and _stale_enough13):
+        _armed_now13 = bool(_WIND_DOWN13 and _wd_state13.get("armed")
+                            and _stale_enough13)
+        # Evaluated independently, on purpose: an acknowledged short must never
+        # be able to suppress the long-side check.
+        if _armed_now13 and _short_unacked13:
+            _short_breach13 = True
+        if _armed_now13 and _open_long13:
             _breach13 = True
-            _open13 = ", ".join(sorted(_inv_book13)[:20])
+            _open13 = ", ".join(_open_long13[:20])
             _tag13 = " [DRILL]" if _drill13 else ""
             # chr(10), not a backslash escape: this whole block is the body of
             # a non-raw triple-quoted string, so an escape here would be
@@ -3871,8 +3912,8 @@ def _qt_close_long_run(_where="postpatch"):
                   f"and is NOT.")
             print(f"  a previous run armed the wind-down at "
                   f"{_wd_state13.get('armed_at_iso', '?')} (closed "
-                  f"{_wd_state13.get('closed', '?')}), yet {len(_inv_book13)} "
-                  f"position(s) are still open:")
+                  f"{_wd_state13.get('closed', '?')}), yet {len(_open_long13)} "
+                  f"LONG position(s) are still open:")
             print(f"  {_open13}")
             print("  Causes to check, in order: orders rejected or never filled;"
                   " get_all_positions() omitting a held name (see HANDOFF 8/11 "
@@ -3888,11 +3929,59 @@ def _qt_close_long_run(_where="postpatch"):
                                   "🚨 Quant-Terminal: FLAT INVARIANT BREACHED"),
                         "color": 16776960 if _drill13 else 15158332,
                         "description": (
-                            f"Wind-down armed, but {len(_inv_book13)} "
+                            f"Wind-down armed, but {len(_open_long13)} LONG "
                             f"position(s) are still open: {_open13}")}]},
                         timeout=10)
                 except Exception:
                     pass
+        # ── SHORT BOOK ───────────────────────────────────────────────────────
+        # Deliberately a DIFFERENT page from the breach above, because the
+        # operator action is different: a breach means "the closer failed, it
+        # will retry next run"; a short book means "no run will ever fix this,
+        # go dispatch a cover". Collapsing them into one message is how 8/12
+        # read as a generic breach for five runs.
+        if _open_short13:
+            _cover13 = ", ".join(
+                f"{_sy13} x{abs(int(float(_inv_book13[_sy13])))}"
+                for _sy13 in _open_short13[:20])
+            if _short_breach13:
+                print(chr(10) + "!" * 68)
+                print("SHORT BOOK — the wind-down CANNOT clear this on its own.")
+                print(f"  {len(_open_short13)} short position(s): {_cover13}")
+                print("  close_long refuses to touch a short by design (the 7/15")
+                print("  abs() doubler), and covering one is a BUY, which")
+                print("  QT_MAX_GROSS=0 blocks. No scheduled run will fix this.")
+                print("  Remedy — dispatch a cover by hand:")
+                print("    gh workflow run position_trim.yml "
+                      "-f mode=execute -f sleeve=short-cover")
+                print("  Or acknowledge it, which keeps the LONG-side invariant")
+                print("  meaningful instead of permanently red:")
+                print("    QT_FLAT_ACK_SHORT='HON:13'")
+                print("!" * 68 + chr(10))
+                _disc13s = _os13cl.environ.get("DISCORD_WEBHOOK_URL", "")
+                if _disc13s:
+                    try:
+                        import requests as _rq13s
+                        _rq13s.post(_disc13s, json={"embeds": [{
+                            "title": ("⚠️ Quant-Terminal: SHORT BOOK "
+                                      "(wind-down cannot self-clear)"),
+                            "color": 15105570,
+                            "description": (
+                                f"{len(_open_short13)} short position(s): "
+                                f"{_cover13}. Dispatch position_trim.yml "
+                                f"sleeve=short-cover to reach flat.")}]},
+                            timeout=10)
+                    except Exception:
+                        pass
+            elif _armed_now13:
+                # `elif _armed_now13`, NOT a bare else: an unarmed run has a
+                # short for ordinary reasons and nobody acknowledged anything.
+                # A bare else here would print "ACKNOWLEDGED" over the 7/15
+                # short book — a log line asserting a human decision that was
+                # never made is worse than no line at all.
+                print(f"  [close_long] short book ACKNOWLEDGED via "
+                      f"QT_FLAT_ACK_SHORT: {_cover13} — book is NOT flat; the "
+                      f"long-side invariant is still enforced.")
         _n_closed13 = 0
         _n_err13 = 0
         _skip13 = {"short": [], "already-flat": []}
@@ -3973,6 +4062,18 @@ def _qt_close_long_run(_where="postpatch"):
                     "last_closed": _n_closed13,
                     "last_errors": _n_err13,
                     "breach": bool(_breach13),
+                    # Split state (2026-08-12). `breach` stays LONG-only so its
+                    # meaning never changed underneath the gate; the short side
+                    # gets its own flag because it needs a different remedy.
+                    "short_breach": bool(_short_breach13),
+                    "open_longs": _open_long13[:40],
+                    "open_shorts": _open_short13[:40],
+                    "short_acked": sorted(set(_open_short13)
+                                          - set(_short_unacked13)),
+                    # The one unambiguous answer to "are we done?". An
+                    # acknowledged short is silenced, NOT flat, and the gate
+                    # must never print "armed and flat" while one is open.
+                    "flat": not _inv_book13,
                     # Stamped so a red run in the history is never mistaken for
                     # a real breach months later. A drill NEVER places an order.
                     "drill": sorted(_drill13),
@@ -3987,8 +4088,10 @@ def _qt_close_long_run(_where="postpatch"):
                 # state file saying armed:true — a log that contradicts the
                 # artifact is worse than no log.
                 print(f"  [close_long] flat-invariant state: armed=True "
-                      f"breach={_breach13} book={len(_held13)} "
-                      f"drill={len(_drill13)} -> {_wd_path13}")
+                      f"breach={_breach13} short_breach={_short_breach13} "
+                      f"book={len(_held13)} longs={len(_open_long13)} "
+                      f"shorts={len(_open_short13)} drill={len(_drill13)} "
+                      f"-> {_wd_path13}")
             except Exception as _wd_e13:
                 print(f"  [close_long] could not persist flat-invariant state "
                       f"({_wd_e13}) — the next run cannot check it")

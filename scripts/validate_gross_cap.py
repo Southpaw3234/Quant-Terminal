@@ -1564,7 +1564,7 @@ check17("...and names itself in the log", "intraday]" in _out, True)
 #     cannot appear in `errors`. So once armed, a non-empty book must page.
 _WD_JSON = "data/predictions/wind_down_state.json"
 
-def run_wd(book, state=None, wind_down=True, armed_age=99999, drill=""):
+def run_wd(book, state=None, wind_down=True, armed_age=99999, drill="", ack=""):
     """Run close_long inside a temp cwd with a seeded wind_down_state.json."""
     cwd0, tmp = os.getcwd(), tempfile.mkdtemp()
     os.makedirs(os.path.join(tmp, "data", "predictions"))
@@ -1577,6 +1577,7 @@ def run_wd(book, state=None, wind_down=True, armed_age=99999, drill=""):
             json.dump(st, fh)
     os.chdir(tmp)
     os.environ["QT_WIND_DOWN_DRILL"] = drill
+    os.environ["QT_FLAT_ACK_SHORT"] = ack
     try:
         sent, out = run_cl(book, wind_down=wind_down)
         after = {}
@@ -1585,6 +1586,7 @@ def run_wd(book, state=None, wind_down=True, armed_age=99999, drill=""):
     finally:
         os.chdir(cwd0)
         os.environ.pop("QT_WIND_DOWN_DRILL", None)
+        os.environ.pop("QT_FLAT_ACK_SHORT", None)
     return sent, out, after
 
 # First wind-down run: nothing armed yet, so a full book is NOT a breach.
@@ -1675,6 +1677,69 @@ check17("...and never orders the drill symbol",
 # Inert unless a human types into the dispatch form.
 _s, _o, _st = run_wd({}, state={"armed": True, "closed": 24}, drill="")
 check17("DRILL inert when unset", _st.get("breach"), False)
+
+# (n) 2026-08-12 — THE SHORT DEADLOCK. HON went short; close_long refuses
+#     shorts by design (d, above), while the invariant counted every position
+#     regardless of side. The gate therefore demanded a state the closer was
+#     structurally incapable of producing, and five consecutive runs failed on
+#     a book no scheduled run could ever clear. Worse, a permanently red gate
+#     cannot signal a NEW long re-entry — the one thing it exists to catch.
+#     Longs and shorts are now separate states with separate remedies.
+_ARMED17 = {"armed": True, "closed": 24}
+
+_s, _o, _st = run_wd({"HON": -13.0}, state=_ARMED17)
+check17("short-only book is NOT a long breach", _st.get("breach"), False)
+check17("...but IS flagged as a short book", _st.get("short_breach"), True)
+check17("...naming the manual cover remedy", "sleeve=short-cover" in _o, True)
+check17("...and still submits no order for it", _s, [])
+check17("...recorded separately from longs", _st.get("open_shorts"), ["HON"])
+check17("...and never reported flat", _st.get("flat"), False)
+
+# Acknowledged: silenced, but the book is still not flat and says so.
+_s, _o, _st = run_wd({"HON": -13.0}, state=_ARMED17, ack="HON")
+check17("acked short does not breach", _st.get("short_breach"), False)
+check17("...and says it was acknowledged", "ACKNOWLEDGED" in _o, True)
+check17("...but is still NOT flat", _st.get("flat"), False)
+check17("...and is listed as acked", _st.get("short_acked"), ["HON"])
+
+# 🔑 THE LOAD-BEARING PROPERTY: an acked short must never mask a long re-entry.
+_s, _o, _st = run_wd({"HON": -13.0, "MSFT": 5.0}, state=_ARMED17, ack="HON")
+check17("acked short does NOT mask a long re-entry", _st.get("breach"), True)
+check17("...and the long is still closed", _s, [("MSFT", 5)])
+check17("...while the short is still skipped", "skipped short: HON" in _o, True)
+
+# The ack is qty-capped, so the 7/15 doubler's signature still breaks through.
+check17("ack is qty-capped: a growing short re-breaches",
+        run_wd({"HON": -26.0}, state=_ARMED17, ack="HON:13")[2].get("short_breach"),
+        True)
+check17("...within the cap it stays acked",
+        run_wd({"HON": -13.0}, state=_ARMED17, ack="HON:13")[2].get("short_breach"),
+        False)
+check17("...and an ack never transfers to another symbol",
+        run_wd({"HON": -13.0}, state=_ARMED17, ack="CTAS")[2].get("short_breach"),
+        True)
+
+# A genuinely flat book stays flat, acks or not — no false "not flat".
+check17("empty book is flat", run_wd({}, state=_ARMED17)[2].get("flat"), True)
+
+# An UNARMED run holding a short must not claim anyone acknowledged it. The
+# 7/15 short book was unarmed and nobody had decided anything; a log line
+# asserting a human decision that was never made is worse than no line.
+_s, _o, _st = run_wd({"CTAS": -160.0, "MSFT": 5.0}, state=None)
+check17("unarmed short is never called ACKNOWLEDGED", "ACKNOWLEDGED" in _o, False)
+check17("...and is still reported as skipped", "skipped short: CTAS" in _o, True)
+
+# The gate must act on the short side, and evaluate the long side FIRST so an
+# ack can never short-circuit it.
+check17("gate reads short_breach", "short_breach" in _wf17, True)
+check17("...names the cover remedy", "sleeve=short-cover" in _wf17, True)
+check17("...evaluates the long breach independently of the ack",
+        _wf17.index("if breach:") < _wf17.index("if short_breach:"), True)
+check17("...and no longer exits before the short check",
+        "sys.exit(1)" in _wf17[_wf17.index("if breach:"):
+                               _wf17.index("if short_breach:")], False)
+check17("...refusing to print 'flat' while anything is open",
+        "if rc == 0 and not longs and not shorts:" in _wf17, True)
 check17("workflow wires the drill input, defaulting empty",
         "QT_WIND_DOWN_DRILL:    ${{ inputs.wind_down_drill }}" in _wf17
         and "wind_down_drill:" in _wf17, True)

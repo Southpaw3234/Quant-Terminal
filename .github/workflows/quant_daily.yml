@@ -628,18 +628,41 @@ jobs:
           import json, sys, pathlib
           s = json.loads(pathlib.Path("data/predictions/wind_down_state.json").read_text() or "{}")
           armed, breach = s.get("armed"), s.get("breach")
-          book, still = s.get("last_seen_book"), s.get("still_open") or []
-          print(f"armed={armed} breach={breach} last_seen_book={book} "
+          short_breach = s.get("short_breach")
+          book = s.get("last_seen_book")
+          longs = s.get("open_longs") or []
+          shorts = s.get("open_shorts") or []
+          acked = s.get("short_acked") or []
+          print(f"armed={armed} breach={breach} short_breach={short_breach} "
+                f"last_seen_book={book} longs={len(longs)} shorts={len(shorts)} "
                 f"last_closed={s.get('last_closed')} errors={s.get('last_errors')}")
           if not armed:
               print("Wind-down not armed yet — nothing to enforce."); sys.exit(0)
+          rc = 0
+          # LONG side FIRST and independently. This is the re-entry detector,
+          # and it must stay legible even while a short is acknowledged — a
+          # gate that is already red for an unrelated reason cannot signal a
+          # new breach, which is what the 8/12 deadlock cost us.
           if breach:
               drill = s.get("drill") or []
               tag = " [DRILL — synthetic, no order was ever placed]" if drill else ""
               print(f"::error::FLAT INVARIANT BREACHED{tag} — wind-down armed but "
-                    f"{book} position(s) still open: {', '.join(still[:20])}")
-              sys.exit(1)
-          print(f"OK — armed and flat (book={book}).")
+                    f"{len(longs)} long position(s) still open: {', '.join(longs[:20])}")
+              rc = 1
+          # SHORT side. close_long refuses shorts by design, so this can NEVER
+          # self-clear: it needs a manual BUY-to-cover, or an explicit ack.
+          if short_breach:
+              print(f"::error::SHORT BOOK — {len(shorts)} short position(s) the "
+                    f"wind-down cannot close: {', '.join(shorts[:20])}. Cover with "
+                    f"position_trim.yml sleeve=short-cover, or acknowledge via "
+                    f"QT_FLAT_ACK_SHORT to keep the long-side check meaningful.")
+              rc = 1
+          elif shorts:
+              print(f"::warning::Short book ACKNOWLEDGED ({', '.join(acked[:20])}) "
+                    f"— the book is NOT flat; long-side invariant still enforced.")
+          if rc == 0 and not longs and not shorts:
+              print(f"OK — armed and flat (book={book}).")
+          sys.exit(rc)
           PY
 
   # ── FAILURE ALERTING (added 2026-08-06) ─────────────────────────────────────
