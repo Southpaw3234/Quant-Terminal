@@ -3887,12 +3887,37 @@ def _qt_close_long_run(_where="postpatch"):
         _short_breach13 = False  # SHORTS — needs a manual BUY-to-cover
         _armed_at13 = float(_wd_state13.get("armed_at") or 0)
         import time as _t13
+        # ── SWEEP AND ENFORCEMENT ARE SEPARATE (2026-08-13) ──────────────────
+        # QT_WIND_DOWN used to control BOTH whether close_long sweeps the held
+        # book AND whether the invariant evaluates and persists. That coupling
+        # is a trap: turning the sweep off to close the phantom-long ->
+        # naked-short path (8/11) ALSO froze wind_down_state.json, and the
+        # workflow gate reads that file every run — so it would have printed
+        # "OK -- armed and flat" forever off a stale snapshot, no matter what
+        # the book did. A gate that reports green from a frozen file is worse
+        # than no gate; it is the same class as the WRC gate reading a
+        # permanently-empty file and the sector cap failing open and silent.
+        #
+        # So now: `armed` LATCHES in the state file and means "flat is the
+        # intended state". Enforcement keys off `armed` alone, so the invariant
+        # observes and records on EVERY run. QT_WIND_DOWN controls ONLY whether
+        # the closing loop sweeps. Standing down is deliberate and explicit via
+        # QT_FLAT_DISARM=1, never a side effect of changing the sweep.
+        _prev_armed13 = bool(_wd_state13.get("armed"))
+        _disarm13 = _os13cl.environ.get("QT_FLAT_DISARM", "").strip().lower() in (
+            "1", "true", "yes")
+        _armed13 = bool((_prev_armed13 or _WIND_DOWN13) and not _disarm13)
+        if _disarm13 and _prev_armed13:
+            print("  [close_long] QT_FLAT_DISARM=1 — standing the flat "
+                  "invariant DOWN. It will not enforce again until a "
+                  "QT_WIND_DOWN run re-arms it.")
         # Grace window: market orders submitted seconds before a run starts are
         # legitimately still unfilled. Only a book that is still populated well
         # after the arming run is evidence of a real failure.
         _stale_enough13 = (_t13.time() - _armed_at13) > 900
-        _armed_now13 = bool(_WIND_DOWN13 and _wd_state13.get("armed")
-                            and _stale_enough13)
+        # `_prev_armed13`, not `_armed13`: the run that FIRST arms must not
+        # breach on its own still-unsold book. Preserved from the original.
+        _armed_now13 = bool(_prev_armed13 and not _disarm13 and _stale_enough13)
         # Evaluated independently, on purpose: an acknowledged short must never
         # be able to suppress the long-side check.
         if _armed_now13 and _short_unacked13:
@@ -4030,11 +4055,16 @@ def _qt_close_long_run(_where="postpatch"):
         # this run's own observation, so a later flat run clears it and the
         # workflow gate goes green again. The workflow reads `breach` AFTER the
         # state commit, so the clocks and evidence files are never at risk.
-        if _WIND_DOWN13:
+        #
+        # 🔑 Written on EVERY run once armed, NOT only when QT_WIND_DOWN is set
+        # (2026-08-13). The old `if _WIND_DOWN13:` gate meant turning the sweep
+        # off froze this file, while the workflow gate went on reading it — a
+        # permanent, confident "OK — armed and flat" off a stale snapshot. The
+        # observation must be as fresh as the gate that consumes it.
+        if _armed13 or _WIND_DOWN13:
             try:
                 import json as _js13w
                 from pathlib import Path as _P13w
-                _prev_armed13 = bool(_wd_state13.get("armed"))
                 _P13w("data/predictions").mkdir(parents=True, exist_ok=True)
                 _P13w(_wd_path13).write_text(_js13w.dumps({
                     # Arm on ANY wind-down run, not only one that closed
@@ -4047,7 +4077,9 @@ def _qt_close_long_run(_where="postpatch"):
                     # re-entry would then go uncaught. The first run's own full
                     # book is not a false positive: it arms at the END of the
                     # run, and the next run gets the 900s fill grace.
-                    "armed": True,
+                    # Once latched it stays latched across sweep changes; only
+                    # QT_FLAT_DISARM=1 stands it down.
+                    "armed": _armed13,
                     "armed_at": (_wd_state13.get("armed_at")
                                  if _prev_armed13 else _t13.time()),
                     "armed_at_iso": (_wd_state13.get("armed_at_iso")
@@ -4074,6 +4106,9 @@ def _qt_close_long_run(_where="postpatch"):
                     # acknowledged short is silenced, NOT flat, and the gate
                     # must never print "armed and flat" while one is open.
                     "flat": not _inv_book13,
+                    # Whether the CLOSING LOOP ran this run, recorded separately
+                    # from `armed` so the two can never be confused again.
+                    "sweeping": bool(_WIND_DOWN13),
                     # Stamped so a red run in the history is never mistaken for
                     # a real breach months later. A drill NEVER places an order.
                     "drill": sorted(_drill13),
@@ -4087,11 +4122,11 @@ def _qt_close_long_run(_where="postpatch"):
                 # True, so the 18:47Z arming run logged "armed=False" over a
                 # state file saying armed:true — a log that contradicts the
                 # artifact is worse than no log.
-                print(f"  [close_long] flat-invariant state: armed=True "
-                      f"breach={_breach13} short_breach={_short_breach13} "
-                      f"book={len(_held13)} longs={len(_open_long13)} "
-                      f"shorts={len(_open_short13)} drill={len(_drill13)} "
-                      f"-> {_wd_path13}")
+                print(f"  [close_long] flat-invariant state: armed={_armed13} "
+                      f"sweeping={bool(_WIND_DOWN13)} breach={_breach13} "
+                      f"short_breach={_short_breach13} book={len(_held13)} "
+                      f"longs={len(_open_long13)} shorts={len(_open_short13)} "
+                      f"drill={len(_drill13)} -> {_wd_path13}")
             except Exception as _wd_e13:
                 print(f"  [close_long] could not persist flat-invariant state "
                       f"({_wd_e13}) — the next run cannot check it")

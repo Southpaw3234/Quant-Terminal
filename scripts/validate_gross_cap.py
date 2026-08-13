@@ -1504,8 +1504,17 @@ os.environ.pop("QT_WIND_DOWN", None)
 #     8/06-8/10 state), wind-down without entries off would re-buy what it just
 #     sold. Both must be present, in the same env block, or this fails.
 _wf17 = open(WF13, encoding="utf-8").read()
-check17("workflow sets QT_WIND_DOWN=1", "QT_WIND_DOWN:          '1'" in _wf17, True)
-check17("...alongside QT_MAX_GROSS=0 (no re-entry)",
+# 2026-08-13: the sweep was turned OFF once the book was confirmed flat, so
+# this no longer pins '1'. What it pins instead is the property that actually
+# matters and never changes: ENTRIES ARE OFF. The original hazard this check
+# guarded — entries off WITHOUT wind-down freezing a non-empty book, the
+# 8/06-8/10 state — is now caught by the invariant itself, which observes and
+# reports on every run regardless of the sweep (see the freshness checks
+# below). Pinning the sweep flag would only forbid the correct end state.
+check17("workflow declares QT_WIND_DOWN explicitly",
+        "QT_WIND_DOWN:          '0'" in _wf17 or "QT_WIND_DOWN:          '1'" in _wf17,
+        True)
+check17("...and QT_MAX_GROSS=0 REGARDLESS (no re-entry, ever)",
         "QT_MAX_GROSS:          '0'" in _wf17, True)
 _env17 = _wf17[_wf17.index("      - name: Run trading cycle"):]
 _env17 = _env17[:_env17.index("GIT_USER_EMAIL")]
@@ -1564,7 +1573,8 @@ check17("...and names itself in the log", "intraday]" in _out, True)
 #     cannot appear in `errors`. So once armed, a non-empty book must page.
 _WD_JSON = "data/predictions/wind_down_state.json"
 
-def run_wd(book, state=None, wind_down=True, armed_age=99999, drill="", ack=""):
+def run_wd(book, state=None, wind_down=True, armed_age=99999, drill="", ack="",
+           disarm=False):
     """Run close_long inside a temp cwd with a seeded wind_down_state.json."""
     cwd0, tmp = os.getcwd(), tempfile.mkdtemp()
     os.makedirs(os.path.join(tmp, "data", "predictions"))
@@ -1578,6 +1588,7 @@ def run_wd(book, state=None, wind_down=True, armed_age=99999, drill="", ack=""):
     os.chdir(tmp)
     os.environ["QT_WIND_DOWN_DRILL"] = drill
     os.environ["QT_FLAT_ACK_SHORT"] = ack
+    os.environ["QT_FLAT_DISARM"] = "1" if disarm else ""
     try:
         sent, out = run_cl(book, wind_down=wind_down)
         after = {}
@@ -1587,6 +1598,7 @@ def run_wd(book, state=None, wind_down=True, armed_age=99999, drill="", ack=""):
         os.chdir(cwd0)
         os.environ.pop("QT_WIND_DOWN_DRILL", None)
         os.environ.pop("QT_FLAT_ACK_SHORT", None)
+        os.environ.pop("QT_FLAT_DISARM", None)
     return sent, out, after
 
 # First wind-down run: nothing armed yet, so a full book is NOT a breach.
@@ -1621,10 +1633,45 @@ check17("...and stays armed", _st.get("armed"), True)
 _s, _o, _st = run_wd(_BOOK_0810, state={"armed": True, "closed": 24}, armed_age=60)
 check17("no breach inside the 15-min fill grace", _st.get("breach"), False)
 
-# Wind-down off: the invariant must be inert, not page on a normal book.
+# ⚠️ SUPERSEDED 2026-08-13. This previously asserted the OPPOSITE — that the
+# invariant goes inert when QT_WIND_DOWN is unset. That coupling was the trap:
+# turning the sweep off to close the phantom-long -> naked-short path also
+# froze wind_down_state.json, and the workflow gate kept reading it, so it
+# would have reported "armed and flat" forever off a stale snapshot. `armed`
+# now LATCHES and enforcement keys off it alone; QT_WIND_DOWN controls only
+# whether the closing loop sweeps. Standing down is explicit (QT_FLAT_DISARM).
 _s, _o, _st = run_wd(_BOOK_0810, state={"armed": True, "closed": 24},
                      wind_down=False)
-check17("inert when QT_WIND_DOWN is unset", "FLAT INVARIANT BREACHED" in _o, False)
+check17("armed + sweep OFF still enforces", "FLAT INVARIANT BREACHED" in _o, True)
+check17("...and submits NOT ONE order", _s, [])
+check17("...while recording that it did not sweep", _st.get("sweeping"), False)
+check17("...and stays armed across the sweep change", _st.get("armed"), True)
+# 🔑 THE TRAP ITSELF: the observation must be refreshed even with the sweep
+# off, or the gate consumes a frozen file.
+check17("state file is REWRITTEN with the sweep off",
+        bool(_st.get("updated_iso")), True)
+check17("...carrying this run's real book, not the old one",
+        _st.get("last_seen_book"), 24)
+
+# QT_FLAT_DISARM is the only way to stand the invariant down, and it is loud.
+_s, _o, _st = run_wd(_BOOK_0810, state={"armed": True, "closed": 24},
+                     wind_down=False, disarm=True)
+check17("QT_FLAT_DISARM stands the invariant down", _st.get("armed"), False)
+check17("...says so out loud", "standing the flat" in _o.lower()
+        or "QT_FLAT_DISARM" in _o, True)
+check17("...and stops breaching", "FLAT INVARIANT BREACHED" in _o, False)
+
+# Never armed at all (fresh repo / local paper): inert, as it always was.
+_s, _o, _st = run_wd(_BOOK_0810, state=None, wind_down=False)
+check17("never-armed + sweep off = inert", "FLAT INVARIANT BREACHED" in _o, False)
+check17("...and does not arm itself without a wind-down run",
+        bool(_st.get("armed")), False)
+
+# The gate must refuse to assert flatness off a stale observation.
+check17("gate has a freshness check", "STATE IS STALE" in _wf17, True)
+check17("...reading updated_iso", "updated_iso" in _wf17, True)
+check17("...and failing, not warning, when it cannot parse it",
+        "Treat as UNKNOWN, not flat" in _wf17, True)
 
 # The workflow must actually enforce it, and only after the state is committed.
 # (m) 2026-08-11 — the state commit must never be dropped silently again.

@@ -296,7 +296,22 @@ jobs:
           # once the book is empty, later runs close 0 and say so. Reversible
           # by removing this line, though fills are not.
           # Validated: validate §17, 22 scenarios (run 31417929408).
-          QT_WIND_DOWN:          '1'
+          #
+          # ── TURNED OFF 2026-08-13, ONLY AFTER THE BOOK WAS CONFIRMED FLAT ──
+          # The sweep has done its job and is now a liability rather than an
+          # asset: on 8/11 it read a PHANTOM long 13 in HON from
+          # get_all_positions() — a name with zero filled buys in the window,
+          # flat since 7/20 — and "closed" it into a naked short (8/12 ledger
+          # ⑦). With the book empty there is nothing left to sweep, and every
+          # further run only re-exposes the account to that path.
+          #
+          # 🔑 This does NOT disarm the flat invariant. `armed` latches in
+          # wind_down_state.json and enforcement keys off it, so the re-entry
+          # detector keeps observing and recording on every run. Standing it
+          # down is deliberate and explicit via QT_FLAT_DISARM=1. Entries stay
+          # blocked by QT_MAX_GROSS='0' above — that pair is what keeps the
+          # book at zero.
+          QT_WIND_DOWN:          '0'
           # Fire-drill for the flat invariant. Empty on every scheduled run, so
           # this is inert unless a human types symbols into the dispatch form.
           # Injects into the invariant CHECK ONLY — the closing loop iterates
@@ -639,6 +654,28 @@ jobs:
           if not armed:
               print("Wind-down not armed yet — nothing to enforce."); sys.exit(0)
           rc = 0
+          # ── FRESHNESS (2026-08-13) ────────────────────────────────────────
+          # This gate is only as good as the observation behind it. The state
+          # write used to be gated on QT_WIND_DOWN, so turning the sweep off
+          # froze the file while this kept reading it — a confident "armed and
+          # flat" off a stale snapshot, forever. The write is decoupled now,
+          # but assert it rather than trust it: an unwritten file means Cell 13
+          # never observed the book this run, and "flat" is then a claim about
+          # the past, not the present.
+          import datetime as _dt
+          _u = s.get("updated_iso") or ""
+          try:
+              _age = (_dt.datetime.now(_dt.timezone.utc)
+                      - _dt.datetime.strptime(_u, "%Y-%m-%dT%H:%M:%SZ")
+                        .replace(tzinfo=_dt.timezone.utc)).total_seconds()
+          except Exception:
+              _age = None
+          if _age is None or _age > 21600:
+              print(f"::error::FLAT-INVARIANT STATE IS STALE (updated_iso={_u!r}, "
+                    f"age={'unparseable' if _age is None else int(_age)}s) — Cell 13 "
+                    f"did not record an observation this run, so this gate cannot "
+                    f"assert anything about the book. Treat as UNKNOWN, not flat.")
+              rc = 1
           # LONG side FIRST and independently. This is the re-entry detector,
           # and it must stay legible even while a short is acknowledged — a
           # gate that is already red for an unrelated reason cannot signal a
