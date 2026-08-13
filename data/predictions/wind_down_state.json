@@ -5,7 +5,14 @@
   "last_seen_book": 1,
   "last_closed": 0,
   "last_errors": 0,
-  "breach": true,
+  "breach": false,
+  "short_breach": true,
+  "open_longs": [],
+  "open_shorts": [
+    "HON"
+  ],
+  "short_acked": [],
+  "flat": false,
   "drill": [],
   "still_open": [
     "HON"
@@ -13,5 +20,5 @@
   "real_book": [
     "HON"
   ],
-  "updated_iso": "2026-08-12T22:29:43Z"
+  "updated_iso": "2026-08-13T15:46:37Z"
 }
