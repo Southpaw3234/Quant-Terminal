@@ -1,2137 +1,2137 @@
 {
   "A": {
-    "intraday_score": 0.2798,
+    "intraday_score": 0.2548,
     "signal": "SELL",
-    "confidence": 0.4404,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.4904,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "AAPL": {
-    "intraday_score": 0.7534,
+    "intraday_score": 0.7206,
     "signal": "BUY",
-    "confidence": 0.5068,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.4412,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "ABBV": {
-    "intraday_score": 0.5568,
-    "signal": "BUY",
-    "confidence": 0.1136,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.4899,
+    "signal": "HOLD",
+    "confidence": 0.0202,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "ABNB": {
-    "intraday_score": 0.4286,
+    "intraday_score": 0.2989,
     "signal": "SELL",
-    "confidence": 0.1428,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.4022,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "ABT": {
-    "intraday_score": 0.348,
+    "intraday_score": 0.3559,
     "signal": "SELL",
-    "confidence": 0.304,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2882,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "ACN": {
     "intraday_score": 0.4771,
     "signal": "HOLD",
-    "confidence": 0.0458,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0244,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "ADBE": {
-    "intraday_score": 0.3564,
+    "intraday_score": 0.296,
     "signal": "SELL",
-    "confidence": 0.2872,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.408,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "ADI": {
-    "intraday_score": 0.4913,
+    "intraday_score": 0.5078,
     "signal": "HOLD",
-    "confidence": 0.0174,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0156,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "AEP": {
-    "intraday_score": 0.4337,
+    "intraday_score": 0.4216,
     "signal": "SELL",
-    "confidence": 0.1326,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1568,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "AFL": {
     "intraday_score": 0.3478,
     "signal": "SELL",
-    "confidence": 0.3044,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2888,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "AFRM": {
-    "intraday_score": 0.3824,
+    "intraday_score": 0.4493,
     "signal": "SELL",
-    "confidence": 0.2352,
-    "n_train_days": 61,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1014,
+    "n_train_days": 60,
+    "generated": "2026-08-13T16:16"
   },
   "AIG": {
-    "intraday_score": 0.3085,
+    "intraday_score": 0.2641,
     "signal": "SELL",
-    "confidence": 0.383,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.4718,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "ALB": {
-    "intraday_score": 0.157,
+    "intraday_score": 0.1663,
     "signal": "SELL",
-    "confidence": 0.686,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.6674,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "ALGN": {
-    "intraday_score": 0.7284,
+    "intraday_score": 0.7212,
     "signal": "BUY",
-    "confidence": 0.4568,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.4424,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "ALL": {
-    "intraday_score": 0.4142,
-    "signal": "SELL",
-    "confidence": 0.1716,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.4596,
+    "signal": "HOLD",
+    "confidence": 0.0808,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "AMAT": {
-    "intraday_score": 0.4173,
-    "signal": "SELL",
-    "confidence": 0.1654,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.4952,
+    "signal": "HOLD",
+    "confidence": 0.0096,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "AMD": {
     "intraday_score": 0.587,
     "signal": "BUY",
-    "confidence": 0.174,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1556,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "AMGN": {
-    "intraday_score": 0.4145,
+    "intraday_score": 0.401,
     "signal": "SELL",
-    "confidence": 0.171,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.198,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "AMT": {
-    "intraday_score": 0.3568,
+    "intraday_score": 0.3979,
     "signal": "SELL",
-    "confidence": 0.2864,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2042,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "AMZN": {
-    "intraday_score": 0.413,
+    "intraday_score": 0.3771,
     "signal": "SELL",
-    "confidence": 0.174,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2458,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "ANET": {
-    "intraday_score": 0.3162,
+    "intraday_score": 0.3868,
     "signal": "SELL",
-    "confidence": 0.3676,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2264,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "AON": {
-    "intraday_score": 0.6591,
+    "intraday_score": 0.571,
     "signal": "BUY",
-    "confidence": 0.3182,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.142,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "APA": {
-    "intraday_score": 0.5869,
+    "intraday_score": 0.574,
     "signal": "BUY",
-    "confidence": 0.1738,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.148,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "APD": {
-    "intraday_score": 0.2272,
+    "intraday_score": 0.2366,
     "signal": "SELL",
-    "confidence": 0.5456,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.5268,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "APTV": {
     "intraday_score": 0.4124,
     "signal": "SELL",
-    "confidence": 0.1752,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1564,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "ARKK": {
-    "intraday_score": 0.4072,
-    "signal": "SELL",
-    "confidence": 0.1856,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.4722,
+    "signal": "HOLD",
+    "confidence": 0.0556,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "ASML": {
     "intraday_score": 0.5,
     "signal": "HOLD",
-    "confidence": 0.0,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0222,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "ATO": {
-    "intraday_score": 0.3606,
+    "intraday_score": 0.4069,
     "signal": "SELL",
-    "confidence": 0.2788,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1862,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "AVB": {
     "intraday_score": 0.4773,
     "signal": "HOLD",
-    "confidence": 0.0454,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0242,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "AVGO": {
-    "intraday_score": 0.2199,
+    "intraday_score": 0.222,
     "signal": "SELL",
-    "confidence": 0.5602,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.556,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "AWK": {
-    "intraday_score": 0.3858,
+    "intraday_score": 0.4045,
     "signal": "SELL",
-    "confidence": 0.2284,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.191,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "AXP": {
-    "intraday_score": 0.3151,
+    "intraday_score": 0.3211,
     "signal": "SELL",
-    "confidence": 0.3698,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.3578,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "BA": {
-    "intraday_score": 0.5733,
+    "intraday_score": 0.5838,
     "signal": "BUY",
-    "confidence": 0.1466,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1676,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "BAC": {
-    "intraday_score": 0.5589,
-    "signal": "BUY",
-    "confidence": 0.1178,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.4492,
+    "signal": "SELL",
+    "confidence": 0.1016,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "BAX": {
-    "intraday_score": 0.73,
+    "intraday_score": 0.6966,
     "signal": "BUY",
-    "confidence": 0.46,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.3932,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "BKNG": {
-    "intraday_score": 0.5129,
-    "signal": "HOLD",
-    "confidence": 0.0258,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.2914,
+    "signal": "SELL",
+    "confidence": 0.4172,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "BKR": {
-    "intraday_score": 0.4329,
+    "intraday_score": 0.3836,
     "signal": "SELL",
-    "confidence": 0.1342,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2328,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "BLK": {
-    "intraday_score": 0.3677,
+    "intraday_score": 0.3632,
     "signal": "SELL",
-    "confidence": 0.2646,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2736,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "BMY": {
-    "intraday_score": 0.3261,
+    "intraday_score": 0.3111,
     "signal": "SELL",
-    "confidence": 0.3478,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.3778,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "BSX": {
     "intraday_score": 0.2391,
     "signal": "SELL",
-    "confidence": 0.5218,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.5556,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "BTC-USD": {
     "intraday_score": 0.4168,
     "signal": "SELL",
     "confidence": 0.1664,
-    "n_train_days": 65,
-    "generated": "2026-08-13T15:59"
+    "n_train_days": 64,
+    "generated": "2026-08-13T16:16"
   },
   "C": {
-    "intraday_score": 0.2096,
+    "intraday_score": 0.1948,
     "signal": "SELL",
-    "confidence": 0.5808,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.6104,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "CAG": {
-    "intraday_score": 0.4046,
+    "intraday_score": 0.3902,
     "signal": "SELL",
-    "confidence": 0.1908,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2196,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "CAT": {
-    "intraday_score": 0.5217,
+    "intraday_score": 0.5109,
     "signal": "HOLD",
-    "confidence": 0.0434,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0218,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "CB": {
-    "intraday_score": 0.4413,
-    "signal": "SELL",
-    "confidence": 0.1174,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.4803,
+    "signal": "HOLD",
+    "confidence": 0.0394,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "CCI": {
-    "intraday_score": 0.3295,
+    "intraday_score": 0.27,
     "signal": "SELL",
-    "confidence": 0.341,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.46,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "CCL": {
-    "intraday_score": 0.3791,
+    "intraday_score": 0.3761,
     "signal": "SELL",
-    "confidence": 0.2418,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2478,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "CDNS": {
     "intraday_score": 0.3913,
     "signal": "SELL",
-    "confidence": 0.2174,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2444,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "CE": {
-    "intraday_score": 0.3683,
+    "intraday_score": 0.3545,
     "signal": "SELL",
-    "confidence": 0.2634,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.291,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "CF": {
-    "intraday_score": 0.372,
+    "intraday_score": 0.3759,
     "signal": "SELL",
-    "confidence": 0.256,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2482,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "CHD": {
-    "intraday_score": 0.3331,
+    "intraday_score": 0.4187,
     "signal": "SELL",
-    "confidence": 0.3338,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1626,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "CHRW": {
-    "intraday_score": 0.7697,
+    "intraday_score": 0.7624,
     "signal": "BUY",
-    "confidence": 0.5394,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.5248,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "CHTR": {
-    "intraday_score": 0.3352,
+    "intraday_score": 0.3186,
     "signal": "SELL",
-    "confidence": 0.3296,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.3628,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "CI": {
-    "intraday_score": 0.5384,
+    "intraday_score": 0.5481,
     "signal": "HOLD",
-    "confidence": 0.0768,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0962,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "CL": {
-    "intraday_score": 0.2852,
+    "intraday_score": 0.3784,
     "signal": "SELL",
-    "confidence": 0.4296,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2432,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "CLX": {
-    "intraday_score": 0.3935,
+    "intraday_score": 0.3976,
     "signal": "SELL",
-    "confidence": 0.213,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2048,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "CMCSA": {
-    "intraday_score": 0.227,
+    "intraday_score": 0.1894,
     "signal": "SELL",
-    "confidence": 0.546,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.6212,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "CME": {
-    "intraday_score": 0.2263,
+    "intraday_score": 0.2441,
     "signal": "SELL",
-    "confidence": 0.5474,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.5118,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "CMG": {
-    "intraday_score": 0.5208,
-    "signal": "HOLD",
-    "confidence": 0.0416,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.4376,
+    "signal": "SELL",
+    "confidence": 0.1248,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "CMI": {
-    "intraday_score": 0.6014,
+    "intraday_score": 0.5636,
     "signal": "BUY",
-    "confidence": 0.2028,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1272,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "CMS": {
     "intraday_score": 0.3913,
     "signal": "SELL",
-    "confidence": 0.2174,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "CNP": {
-    "intraday_score": 0.2024,
+    "intraday_score": 0.1979,
     "signal": "SELL",
-    "confidence": 0.5952,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.6042,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "COF": {
     "intraday_score": 0.3913,
     "signal": "SELL",
-    "confidence": 0.2174,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.244,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "COIN": {
-    "intraday_score": 0.3569,
+    "intraday_score": 0.352,
     "signal": "SELL",
-    "confidence": 0.2862,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.296,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "COP": {
-    "intraday_score": 0.6519,
+    "intraday_score": 0.5773,
     "signal": "BUY",
-    "confidence": 0.3038,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1546,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "COR": {
-    "intraday_score": 0.5229,
+    "intraday_score": 0.5129,
     "signal": "HOLD",
-    "confidence": 0.0458,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0258,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "COST": {
-    "intraday_score": 0.6449,
+    "intraday_score": 0.6515,
     "signal": "BUY",
-    "confidence": 0.2898,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.303,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "CRM": {
-    "intraday_score": 0.3553,
+    "intraday_score": 0.3347,
     "signal": "SELL",
-    "confidence": 0.2894,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.3306,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "CRWD": {
-    "intraday_score": 0.4233,
+    "intraday_score": 0.4282,
     "signal": "SELL",
-    "confidence": 0.1534,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1436,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "CSCO": {
     "intraday_score": 0.4783,
     "signal": "HOLD",
-    "confidence": 0.0434,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0222,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "CSX": {
     "intraday_score": 0.5012,
     "signal": "HOLD",
-    "confidence": 0.0024,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0234,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "CTAS": {
-    "intraday_score": 0.7812,
+    "intraday_score": 0.766,
     "signal": "BUY",
-    "confidence": 0.5624,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.532,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "CVS": {
-    "intraday_score": 0.5213,
+    "intraday_score": 0.4771,
     "signal": "HOLD",
-    "confidence": 0.0426,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0458,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "CVX": {
-    "intraday_score": 0.7194,
+    "intraday_score": 0.7106,
     "signal": "BUY",
-    "confidence": 0.4388,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.4212,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "D": {
-    "intraday_score": 0.1988,
+    "intraday_score": 0.223,
     "signal": "SELL",
-    "confidence": 0.6024,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.554,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "DD": {
-    "intraday_score": 0.2872,
+    "intraday_score": 0.2711,
     "signal": "SELL",
-    "confidence": 0.4256,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.4578,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "DDOG": {
-    "intraday_score": 0.5091,
-    "signal": "HOLD",
-    "confidence": 0.0182,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.4309,
+    "signal": "SELL",
+    "confidence": 0.1382,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "DE": {
-    "intraday_score": 0.4955,
+    "intraday_score": 0.5301,
     "signal": "HOLD",
-    "confidence": 0.009,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0602,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "DG": {
-    "intraday_score": 0.3186,
+    "intraday_score": 0.3923,
     "signal": "SELL",
-    "confidence": 0.3628,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2154,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "DHR": {
-    "intraday_score": 0.5618,
-    "signal": "BUY",
-    "confidence": 0.1236,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.533,
+    "signal": "HOLD",
+    "confidence": 0.066,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "DIA": {
-    "intraday_score": 0.6969,
+    "intraday_score": 0.6824,
     "signal": "BUY",
-    "confidence": 0.3938,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.3648,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "DIS": {
-    "intraday_score": 0.2182,
+    "intraday_score": 0.2223,
     "signal": "SELL",
-    "confidence": 0.5636,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.5554,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "DLR": {
-    "intraday_score": 0.2069,
+    "intraday_score": 0.1974,
     "signal": "SELL",
-    "confidence": 0.5862,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.6052,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "DLTR": {
-    "intraday_score": 0.6125,
+    "intraday_score": 0.599,
     "signal": "BUY",
-    "confidence": 0.225,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.198,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "DOGE-USD": {
     "intraday_score": 0.3077,
     "signal": "SELL",
     "confidence": 0.3846,
     "n_train_days": 36,
-    "generated": "2026-08-13T15:59"
+    "generated": "2026-08-13T16:16"
   },
   "DOW": {
-    "intraday_score": 0.3332,
+    "intraday_score": 0.416,
     "signal": "SELL",
-    "confidence": 0.3336,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.168,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "DPZ": {
-    "intraday_score": 0.289,
+    "intraday_score": 0.3081,
     "signal": "SELL",
-    "confidence": 0.422,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.3838,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "DUK": {
-    "intraday_score": 0.4623,
+    "intraday_score": 0.4896,
     "signal": "HOLD",
-    "confidence": 0.0754,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0208,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "DVN": {
-    "intraday_score": 0.238,
+    "intraday_score": 0.2357,
     "signal": "SELL",
-    "confidence": 0.524,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.5286,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "DXCM": {
-    "intraday_score": 0.3668,
+    "intraday_score": 0.4067,
     "signal": "SELL",
-    "confidence": 0.2664,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1866,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "EA": {
     "intraday_score": 0.5036,
     "signal": "HOLD",
     "confidence": 0.0072,
     "n_train_days": 56,
-    "generated": "2026-08-13T15:59"
+    "generated": "2026-08-13T16:16"
   },
   "ECL": {
-    "intraday_score": 0.6372,
+    "intraday_score": 0.6446,
     "signal": "BUY",
-    "confidence": 0.2744,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2892,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "ED": {
-    "intraday_score": 0.3894,
+    "intraday_score": 0.3875,
     "signal": "SELL",
-    "confidence": 0.2212,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.225,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "EL": {
     "intraday_score": 0.3259,
     "signal": "SELL",
-    "confidence": 0.3482,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.3334,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "ELV": {
-    "intraday_score": 0.5386,
+    "intraday_score": 0.4787,
     "signal": "HOLD",
-    "confidence": 0.0772,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0426,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "EMR": {
-    "intraday_score": 0.4101,
+    "intraday_score": 0.4042,
     "signal": "SELL",
-    "confidence": 0.1798,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1916,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "ENPH": {
-    "intraday_score": 0.3152,
+    "intraday_score": 0.2326,
     "signal": "SELL",
-    "confidence": 0.3696,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.5348,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "EOG": {
-    "intraday_score": 0.4581,
-    "signal": "HOLD",
-    "confidence": 0.0838,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.4453,
+    "signal": "SELL",
+    "confidence": 0.1094,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "EQIX": {
-    "intraday_score": 0.6873,
+    "intraday_score": 0.6668,
     "signal": "BUY",
-    "confidence": 0.3746,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.3336,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "EQR": {
-    "intraday_score": 0.7217,
+    "intraday_score": 0.6708,
     "signal": "BUY",
-    "confidence": 0.4434,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.3416,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "ESS": {
-    "intraday_score": 0.5302,
-    "signal": "HOLD",
-    "confidence": 0.0604,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.5934,
+    "signal": "BUY",
+    "confidence": 0.1868,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "ETH-USD": {
-    "intraday_score": 0.4676,
-    "signal": "HOLD",
-    "confidence": 0.0648,
-    "n_train_days": 67,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.4049,
+    "signal": "SELL",
+    "confidence": 0.1902,
+    "n_train_days": 66,
+    "generated": "2026-08-13T16:16"
   },
   "ETN": {
-    "intraday_score": 0.5646,
+    "intraday_score": 0.5749,
     "signal": "BUY",
-    "confidence": 0.1292,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1498,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "ETR": {
-    "intraday_score": 0.6845,
+    "intraday_score": 0.6807,
     "signal": "BUY",
-    "confidence": 0.369,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.3614,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "EW": {
-    "intraday_score": 0.6006,
+    "intraday_score": 0.5833,
     "signal": "BUY",
-    "confidence": 0.2012,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1666,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "EXC": {
-    "intraday_score": 0.4703,
-    "signal": "HOLD",
-    "confidence": 0.0594,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
-  },
-  "EXPD": {
-    "intraday_score": 0.5377,
+    "intraday_score": 0.4623,
     "signal": "HOLD",
     "confidence": 0.0754,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
+  },
+  "EXPD": {
+    "intraday_score": 0.5754,
+    "signal": "BUY",
+    "confidence": 0.1508,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "EXPE": {
-    "intraday_score": 0.7266,
+    "intraday_score": 0.7206,
     "signal": "BUY",
-    "confidence": 0.4532,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.4412,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "EXR": {
-    "intraday_score": 0.3147,
+    "intraday_score": 0.3122,
     "signal": "SELL",
-    "confidence": 0.3706,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.3756,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "F": {
     "intraday_score": 0.413,
     "signal": "SELL",
-    "confidence": 0.174,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "FANG": {
-    "intraday_score": 0.5506,
-    "signal": "BUY",
-    "confidence": 0.1012,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.4992,
+    "signal": "HOLD",
+    "confidence": 0.0016,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "FAST": {
-    "intraday_score": 0.6698,
+    "intraday_score": 0.6597,
     "signal": "BUY",
-    "confidence": 0.3396,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.3194,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "FCX": {
-    "intraday_score": 0.4742,
-    "signal": "HOLD",
-    "confidence": 0.0516,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.411,
+    "signal": "SELL",
+    "confidence": 0.178,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "FDX": {
-    "intraday_score": 0.6289,
+    "intraday_score": 0.6091,
     "signal": "BUY",
-    "confidence": 0.2578,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2182,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "FE": {
-    "intraday_score": 0.5821,
+    "intraday_score": 0.5913,
     "signal": "BUY",
-    "confidence": 0.1642,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1826,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "FSLR": {
-    "intraday_score": 0.5586,
+    "intraday_score": 0.612,
     "signal": "BUY",
-    "confidence": 0.1172,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.224,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "FTNT": {
-    "intraday_score": 0.3725,
+    "intraday_score": 0.398,
     "signal": "SELL",
-    "confidence": 0.255,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.204,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "FTV": {
     "intraday_score": 0.413,
     "signal": "SELL",
-    "confidence": 0.174,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1556,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "GD": {
-    "intraday_score": 0.5762,
+    "intraday_score": 0.6177,
     "signal": "BUY",
-    "confidence": 0.1524,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2354,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "GE": {
-    "intraday_score": 0.5331,
+    "intraday_score": 0.5415,
     "signal": "HOLD",
-    "confidence": 0.0662,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.083,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "GILD": {
-    "intraday_score": 0.239,
+    "intraday_score": 0.2282,
     "signal": "SELL",
-    "confidence": 0.522,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.5436,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "GIS": {
-    "intraday_score": 0.7179,
+    "intraday_score": 0.72,
     "signal": "BUY",
-    "confidence": 0.4358,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.44,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "GLD": {
-    "intraday_score": 0.4506,
+    "intraday_score": 0.5017,
     "signal": "HOLD",
-    "confidence": 0.0988,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0034,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "GM": {
-    "intraday_score": 0.2506,
+    "intraday_score": 0.2505,
     "signal": "SELL",
-    "confidence": 0.4988,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.499,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "GOOGL": {
-    "intraday_score": 0.4553,
+    "intraday_score": 0.4667,
     "signal": "HOLD",
-    "confidence": 0.0894,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0666,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "GS": {
     "intraday_score": 0.3478,
     "signal": "SELL",
-    "confidence": 0.3044,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.3334,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "GWW": {
-    "intraday_score": 0.4632,
+    "intraday_score": 0.4625,
     "signal": "HOLD",
-    "confidence": 0.0736,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.075,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "HAL": {
-    "intraday_score": 0.3311,
+    "intraday_score": 0.344,
     "signal": "SELL",
-    "confidence": 0.3378,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.312,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "HD": {
-    "intraday_score": 0.6086,
+    "intraday_score": 0.5566,
     "signal": "BUY",
-    "confidence": 0.2172,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1132,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "HIG": {
-    "intraday_score": 0.5582,
-    "signal": "BUY",
-    "confidence": 0.1164,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.5232,
+    "signal": "HOLD",
+    "confidence": 0.0464,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "HLT": {
-    "intraday_score": 0.3397,
+    "intraday_score": 0.3822,
     "signal": "SELL",
-    "confidence": 0.3206,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2356,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "HON": {
-    "intraday_score": 0.465,
+    "intraday_score": 0.4634,
     "signal": "HOLD",
-    "confidence": 0.07,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0732,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "HOOD": {
-    "intraday_score": 0.4106,
+    "intraday_score": 0.4254,
     "signal": "SELL",
-    "confidence": 0.1788,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1492,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "HRL": {
-    "intraday_score": 0.753,
+    "intraday_score": 0.7371,
     "signal": "BUY",
-    "confidence": 0.506,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.4742,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "HSY": {
-    "intraday_score": 0.4348,
-    "signal": "SELL",
-    "confidence": 0.1304,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.5117,
+    "signal": "HOLD",
+    "confidence": 0.0234,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "HUM": {
-    "intraday_score": 0.4595,
-    "signal": "HOLD",
-    "confidence": 0.081,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.3855,
+    "signal": "SELL",
+    "confidence": 0.229,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "HWM": {
-    "intraday_score": 0.5904,
+    "intraday_score": 0.5774,
     "signal": "BUY",
-    "confidence": 0.1808,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1548,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "HYG": {
-    "intraday_score": 0.3857,
+    "intraday_score": 0.4036,
     "signal": "SELL",
-    "confidence": 0.2286,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1928,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "IBM": {
-    "intraday_score": 0.6235,
+    "intraday_score": 0.64,
     "signal": "BUY",
-    "confidence": 0.247,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.28,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "ICE": {
-    "intraday_score": 0.2935,
+    "intraday_score": 0.3194,
     "signal": "SELL",
-    "confidence": 0.413,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.3612,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "IDXX": {
-    "intraday_score": 0.6982,
+    "intraday_score": 0.7029,
     "signal": "BUY",
-    "confidence": 0.3964,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.4058,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "IFF": {
-    "intraday_score": 0.5641,
+    "intraday_score": 0.6436,
     "signal": "BUY",
-    "confidence": 0.1282,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2872,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "INTC": {
-    "intraday_score": 0.4992,
+    "intraday_score": 0.4699,
     "signal": "HOLD",
-    "confidence": 0.0016,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0602,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "INTU": {
-    "intraday_score": 0.413,
+    "intraday_score": 0.3819,
     "signal": "SELL",
-    "confidence": 0.174,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2362,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "IQV": {
-    "intraday_score": 0.4495,
+    "intraday_score": 0.421,
     "signal": "SELL",
-    "confidence": 0.101,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.158,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "ISRG": {
-    "intraday_score": 0.2247,
+    "intraday_score": 0.2478,
     "signal": "SELL",
-    "confidence": 0.5506,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.5044,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "IT": {
-    "intraday_score": 0.1773,
+    "intraday_score": 0.1824,
     "signal": "SELL",
-    "confidence": 0.6454,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.6352,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "ITW": {
-    "intraday_score": 0.5739,
+    "intraday_score": 0.5956,
     "signal": "BUY",
-    "confidence": 0.1478,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1912,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "IWM": {
-    "intraday_score": 0.6757,
+    "intraday_score": 0.6011,
     "signal": "BUY",
-    "confidence": 0.3514,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2022,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "JNJ": {
-    "intraday_score": 0.733,
+    "intraday_score": 0.7234,
     "signal": "BUY",
-    "confidence": 0.466,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.4468,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "JPM": {
-    "intraday_score": 0.2384,
+    "intraday_score": 0.2366,
     "signal": "SELL",
-    "confidence": 0.5232,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.5268,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "KLAC": {
-    "intraday_score": 0.5013,
+    "intraday_score": 0.512,
     "signal": "HOLD",
-    "confidence": 0.0026,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.024,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "KMI": {
-    "intraday_score": 0.307,
+    "intraday_score": 0.3345,
     "signal": "SELL",
-    "confidence": 0.386,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.331,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "KO": {
-    "intraday_score": 0.3399,
+    "intraday_score": 0.3861,
     "signal": "SELL",
-    "confidence": 0.3202,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2278,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "LIN": {
-    "intraday_score": 0.5077,
+    "intraday_score": 0.5246,
     "signal": "HOLD",
-    "confidence": 0.0154,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0492,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "LLY": {
-    "intraday_score": 0.4656,
-    "signal": "HOLD",
-    "confidence": 0.0688,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.4414,
+    "signal": "SELL",
+    "confidence": 0.1172,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "LMT": {
-    "intraday_score": 0.4345,
+    "intraday_score": 0.3594,
     "signal": "SELL",
-    "confidence": 0.131,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2812,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "LNG": {
-    "intraday_score": 0.6497,
+    "intraday_score": 0.6393,
     "signal": "BUY",
-    "confidence": 0.2994,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2786,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "LOW": {
-    "intraday_score": 0.2046,
+    "intraday_score": 0.2698,
     "signal": "SELL",
-    "confidence": 0.5908,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.4604,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "LQD": {
-    "intraday_score": 0.5081,
-    "signal": "HOLD",
-    "confidence": 0.0162,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.5558,
+    "signal": "BUY",
+    "confidence": 0.1116,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "LRCX": {
-    "intraday_score": 0.5436,
-    "signal": "HOLD",
-    "confidence": 0.0872,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.5556,
+    "signal": "BUY",
+    "confidence": 0.1112,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "LVS": {
-    "intraday_score": 0.2906,
+    "intraday_score": 0.3126,
     "signal": "SELL",
-    "confidence": 0.4188,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.3748,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "LYV": {
-    "intraday_score": 0.5833,
-    "signal": "BUY",
-    "confidence": 0.1666,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.5435,
+    "signal": "HOLD",
+    "confidence": 0.087,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "MA": {
-    "intraday_score": 0.642,
+    "intraday_score": 0.6247,
     "signal": "BUY",
-    "confidence": 0.284,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2494,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "MAR": {
-    "intraday_score": 0.5053,
-    "signal": "HOLD",
-    "confidence": 0.0106,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.5557,
+    "signal": "BUY",
+    "confidence": 0.1114,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "MCD": {
-    "intraday_score": 0.1971,
+    "intraday_score": 0.168,
     "signal": "SELL",
-    "confidence": 0.6058,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.664,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "MCHP": {
-    "intraday_score": 0.4827,
-    "signal": "HOLD",
-    "confidence": 0.0346,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.3487,
+    "signal": "SELL",
+    "confidence": 0.3026,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "MCK": {
-    "intraday_score": 0.5652,
+    "intraday_score": 0.5556,
     "signal": "BUY",
-    "confidence": 0.1304,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1112,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "MCO": {
-    "intraday_score": 0.4705,
-    "signal": "HOLD",
-    "confidence": 0.059,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.4444,
+    "signal": "SELL",
+    "confidence": 0.1112,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "MDLZ": {
-    "intraday_score": 0.4469,
-    "signal": "SELL",
-    "confidence": 0.1062,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.5008,
+    "signal": "HOLD",
+    "confidence": 0.0016,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "MDT": {
-    "intraday_score": 0.3549,
+    "intraday_score": 0.3613,
     "signal": "SELL",
-    "confidence": 0.2902,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2774,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "MET": {
-    "intraday_score": 0.3153,
+    "intraday_score": 0.2403,
     "signal": "SELL",
-    "confidence": 0.3694,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.5194,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "META": {
-    "intraday_score": 0.6049,
+    "intraday_score": 0.6292,
     "signal": "BUY",
-    "confidence": 0.2098,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2584,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "MGM": {
-    "intraday_score": 0.2382,
+    "intraday_score": 0.2513,
     "signal": "SELL",
-    "confidence": 0.5236,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.4974,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "MMM": {
     "intraday_score": 0.3913,
     "signal": "SELL",
-    "confidence": 0.2174,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2444,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "MO": {
-    "intraday_score": 0.4357,
+    "intraday_score": 0.4216,
     "signal": "SELL",
-    "confidence": 0.1286,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1568,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "MOS": {
-    "intraday_score": 0.7265,
+    "intraday_score": 0.7311,
     "signal": "BUY",
-    "confidence": 0.453,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.4622,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "MPC": {
-    "intraday_score": 0.6897,
+    "intraday_score": 0.6767,
     "signal": "BUY",
-    "confidence": 0.3794,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.3534,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "MPWR": {
-    "intraday_score": 0.4176,
+    "intraday_score": 0.4276,
     "signal": "SELL",
-    "confidence": 0.1648,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1448,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "MRK": {
-    "intraday_score": 0.2507,
+    "intraday_score": 0.2196,
     "signal": "SELL",
-    "confidence": 0.4986,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.5608,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "MRVL": {
-    "intraday_score": 0.37,
+    "intraday_score": 0.3558,
     "signal": "SELL",
-    "confidence": 0.26,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2884,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "MS": {
-    "intraday_score": 0.3765,
+    "intraday_score": 0.268,
     "signal": "SELL",
-    "confidence": 0.247,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.464,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "MSFT": {
     "intraday_score": 0.3043,
     "signal": "SELL",
-    "confidence": 0.3914,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.3778,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "MTD": {
-    "intraday_score": 0.5228,
+    "intraday_score": 0.512,
     "signal": "HOLD",
-    "confidence": 0.0456,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.024,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "MU": {
-    "intraday_score": 0.4348,
+    "intraday_score": 0.4222,
     "signal": "SELL",
-    "confidence": 0.1304,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1556,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "NCLH": {
-    "intraday_score": 0.5459,
-    "signal": "HOLD",
-    "confidence": 0.0918,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.5895,
+    "signal": "BUY",
+    "confidence": 0.179,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "NEE": {
-    "intraday_score": 0.4128,
-    "signal": "SELL",
-    "confidence": 0.1744,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.529,
+    "signal": "HOLD",
+    "confidence": 0.058,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "NEM": {
-    "intraday_score": 0.4249,
-    "signal": "SELL",
-    "confidence": 0.1502,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.5004,
+    "signal": "HOLD",
+    "confidence": 0.0008,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "NET": {
-    "intraday_score": 0.7126,
+    "intraday_score": 0.7147,
     "signal": "BUY",
-    "confidence": 0.4252,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.4294,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "NFLX": {
     "intraday_score": 0.3071,
     "signal": "SELL",
-    "confidence": 0.3858,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.3778,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "NKE": {
-    "intraday_score": 0.4348,
-    "signal": "SELL",
-    "confidence": 0.1304,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.5206,
+    "signal": "HOLD",
+    "confidence": 0.0412,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "NOC": {
-    "intraday_score": 0.3832,
+    "intraday_score": 0.3227,
     "signal": "SELL",
-    "confidence": 0.2336,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.3546,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "NOW": {
-    "intraday_score": 0.2334,
+    "intraday_score": 0.2439,
     "signal": "SELL",
-    "confidence": 0.5332,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.5122,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "NSC": {
-    "intraday_score": 0.4569,
+    "intraday_score": 0.4666,
     "signal": "HOLD",
-    "confidence": 0.0862,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0668,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "NUE": {
-    "intraday_score": 0.4772,
+    "intraday_score": 0.4872,
     "signal": "HOLD",
-    "confidence": 0.0456,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0256,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "NVDA": {
-    "intraday_score": 0.2506,
+    "intraday_score": 0.2669,
     "signal": "SELL",
-    "confidence": 0.4988,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.4662,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "NXPI": {
-    "intraday_score": 0.4136,
+    "intraday_score": 0.4227,
     "signal": "SELL",
-    "confidence": 0.1728,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1546,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "O": {
-    "intraday_score": 0.2217,
+    "intraday_score": 0.2153,
     "signal": "SELL",
-    "confidence": 0.5566,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.5694,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "OMC": {
-    "intraday_score": 0.3145,
+    "intraday_score": 0.3455,
     "signal": "SELL",
-    "confidence": 0.371,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.309,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "ON": {
-    "intraday_score": 0.3847,
+    "intraday_score": 0.4041,
     "signal": "SELL",
-    "confidence": 0.2306,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1918,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "ORCL": {
-    "intraday_score": 0.2826,
+    "intraday_score": 0.2667,
     "signal": "SELL",
-    "confidence": 0.4348,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.4666,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "OXY": {
-    "intraday_score": 0.2512,
+    "intraday_score": 0.2375,
     "signal": "SELL",
-    "confidence": 0.4976,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.525,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "PANW": {
-    "intraday_score": 0.7602,
+    "intraday_score": 0.7683,
     "signal": "BUY",
-    "confidence": 0.5204,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.5366,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "PCAR": {
-    "intraday_score": 0.476,
+    "intraday_score": 0.4615,
     "signal": "HOLD",
-    "confidence": 0.048,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.077,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "PEG": {
-    "intraday_score": 0.3241,
+    "intraday_score": 0.3279,
     "signal": "SELL",
-    "confidence": 0.3518,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.3442,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "PEP": {
-    "intraday_score": 0.2446,
+    "intraday_score": 0.2468,
     "signal": "SELL",
-    "confidence": 0.5108,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.5064,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "PFE": {
-    "intraday_score": 0.5374,
+    "intraday_score": 0.5419,
     "signal": "HOLD",
-    "confidence": 0.0748,
-    "n_train_days": 58,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0838,
+    "n_train_days": 57,
+    "generated": "2026-08-13T16:16"
   },
   "PG": {
-    "intraday_score": 0.5793,
+    "intraday_score": 0.5582,
     "signal": "BUY",
-    "confidence": 0.1586,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1164,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "PGR": {
-    "intraday_score": 0.6797,
+    "intraday_score": 0.6888,
     "signal": "BUY",
-    "confidence": 0.3594,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.3776,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "PH": {
-    "intraday_score": 0.4604,
-    "signal": "HOLD",
-    "confidence": 0.0792,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.5858,
+    "signal": "BUY",
+    "confidence": 0.1716,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "PKG": {
-    "intraday_score": 0.5435,
-    "signal": "HOLD",
-    "confidence": 0.087,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.5556,
+    "signal": "BUY",
+    "confidence": 0.1112,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "PLD": {
     "intraday_score": 0.4359,
     "signal": "SELL",
-    "confidence": 0.1282,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1552,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "PLTR": {
-    "intraday_score": 0.7117,
+    "intraday_score": 0.7112,
     "signal": "BUY",
-    "confidence": 0.4234,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.4224,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "PM": {
-    "intraday_score": 0.2457,
+    "intraday_score": 0.2724,
     "signal": "SELL",
-    "confidence": 0.5086,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.4552,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "PNC": {
-    "intraday_score": 0.431,
+    "intraday_score": 0.4126,
     "signal": "SELL",
-    "confidence": 0.138,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1748,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "PODD": {
-    "intraday_score": 0.6247,
+    "intraday_score": 0.6301,
     "signal": "BUY",
-    "confidence": 0.2494,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2602,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "PPG": {
-    "intraday_score": 0.6137,
+    "intraday_score": 0.6219,
     "signal": "BUY",
-    "confidence": 0.2274,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2438,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "PRU": {
-    "intraday_score": 0.677,
+    "intraday_score": 0.6813,
     "signal": "BUY",
-    "confidence": 0.354,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.3626,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "PSA": {
     "intraday_score": 0.4994,
     "signal": "HOLD",
-    "confidence": 0.0012,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0226,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "PSX": {
-    "intraday_score": 0.5791,
-    "signal": "BUY",
-    "confidence": 0.1582,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.5257,
+    "signal": "HOLD",
+    "confidence": 0.0514,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "PYPL": {
-    "intraday_score": 0.3018,
+    "intraday_score": 0.424,
     "signal": "SELL",
-    "confidence": 0.3964,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.152,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "QCOM": {
-    "intraday_score": 0.2572,
+    "intraday_score": 0.2538,
     "signal": "SELL",
-    "confidence": 0.4856,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.4924,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "QQQ": {
-    "intraday_score": 0.4565,
-    "signal": "HOLD",
-    "confidence": 0.087,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.4444,
+    "signal": "SELL",
+    "confidence": 0.1112,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "RCL": {
-    "intraday_score": 0.6192,
-    "signal": "BUY",
-    "confidence": 0.2384,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.4522,
+    "signal": "HOLD",
+    "confidence": 0.0956,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "REGN": {
-    "intraday_score": 0.2637,
+    "intraday_score": 0.23,
     "signal": "SELL",
-    "confidence": 0.4726,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.54,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "RMD": {
-    "intraday_score": 0.4569,
-    "signal": "HOLD",
-    "confidence": 0.0862,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.4081,
+    "signal": "SELL",
+    "confidence": 0.1838,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "ROP": {
-    "intraday_score": 0.4093,
+    "intraday_score": 0.4398,
     "signal": "SELL",
-    "confidence": 0.1814,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1204,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "ROST": {
     "intraday_score": 0.413,
     "signal": "SELL",
-    "confidence": 0.174,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1556,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "RTX": {
-    "intraday_score": 0.481,
+    "intraday_score": 0.4861,
     "signal": "HOLD",
-    "confidence": 0.038,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0278,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "SBUX": {
-    "intraday_score": 0.2561,
+    "intraday_score": 0.2698,
     "signal": "SELL",
-    "confidence": 0.4878,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.4604,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "SCHW": {
-    "intraday_score": 0.5829,
+    "intraday_score": 0.5834,
     "signal": "BUY",
-    "confidence": 0.1658,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1668,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "SHOP": {
-    "intraday_score": 0.6393,
+    "intraday_score": 0.5845,
     "signal": "BUY",
-    "confidence": 0.2786,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.169,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "SHW": {
     "intraday_score": 0.4789,
     "signal": "HOLD",
-    "confidence": 0.0422,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0208,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "SJM": {
     "intraday_score": 0.4772,
     "signal": "HOLD",
-    "confidence": 0.0456,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0686,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "SLB": {
     "intraday_score": 0.3696,
     "signal": "SELL",
-    "confidence": 0.2608,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2888,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "SLV": {
     "intraday_score": 0.3696,
     "signal": "SELL",
-    "confidence": 0.2608,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2888,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "SMH": {
     "intraday_score": 0.4785,
     "signal": "HOLD",
-    "confidence": 0.043,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.066,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "SNOW": {
     "intraday_score": 0.5779,
     "signal": "BUY",
     "confidence": 0.1558,
-    "n_train_days": 61,
-    "generated": "2026-08-13T15:59"
+    "n_train_days": 60,
+    "generated": "2026-08-13T16:16"
   },
   "SNPS": {
-    "intraday_score": 0.2527,
+    "intraday_score": 0.2464,
     "signal": "SELL",
-    "confidence": 0.4946,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.5072,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "SO": {
     "intraday_score": 0.4136,
     "signal": "SELL",
-    "confidence": 0.1728,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1552,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "SOL-USD": {
-    "intraday_score": 0.2072,
+    "intraday_score": 0.3333,
     "signal": "SELL",
-    "confidence": 0.5856,
-    "n_train_days": 65,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.3334,
+    "n_train_days": 64,
+    "generated": "2026-08-13T16:16"
   },
   "SOXX": {
     "intraday_score": 0.4785,
     "signal": "HOLD",
-    "confidence": 0.043,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.066,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "SPG": {
     "intraday_score": 0.4779,
     "signal": "HOLD",
-    "confidence": 0.0442,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0222,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "SPGI": {
-    "intraday_score": 0.5072,
+    "intraday_score": 0.5116,
     "signal": "HOLD",
-    "confidence": 0.0144,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0232,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "SPY": {
-    "intraday_score": 0.5711,
-    "signal": "BUY",
-    "confidence": 0.1422,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.5205,
+    "signal": "HOLD",
+    "confidence": 0.041,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "SRE": {
-    "intraday_score": 0.3688,
+    "intraday_score": 0.3511,
     "signal": "SELL",
-    "confidence": 0.2624,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2978,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "STZ": {
     "intraday_score": 0.3699,
     "signal": "SELL",
-    "confidence": 0.2602,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2436,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "SWKS": {
     "intraday_score": 0.5015,
     "signal": "HOLD",
-    "confidence": 0.003,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0198,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "SYK": {
-    "intraday_score": 0.3952,
+    "intraday_score": 0.3678,
     "signal": "SELL",
-    "confidence": 0.2096,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2644,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "T": {
-    "intraday_score": 0.4475,
+    "intraday_score": 0.2841,
     "signal": "SELL",
-    "confidence": 0.105,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.4318,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "TDG": {
-    "intraday_score": 0.5924,
-    "signal": "BUY",
-    "confidence": 0.1848,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.5098,
+    "signal": "HOLD",
+    "confidence": 0.0196,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "TEAM": {
-    "intraday_score": 0.5563,
+    "intraday_score": 0.6546,
     "signal": "BUY",
-    "confidence": 0.1126,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.3092,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "TER": {
-    "intraday_score": 0.6079,
+    "intraday_score": 0.6061,
     "signal": "BUY",
-    "confidence": 0.2158,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2122,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "TFC": {
-    "intraday_score": 0.6203,
+    "intraday_score": 0.6433,
     "signal": "BUY",
-    "confidence": 0.2406,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2866,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "TGT": {
-    "intraday_score": 0.4636,
-    "signal": "HOLD",
-    "confidence": 0.0728,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.4194,
+    "signal": "SELL",
+    "confidence": 0.1612,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "TJX": {
-    "intraday_score": 0.3791,
+    "intraday_score": 0.3485,
     "signal": "SELL",
-    "confidence": 0.2418,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.303,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "TLT": {
-    "intraday_score": 0.4814,
+    "intraday_score": 0.4859,
     "signal": "HOLD",
-    "confidence": 0.0372,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0282,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "TMO": {
-    "intraday_score": 0.4509,
+    "intraday_score": 0.4676,
     "signal": "HOLD",
-    "confidence": 0.0982,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0648,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "TMUS": {
     "intraday_score": 0.5643,
     "signal": "BUY",
-    "confidence": 0.1286,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1538,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "TRV": {
-    "intraday_score": 0.4127,
+    "intraday_score": 0.4326,
     "signal": "SELL",
-    "confidence": 0.1746,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1348,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "TSLA": {
-    "intraday_score": 0.4025,
+    "intraday_score": 0.3916,
     "signal": "SELL",
-    "confidence": 0.195,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2168,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "TSM": {
     "intraday_score": 0.4779,
     "signal": "HOLD",
-    "confidence": 0.0442,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0674,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "TSN": {
-    "intraday_score": 0.2932,
+    "intraday_score": 0.296,
     "signal": "SELL",
-    "confidence": 0.4136,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.408,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "TTWO": {
-    "intraday_score": 0.6513,
+    "intraday_score": 0.6498,
     "signal": "BUY",
-    "confidence": 0.3026,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2996,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "TXN": {
-    "intraday_score": 0.3381,
+    "intraday_score": 0.3629,
     "signal": "SELL",
-    "confidence": 0.3238,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2742,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "TYL": {
-    "intraday_score": 0.4055,
-    "signal": "SELL",
-    "confidence": 0.189,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.4783,
+    "signal": "HOLD",
+    "confidence": 0.0434,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "UBER": {
-    "intraday_score": 0.2827,
+    "intraday_score": 0.3357,
     "signal": "SELL",
-    "confidence": 0.4346,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.3286,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "UNH": {
-    "intraday_score": 0.2411,
+    "intraday_score": 0.2187,
     "signal": "SELL",
-    "confidence": 0.5178,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.5626,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "UNP": {
-    "intraday_score": 0.2549,
+    "intraday_score": 0.3867,
     "signal": "SELL",
-    "confidence": 0.4902,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2266,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "UPS": {
-    "intraday_score": 0.4611,
+    "intraday_score": 0.467,
     "signal": "HOLD",
-    "confidence": 0.0778,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.066,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "USB": {
-    "intraday_score": 0.6046,
+    "intraday_score": 0.5941,
     "signal": "BUY",
-    "confidence": 0.2092,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1882,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "V": {
-    "intraday_score": 0.5903,
+    "intraday_score": 0.5878,
     "signal": "BUY",
-    "confidence": 0.1806,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1756,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "VICI": {
-    "intraday_score": 0.3151,
+    "intraday_score": 0.2828,
     "signal": "SELL",
-    "confidence": 0.3698,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.4344,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "VLO": {
-    "intraday_score": 0.4379,
-    "signal": "SELL",
-    "confidence": 0.1242,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.4833,
+    "signal": "HOLD",
+    "confidence": 0.0334,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "VNQ": {
-    "intraday_score": 0.2754,
+    "intraday_score": 0.1713,
     "signal": "SELL",
-    "confidence": 0.4492,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.6574,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "VRTX": {
-    "intraday_score": 0.7007,
-    "signal": "BUY",
-    "confidence": 0.4014,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.414,
+    "signal": "SELL",
+    "confidence": 0.172,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "VTR": {
-    "intraday_score": 0.5687,
-    "signal": "BUY",
-    "confidence": 0.1374,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.5295,
+    "signal": "HOLD",
+    "confidence": 0.059,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "VZ": {
-    "intraday_score": 0.4794,
+    "intraday_score": 0.4686,
     "signal": "HOLD",
-    "confidence": 0.0412,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0628,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "WAT": {
-    "intraday_score": 0.3884,
+    "intraday_score": 0.2913,
     "signal": "SELL",
-    "confidence": 0.2232,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.4174,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "WBD": {
-    "intraday_score": 0.4369,
+    "intraday_score": 0.4352,
     "signal": "SELL",
-    "confidence": 0.1262,
-    "n_train_days": 53,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1296,
+    "n_train_days": 52,
+    "generated": "2026-08-13T16:16"
   },
   "WDAY": {
-    "intraday_score": 0.4984,
+    "intraday_score": 0.4813,
     "signal": "HOLD",
-    "confidence": 0.0032,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0374,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "WEC": {
-    "intraday_score": 0.4133,
+    "intraday_score": 0.4222,
     "signal": "SELL",
-    "confidence": 0.1734,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1556,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "WELL": {
-    "intraday_score": 0.4587,
-    "signal": "HOLD",
-    "confidence": 0.0826,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.4433,
+    "signal": "SELL",
+    "confidence": 0.1134,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "WFC": {
-    "intraday_score": 0.3202,
+    "intraday_score": 0.3362,
     "signal": "SELL",
-    "confidence": 0.3596,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.3276,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "WMB": {
-    "intraday_score": 0.281,
+    "intraday_score": 0.2831,
     "signal": "SELL",
-    "confidence": 0.438,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.4338,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "WMT": {
-    "intraday_score": 0.1401,
+    "intraday_score": 0.1424,
     "signal": "SELL",
-    "confidence": 0.7198,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.7152,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "WY": {
     "intraday_score": 0.3923,
     "signal": "SELL",
-    "confidence": 0.2154,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1988,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "XEL": {
     "intraday_score": 0.2609,
     "signal": "SELL",
-    "confidence": 0.4782,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.5112,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "XLB": {
-    "intraday_score": 0.4485,
+    "intraday_score": 0.3336,
     "signal": "SELL",
-    "confidence": 0.103,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.3328,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "XLC": {
-    "intraday_score": 0.2984,
+    "intraday_score": 0.302,
     "signal": "SELL",
-    "confidence": 0.4032,
-    "n_train_days": 57,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.396,
+    "n_train_days": 56,
+    "generated": "2026-08-13T16:16"
   },
   "XLE": {
-    "intraday_score": 0.6128,
+    "intraday_score": 0.5894,
     "signal": "BUY",
-    "confidence": 0.2256,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1788,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "XLF": {
-    "intraday_score": 0.505,
-    "signal": "HOLD",
-    "confidence": 0.01,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.578,
+    "signal": "BUY",
+    "confidence": 0.156,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "XLI": {
-    "intraday_score": 0.5475,
+    "intraday_score": 0.5177,
     "signal": "HOLD",
-    "confidence": 0.095,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0354,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "XLK": {
-    "intraday_score": 0.4565,
-    "signal": "HOLD",
-    "confidence": 0.087,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.4444,
+    "signal": "SELL",
+    "confidence": 0.1112,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "XLP": {
     "intraday_score": 0.4351,
     "signal": "SELL",
-    "confidence": 0.1298,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1104,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "XLRE": {
-    "intraday_score": 0.2462,
+    "intraday_score": 0.2582,
     "signal": "SELL",
-    "confidence": 0.5076,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.4836,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "XLU": {
     "intraday_score": 0.4348,
     "signal": "SELL",
-    "confidence": 0.1304,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1556,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "XLV": {
-    "intraday_score": 0.5223,
+    "intraday_score": 0.5013,
     "signal": "HOLD",
-    "confidence": 0.0446,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0026,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "XLY": {
-    "intraday_score": 0.4562,
-    "signal": "HOLD",
-    "confidence": 0.0876,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "intraday_score": 0.4444,
+    "signal": "SELL",
+    "confidence": 0.1112,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "XOM": {
-    "intraday_score": 0.4742,
+    "intraday_score": 0.4726,
     "signal": "HOLD",
-    "confidence": 0.0516,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0548,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "XRP-USD": {
-    "intraday_score": 0.3312,
+    "intraday_score": 0.288,
     "signal": "SELL",
-    "confidence": 0.3376,
-    "n_train_days": 66,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.424,
+    "n_train_days": 65,
+    "generated": "2026-08-13T16:16"
   },
   "XYL": {
-    "intraday_score": 0.4836,
+    "intraday_score": 0.5271,
     "signal": "HOLD",
-    "confidence": 0.0328,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.0542,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "YUM": {
     "intraday_score": 0.5,
     "signal": "HOLD",
-    "confidence": 0.0,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.022,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "ZBH": {
-    "intraday_score": 0.6324,
+    "intraday_score": 0.6491,
     "signal": "BUY",
-    "confidence": 0.2648,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.2982,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   },
   "ZS": {
-    "intraday_score": 0.5967,
+    "intraday_score": 0.5641,
     "signal": "BUY",
-    "confidence": 0.1934,
-    "n_train_days": 62,
-    "generated": "2026-08-13T15:59"
+    "confidence": 0.1282,
+    "n_train_days": 61,
+    "generated": "2026-08-13T16:16"
   }
 }
