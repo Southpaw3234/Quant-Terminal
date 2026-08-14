@@ -5,25 +5,25 @@
     "Financials": 0.1444,
     "Healthcare": 0.2189,
     "Energy": 0.3496,
-    "Consumer Disc": 0.0938,
+    "Consumer Disc": 0.1074,
     "Consumer Staples": 0.0933,
-    "Industrials": 0.2759,
-    "Materials": 0.1762,
+    "Industrials": 0.2743,
+    "Materials": 0.182,
     "Utilities": 0.1618,
     "Real Estate": 0.1073,
-    "Communication": 0.0842
+    "Communication": 0.0959
   },
   "score_boost": {
     "Technology": 0.03,
     "Financials": 0.0,
     "Healthcare": 0.0,
     "Energy": 0.03,
-    "Consumer Disc": -0.03,
+    "Consumer Disc": 0.0,
     "Consumer Staples": -0.03,
     "Industrials": 0.03,
     "Materials": 0.0,
     "Utilities": 0.0,
-    "Real Estate": 0.0,
+    "Real Estate": -0.03,
     "Communication": -0.03
   }
 }
