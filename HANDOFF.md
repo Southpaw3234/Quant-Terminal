@@ -64,19 +64,32 @@ alpha question as answered.
 
 ## 🔔 SESSION PICKUP — fresh-session checklist (READ FIRST)
 
-> ### 🔴 BLOCKER OPEN AS OF 2026-08-12 — "nothing needs you today" IS THE WRONG ANSWER UNTIL THIS CLEARS.
+> ### 🔴 BLOCKER STILL OPEN — RAISED 2026-08-12, UNCHANGED AS OF 2026-08-20. "nothing needs you today" IS THE WRONG ANSWER UNTIL THIS CLEARS.
 >
-> **Master's crons are failing on EVERY run and paging Discord each time.** The
-> flat-invariant gate is deadlocked on a **`HON` short** that no scheduled run can
+> **Master's crons are failing on EVERY trading run and paging Discord each time.**
+> The flat-invariant gate is red on a **`HON` short** that no scheduled run can
 > clear: `close_long` skips shorts by design, and covering one is a BUY that
-> `QT_MAX_GROSS='0'` blocks. Five consecutive runs red on 8/12. **ONE open item —
-> do it before anything else:**
+> `QT_MAX_GROSS='0'` blocks. **37 red trading runs across 8 days** (6 on 8/12,
+> then 5/day 8/13–8/19, 5 so far on 8/20 — latest `32392556967`, 16:32Z).
+> **ONE open item — do it before anything else:**
 >
 > 1. 🔴 **COVER HON — NOT DONE.** `gh workflow run position_trim.yml --repo Southpaw3234/Quant-Terminal -f mode=execute -f sleeve=short-cover`
->    — DAY orders, fills at the next open, ~$3,059, takes gross to $0.00× / zero
+>    — DAY orders, fills at the next open, ~$2,864 (8/20 dry-run), takes gross to $0.00× / zero
 >    shorts. ⚠️ **Confirm the dry-run plan actually NAMES HON first** — the broker
 >    read has been caught wrong in BOTH directions (omitting HON on five 8/10
 >    reads, inventing it on 8/11), and the tool no-ops on an empty read.
+>    ✅ **DRY-RUN CONFIRMED 8/20 (`32369620774`, read-only) — the plan NAMES HON.**
+>    `HON short=-13 openBUY=0 price=220.29 cover=13 cost=$2,864` → *"1 market
+>    BUY-to-cover (DAY, fill at next open) … Projected after covers: gross ~$0
+>    (0.00x equity), zero shorts."* Account `equity=$113,725.80 cash=$116,589.55`,
+>    1 position, gross $2,864 (0.03×). This clears all three hazards: it is **not
+>    an empty read** (the no-op case), qty is **exactly 13** (matches the fill
+>    audit's naked short), and `openBUY=0` means **no pending buy to double-cover**.
+>    It is also independent corroboration — `delever_account.py` is a *different
+>    code path* from the gate's `close_long`, and it sees the same HON.
+>    ⚠️ **Cost moved: ~$2,864, not the $3,059 quoted on 8/12** — HON fell 235.34 →
+>    220.29 (−$195 on 13sh), so the cover got cheaper. ⚠️ The printed `P&L -$1,230`
+>    is still the **distorted-basis artifact — do NOT book it** (8/12 ledger caveat).
 >    ✅ **The cover is known-safe:** the fill audit (8/12 ledger ⑦) proves this is a
 >    clean naked short with no hidden long behind it, so buying exactly 13 lands
 >    the account flat. **This is a trade: the user fires it, not Claude.**
@@ -85,9 +98,21 @@ alpha question as answered.
 >    green** — HON still breaches, now as a distinct `SHORT BOOK` page naming the
 >    cover instead of a generic breach. Only (1) clears the red.
 >
+> **🔑 PR #23 IS CONFIRMED WORKING — the red is now INFORMATIVE, not a deadlock.**
+> The gate signature is byte-identical on every run sampled 8/17–8/20:
+> `armed=True breach=False short_breach=True last_seen_book=1 longs=0 shorts=1 last_closed=0 errors=0`.
+> `breach=False`/`longs=0` means the **long-side re-entry detector reads clean and
+> independently** — which is the one thing the 8/12 deadlock had cost us. Coast to
+> flat is holding; a new long entry would still show up here. Only the short is left.
+>
+> **🔑 HON IS REAL — the 8/10–8/11 phantom doubt is SETTLED.** The broker read
+> flip-flopped then, but **37 consecutive reads over 8 days all return `shorts=1, HON`**.
+> Do not re-litigate provenance; the position exists and needs covering.
+>
 > **Verification that the blocker cleared:** the first run *after* the fill prints
-> `[close_long] flat-invariant state: ... breach=False` with an empty book, and the
-> `Flat-invariant gate` step goes green. `closed N` is NOT proof — see 8/11 ledger ②.
+> `[close_long] flat-invariant state: ... breach=False` with `longs=0 shorts=0`, and
+> the `Flat-invariant gate` step goes green on `OK — armed and flat`. `closed N` is
+> NOT proof — see 8/11 ledger ②.
 > ⚠️ Also read 8/12 ledger ④ before quoting 8/11's "the book is flat": it does not hold.
 
 > ### ⚠️ CADENCE CHANGED 2026-08-06 — THIS IS NO LONGER A DAILY RITUAL.
