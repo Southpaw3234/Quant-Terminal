@@ -5709,6 +5709,41 @@ _load_model_cache(namespace)
 # postpatch wrappers can't reach (they run in the cell's namespace, not its
 # function bodies). Each entry must be an exact, unique substring.
 _SRC_REPLACE = [
+    # ── Cell 2 river import: guarded (2026-08-22) ────────────────────────────
+    # The notebook imports river at MODULE SCOPE in Cell 2, ABOVE the
+    # _get_macro_history definition in that same cell. On 2026-08-21 river
+    # 0.26.0 walked in past an uncapped `river>=0.21` (0.26 needs py3.12; the
+    # runner pins 3.11), the import raised TypeError, Cell 2 ABORTED, so
+    # _get_macro_history never bound, Cell 6 build_features died on NameError,
+    # and the morning run trained 0/0 models in 4 minutes — silently, because
+    # the only red on the run was the pre-existing HON gate.
+    # The pin (01b2897) stops that one version. This stops the CLASS: river is
+    # optional here (cut from the blend 6/14; only Cell 15's online-learning
+    # layer still uses it, and BOTH of its imports are already inside try
+    # blocks — the CELL_15_PREPATCH one and the notebook's own), so a failed
+    # import must degrade, never abort the cell that owns the macro cache.
+    # Names bind to None rather than staying unbound, so any downstream use
+    # raises AttributeError at the point of use instead of NameError; nothing
+    # in the notebook shadows these four (checked: no sklearn collision).
+    # NOTE: kept at the HEAD of the list deliberately — validate section 2
+    # asserts anchor uniqueness on _SRC_REPLACE[-3:] against Cell 13, and this
+    # anchor lives in Cell 2. Appending it would evict a gross-cap anchor.
+    ('from river import linear_model, preprocessing, metrics, drift\n',
+     'try:\n'
+     '    from river import linear_model, preprocessing, metrics, drift\n'
+     '    _RIVER_OK = True\n'
+     'except Exception as _rv_imp_e:\n'
+     '    linear_model = preprocessing = metrics = drift = None\n'
+     '    _RIVER_OK = False\n'
+     '    print("  [patch] river import FAILED ("\n'
+     '          + type(_rv_imp_e).__name__ + ": " + str(_rv_imp_e)\n'
+     '          + ") - online-learning layer disabled this run; "\n'
+     '          "main model path UNAFFECTED")\n'),
+    # ...and do not let the cell claim success when the import did not happen.
+    # Anchored separately because this print sits ~30 lines below the import.
+    ('print("River online learning imported OK")',
+     'print("River online learning imported OK" if _RIVER_OK\n'
+     '      else "River online learning DISABLED - import failed, see above")'),
     # River >= 0.21 changed learn_one() to return None (in-place) instead of
     # self, breaking the chained scaler.learn_one(x).transform_one(x) idiom →
     # 'NoneType' object has no attribute 'transform_one'. Split into two calls.

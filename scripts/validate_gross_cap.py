@@ -1813,6 +1813,83 @@ if _frz:
     check18("no bare full-overwrite left",
             _ric_src.count("to_csv(OUT_CSV") + _ric_src.count("to_csv(LS_CSV"), 2)
 
+# ── SECTION 19 — Cell 2 river import is guarded (2026-08-22) ────────────────
+# On 2026-08-21 river 0.26.0 (py3.12-only; the runner pins 3.11) made the BARE
+# module-level import in Cell 2 raise. The cell aborted, so _get_macro_history
+# — defined ~30 lines BELOW that import, in the same cell — never bound, Cell 6
+# build_features died on NameError, and the morning run trained 0/0 models in 4
+# minutes. It was silent: the only red on the run was the pre-existing HON gate.
+# The requirements pin (01b2897) stops that one version. This section pins the
+# STRUCTURAL fix, so no optional dependency can take that cell down again.
+def check19(name, got, want):
+    ok = got == want
+    print(f"19. {name:<52} got={str(got):<7} {'PASS' if ok else 'FAIL (want %s)' % want}")
+    if not ok:
+        fails.append(f"section19 {name}: got={got} want={want}")
+
+
+_RV_ANCHOR = "from river import linear_model, preprocessing, metrics, drift\n"
+_RV_PRINT = 'print("River online learning imported OK")'
+cell2 = "".join(nb["cells"][2]["source"])
+
+# (a) Both anchors are real and unique, and neither sits in the pairs[-3:]
+#     window that section 2 asserts against Cell 13 — putting them there would
+#     silently evict a gross-cap anchor from that check.
+check19("import anchor unique in Cell 2", cell2.count(_RV_ANCHOR), 1)
+check19("success-print anchor unique in Cell 2", cell2.count(_RV_PRINT), 1)
+check19("import anchor is wired into _SRC_REPLACE",
+        any(_o == _RV_ANCHOR for _o, _n in pairs), True)
+check19("print anchor is wired into _SRC_REPLACE",
+        any(_o == _RV_PRINT for _o, _n in pairs), True)
+check19("guard kept OUT of the pairs[-3:] window",
+        any(_o in (_RV_ANCHOR, _RV_PRINT) for _o, _n in pairs[-3:]), False)
+
+# (b) The patched cell is valid Python and the bare import is actually gone.
+patched2 = cell2
+for _o, _n in pairs:
+    patched2 = patched2.replace(_o, _n)
+try:
+    compile(patched2, "cell2_patched", "exec")
+    check19("patched Cell 2 compiles", True, True)
+except SyntaxError as _e19:
+    check19(f"patched Cell 2 compiles ({_e19.msg} L{_e19.lineno})", False, True)
+check19("no bare module-level river import left",
+        any(_l == _RV_ANCHOR.rstrip("\n") for _l in patched2.splitlines()), False)
+check19("the import is wrapped in try/except",
+        "except Exception as _rv_imp_e:" in patched2, True)
+
+# (c) BEHAVIOURAL — the 8/21 regression itself. With river unimportable the
+#     guard must swallow the failure, bind the four names to None, set
+#     _RIVER_OK False, say so out loud, and — decisively — execution must still
+#     REACH a definition placed after it. That last check is the whole point:
+#     _get_macro_history lives below this import.
+_guard_new = next(_n for _o, _n in pairs if _o == _RV_ANCHOR)
+_probe19 = _guard_new + "\ndef _probe_after_import():\n    return 'reached'\n"
+_ns19 = {}
+_saved19 = sys.modules.get("river", "absent")
+sys.modules["river"] = None          # `from river import ...` now raises
+_buf19 = io.StringIO()
+try:
+    with contextlib.redirect_stdout(_buf19):
+        exec(_probe19, _ns19)
+    check19("a broken river does NOT raise", True, True)
+except Exception as _e19b:
+    check19(f"a broken river does NOT raise ({type(_e19b).__name__})", False, True)
+finally:
+    if _saved19 == "absent":
+        sys.modules.pop("river", None)
+    else:
+        sys.modules["river"] = _saved19
+check19("_RIVER_OK is False", _ns19.get("_RIVER_OK"), False)
+check19("names bound to None, not left unbound",
+        [_ns19.get(_k, "UNBOUND") for _k in
+         ("linear_model", "preprocessing", "metrics", "drift")],
+        [None, None, None, None])
+check19("execution REACHES defs below the import",
+        callable(_ns19.get("_probe_after_import")), True)
+check19("the failure is reported, not swallowed silently",
+        "river import FAILED" in _buf19.getvalue(), True)
+
 print()
 if fails:
     print("VALIDATION FAILED:")
