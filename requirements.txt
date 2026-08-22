@@ -15,7 +15,10 @@ cvxpy>=1.4
 ipython>=8.0
 ta>=0.10
 scipy>=1.11
-river>=0.21
+# river 0.26.0 walked in silently 2026-08-21 and needs py3.12 (the runner is 3.11): its
+# module-level import in Cell 2 raised, so _get_macro_history never bound, build_features
+# died, and the morning run retrained 0/0 models. Cut from the blend 6/14 — cap it, do not chase it.
+river>=0.21,<0.26
 mapie>=0.8
 clarabel>=0.6
 alpaca-py>=0.8
