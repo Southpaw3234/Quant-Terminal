@@ -1,10 +1,10 @@
 {
-  "high_rsi_bear": {
-    "dampen": 0.25,
-    "count": 2,
-    "accuracy": 0.25,
-    "description": "BUY with RSI>68 in Bear regime \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 25% accurate (2 samples)",
-    "created_date": "2026-08-22",
+  "ticker_DXCM": {
+    "dampen": 0.16,
+    "count": 5,
+    "accuracy": 0.286,
+    "description": "DXCM systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 29% accurate (5 samples)",
+    "created_date": "2026-08-24",
     "created_regime": 1
   },
   "ticker_DG": {
@@ -12,7 +12,7 @@
     "count": 7,
     "accuracy": 0.333,
     "description": "DG systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 33% accurate (7 samples)",
-    "created_date": "2026-08-22",
+    "created_date": "2026-08-24",
     "created_regime": 1
   },
   "ticker_RCL": {
@@ -20,7 +20,7 @@
     "count": 7,
     "accuracy": 0.222,
     "description": "RCL systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 22% accurate (7 samples)",
-    "created_date": "2026-08-22",
+    "created_date": "2026-08-24",
     "created_regime": 1
   },
   "ticker_OXY": {
@@ -28,7 +28,7 @@
     "count": 5,
     "accuracy": 0.286,
     "description": "OXY systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 29% accurate (5 samples)",
-    "created_date": "2026-08-22",
+    "created_date": "2026-08-24",
     "created_regime": 1
   },
   "ticker_CTAS": {
@@ -36,23 +36,15 @@
     "count": 5,
     "accuracy": 0.286,
     "description": "CTAS systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 29% accurate (5 samples)",
-    "created_date": "2026-08-22",
+    "created_date": "2026-08-24",
     "created_regime": 1
   },
   "_boosts": {
-    "created_date": "2026-08-22",
+    "created_date": "2026-08-24",
     "created_regime": 1
   },
   "_regime_bull": {
-    "high_rsi_bear": {
-      "dampen": 0.25,
-      "count": 2,
-      "accuracy": 0.25,
-      "description": "BUY with RSI>68 in Bear regime \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 25% accurate (2 samples)",
-      "created_date": "2026-08-22",
-      "created_regime": 1
-    },
-    "created_date": "2026-08-22",
+    "created_date": "2026-08-24",
     "created_regime": 1
   }
 }
