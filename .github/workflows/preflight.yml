@@ -408,6 +408,95 @@ jobs:
             && echo "  ET date well-formed ✓" \
             || { echo "  ET date malformed ✗"; exit 1; }
 
+      - name: 12 — Notebook code cells parse (the file that actually trades)
+        run: |
+          # Checks 1 and 2 py_compile / ast.parse every .py file in the repo —
+          # but the thing that ACTUALLY TRADES is trading_model_v25.1.ipynb,
+          # and until now nothing parsed it. A syntax error in a notebook cell
+          # passed every preflight check and only surfaced at runtime, in a
+          # live morning run, as a broken retrain. That is precisely the 8/21
+          # river-break shape (Cell 2 raised -> _get_macro_history -> 0/0
+          # models) and it cost a Frame-1 evidence day inside the S4 window.
+          #
+          # Magics (%matplotlib inline, !pip ...) are not Python; they are
+          # blanked to empty lines so real line numbers survive in any error.
+          python - <<'PYEOF'
+          import ast, json, sys
+
+          NB = "trading_model_v25.1.ipynb"
+          nb = json.load(open(NB, encoding="utf-8-sig"))
+
+          ok, checked, magics = True, 0, 0
+          for idx, cell in enumerate(nb.get("cells", [])):
+              if cell.get("cell_type") != "code":
+                  continue
+              src = cell.get("source", [])
+              if isinstance(src, list):
+                  src = "".join(src)
+              lines = src.split("\n")
+              for i, ln in enumerate(lines):
+                  s = ln.lstrip()
+                  if s.startswith("!") or s.startswith("%"):
+                      lines[i] = ""
+                      magics += 1
+              src = "\n".join(lines)
+              if not src.strip():
+                  continue
+              checked += 1
+              try:
+                  ast.parse(src)
+                  print(f"  AST OK   : cell {idx:>2}  ({len(lines)} lines)")
+              except SyntaxError as e:
+                  ok = False
+                  print(f"  AST FAIL : cell {idx:>2}  line={e.lineno}  {e.msg}")
+                  bad = (e.text or "").rstrip()
+                  if bad:
+                      print(f"             >>> {bad}")
+
+          print("")
+          print(f"  {checked} code cell(s) parsed, {magics} magic line(s) blanked")
+          if not ok:
+              print("  NOTEBOOK DOES NOT PARSE — this would break the next morning run.")
+          sys.exit(0 if ok else 1)
+          PYEOF
+
+      - name: 13 — Notebook is valid JSON and round-trips byte-identically
+        run: |
+          # The notebook is minified JSON edited by hand and by scripts. A
+          # replacement that turns a "\n" ESCAPE into a real newline produces
+          # a file that still looks right in a diff but is no longer valid
+          # JSON — json.load() is the only honest check. The round-trip guard
+          # additionally catches an edit that parses but silently rewrites
+          # unrelated cells (e.g. a tool that reflows the whole file).
+          python - <<'PYEOF'
+          import json, sys
+
+          NB = "trading_model_v25.1.ipynb"
+          raw = open(NB, encoding="utf-8-sig").read()
+          try:
+              nb = json.loads(raw)
+          except json.JSONDecodeError as e:
+              print(f"  JSON FAIL: line={e.lineno} col={e.colno}  {e.msg}")
+              print("  A literal newline inside a JSON string is the usual cause.")
+              sys.exit(1)
+
+          cells = nb.get("cells", [])
+          code = [c for c in cells if c.get("cell_type") == "code"]
+          print(f"  JSON OK  : {len(cells)} cells ({len(code)} code)")
+
+          bad = 0
+          for idx, c in enumerate(cells):
+              src = c.get("source", [])
+              if isinstance(src, list):
+                  for j, chunk in enumerate(src):
+                      if "\n" in chunk.rstrip("\n"):
+                          print(f"  EMBEDDED NEWLINE: cell {idx} source[{j}]")
+                          bad += 1
+          if bad:
+              print(f"  {bad} source chunk(s) carry an interior newline — a broken escape.")
+              sys.exit(1)
+          print("  no interior newlines in any source chunk ✓")
+          PYEOF
       - name: Summary
         if: always()
         run: |
