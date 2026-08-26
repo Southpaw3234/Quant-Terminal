@@ -101,6 +101,25 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
+          # `ref` is deliberately the branch NAME, not the default (github.sha).
+          #
+          # github.sha is pinned when the run is CREATED, not when the job
+          # starts. The ~15:27Z intraday crons are created while the ~2.5h
+          # morning cycle is still running, so with the default ref they
+          # checked out a PRE-MORNING tree even when the runner picked the job
+          # up minutes AFTER the morning commit landed (2026-08-24: created
+          # 15:27:22, checked out 16:03:55 = 32s after morning commit c7bb579,
+          # and still got 34d2c4f from 8/22). The scorer then read-modify-wrote
+          # the whole predictions.csv off that stale base and the push
+          # resolver's `rebase -X theirs` favoured the replayed stale side,
+          # erasing the morning's 307 rows. Same wipe on 8/12 and 8/13.
+          #
+          # A branch name makes actions/checkout resolve the LIVE tip at
+          # checkout time, which closes the "created during the morning" window.
+          # It does NOT close the "morning commits mid-run" window — nothing
+          # here can — so the row-count guard at the end of this job is the
+          # backstop, not this line.
+          ref: ${{ github.ref_name }}
           fetch-depth: 1
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -664,6 +683,61 @@ jobs:
               print(f"OK — armed and flat (book={book}).")
           sys.exit(rc)
           PY
+
+      # ── PREDICTIONS LEDGER GUARD (added 2026-08-26) ──────────────────────────
+      # predictions.csv is append-only: nothing in this repo prunes it (the only
+      # writer is the scorer's read-modify-write at quant_runner.py:5323, which
+      # rewrites every row it read). So a COMMIT THAT SHRINKS IT IS ALWAYS A BUG.
+      #
+      # That is exactly how 8/12, 8/13 and 8/24 were lost: a stale-base intraday
+      # run rewrote the file off a pre-morning tree and `rebase -X theirs` let it
+      # win, silently dropping that morning's 307 rows (8/24: 50087 -> 49780).
+      # Nothing went red, because the flat-invariant gate was already red for
+      # HON — a permanently-failing gate cannot carry a new signal. That is the
+      # 8/22 ledger's lesson repeated, so this check is deliberately:
+      #   * `if: always()`, AFTER the flat-invariant gate, so HON's daily red
+      #     can never mask it and it still runs when the gate exits non-zero;
+      #   * comparing the PUSHED tip against its own parent on the remote, not
+      #     against a local baseline — the wipe is only observable on master;
+      #   * fail-open on anything indeterminate (shallow history, missing file,
+      #     no push this run) so it can never red a run on its own confusion.
+      - name: Predictions ledger guard (row count must never decrease)
+        if: always()
+        run: |
+          set -u
+          F=data/predictions/predictions.csv
+          BR="${GITHUB_REF_NAME:-master}"
+
+          if [ "$BR" != "master" ]; then
+            echo "Not master ($BR) — ledger guard not applicable."; exit 0
+          fi
+
+          # Deepen enough to see the pushed commit's parent. fetch-depth:1 in
+          # the checkout leaves no history at all, so this is required, and a
+          # failure here must NOT red the run.
+          if ! git fetch --depth=25 origin "$BR" >/dev/null 2>&1; then
+            echo "::warning::ledger guard: could not fetch origin/$BR — skipping."; exit 0
+          fi
+
+          cur=$(git show "FETCH_HEAD:$F" 2>/dev/null | wc -l | tr -d ' ')
+          prev=$(git show "FETCH_HEAD~1:$F" 2>/dev/null | wc -l | tr -d ' ')
+
+          if [ -z "$cur" ] || [ "$cur" -eq 0 ]; then
+            echo "::warning::ledger guard: $F unreadable at origin/$BR tip — skipping."; exit 0
+          fi
+          if [ -z "$prev" ] || [ "$prev" -eq 0 ]; then
+            echo "ledger guard: no readable parent copy of $F — nothing to compare (OK)."; exit 0
+          fi
+
+          echo "ledger guard: origin/$BR tip=$cur rows, parent=$prev rows"
+
+          if [ "$cur" -lt "$prev" ]; then
+            lost=$((prev - cur))
+            echo "::error::PREDICTIONS LEDGER SHRANK — origin/$BR went from $prev to $cur rows ($lost lost) in $(git rev-parse --short FETCH_HEAD). predictions.csv is append-only, so this is the stale-base wipe that erased 8/12, 8/13 and 8/24. The dropped rows are still in the parent commit: recover with 'git show $(git rev-parse --short FETCH_HEAD)~1:$F'. Do NOT let another cycle run before recovering — each one rewrites the file again."
+            exit 1
+          fi
+
+          echo "OK — ledger did not shrink ($prev -> $cur)."
 
   # ── FAILURE ALERTING (added 2026-08-06) ─────────────────────────────────────
   # The INNER of two alarms; morning_watchdog.yml is the outer one and asserts
