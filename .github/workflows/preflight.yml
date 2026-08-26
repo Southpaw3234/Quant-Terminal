@@ -460,14 +460,22 @@ jobs:
           sys.exit(0 if ok else 1)
           PYEOF
 
-      - name: 13 — Notebook is valid JSON and round-trips byte-identically
+      - name: 13 — Notebook is valid JSON with the expected cell structure
         run: |
           # The notebook is minified JSON edited by hand and by scripts. A
-          # replacement that turns a "\n" ESCAPE into a real newline produces
-          # a file that still looks right in a diff but is no longer valid
-          # JSON — json.load() is the only honest check. The round-trip guard
-          # additionally catches an edit that parses but silently rewrites
-          # unrelated cells (e.g. a tool that reflows the whole file).
+          # replacement that turns a "\n" ESCAPE into a real newline yields a
+          # file that still looks right in a diff but is no longer valid JSON
+          # — a literal control character inside a string. json.loads() is the
+          # honest check and it catches exactly that; this patch produced the
+          # failure twice while being written, so it is not hypothetical.
+          #
+          # NOTE: do NOT try to detect the corruption by scanning parsed
+          # source chunks for interior newlines. nbformat permits a cell to
+          # store its whole body as one multi-line chunk (9 cells here do),
+          # and AFTER parsing a legitimate multi-line chunk is byte-identical
+          # to a corrupted one. The distinction exists only in the raw bytes,
+          # where json.loads already rejects it. An earlier draft of this
+          # check made that mistake and failed on healthy cells.
           python - <<'PYEOF'
           import json, sys
 
@@ -477,25 +485,37 @@ jobs:
               nb = json.loads(raw)
           except json.JSONDecodeError as e:
               print(f"  JSON FAIL: line={e.lineno} col={e.colno}  {e.msg}")
-              print("  A literal newline inside a JSON string is the usual cause.")
+              print("  A literal newline inside a JSON string is the usual cause:")
+              print("  a hand-edit wrote a real line break where \\n belonged.")
               sys.exit(1)
 
           cells = nb.get("cells", [])
           code = [c for c in cells if c.get("cell_type") == "code"]
           print(f"  JSON OK  : {len(cells)} cells ({len(code)} code)")
 
-          bad = 0
-          for idx, c in enumerate(cells):
-              src = c.get("source", [])
-              if isinstance(src, list):
-                  for j, chunk in enumerate(src):
-                      if "\n" in chunk.rstrip("\n"):
-                          print(f"  EMBEDDED NEWLINE: cell {idx} source[{j}]")
-                          bad += 1
-          if bad:
-              print(f"  {bad} source chunk(s) carry an interior newline — a broken escape.")
-              sys.exit(1)
-          print("  no interior newlines in any source chunk ✓")
+          # Structural floor. quant_runner indexes cells POSITIONALLY
+          # (SKIP_BY_TYPE, CELL_TAGS), so a cell appearing or disappearing
+          # silently re-points every skip list. Assert the shape rather than
+          # the content.
+          EXPECT_TOTAL, EXPECT_CODE = 24, 23
+          ok = True
+          if len(cells) != EXPECT_TOTAL or len(code) != EXPECT_CODE:
+              print(f"  CELL COUNT CHANGED: expected {EXPECT_TOTAL} total / "
+                    f"{EXPECT_CODE} code, got {len(cells)} / {len(code)}.")
+              print("  quant_runner indexes cells by POSITION — SKIP_BY_TYPE and")
+              print("  CELL_TAGS are now pointing at different cells. If this is")
+              print("  intentional, update those and bump the expectation here.")
+              ok = False
+          else:
+              print(f"  cell structure unchanged ({EXPECT_TOTAL}/{EXPECT_CODE}) ✓")
+
+          empty = [i for i, c in enumerate(cells)
+                   if c.get("cell_type") == "code"
+                   and not "".join(c.get("source", [])).strip()]
+          if empty:
+              print(f"  WARNING: empty code cell(s) at {empty}")
+
+          sys.exit(0 if ok else 1)
           PYEOF
       - name: Summary
         if: always()
