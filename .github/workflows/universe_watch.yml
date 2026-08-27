@@ -1,0 +1,194 @@
+name: Universe-composition watch (alert only, read-only)
+
+# WHY THIS EXISTS
+# ---------------
+# On 2026-08-26 the equity cross-section was found to be silently varying in
+# size. AVB and EQR dropped together on 08-19, 08-20 and 08-26; DOGE-USD on
+# 08-17/18. Neither REIT is delisted - both price normally on every other
+# session. The log said only `SKIP AVB` / `SKIP EQR`: no reason, no row count,
+# no exception, and nothing downstream recorded that the universe was short.
+#
+# PR #26 made that failure legible (the SKIP line now states which condition
+# fired and the row count, and a WARNING names every skipped ticker). This
+# workflow is the other half: it READS that output each session and reports
+# it, so universe drift is noticed at the time instead of being reconstructed
+# weeks later by diffing predictions.csv - which is exactly what the 8/26
+# ledger had to do.
+#
+# n per day is an input to every rank-IC read. HANDOFF.md instructs that n
+# shifts be attributed to dated model changes (e.g. 65be103, WYFI, 279->280).
+# This is the undated, silent, intermittent source of the same drift.
+#
+# Read-only: no keys, no orders, no writes, no state. It reports; it never
+# gates. A failure here must never block a trading run.
+
+on:
+  schedule:
+    # 17:45 UTC. The morning run dispatches 13:35Z and takes ~130-160 min, so
+    # it completes ~16:00-16:15Z (slowest observed: 158 min on 2026-08-06).
+    # Deliberately 15 min AFTER morning_watchdog.yml's 17:30Z so that on a
+    # missing-morning day the watchdog's page lands first and this one is
+    # read as corroboration rather than a second competing alarm.
+    - cron: '45 17 * * 1-5'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read          # needed to list runs and download their logs
+
+jobs:
+  universe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Report the morning run's universe composition
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions
+        run: |
+          set -u
+
+          TODAY_ET=$(TZ=America/New_York date +%Y-%m-%d)
+
+          # ---- SUNSET (2026-08-09 wind-down) ------------------------------
+          # MUST match QT_SUNSET_DATE in quant_daily.yml and the copy in
+          # morning_watchdog.yml. Once the trading crons retire there is no
+          # morning run to read, so without this gate the workflow would post
+          # to Discord every weekday forever about an absence that is by
+          # design. A permanently-crying alarm trains the reader to ignore the
+          # channel that also carries real pages.
+          QT_SUNSET_DATE='2026-09-25'
+          if [[ "$TODAY_ET" > "$QT_SUNSET_DATE" || "$TODAY_ET" == "$QT_SUNSET_DATE" ]]; then
+            echo "SUNSET: ${TODAY_ET} >= ${QT_SUNSET_DATE} — trading crons are retired"
+            echo "by design, so there is no morning run to read. Not posting."
+            exit 0
+          fi
+
+          # ---- No-session guard -------------------------------------------
+          # Same reasoning as morning_watchdog.yml: the cron is 1-5 so it never
+          # self-fires on a weekend, but a MANUAL dispatch does. Labor Day
+          # 2026-09-07 is the only market holiday before the sunset date.
+          DOW=$(TZ=America/New_York date +%u)
+          if [ "$DOW" -ge 6 ]; then
+            echo "Weekend (${TODAY_ET}, dow=${DOW}) — no morning run expected. Not posting."
+            exit 0
+          fi
+          case "$TODAY_ET" in
+            2026-09-07)
+              echo "US market holiday (${TODAY_ET}, Labor Day) — no morning run. Not posting."
+              exit 0
+              ;;
+          esac
+
+          # ---- Find today's MORNING run -----------------------------------
+          # Do not guess by timestamp or duration. The resolver's own line is
+          # authoritative, and it is the same string the marker gate prints:
+          #   Run type: morning (UTC hour=13 day=3)
+          # Several runs happen per day and any of them can be the long one,
+          # so identify by content, oldest-first (the morning is the first
+          # in-window run of the day).
+          IDS=$(gh api "repos/${REPO}/actions/workflows/quant_daily.yml/runs?per_page=40" \
+                  --jq '[.workflow_runs[] | select(.created_at >= "'"${TODAY_ET}"'T00:00:00Z")]
+                        | sort_by(.created_at) | .[].id' 2>/dev/null || true)
+
+          if [ -z "${IDS}" ]; then
+            echo "No quant_daily runs found for ${TODAY_ET} — morning_watchdog.yml owns"
+            echo "that alarm and will have paged. Not duplicating it."
+            exit 0
+          fi
+
+          LOG=""
+          RUN_ID=""
+          for id in ${IDS}; do
+            echo "  inspecting run ${id}…"
+            if gh run view "${id}" --repo "${REPO}" --log > /tmp/run.log 2>/dev/null; then
+              if grep -qa 'Run type: morning' /tmp/run.log; then
+                RUN_ID="${id}"; LOG=/tmp/run.log
+                echo "  -> run ${id} is today's morning run"
+                break
+              fi
+            else
+              echo "  (log unavailable for ${id} — may still be running)"
+            fi
+          done
+
+          if [ -z "${LOG}" ]; then
+            echo "No run today resolved to 'morning' yet. Not posting — the"
+            echo "marker alarm in morning_watchdog.yml covers a genuine miss."
+            exit 0
+          fi
+
+          # ---- Extract ------------------------------------------------------
+          strip() { sed -e 's/\r$//' -e 's/\x1b\[[0-9;]*m//g'; }
+
+          # Skip lines. PR #26 shape:  SKIP AVB        no data returned
+          SKIPS=$(grep -a -oE '  SKIP [A-Z0-9.^=-]+ +[^"]*' "$LOG" | strip \
+                    | sed -e 's/^  SKIP /  /' -e 's/ *$//' | sort -u || true)
+          NSKIP=$(printf '%s' "$SKIPS" | grep -c . || true)
+
+          # Regression detector: a BARE `SKIP TICKER` with no reason means the
+          # PR #26 change was reverted, or a second SKIP site exists that was
+          # never fixed. Worth saying loudly - the whole point was that a
+          # reasonless SKIP is unreadable.
+          BARE=$(grep -a -cE '  SKIP [A-Z0-9.^=-]+ *$' "$LOG" || true)
+
+          FALLBACK=$(grep -a -c 'parallel fetch returned no data' "$LOG" || true)
+          WARNLINE=$(grep -a -oE 'WARNING: [0-9]+ ticker\(s\) SKIPPED on fetch: .*' "$LOG" | strip | head -1 || true)
+          PREDS=$(grep -a -oE '[0-9]+ predictions logged' "$LOG" | head -1 || true)
+          BATCH=$(grep -a -oE '[0-9]+ tickers downloaded via batch' "$LOG" | head -1 || true)
+          GUARD=$(grep -a -oE 'OK — ledger did not shrink \([0-9]+ -> [0-9]+\)|PREDICTIONS LEDGER SHRANK[^"]*' "$LOG" | strip | head -1 || true)
+          DELISTED=$(grep -a -oE 'DELISTED\? +[A-Z0-9.^=-]+' "$LOG" | strip | sed 's/DELISTED? *//' | sort -u | tr '\n' ' ' || true)
+
+          echo "───────── universe watch ${TODAY_ET} (run ${RUN_ID}) ─────────"
+          echo "batch      : ${BATCH:-<not found>}"
+          echo "predictions: ${PREDS:-<not found>}"
+          echo "skipped    : ${NSKIP} ticker(s)"
+          [ -n "$SKIPS" ] && printf '%s\n' "$SKIPS"
+          echo "bare SKIPs : ${BARE}  (should be 0 after PR #26)"
+          echo "fallback   : ${FALLBACK} 'returned no data'"
+          echo "delisted?  : ${DELISTED:-none}"
+          echo "guard      : ${GUARD:-<not found>}"
+
+          # ---- Compose ------------------------------------------------------
+          if [ "${NSKIP}" -gt 0 ]; then
+            HEAD="🔭 **Universe watch — ${TODAY_ET}**  ·  ${NSKIP} ticker(s) dropped"
+          else
+            HEAD="🔭 **Universe watch — ${TODAY_ET}**  ·  full cross-section"
+          fi
+
+          BODY="${BATCH:-batch line not found} · ${PREDS:-predictions line not found}"
+          if [ -n "$SKIPS" ]; then
+            BODY="${BODY}"$'\n'"\`\`\`"$'\n'"${SKIPS}"$'\n'"\`\`\`"
+          fi
+          [ -n "$WARNLINE" ] && BODY="${BODY}"$'\n'"${WARNLINE}"
+          [ "${FALLBACK}" -gt 0 ] && BODY="${BODY}"$'\n'"fallback returned no data ×${FALLBACK}"
+          [ -n "$DELISTED" ] && BODY="${BODY}"$'\n'"delisted?: ${DELISTED}"
+          [ -n "$GUARD" ] && BODY="${BODY}"$'\n'"ledger: ${GUARD}"
+
+          if [ "${BARE}" -gt 0 ]; then
+            BODY="${BODY}"$'\n'"⚠️ **${BARE} BARE \`SKIP\` line(s) with no reason — PR #26 has regressed, or there is a second unfixed SKIP site.**"
+          fi
+
+          BODY="${BODY}"$'\n'"${RUN_URL}/runs/${RUN_ID}"
+
+          # jq builds the JSON so newlines/quotes/backticks are escaped
+          # correctly. The watchdog's printf approach is fine for its fixed
+          # string but would corrupt this variable-length body.
+          PAYLOAD=$(jq -nc --arg c "${HEAD}"$'\n'"${BODY}" '{content:$c}')
+
+          if [ -n "${DISCORD_WEBHOOK_URL:-}" ]; then
+            code=$(curl -s -o /tmp/dc.out -w '%{http_code}' \
+                     -H 'Content-Type: application/json' \
+                     -d "$PAYLOAD" "$DISCORD_WEBHOOK_URL" || echo 000)
+            echo "discord HTTP ${code}"
+            [ "${code}" = "204" ] || { echo "::warning::Discord post returned ${code}"; head -c 300 /tmp/dc.out || true; }
+          else
+            echo "::warning::DISCORD_WEBHOOK_URL not set — report not delivered."
+            echo "$PAYLOAD"
+          fi
+
+          # Always exit 0. This reports; it does not gate. A red run here would
+          # add noise to an Actions list that is already red from HON.
+          exit 0
