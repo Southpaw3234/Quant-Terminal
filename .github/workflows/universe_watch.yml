@@ -168,7 +168,7 @@ jobs:
           [ -n "$GUARD" ] && BODY="${BODY}"$'\n'"ledger: ${GUARD}"
 
           if [ "${BARE}" -gt 0 ]; then
-            BODY="${BODY}"$'\n'"⚠️ **${BARE} BARE \`SKIP\` line(s) with no reason — PR #26 has regressed, or there is a second unfixed SKIP site.**"
+            BODY="${BODY}"$'\n'"⚠️ **${BARE} bare \`SKIP\` line(s) carrying no reason.** If this run postdates PR #26 (merge \`84149f7\`, 2026-08-26) then the fix regressed or a second unfixed SKIP site exists. On an older run this is expected — it is what the old code printed."
           fi
 
           BODY="${BODY}"$'\n'"${RUN_URL}/runs/${RUN_ID}"
