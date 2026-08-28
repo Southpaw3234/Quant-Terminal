@@ -70,14 +70,14 @@ jobs:
     outputs:
       go: ${{ steps.check.outputs.go }}
     env:
-      QT_SUNSET_DATE: '2026-09-25'   # day AFTER S4's expected read (~2026-09-24)
+      QT_SUNSET_DATE: '2026-09-26'   # day AFTER S4's expected read (~2026-09-25)
     steps:
       - id: check
         run: |
           set -u
           # ET, not UTC — same reasoning as the watchdog and the marker (8d3e9df).
           TODAY_ET=$(TZ=America/New_York date +%Y-%m-%d)
-          # ISO dates compare correctly as strings; verified 09-24 RUN / 09-25 SUNSET.
+          # ISO dates compare correctly as strings; verified 09-25 RUN / 09-26 SUNSET.
           if [[ "$TODAY_ET" < "$QT_SUNSET_DATE" ]]; then
             echo "go=true" >> "$GITHUB_OUTPUT"
             echo "pre-sunset (${TODAY_ET} < ${QT_SUNSET_DATE}) — running normally."

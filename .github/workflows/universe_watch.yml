@@ -59,7 +59,7 @@ jobs:
           # to Discord every weekday forever about an absence that is by
           # design. A permanently-crying alarm trains the reader to ignore the
           # channel that also carries real pages.
-          QT_SUNSET_DATE='2026-09-25'
+          QT_SUNSET_DATE='2026-09-26'
           if [[ "$TODAY_ET" > "$QT_SUNSET_DATE" || "$TODAY_ET" == "$QT_SUNSET_DATE" ]]; then
             echo "SUNSET: ${TODAY_ET} >= ${QT_SUNSET_DATE} — trading crons are retired"
             echo "by design, so there is no morning run to read. Not posting."
