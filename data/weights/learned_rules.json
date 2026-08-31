@@ -31,6 +31,14 @@
     "created_date": "2026-08-31",
     "created_regime": 1
   },
+  "ticker_FANG": {
+    "dampen": 0.2,
+    "count": 5,
+    "accuracy": 0.143,
+    "description": "FANG systematically underperforming \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u009d 14% accurate (5 samples)",
+    "created_date": "2026-08-31",
+    "created_regime": 1
+  },
   "ticker_CTAS": {
     "dampen": 0.16,
     "count": 5,
