@@ -53,7 +53,7 @@ them is how an "insider buying" signal becomes an "insider got paid" signal.
 
 ENV
 ---
-  FINNHUB_KEY            required for live fetch (a GitHub secret)
+  FINNHUB_API_KEY        required for live fetch (a GitHub secret)
   QT_F4_UNIVERSE         comma-separated tickers, or a path to a file of them
   QT_F4_LOOKBACK_DAYS    default 365
   QT_F4_OUT              default data/events/events_form4.csv
@@ -288,15 +288,15 @@ def probe(key: str) -> None:
 # ------------------------------------------------------------------ main
 
 def main() -> None:
-    key = os.environ.get("FINNHUB_KEY", "").strip()
+    key = os.environ.get("FINNHUB_API_KEY", "").strip()
     if os.environ.get("QT_F4_PROBE", "").strip() == "1":
         if not key:
-            print("[form4] FATAL: probe needs FINNHUB_KEY")
+            print("[form4] FATAL: probe needs FINNHUB_API_KEY")
             sys.exit(2)
         probe(key)
         return
     if not key:
-        print("[form4] FATAL: FINNHUB_KEY not set. SEC EDGAR is NOT a fallback "
+        print("[form4] FATAL: FINNHUB_API_KEY not set. SEC EDGAR is NOT a fallback "
               "from CI — it returns 0 (see module docstring).")
         sys.exit(2)
 
