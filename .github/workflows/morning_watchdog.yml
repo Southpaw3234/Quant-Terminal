@@ -64,7 +64,7 @@ jobs:
           # would page Discord EVERY WEEKDAY FOREVER over an expected absence.
           # A permanently-crying alarm is worse than no alarm: it trains the
           # reader to ignore the channel that also carries real pages.
-          QT_SUNSET_DATE='2026-09-26'
+          QT_SUNSET_DATE='2026-09-29'
           if [[ "$TODAY_ET" > "$QT_SUNSET_DATE" || "$TODAY_ET" == "$QT_SUNSET_DATE" ]]; then
             echo "SUNSET: ${TODAY_ET} >= ${QT_SUNSET_DATE} — trading crons are"
             echo "retired by design, so a stale marker is EXPECTED. Not alerting."
@@ -84,7 +84,7 @@ jobs:
           #    the costlier gap. Between now and QT_SUNSET_DATE there is
           #    exactly one: Labor Day, Monday 2026-09-07 (verified: first
           #    Monday of September 2026). A full holiday calendar would be
-          #    over-engineering for a workflow retiring on 2026-09-26 — if
+          #    over-engineering for a workflow retiring on 2026-09-29 — if
           #    that date ever moves out, extend this list rather than trusting
           #    it to stay complete.
           DOW=$(TZ=America/New_York date +%u)      # 1=Mon .. 6=Sat, 7=Sun
