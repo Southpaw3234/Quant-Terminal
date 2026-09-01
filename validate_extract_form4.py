@@ -28,10 +28,12 @@ def check(name: str, ok: bool, detail: str) -> None:
         FAILURES.append(name)
 
 
-def _tx(name, code, shares, price, fd):
-    return {"name": name, "transactionCode": code, "change": shares,
-            "transactionPrice": price, "filingDate": fd,
-            "transactionDate": fd}
+def _tx(name, code, shares, price, fd, **extra):
+    d = {"name": name, "transactionCode": code, "change": shares,
+         "transactionPrice": price, "filingDate": fd,
+         "transactionDate": fd, "isDerivative": False, "currency": "USD"}
+    d.update(extra)
+    return d
 
 
 def test_normalise():
@@ -65,6 +67,17 @@ def test_filter():
     names = sorted(r["name"] for r in keep)
     check("filter-p-only", names == ["Alice"],
           f"kept {names} of 6 (awards, exercises, sales, priceless, undated dropped)")
+
+    # Fields confirmed to exist by the 2026-09-01 live probe.
+    extra = f4.normalise([
+        _tx("Gina", "P", 100, 10.0, "2026-01-05", isDerivative=True),
+        _tx("Hank", "P", 100, 10.0, "2026-01-05", currency="EUR"),
+        _tx("Ivan", "P", 100, 10.0, "2026-01-05", currency=""),   # tolerated
+    ], "ACME")
+    kept = sorted(r["name"] for r in f4.filter_open_market_purchases(extra))
+    check("filter-derivative-currency", kept == ["Ivan"],
+          f"kept {kept} — derivative row and EUR row dropped, blank "
+          f"currency tolerated")
 
 
 def test_cluster_distinct_insiders():

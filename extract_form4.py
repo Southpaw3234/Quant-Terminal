@@ -124,6 +124,13 @@ def normalise(raw_rows: list, ticker: str) -> list:
             "value": abs(change) * price,
             "filing_date": str(d.get("filingDate") or "").strip(),
             "transaction_date": str(d.get("transactionDate") or "").strip(),
+            # Confirmed present by the 2026-09-01 live probe. `id` is a stable
+            # per-transaction key (better than name+date for dedup);
+            # `is_derivative` lets us exclude derivative rows explicitly
+            # rather than trusting code P to imply non-derivative.
+            "tx_id": str(d.get("id") or "").strip(),
+            "is_derivative": bool(d.get("isDerivative") or False),
+            "currency": str(d.get("currency") or "").strip().upper(),
         })
     return out
 
@@ -138,6 +145,17 @@ def filter_open_market_purchases(rows: list) -> list:
     keep = []
     for r in rows:
         if r["code"] != PURCHASE_CODE:
+            continue
+        # Explicit, not implied. The live probe confirmed Finnhub carries an
+        # isDerivative flag, so exclude derivative rows on the flag rather
+        # than assuming code P never appears on one.
+        if r.get("is_derivative"):
+            continue
+        # Non-USD prices would be compared against USD bars and against a USD
+        # benchmark. Blank is tolerated (older rows omit it); a stated
+        # non-USD currency is not.
+        cur = r.get("currency") or ""
+        if cur and cur != "USD":
             continue
         if r["shares"] <= 0 or r["price"] <= 0:
             continue
@@ -248,41 +266,70 @@ def fetch(tickers: list, key: str, lookback_days: int) -> list:
 
 
 def probe(key: str) -> None:
-    """Fetch ONE ticker and print the observed schema, then stop.
+    """Survey the universe's transaction-code mix and confirm the schema.
 
     Written because this module was authored without ever having seen a live
-    Finnhub insider payload. Verifying the shape costs one API call; assuming
-    it costs an accumulation window.
+    Finnhub insider payload. Verifying the shape costs a few API calls;
+    assuming it costs an accumulation window.
+
+    The FIRST probe (2026-09-01, AAPL, 365d) returned 116 rows with codes
+    {'S':30, 'M':53, 'A':17, 'F':12, 'G':4} and ZERO 'P'. That is the whole
+    finding: mega-cap insiders are COMPENSATED in stock and sell it; they do
+    not buy it on the open market. So this probe now surveys several names,
+    because "does this universe contain any purchases at all" decides
+    whether the extractor can produce events before any statistics matter.
     """
     import requests
     import datetime as dt
-    tk = _universe()[0]
+    import time
+    n_probe = int(os.environ.get("QT_F4_PROBE_N", "8"))
+    tickers = _universe()[:n_probe]
     to_d = dt.date.today()
-    r = requests.get(FINNHUB_URL,
-                     params={"symbol": tk,
-                             "from": (to_d - dt.timedelta(days=365)).isoformat(),
-                             "to": to_d.isoformat(), "token": key}, timeout=20)
-    print(f"[form4 probe] {tk} HTTP {r.status_code}")
-    if r.status_code != 200:
-        print(f"[form4 probe] body: {r.text[:400]}")
-        sys.exit(1)
-    payload = r.json()
-    print(f"[form4 probe] top-level keys: {sorted(payload.keys())}")
-    data = payload.get("data") or []
-    print(f"[form4 probe] {len(data)} row(s)")
-    if not data:
-        print("[form4 probe] NO ROWS — cannot confirm the record schema.")
-        return
-    print(f"[form4 probe] record keys: {sorted(data[0].keys())}")
-    print(f"[form4 probe] sample record:\n{json.dumps(data[0], indent=2)[:800]}")
-    codes = {}
-    for d in data:
-        c = str(d.get("transactionCode") or "?")
-        codes[c] = codes.get(c, 0) + 1
-    print(f"[form4 probe] transactionCode histogram: {codes}")
-    has_time = any(":" in str(d.get("filingDate") or "") for d in data)
-    print(f"[form4 probe] filingDate carries a TIME component: {has_time}")
-    print("[form4 probe] (if False, next-session entry is the only safe read)")
+    from_d = (to_d - dt.timedelta(days=365)).isoformat()
+
+    all_codes: dict = {}
+    total_rows = 0
+    schema_printed = False
+    per_ticker = []
+    for tk in tickers:
+        r = requests.get(FINNHUB_URL,
+                         params={"symbol": tk, "from": from_d,
+                                 "to": to_d.isoformat(), "token": key},
+                         timeout=20)
+        if r.status_code != 200:
+            print(f"[form4 probe] {tk} HTTP {r.status_code}: {r.text[:200]}")
+            sys.exit(1)
+        data = r.json().get("data") or []
+        total_rows += len(data)
+        if data and not schema_printed:
+            print(f"[form4 probe] record keys: {sorted(data[0].keys())}")
+            print(f"[form4 probe] sample:\n{json.dumps(data[0], indent=2)[:600]}")
+            has_time = any(":" in str(d.get('filingDate') or '') for d in data)
+            print(f"[form4 probe] filingDate carries a TIME component: {has_time}")
+            print("[form4 probe] (False -> next-session entry is the only safe read)")
+            schema_printed = True
+        codes: dict = {}
+        for d in data:
+            c = str(d.get("transactionCode") or "?")
+            codes[c] = codes.get(c, 0) + 1
+            all_codes[c] = all_codes.get(c, 0) + 1
+        per_ticker.append((tk, len(data), codes.get(PURCHASE_CODE, 0)))
+        time.sleep(1.1)
+
+    print(f"\n[form4 probe] surveyed {len(tickers)} ticker(s), "
+          f"{total_rows} transaction(s) over 365d")
+    for tk, n, np_ in per_ticker:
+        print(f"[form4 probe]   {tk:<6} {n:>4} rows   P={np_}")
+    print(f"[form4 probe] UNIVERSE code histogram: {all_codes}")
+    n_p = all_codes.get(PURCHASE_CODE, 0)
+    print(f"[form4 probe] open-market purchases (P): {n_p}")
+    if n_p == 0:
+        print("[form4 probe] ⚠️  ZERO open-market purchases in this universe. "
+              "The extractor is working; the UNIVERSE is wrong. Mega-cap "
+              "insiders are paid in stock and sell it — they do not buy it. "
+              "A3 cannot produce events until A4 (the inverted screen: small, "
+              "illiquid, uncovered) supplies names whose insiders actually "
+              "buy. This is a data-availability fact, not a tuning problem.")
 
 
 # ------------------------------------------------------------------ main
