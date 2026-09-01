@@ -1,0 +1,90 @@
+name: Validate Form 4 extractor (v27 A3, read-only)
+
+# Two jobs, deliberately separated:
+#
+#   validate  -- hermetic, no network, no secrets. Runs on every push to a
+#                v27/** branch. This is the gate.
+#   probe     -- dispatch-only, uses FINNHUB_KEY, makes ONE API call and
+#                prints the OBSERVED record schema. extract_form4.py was
+#                written without ever having seen a live payload, so the
+#                schema is an assumption until this says otherwise.
+#
+# v27 SEQUENCING: neither job is scheduled and neither is wired into
+# quant_daily.yml. S4 reads obs #30 ~2026-09-28; nothing here may run on a
+# cron or write under data/predictions/ before 09-29. See
+# docs/V27_BUILD_PLAN.md 0.
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_probe:
+        description: 'Make one live Finnhub call and print the observed schema'
+        type: boolean
+        default: false
+  push:
+    branches:
+      - 'v27/**'
+    paths:
+      - 'extract_form4.py'
+      - 'validate_extract_form4.py'
+      - '.github/workflows/validate_extract_form4.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        # No `requests`: the pure-logic suite must not be able to reach the
+        # network even by accident. extract_form4.py imports requests lazily
+        # inside fetch()/probe() precisely so this stays possible.
+        run: pip install "numpy<2.4" pandas
+
+      - name: Compile check
+        run: |
+          python -m py_compile extract_form4.py
+          python -m py_compile validate_extract_form4.py
+
+      - name: Run pure-logic validation
+        run: python validate_extract_form4.py
+
+      - name: Assert nothing under data/ changed
+        run: |
+          set -u
+          if ! git diff --quiet -- data/ 2>/dev/null; then
+            echo "::error::validation modified data/ — it must be read-only"
+            git --no-pager diff --stat -- data/
+            exit 1
+          fi
+          echo "OK — data/ untouched."
+
+  probe:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_probe
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas requests
+      - name: Probe the live Finnhub insider schema
+        env:
+          FINNHUB_KEY: ${{ secrets.FINNHUB_KEY }}
+          QT_F4_PROBE: '1'
+        run: |
+          set -u
+          if [ -z "${FINNHUB_KEY}" ]; then
+            echo "::error::FINNHUB_KEY secret is not set — cannot probe."
+            exit 1
+          fi
+          python extract_form4.py
