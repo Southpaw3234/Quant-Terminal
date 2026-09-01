@@ -173,6 +173,10 @@ def test_signal(tmp: Path) -> None:
     stdout = _run(ev_csv, px_csv, out)
     got = pd.read_csv(out)
     m = float(got["abnormal_ret"].mean())
+    # assert N too: a silent drop of events would otherwise hide behind a
+    # mean that still looks about right
+    check("signal-n", len(got) == n_ev,
+          f"{len(got)} of {n_ev} events survived to the ledger")
     check("signal-recovered", 0.015 < m < 0.025,
           f"mean abnormal={m:+.4f} (planted +0.0200)")
     check("signal-verdict", "E1 verdict     : PASS" in stdout,
@@ -277,9 +281,18 @@ def test_freeze(tmp: Path) -> None:
     # Now materially change the prices and re-run against the same ledger.
     # This is exactly what bit v25: a full-overwrite analyzer recomputing
     # history from a fresh download.
+    #
+    # NOTE: scaling the series by a CONSTANT does not work here, and the
+    # first version of this test made that mistake. A return is
+    # p[exit]/p[entry] - 1, so a constant factor cancels exactly; the
+    # recomputed values were identical, nothing needed freezing, and the
+    # test passed vacuously while asserting nothing. The perturbation has
+    # to change the SHAPE of the path, not its level.
+    rng2 = np.random.default_rng(SEED + 3)
     for tk in list(series):
         if tk != "SPY":
-            series[tk] = series[tk] * 1.25
+            series[tk] = pd.Series(
+                100 * np.cumprod(1 + rng2.normal(0, 0.02, len(idx))), index=idx)
     _write_prices(px_csv, series)
     stdout = _run(ev_csv, px_csv, out)
     second = pd.read_csv(out).set_index("event_id")["abnormal_ret"].to_dict()
