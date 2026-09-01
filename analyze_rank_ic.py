@@ -143,7 +143,7 @@ def _freeze_first_write(new_df: "pd.DataFrame", path: Path, label: str) -> "pd.D
     prevented this.
 
     Why it matters beyond tidiness: rank_ic_v2.csv is written by this same
-    script (QT_RANK_IC_OUT) and is the S4 decision input due ~2026-09-24. A
+    script (QT_RANK_IC_OUT) and is the S4 decision input due ~2026-09-28. A
     recomputed series means the number read on decision day is not the 30
     observations that were accumulated — it is whatever today's price
     download implies. Freezing makes the window an append-only ledger.
