@@ -1,8 +1,10 @@
 # v27 — Pre-Registration
 
 **Drafted:** 2026-09-01
-**Status:** 🔴 **UNSIGNED — NOT YET BINDING.** Becomes binding only when §⓪ is completed
-by the operator. Until then this is a draft and no v27 code should be written.
+**Status:** 🟢 **SIGNED AND BINDING as of 2026-09-01.** §⓪ is complete
+All four criteria, the restart budget, the anti-deferral clause and the terminal date are
+now in force. Changing any number below after this date is a violation of the document,
+not an amendment to it.
 
 > **Why this exists.** In v25, four criteria (S1–S4) were pre-registered and three failed.
 > The thresholds were **not renegotiated**, and that is the single most valuable thing the
@@ -11,13 +13,13 @@ by the operator. Until then this is a draft and no v27 code should be written.
 
 ---
 
-## ⓪ To be completed by the operator BEFORE any v27 code is written
+## ⓪ Completed by the operator — 2026-09-01, before any v27 code was written
 
 **P1 — Stated prior.** Probability that v27 produces a strategy clearing E1–E4 and
 surviving to a live capital ramp:
 
 ```
-P(success) = ______%          signed: ____________   date: __________
+P(success) = 15%             signed: Southpaw3234        date: 2026-09-01
 ```
 
 *Anchor, not a recommendation:* the v25 attempt was recorded in advance at **≈10%
@@ -30,14 +32,14 @@ pessimism — and it is much cheaper to learn here than in §⑤.
 tested before the WRC/SPA correction is applied:
 
 ```
-K = ______           (declare it now; testing more than K invalidates E1)
+K = 5                (declared 2026-09-01; testing more than 5 invalidates E1)
 ```
 
 **P3 — Intended full allocation.** The capital §⑤ ramps toward. Needed now so the ramp
 percentages are meaningful and cannot be re-based later:
 
 ```
-Full allocation = ____________
+Full allocation = $10,000    (declared 2026-09-01)
 ```
 
 ---
@@ -151,10 +153,10 @@ Expressed as a percentage of the §⓪ P3 allocation so it cannot be re-based af
 
 | stage | size | hold | advance if | abort if |
 |---|---|---|---|---|
-| 1 | **5%** | 20 trading days | no abort trigger | drawdown > **5%**, or any reconciliation break |
-| 2 | **15%** | 20 trading days | stage-1 Sharpe ≥ 0 | drawdown > **7%** |
-| 3 | **40%** | 40 trading days | stages 1–2 combined Sharpe ≥ +0.3 | drawdown > **10%** |
-| 4 | **100%** | — | stages 1–3 combined Sharpe ≥ +0.5 | drawdown > **12%** |
+| 1 | **5% — $500** | 20 trading days | no abort trigger | drawdown > **5%**, or any reconciliation break |
+| 2 | **15% — $1,500** | 20 trading days | stage-1 Sharpe ≥ 0 | drawdown > **7%** |
+| 3 | **40% — $4,000** | 40 trading days | stages 1–2 combined Sharpe ≥ +0.3 | drawdown > **10%** |
+| 4 | **100% — $10,000** | — | stages 1–3 combined Sharpe ≥ +0.5 | drawdown > **12%** |
 
 **An abort at any stage returns to paper, not to the previous stage.** The ramp is not
 resumed on judgment; re-entry requires a fresh E3.
