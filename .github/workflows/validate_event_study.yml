@@ -1,0 +1,63 @@
+name: Validate event-study engine (v27 A2, read-only)
+
+# Proves `event_study.py` against synthetic data with KNOWN answers before it
+# is ever pointed at a real filing. Measurement-only:
+#   * no trading keys, no broker, no orders
+#   * no network at all -- prices come from a temp CSV, not yfinance
+#   * nothing is committed, and nothing under data/predictions/ is touched
+#
+# v27 SEQUENCING: this workflow must NOT be added to quant_daily.yml and must
+# not run on a schedule before 2026-09-29. S4 is mid-flight at N=12 and reads
+# obs #30 on ~2026-09-28; anything writing to data/predictions/ or altering
+# the live model before then corrupts a measurement four criteria depend on.
+# This job is dispatch/branch-only by design. See docs/V27_BUILD_PLAN.md 0.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'v27/**'
+    paths:
+      - 'event_study.py'
+      - 'validate_event_study.py'
+      - '.github/workflows/validate_event_study.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        # Deliberately NOT installing yfinance: the suite must be hermetic,
+        # and if a test can reach the network it will eventually fail for a
+        # reason that has nothing to do with the code under test.
+        run: pip install "numpy<2.4" pandas
+
+      - name: Compile check
+        run: |
+          python -m py_compile event_study.py
+          python -m py_compile validate_event_study.py
+
+      - name: Run validation suite
+        run: python validate_event_study.py
+
+      - name: Assert the live pipeline was not touched
+        # A validate job that quietly wrote into the S4 evidence tree would be
+        # far worse than a failing test. Cheap to check, so check it.
+        run: |
+          set -u
+          if ! git diff --quiet -- data/ 2>/dev/null; then
+            echo "::error::validation modified data/ — it must be read-only"
+            git --no-pager diff --stat -- data/
+            exit 1
+          fi
+          echo "OK — data/ untouched by the validation run."
