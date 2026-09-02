@@ -81,7 +81,10 @@ ENV
   QT_U_PRICE_MIN         default 2.00          ]
   QT_U_MIN_HISTORY       default 200           ]
   QT_U_ADV_LOOKBACK      default 60  (trading days)
-  QT_U_MAX_SYMBOLS       cap for cost control (0 = no cap)
+  QT_U_MAX_SYMBOLS       hard cap for cost control (0 = no cap)
+  QT_U_SAMPLE_N          default 1500   ] the frozen random sample --
+  QT_U_SAMPLE_SEED       default 20260901 ] part of the specification
+  QT_U_SAMPLE_OUT        default data/universe/v27_sample.csv
   QT_U_SYMBOLS_ONLY      "1" -> fetch + report the symbol funnel, no prices
 """
 from __future__ import annotations
@@ -105,6 +108,23 @@ MIN_HISTORY_DAYS = int(os.environ.get("QT_U_MIN_HISTORY", "200"))
 ADV_LOOKBACK = int(os.environ.get("QT_U_ADV_LOOKBACK", "60"))
 
 MAX_SYMBOLS = int(os.environ.get("QT_U_MAX_SYMBOLS", "0"))
+
+# ---- SAMPLING. Decided 2026-09-01: price a fixed random sample rather than
+# all ~18,400 names. Pricing everything is ~92 chunked yfinance downloads,
+# slow and flaky, and it is not needed -- a RULE that draws a random sample
+# is as defensible as a rule that takes everything, and far cheaper.
+#
+# 🔑 The sample is FROZEN TO DISK on first draw and reloaded thereafter.
+# This is the entire point. A sample redrawn each run is not a sample, it is
+# an unlimited supply of universes: run it enough times and one of them
+# produces a flattering E1, with nothing in the record showing how many were
+# discarded. Freezing makes the draw a one-time, dated event -- the same
+# discipline `_freeze_first_write` applies to written evidence rows, applied
+# to universe membership instead.
+SAMPLE_N = int(os.environ.get("QT_U_SAMPLE_N", "1500"))
+SAMPLE_SEED = int(os.environ.get("QT_U_SAMPLE_SEED", "20260901"))
+SAMPLE_CSV = Path(os.environ.get("QT_U_SAMPLE_OUT",
+                                 "data/universe/v27_sample.csv"))
 
 # Finnhub `type` values that are actual operating companies. Everything else
 # (ETP, closed-end funds, warrants, units, rights, preferreds) is excluded:
@@ -149,6 +169,77 @@ def filter_symbols(raw: list) -> list:
                     "description": str(d.get("description") or "").strip(),
                     "type": typ})
     return sorted(out, key=lambda r: r["ticker"])
+
+
+def sample_symbols(syms: list, n: int = SAMPLE_N,
+                   seed: int = SAMPLE_SEED) -> list:
+    """Deterministic random sample of the symbol list.
+
+    Sorted first so the draw does not depend on the order Finnhub happened
+    to return rows in — same seed plus same population must give the same
+    sample on any machine, on any day.
+
+    Returns everything if the population is already at or below n, so the
+    sampling step is a no-op on a small universe rather than an error.
+    """
+    pool = sorted(syms, key=lambda r: r["ticker"])
+    if n <= 0 or len(pool) <= n:
+        return pool
+    rng = np.random.default_rng(seed)
+    idx = rng.choice(len(pool), size=n, replace=False)
+    return [pool[i] for i in sorted(idx)]
+
+
+def load_or_draw_sample(syms: list, path: Path = SAMPLE_CSV,
+                        n: int = SAMPLE_N, seed: int = SAMPLE_SEED) -> list:
+    """Reload the frozen sample if it exists; otherwise draw and freeze it.
+
+    A redrawn sample is a new universe, and a new universe is a new
+    SPECIFICATION under docs/V27_PREREGISTRATION.md. Reloading is therefore
+    the correct behaviour even when the symbol population has changed since
+    the draw — new listings do not retroactively join the study, and names
+    that have since delisted stay in it, which is the only handling that
+    does not quietly re-bias the universe over time.
+
+    To draw a genuinely new sample, delete the file deliberately and record
+    why. That is meant to be an explicit act, not a side effect of a rerun.
+    """
+    if path.exists():
+        try:
+            old = pd.read_csv(path)
+        except Exception as exc:
+            print(f"[universe] frozen sample at {path} unreadable ({exc})")
+            old = None
+        if old is not None and "ticker" in old.columns and len(old):
+            meta = ""
+            if "drawn_at" in old.columns and "seed" in old.columns:
+                meta = (f" (drawn {old['drawn_at'].iloc[0]}, "
+                        f"seed {old['seed'].iloc[0]}, "
+                        f"from a population of "
+                        f"{old.get('population', pd.Series(['?'])).iloc[0]})")
+            print(f"[universe] REUSING frozen sample: {len(old)} name(s)"
+                  f"{meta}")
+            print("[universe] the sample is NOT redrawn — a new draw is a new "
+                  "specification. Delete the file deliberately to redraw.")
+            by_tk = {r["ticker"]: r for r in syms}
+            return [by_tk.get(tk, {"ticker": tk, "description": "",
+                                   "type": ""})
+                    for tk in old["ticker"].astype(str).str.upper()]
+
+    drawn = sample_symbols(syms, n, seed)
+    stamp = pd.Timestamp.utcnow().date().isoformat()
+    out = pd.DataFrame([{"ticker": r["ticker"],
+                         "description": r.get("description", ""),
+                         "seed": seed, "n_requested": n,
+                         "population": len(syms),
+                         "drawn_at": stamp} for r in drawn])
+    path.parent.mkdir(parents=True, exist_ok=True)
+    out.to_csv(path, index=False)
+    print(f"[universe] DREW a new sample: {len(drawn)} of {len(syms):,} "
+          f"(seed {seed}) and FROZE it to {path}")
+    print("[universe] this draw is now part of the specification. Reruns "
+          "reload it; they do not redraw.")
+    return drawn
 
 
 def compute_adv(close: pd.Series, volume: pd.Series, asof=None,
@@ -295,6 +386,7 @@ def main() -> None:
         print("[universe] QT_U_SYMBOLS_ONLY=1 — stopping before price fetch.")
         return
 
+    syms = load_or_draw_sample(syms)
     tickers = [r["ticker"] for r in syms]
     if MAX_SYMBOLS and len(tickers) > MAX_SYMBOLS:
         print(f"[universe] capping {len(tickers):,} -> {MAX_SYMBOLS:,} "
