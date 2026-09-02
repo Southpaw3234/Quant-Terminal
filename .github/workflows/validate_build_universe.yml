@@ -1,0 +1,86 @@
+name: Validate inverted universe screen (v27 A4, read-only)
+
+# validate  -- hermetic, no network, no secrets. The gate.
+# symbols   -- dispatch-only. Fetches the US symbol list and prints the
+#              funnel WITHOUT downloading prices, so the question "how many
+#              candidate names even exist" costs one API call rather than
+#              several thousand yfinance requests.
+#
+# v27 SEQUENCING: neither job is scheduled, neither is wired into
+# quant_daily.yml, and neither writes under data/predictions/. S4 reads obs
+# #30 ~2026-09-28. See docs/V27_BUILD_PLAN.md 0.
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_symbols:
+        description: 'Fetch the live US symbol list and print the funnel'
+        type: boolean
+        default: false
+  push:
+    branches:
+      - 'v27/**'
+    paths:
+      - 'build_universe.py'
+      - 'validate_build_universe.py'
+      - '.github/workflows/validate_build_universe.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        # No requests, no yfinance: the pure-logic suite must not be able to
+        # reach the network even by accident. build_universe.py imports both
+        # lazily inside the fetch functions so this stays possible.
+        run: pip install "numpy<2.4" pandas
+
+      - name: Compile check
+        run: |
+          python -m py_compile build_universe.py
+          python -m py_compile validate_build_universe.py
+
+      - name: Run pure-logic validation
+        run: python validate_build_universe.py
+
+      - name: Assert nothing under data/ changed
+        run: |
+          set -u
+          if ! git diff --quiet -- data/ 2>/dev/null; then
+            echo "::error::validation modified data/ — it must be read-only"
+            git --no-pager diff --stat -- data/
+            exit 1
+          fi
+          echo "OK — data/ untouched."
+
+  symbols:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_symbols
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas requests
+      - name: Fetch the US symbol list and report the funnel
+        env:
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+          QT_U_SYMBOLS_ONLY: '1'
+        run: |
+          set -u
+          if [ -z "${FINNHUB_API_KEY}" ]; then
+            echo "::error::FINNHUB_API_KEY secret is not set."
+            exit 1
+          fi
+          python build_universe.py
