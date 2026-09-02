@@ -132,6 +132,31 @@ SAMPLE_CSV = Path(os.environ.get("QT_U_SAMPLE_OUT",
 # about a business.
 COMMON_TYPES = {"Common Stock", "COMMON STOCK", "EQS", "Equity"}
 
+# Primary US exchanges, by MIC. Everything else — above all the OTC venues
+# (OTCM, PINX, OOTC) — is excluded.
+#
+# 🔑 THIS IS NOT TIDINESS. The first live screen returned RHHVF = ROCHE
+# HOLDING AG, a ~$250B pharmaceutical company, as an "illiquid small-cap".
+# It qualified because its US OTC line is thinly traded. Along with it came
+# ATUUF, EXETF, CURLF, KRKNF, NOPMF, CDDRF — 7 of 69 names, all foreign
+# ordinaries on OTC.
+#
+# Two independent reasons this destroys the screen:
+#
+#  1. ADV ON AN OTC FOREIGN ORDINARY MEASURES THE THINNESS OF ITS US
+#     LISTING, NOT THE SIZE OR OBSCURITY OF THE COMPANY. The screen's whole
+#     premise is "too small for large funds to hold". Roche is the single
+#     most-covered pharma name on earth.
+#  2. Foreign private issuers are EXEMPT from Section 16 (Rule 3a12-3(b)),
+#     so they file no Form 4s at all. These names cannot produce a single
+#     event no matter how long the study runs — they are pure dead weight
+#     in a universe whose size is the binding constraint.
+#
+# The MIC histogram is printed on every symbols-only run so this allowlist
+# can be checked against reality rather than trusted.
+US_PRIMARY_MICS = {"XNAS", "XNYS", "ARCX", "BATS", "XASE", "IEXG", "EDGX",
+                   "XBOS", "XPHL", "XCIS"}
+
 
 # ------------------------------------------------------------------ pure
 
@@ -164,10 +189,21 @@ def filter_symbols(raw: list) -> list:
         # acquires warrants and units it was never meant to contain.
         if typ not in COMMON_TYPES:
             continue
+        # Primary US exchanges only. See US_PRIMARY_MICS for why this is
+        # load-bearing rather than cosmetic.
+        mic = str(d.get("mic") or "").strip().upper()
+        if mic not in US_PRIMARY_MICS:
+            continue
+        # Belt and braces: the 5-letter -F suffix is the OTC foreign-ordinary
+        # convention (RHHVF, EXETF, CURLF). If one ever reaches here with a
+        # primary-exchange MIC, drop it anyway — a foreign private issuer
+        # files no Form 4 and cannot produce an event.
+        if len(sym) == 5 and sym.endswith("F"):
+            continue
         seen.add(sym)
         out.append({"ticker": sym,
                     "description": str(d.get("description") or "").strip(),
-                    "type": typ})
+                    "type": typ, "mic": mic})
     return sorted(out, key=lambda r: r["ticker"])
 
 
@@ -381,6 +417,20 @@ def main() -> None:
             types[t] = types.get(t, 0) + 1
     top = sorted(types.items(), key=lambda kv: -kv[1])[:10]
     print(f"[universe] symbol types seen: {top}")
+
+    # MIC histogram over COMMON-STOCK rows only, so the exchange allowlist
+    # can be checked against reality instead of trusted. The OTC line is the
+    # one to watch: it is where Roche came from.
+    mics: dict = {}
+    for d in raw or []:
+        if isinstance(d, dict) and str(d.get("type") or "").strip() in COMMON_TYPES:
+            m = str(d.get("mic") or "?").strip().upper()
+            mics[m] = mics.get(m, 0) + 1
+    ranked = sorted(mics.items(), key=lambda kv: -kv[1])[:14]
+    print(f"[universe] MIC histogram (Common Stock rows): {ranked}")
+    kept_mics = sum(v for k, v in mics.items() if k in US_PRIMARY_MICS)
+    print(f"[universe] {kept_mics:,} on primary US exchanges, "
+          f"{sum(mics.values()) - kept_mics:,} elsewhere (OTC etc.) — excluded")
 
     if os.environ.get("QT_U_SYMBOLS_ONLY", "").strip() == "1":
         print("[universe] QT_U_SYMBOLS_ONLY=1 — stopping before price fetch.")

@@ -27,18 +27,19 @@ def check(name: str, ok: bool, detail: str) -> None:
 
 def test_filter_symbols():
     print("\n--- filter_symbols: operating companies only ---")
+    C, M = "Common Stock", "XNAS"
     raw = [
-        {"symbol": "ACME", "type": "Common Stock", "description": "Acme"},
-        {"symbol": "SPY", "type": "ETP", "description": "SPDR"},
-        {"symbol": "BRK.B", "type": "Common Stock", "description": "class"},
-        {"symbol": "ACME", "type": "Common Stock", "description": "dupe"},
-        {"symbol": "TOOLONG", "type": "Common Stock", "description": "7 chars"},
-        {"symbol": "AB1", "type": "Common Stock", "description": "digit"},
-        {"symbol": "", "type": "Common Stock", "description": "blank"},
+        {"symbol": "ACME", "type": C, "mic": M, "description": "Acme"},
+        {"symbol": "SPY", "type": "ETP", "mic": M, "description": "SPDR"},
+        {"symbol": "BRK.B", "type": C, "mic": M, "description": "class"},
+        {"symbol": "ACME", "type": C, "mic": M, "description": "dupe"},
+        {"symbol": "TOOLONG", "type": C, "mic": M, "description": "7 chars"},
+        {"symbol": "AB1", "type": C, "mic": M, "description": "digit"},
+        {"symbol": "", "type": C, "mic": M, "description": "blank"},
         "not a dict",
-        {"symbol": "GOOD", "type": "Common Stock", "description": "keep"},
-        {"symbol": "UNTY", "type": "", "description": "untyped"},
-        {"symbol": "REIT", "type": "REIT", "description": "reit"},
+        {"symbol": "GOOD", "type": C, "mic": M, "description": "keep"},
+        {"symbol": "UNTY", "type": "", "mic": M, "description": "untyped"},
+        {"symbol": "REIT", "type": "REIT", "mic": M, "description": "reit"},
     ]
     got = [r["ticker"] for r in bu.filter_symbols(raw)]
     check("filter-symbols", got == ["ACME", "GOOD"],
@@ -51,6 +52,27 @@ def test_filter_symbols():
           "a row with an EMPTY type is excluded, not waved through")
     check("filter-reit-excluded", "REIT" not in got,
           "REIT excluded — a specification choice, not an accident")
+
+    # Regression for the 2026-09-02 live screen, which returned RHHVF =
+    # ROCHE HOLDING AG as an "illiquid small-cap" because its US OTC line is
+    # thin. Seven of 69 names were OTC foreign ordinaries: they break the
+    # screen's premise AND file no Form 4s (FPIs are exempt from Section 16).
+    otc = [
+        {"symbol": "RHHVF", "type": C, "mic": "OTCM", "description": "ROCHE"},
+        {"symbol": "CURLF", "type": C, "mic": "PINX", "description": "CURALEAF"},
+        {"symbol": "SNEAK", "type": C, "mic": "OOTC", "description": "otc"},
+        {"symbol": "ABCDF", "type": C, "mic": "XNAS", "description": "F-suffix"},
+        {"symbol": "REALCO", "type": C, "mic": "XNYS", "description": "too long"},
+        {"symbol": "REAL", "type": C, "mic": "XNYS", "description": "keep"},
+    ]
+    got2 = [r["ticker"] for r in bu.filter_symbols(otc)]
+    check("filter-otc-excluded", got2 == ["REAL"],
+          f"kept {got2} — Roche and every other OTC/foreign-ordinary dropped")
+    check("filter-f-suffix", "ABCDF" not in got2,
+          "a 5-letter -F symbol is dropped even on a primary-exchange MIC")
+    check("filter-mic-recorded",
+          all("mic" in r for r in bu.filter_symbols(otc)),
+          "mic retained on kept rows so the universe file is auditable")
 
 
 def test_adv_median_not_mean():
