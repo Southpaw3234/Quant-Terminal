@@ -17,6 +17,10 @@ name: Validate Form 4 extractor (v27 A3, read-only)
 on:
   workflow_dispatch:
     inputs:
+      run_extract:
+        description: 'Count cluster-buy events across the A4 universe (availability only)'
+        type: boolean
+        default: false
       run_probe:
         description: 'Make one live Finnhub call and print the observed schema'
         type: boolean
@@ -88,3 +92,52 @@ jobs:
             exit 1
           fi
           python extract_form4.py
+
+  extract:
+    # Counts cluster-buy events on the A4 universe. Availability only --
+    # it does NOT run event_study.py and computes no returns. Event COUNTS
+    # are free against K=5; event PERFORMANCE is not, and keeping the two in
+    # separate jobs is what keeps that distinction real rather than stated.
+    #
+    # Uploads an artifact; does not commit. Same reasoning as the universe
+    # screen: an emitted event set is specification-adjacent and enters the
+    # repo through a reviewed commit.
+    if: github.event_name == 'workflow_dispatch' && inputs.run_extract
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas requests
+      - name: Extract Form 4 cluster buys over the A4 universe
+        env:
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+          QT_F4_UNIVERSE: data/universe/v27_universe.csv
+        run: |
+          set -u
+          if [ -z "${FINNHUB_API_KEY}" ]; then
+            echo "::error::FINNHUB_API_KEY secret is not set."
+            exit 1
+          fi
+          if [ ! -f data/universe/v27_universe.csv ]; then
+            echo "::error::no A4 universe on this ref — run the screen first."
+            exit 1
+          fi
+          echo "universe: $(( $(wc -l < data/universe/v27_universe.csv) - 1 )) names"
+          python extract_form4.py
+      - name: Guard — S4 evidence untouched
+        run: |
+          set -u
+          if ! git diff --quiet -- data/predictions/ data/shadow/ 2>/dev/null; then
+            echo "::error::the extractor modified S4 evidence — it must not"
+            exit 1
+          fi
+          echo "OK — data/predictions/ and data/shadow/ untouched."
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v27-form4-events
+          path: data/events/*.csv
+          if-no-files-found: warn
