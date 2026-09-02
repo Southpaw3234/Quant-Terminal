@@ -123,6 +123,59 @@ def test_screen_inverted():
           "funnel stages sum to the input count — no name vanishes silently")
 
 
+def test_sampling():
+    print("\n--- sample_symbols: deterministic, order-independent ---")
+    pool = [{"ticker": f"T{i:04d}", "description": "", "type": "Common Stock"}
+            for i in range(5000)]
+    a = [r["ticker"] for r in bu.sample_symbols(pool, 100, seed=42)]
+    b = [r["ticker"] for r in bu.sample_symbols(pool, 100, seed=42)]
+    c = [r["ticker"] for r in bu.sample_symbols(pool, 100, seed=43)]
+    check("sample-deterministic", a == b,
+          f"same seed -> identical {len(a)}-name sample")
+    check("sample-seed-matters", a != c,
+          "a different seed gives a different sample")
+    check("sample-size", len(a) == 100 and len(set(a)) == 100,
+          f"{len(a)} names, no duplicates (drawn without replacement)")
+
+    shuffled = list(reversed(pool))
+    d = [r["ticker"] for r in bu.sample_symbols(shuffled, 100, seed=42)]
+    check("sample-order-independent", a == d,
+          "reversing the input order gives the same sample — the draw does "
+          "not depend on the order Finnhub returned rows in")
+
+    small = pool[:50]
+    e = bu.sample_symbols(small, 100, seed=42)
+    check("sample-noop-when-small", len(e) == 50,
+          "population <= n returns everything rather than erroring")
+
+
+def test_sample_frozen(tmp_path_str="."):
+    print("\n--- load_or_draw_sample: FROZEN (the one that matters) ---")
+    import tempfile
+    from pathlib import Path as _P
+    pool = [{"ticker": f"T{i:04d}", "description": "", "type": "Common Stock"}
+            for i in range(5000)]
+    with tempfile.TemporaryDirectory() as td:
+        p = _P(td) / "sample.csv"
+        first = [r["ticker"] for r in
+                 bu.load_or_draw_sample(pool, p, n=100, seed=42)]
+        check("frozen-created", p.exists() and len(first) == 100,
+              f"first call drew {len(first)} names and wrote {p.name}")
+
+        # A different seed AND a changed population must both be ignored:
+        # the frozen file is authoritative.
+        grown = pool + [{"ticker": f"NEW{i:03d}", "description": "",
+                         "type": "Common Stock"} for i in range(500)]
+        second = [r["ticker"] for r in
+                  bu.load_or_draw_sample(grown, p, n=100, seed=999)]
+        check("frozen-reused", first == second,
+              "a rerun with a DIFFERENT seed and 500 new listings returned "
+              "the identical sample — reruns cannot redraw")
+        check("frozen-no-new-listings",
+              not any(t.startswith("NEW") for t in second),
+              "new listings did not retroactively join the study")
+
+
 def test_adv_empty():
     print("\n--- compute_adv: degenerate inputs ---")
     idx = pd.bdate_range("2025-01-01", periods=10)
@@ -143,6 +196,8 @@ def main():
     test_adv_median_not_mean()
     test_adv_point_in_time()
     test_screen_inverted()
+    test_sampling()
+    test_sample_frozen()
     test_adv_empty()
     print("\n" + "=" * 68)
     if FAILURES:
