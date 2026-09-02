@@ -199,6 +199,27 @@ def test_referee_records_e1():
               "and it cannot be read again")
 
 
+def test_live_registry():
+    print("\n--- referee: the LIVE registry, not a fixture ---")
+    p = Path("data/registry/specifications.json")
+    if not p.exists():
+        check("live-registry-present", False, f"{p} missing")
+        return
+    r = referee.Referee(registry_path=p)
+    check("live-k-used", r.k_used() == 1,
+          f"K {r.k_used()}/{r.k_budget} spent, {r.k_remaining()} remaining")
+    check("live-e1-locked",
+          not r.authorize_read("form4_cluster_buy_v1", "2026-12-15").allowed,
+          "form4_cluster_buy_v1 is READ and cannot be read again")
+    spec = r.specs.get("form4_cluster_buy_v1")
+    check("live-e1-verdict", spec and spec.result.get("verdict") == "NOT MET",
+          f"recorded verdict: {spec.result.get('verdict') if spec else 'n/a'}")
+    check("live-caveats-travel", spec and len(spec.result.get("caveats", [])) >= 3,
+          "the survivorship / next-session-entry / WRC caveats are stored WITH "
+          "the number, not left in a PR description nobody reads later")
+    print(f"\n{r.status()}")
+
+
 def main():
     print("=" * 70)
     print("qt Phase 1 — Measurement + Referee (no network)")
@@ -208,6 +229,7 @@ def main():
     test_referee_refuses()
     test_referee_budget_and_persistence()
     test_referee_records_e1()
+    test_live_registry()
     print("\n" + "=" * 70)
     if FAILURES:
         print(f"RESULT: {len(FAILURES)} FAILED -> {', '.join(FAILURES)}")
