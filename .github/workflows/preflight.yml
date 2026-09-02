@@ -43,9 +43,11 @@ jobs:
           python -m py_compile build_universe.py && echo "build_universe.py PASS"
           echo "-- v28 qt package --"
           python -m py_compile qt/__init__.py qt/ledger.py qt/guards.py \
+            qt/measurement.py qt/referee.py \
             && echo "qt package        PASS"
           echo "-- validation suites --"
-          python -m py_compile validate_qt.py validate_event_study.py \
+          python -m py_compile validate_qt.py validate_qt_phase1.py \
+            validate_event_study.py \
             validate_extract_form4.py validate_build_universe.py \
             && echo "validate suites   PASS"
 
@@ -542,7 +544,7 @@ jobs:
         run: |
           set -u
           fail=0
-          for s in validate_qt.py validate_event_study.py \
+          for s in validate_qt.py validate_qt_phase1.py validate_event_study.py \
                    validate_extract_form4.py validate_build_universe.py; do
             echo "──── $s ────"
             if python "$s"; then
