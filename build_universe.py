@@ -135,7 +135,14 @@ def filter_symbols(raw: list) -> list:
             continue
         if not sym.isalpha() or len(sym) > 5:
             continue
-        if typ and typ not in COMMON_TYPES:
+        # Strict: an UNKNOWN type is excluded, not waved through. The first
+        # version read `if typ and typ not in COMMON_TYPES`, which let every
+        # blank-type row pass -- the 2026-09-01 live funnel returned 19,088
+        # "operating companies" against only 18,433 rows actually typed
+        # Common Stock, and the gap was 767 untyped rows nobody had decided
+        # to admit. Admitting instruments by accident is how a universe
+        # acquires warrants and units it was never meant to contain.
+        if typ not in COMMON_TYPES:
             continue
         seen.add(sym)
         out.append({"ticker": sym,

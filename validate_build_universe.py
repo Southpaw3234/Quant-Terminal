@@ -37,11 +37,20 @@ def test_filter_symbols():
         {"symbol": "", "type": "Common Stock", "description": "blank"},
         "not a dict",
         {"symbol": "GOOD", "type": "Common Stock", "description": "keep"},
+        {"symbol": "UNTY", "type": "", "description": "untyped"},
+        {"symbol": "REIT", "type": "REIT", "description": "reit"},
     ]
     got = [r["ticker"] for r in bu.filter_symbols(raw)]
     check("filter-symbols", got == ["ACME", "GOOD"],
           f"kept {got} (ETF, class share, dupe, 7-char, digit, blank, "
           f"non-dict all dropped)")
+    # Regression: the first version read `if typ and typ not in COMMON_TYPES`,
+    # which waved every blank-type row through. The live funnel exposed it --
+    # 19,088 kept against 18,433 rows actually typed Common Stock.
+    check("filter-untyped-excluded", "UNTY" not in got,
+          "a row with an EMPTY type is excluded, not waved through")
+    check("filter-reit-excluded", "REIT" not in got,
+          "REIT excluded — a specification choice, not an accident")
 
 
 def test_adv_median_not_mean():
