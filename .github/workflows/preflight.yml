@@ -36,6 +36,18 @@ jobs:
           python -m py_compile analyze_shadow_intraday.py && echo "analyze_shadow_intraday.py PASS"
           python -m py_compile model_intraday.py && echo "model_intraday.py PASS"
           python -m py_compile backfill_intraday_features.py && echo "backfill_intraday_features.py PASS"
+          python -m py_compile analyze_rank_ic.py && echo "analyze_rank_ic.py PASS"
+          echo "-- v27 components --"
+          python -m py_compile event_study.py    && echo "event_study.py    PASS"
+          python -m py_compile extract_form4.py  && echo "extract_form4.py  PASS"
+          python -m py_compile build_universe.py && echo "build_universe.py PASS"
+          echo "-- v28 qt package --"
+          python -m py_compile qt/__init__.py qt/ledger.py qt/guards.py \
+            && echo "qt package        PASS"
+          echo "-- validation suites --"
+          python -m py_compile validate_qt.py validate_event_study.py \
+            validate_extract_form4.py validate_build_universe.py \
+            && echo "validate suites   PASS"
 
       - name: 2 — AST parse + triple-quote balance
         run: |
@@ -517,6 +529,44 @@ jobs:
 
           sys.exit(0 if ok else 1)
           PYEOF
+      - name: 14 — v27/v28 validation suites
+        # Added 2026-09-02. Preflight passed on the Phase 0 branch WITHOUT
+        # compiling a line of the new code: check 1 covered nine v25 files and
+        # none of the v27 components or the qt package. "Preflight green" was
+        # therefore a much weaker statement than it read as, which is exactly
+        # the shape of the measurement gaps this project keeps finding.
+        #
+        # These suites are hermetic -- no network, no secrets, no broker -- so
+        # they belong in preflight rather than only on their own branch
+        # triggers, where they never run against master.
+        run: |
+          set -u
+          fail=0
+          for s in validate_qt.py validate_event_study.py \
+                   validate_extract_form4.py validate_build_universe.py; do
+            echo "──── $s ────"
+            if python "$s"; then
+              echo "$s PASS"
+            else
+              echo "::error::$s FAILED"
+              fail=1
+            fi
+          done
+          exit $fail
+
+      - name: 15 — qt package has no network or broker imports
+        # A guard module that can reach the network is one refactor away from a
+        # guard that places an order, and a guard that can make a request can
+        # hang. Duplicated from validate_qt.yml deliberately: this invariant
+        # should hold on master whether or not anyone dispatched that workflow.
+        run: |
+          set -u
+          if grep -rnE '^\s*(import|from)\s+(alpaca|yfinance|requests)' qt/; then
+            echo "::error::qt/ imports a network or broker library"
+            exit 1
+          fi
+          echo "qt/ import hygiene PASS"
+
       - name: Summary
         if: always()
         run: |

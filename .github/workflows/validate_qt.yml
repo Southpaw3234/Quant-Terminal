@@ -1,0 +1,89 @@
+name: Validate qt package (v28 Phase 0, read-only)
+
+# Hermetic: no network, no secrets, no broker. The qt package is the
+# replacement for quant_runner.py, but in Phase 0 it runs ONLY here --
+# nothing imports it from the live pipeline.
+#
+# v28 SEQUENCING: not scheduled, not wired into quant_daily.yml, writes
+# nothing under data/. S4 reads obs #30 on 2026-09-28 and the crons retire
+# 09-29; until then quant_runner.py remains the production path, untouched.
+# See docs/V28_AGENT_ARCHITECTURE.md §④.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'v28/**'
+    paths:
+      - 'qt/**'
+      - 'validate_qt.py'
+      - '.github/workflows/validate_qt.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history: the untouched-pipeline check below diffs against
+          # origin/master. The first version used HEAD~1, which does not exist
+          # under checkout's default depth of 1 -- git errored, the `!` in the
+          # test inverted the error into "modified", and the guard reported a
+          # violation on every file on a branch that had touched none of them.
+          # A guard that fails loudly on its own bug is the right failure
+          # direction, but it was still crying wolf.
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        # pandas only. The qt package must not acquire a dependency on the
+        # broker SDK, yfinance, or anything else that could reach the network
+        # from a guard. A guard that can make a request can hang.
+        run: pip install "numpy<2.4" pandas
+
+      - name: Compile check
+        run: |
+          python -m py_compile qt/__init__.py qt/ledger.py qt/guards.py
+          python -m py_compile validate_qt.py
+
+      - name: Run Phase 0 validation
+        run: python validate_qt.py
+
+      - name: Assert the live pipeline is untouched
+        run: |
+          set -u
+          git fetch -q origin master
+          BASE=origin/master
+          echo "comparing this branch against ${BASE}"
+          for f in quant_runner.py trading_model_v25.1.ipynb \
+                   .github/workflows/quant_daily.yml; do
+            # No 2>/dev/null: if git itself fails, the message must be visible
+            # rather than silently becoming a violation report.
+            if ! git diff --quiet "$BASE" -- "$f"; then
+              echo "::error::Phase 0 modified $f — it must not before 2026-09-29"
+              git --no-pager diff --stat "$BASE" -- "$f"
+              exit 1
+            fi
+          done
+          if ! git diff --quiet -- data/ 2>/dev/null; then
+            echo "::error::validation wrote under data/ — it must not"
+            exit 1
+          fi
+          echo "OK — monolith, notebook, live workflow and data/ all untouched."
+
+      - name: Assert qt imports nothing it should not
+        # A guard module that can import the broker SDK is one refactor away
+        # from a guard that places an order.
+        run: |
+          set -u
+          if grep -rnE '^\s*(import|from)\s+(alpaca|yfinance|requests)' qt/; then
+            echo "::error::qt/ imports a network or broker library"
+            exit 1
+          fi
+          echo "OK — qt/ has no network or broker imports."
