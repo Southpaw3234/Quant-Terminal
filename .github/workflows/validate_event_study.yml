@@ -14,6 +14,11 @@ name: Validate event-study engine (v27 A2, read-only)
 
 on:
   workflow_dispatch:
+    inputs:
+      run_e1:
+        description: "THE E1 READ — computes returns and SPENDS one of K=5"
+        type: boolean
+        default: false
   push:
     branches:
       - 'v27/**'
@@ -61,3 +66,55 @@ jobs:
             exit 1
           fi
           echo "OK — data/ untouched by the validation run."
+
+  e1:
+    # ⚠️ THE E1 READ. This is the FIRST job in v27 that computes RETURNS, and
+    # running it spends ONE of the K=5 specifications in
+    # docs/V27_PREREGISTRATION.md. Everything before it -- universe size,
+    # event counts, schema probes -- was availability and cost nothing.
+    #
+    # The specification being read is:
+    #   universe   907 names, 250k <= ADV <= 5M, price >= $2, >=200 bars
+    #   events     >= 2 distinct insiders within 5d, aggregate >= $100,000
+    #   horizon    21 trading bars, entry first bar STRICTLY AFTER event_ts
+    #   control    SPY, market-adjusted
+    #
+    # The output ledger freezes on first write, so this read cannot be
+    # quietly re-run into a different number.
+    if: github.event_name == 'workflow_dispatch' && inputs.run_e1
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas "yfinance>=0.2.40,<2"
+      - name: Run the event study
+        env:
+          QT_EVENTS_CSV: data/events/events_form4.csv
+          QT_EVENT_OUT: data/events/event_study.csv
+          QT_EVENT_HORIZON: '21'
+          QT_EVENT_BENCH: SPY
+        run: |
+          set -u
+          if [ ! -f data/events/events_form4.csv ]; then
+            echo "::error::no events file — run the extractor first."
+            exit 1
+          fi
+          echo "events: $(( $(wc -l < data/events/events_form4.csv) - 1 ))"
+          python event_study.py
+      - name: Guard — S4 evidence untouched
+        run: |
+          set -u
+          if ! git diff --quiet -- data/predictions/ data/shadow/ 2>/dev/null; then
+            echo "::error::the event study modified S4 evidence — it must not"
+            exit 1
+          fi
+          echo "OK — data/predictions/ and data/shadow/ untouched."
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v27-e1-read
+          path: data/events/event_study.csv
+          if-no-files-found: error
