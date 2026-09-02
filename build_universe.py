@@ -82,8 +82,8 @@ ENV
   QT_U_MIN_HISTORY       default 200           ]
   QT_U_ADV_LOOKBACK      default 60  (trading days)
   QT_U_MAX_SYMBOLS       hard cap for cost control (0 = no cap)
-  QT_U_SAMPLE_N          default 1500   ] the frozen random sample --
-  QT_U_SAMPLE_SEED       default 20260901 ] part of the specification
+  QT_U_SAMPLE_N          default 0 = NO SAMPLING, take the whole population
+  QT_U_SAMPLE_SEED       default 20260901 (unused while SAMPLE_N=0)
   QT_U_SAMPLE_OUT        default data/universe/v27_sample.csv
   QT_U_SYMBOLS_ONLY      "1" -> fetch + report the symbol funnel, no prices
 """
@@ -109,10 +109,29 @@ ADV_LOOKBACK = int(os.environ.get("QT_U_ADV_LOOKBACK", "60"))
 
 MAX_SYMBOLS = int(os.environ.get("QT_U_MAX_SYMBOLS", "0"))
 
-# ---- SAMPLING. Decided 2026-09-01: price a fixed random sample rather than
-# all ~18,400 names. Pricing everything is ~92 chunked yfinance downloads,
-# slow and flaky, and it is not needed -- a RULE that draws a random sample
-# is as defensible as a rule that takes everything, and far cheaper.
+# ---- SAMPLING. SUPERSEDED 2026-09-02: SAMPLE_N now defaults to 0, meaning
+# NO SAMPLING -- the whole screened population is priced.
+#
+# The 1,500-name sample was chosen on 2026-09-01 against a believed
+# population of 18,413, where pricing everything looked like ~92 chunked
+# yfinance downloads. That figure was 73% OTC rows, which the MIC fix then
+# excluded. The real population is 4,956, and pricing all of it is ~25
+# chunks (1,500 took ~90 seconds). The cost argument that justified
+# sampling did not survive the correction that produced the number.
+#
+# 🔑 Taking everything is not merely cheaper, it is METHODOLOGICALLY BETTER:
+# it removes the seed and the sample size from the specification. Two free
+# parameters that had to be declared, defended and frozen simply stop
+# existing, and "the universe is every US-listed common stock passing the
+# screen" needs no seed to reproduce.
+#
+# The sampling machinery is retained and still tested -- if the population
+# ever grows past what can be priced, it is the correct fallback, and its
+# freeze semantics are the reason it can be trusted then.
+#
+# The freeze still applies to the FULL population list: universe membership
+# is pinned as of the draw date, so new listings do not retroactively join
+# the study and names that later delist stay in it.
 #
 # 🔑 The sample is FROZEN TO DISK on first draw and reloaded thereafter.
 # This is the entire point. A sample redrawn each run is not a sample, it is
@@ -121,7 +140,7 @@ MAX_SYMBOLS = int(os.environ.get("QT_U_MAX_SYMBOLS", "0"))
 # discarded. Freezing makes the draw a one-time, dated event -- the same
 # discipline `_freeze_first_write` applies to written evidence rows, applied
 # to universe membership instead.
-SAMPLE_N = int(os.environ.get("QT_U_SAMPLE_N", "1500"))
+SAMPLE_N = int(os.environ.get("QT_U_SAMPLE_N", "0"))
 SAMPLE_SEED = int(os.environ.get("QT_U_SAMPLE_SEED", "20260901"))
 SAMPLE_CSV = Path(os.environ.get("QT_U_SAMPLE_OUT",
                                  "data/universe/v27_sample.csv"))
