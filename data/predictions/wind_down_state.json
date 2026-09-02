@@ -2,17 +2,23 @@
   "armed": true,
   "armed_at": 1786474052.6199172,
   "armed_at_iso": "2026-08-11T18:47:32Z",
-  "last_seen_book": 0,
+  "last_seen_book": 1,
   "last_closed": 0,
   "last_errors": 0,
   "breach": false,
-  "short_breach": false,
+  "short_breach": true,
   "open_longs": [],
-  "open_shorts": [],
+  "open_shorts": [
+    "HON"
+  ],
   "short_acked": [],
-  "flat": true,
+  "flat": false,
   "drill": [],
-  "still_open": [],
-  "real_book": [],
-  "updated_iso": "2026-09-01T23:34:35Z"
+  "still_open": [
+    "HON"
+  ],
+  "real_book": [
+    "HON"
+  ],
+  "updated_iso": "2026-09-02T15:39:10Z"
 }
