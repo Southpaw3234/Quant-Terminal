@@ -233,9 +233,31 @@ def _universe() -> list:
                 "HD", "INTC", "QCOM", "MU", "TXN", "BA", "CVX"]
     p = Path(raw)
     if p.exists():
-        return [ln.strip().upper() for ln in p.read_text().splitlines()
-                if ln.strip() and not ln.startswith("#")]
+        return read_universe_file(p)
     return [t.strip().upper() for t in raw.split(",") if t.strip()]
+
+
+def read_universe_file(p: Path) -> list:
+    """Ticker list from either a CSV with a `ticker` column or a plain list.
+
+    A4 writes `data/universe/v27_universe.csv`, which has a header and six
+    columns. Reading it line-by-line would silently produce tickers like
+    "TICKER,DESCRIPTION,TYPE" and then fetch nothing for any of them -- an
+    empty result that looks exactly like "this universe has no insider
+    buying" rather than like a parsing bug. Detect the header instead.
+    """
+    text = p.read_text()
+    first = text.splitlines()[0] if text.splitlines() else ""
+    if "," in first and "ticker" in first.lower():
+        df = pd.read_csv(p)
+        col = next((c for c in df.columns if c.strip().lower() == "ticker"),
+                   None)
+        if col is None:
+            raise ValueError(f"{p} looks like a CSV but has no ticker column")
+        return [str(t).strip().upper() for t in df[col].dropna()
+                if str(t).strip()]
+    return [ln.strip().upper() for ln in text.splitlines()
+            if ln.strip() and not ln.startswith("#")]
 
 
 def fetch(tickers: list, key: str, lookback_days: int) -> list:

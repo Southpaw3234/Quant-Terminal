@@ -161,6 +161,33 @@ def test_event_schema():
           f"intraday time, so next-session entry is the only safe read")
 
 
+def test_universe_file():
+    print("\n--- read_universe_file: CSV vs plain list ---")
+    import tempfile
+    from pathlib import Path as _P
+    with tempfile.TemporaryDirectory() as td:
+        d = _P(td)
+        csv = d / "u.csv"
+        csv.write_text("ticker,description,type,adv,n_bars,last_price\n"
+                       "AAA,Alpha Inc,Common Stock,1000,250,5.0\n"
+                       "bbb,Beta Co,Common Stock,2000,250,6.0\n")
+        got = f4.read_universe_file(csv)
+        check("universe-csv", got == ["AAA", "BBB"],
+              f"{got} — header detected, ticker column read, uppercased")
+
+        plain = d / "u.txt"
+        plain.write_text("# comment\nCCC\n\nDDD\n")
+        got2 = f4.read_universe_file(plain)
+        check("universe-plain", got2 == ["CCC", "DDD"],
+              f"{got2} — plain list still works, comments and blanks skipped")
+
+        # The failure this guards: line-reading a CSV yields a header-shaped
+        # "ticker" that fetches nothing, and an empty result is
+        # indistinguishable from "this universe has no insider buying".
+        check("universe-no-header-leak", "TICKER,DESCRIPTION,TYPE" not in got,
+              "the header row is not returned as a ticker")
+
+
 def main():
     print("=" * 68)
     print("extract_form4.py — pure-logic validation (no network)")
@@ -172,6 +199,7 @@ def main():
     test_cluster_timestamp()
     test_no_double_count()
     test_event_schema()
+    test_universe_file()
     print("\n" + "=" * 68)
     if FAILURES:
         print(f"RESULT: {len(FAILURES)} FAILED -> {', '.join(FAILURES)}")
