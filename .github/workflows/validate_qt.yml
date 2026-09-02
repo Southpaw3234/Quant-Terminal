@@ -28,6 +28,15 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Full history: the untouched-pipeline check below diffs against
+          # origin/master. The first version used HEAD~1, which does not exist
+          # under checkout's default depth of 1 -- git errored, the `!` in the
+          # test inverted the error into "modified", and the guard reported a
+          # violation on every file on a branch that had touched none of them.
+          # A guard that fails loudly on its own bug is the right failure
+          # direction, but it was still crying wolf.
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -49,10 +58,16 @@ jobs:
       - name: Assert the live pipeline is untouched
         run: |
           set -u
+          git fetch -q origin master
+          BASE=origin/master
+          echo "comparing this branch against ${BASE}"
           for f in quant_runner.py trading_model_v25.1.ipynb \
                    .github/workflows/quant_daily.yml; do
-            if ! git diff --quiet HEAD~1 -- "$f" 2>/dev/null; then
+            # No 2>/dev/null: if git itself fails, the message must be visible
+            # rather than silently becoming a violation report.
+            if ! git diff --quiet "$BASE" -- "$f"; then
               echo "::error::Phase 0 modified $f — it must not before 2026-09-29"
+              git --no-pager diff --stat "$BASE" -- "$f"
               exit 1
             fi
           done
