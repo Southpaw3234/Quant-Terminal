@@ -13,6 +13,10 @@ name: Validate inverted universe screen (v27 A4, read-only)
 on:
   workflow_dispatch:
     inputs:
+      run_screen:
+        description: 'Full screen: draw the frozen sample, price it, apply the ADV filter'
+        type: boolean
+        default: false
       run_symbols:
         description: 'Fetch the live US symbol list and print the funnel'
         type: boolean
@@ -84,3 +88,57 @@ jobs:
             exit 1
           fi
           python build_universe.py
+
+  screen:
+    # Full screen: draws (or reloads) the frozen sample, prices it, applies
+    # the inverted ADV filter, and uploads the results as an ARTIFACT.
+    #
+    # It deliberately does NOT commit. The frozen sample is part of the
+    # specification, so it gets added to the repo by a human-reviewed commit
+    # rather than by a workflow that could quietly redraw it on a rerun. A
+    # workflow with write access to its own specification is not a frozen
+    # specification.
+    if: github.event_name == 'workflow_dispatch' && inputs.run_screen
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas requests "yfinance>=0.2.40,<2"
+      - name: Build the universe
+        env:
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+        run: |
+          set -u
+          if [ -z "${FINNHUB_API_KEY}" ]; then
+            echo "::error::FINNHUB_API_KEY secret is not set."
+            exit 1
+          fi
+          python build_universe.py
+      - name: Show what was produced
+        run: |
+          set -u
+          ls -l data/universe/ || true
+          for f in data/universe/v27_sample.csv data/universe/v27_universe.csv; do
+            if [ -f "$f" ]; then
+              echo "--- $f ($(( $(wc -l < "$f") - 1 )) rows) ---"
+              head -5 "$f"
+            fi
+          done
+      - name: Guard — the live evidence tree must be untouched
+        run: |
+          set -u
+          if ! git diff --quiet -- data/predictions/ data/shadow/ 2>/dev/null; then
+            echo "::error::the screen modified S4 evidence — it must not"
+            git --no-pager diff --stat -- data/predictions/ data/shadow/
+            exit 1
+          fi
+          echo "OK — data/predictions/ and data/shadow/ untouched."
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v27-universe
+          path: data/universe/*.csv
+          if-no-files-found: error
