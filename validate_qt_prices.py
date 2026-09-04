@@ -144,6 +144,86 @@ def test_forward_return():
           "settled_only=False allows it (tests only)")
 
 
+
+
+def test_delisting_vs_unmatured():
+    print("\n--- forward_return_ex: DELISTED is not UNMATURED (the fix) ---")
+    idx = pd.bdate_range("2025-01-01", periods=200)
+    close = pd.Series(10.0, index=idx)
+    today = idx[-1]
+
+    # A. Healthy name, event too recent: series runs to "today" -> unmatured.
+    r, st = prices.forward_return_ex(close, entry_i=len(close) - 30,
+                                     horizon=63, data_end=today)
+    check("status-unmatured", r is None and st == "unmatured",
+          f"series still trading, event too recent -> {st} (correctly withheld)")
+
+    # B. Delisted name: series STOPS 60 sessions before today, and the stock
+    #    halved on the way out. The old engine dropped this identically to A.
+    dead = close.iloc[:140].copy()
+    dead.iloc[120:] = 5.0
+    r2, st2 = prices.forward_return_ex(dead, entry_i=100, horizon=63,
+                                       data_end=today)
+    check("status-delisted", st2 == "delisted" and r2 is not None,
+          f"series ended long before today -> {st2}, ret {r2:+.1%} RECORDED "
+          f"(the old engine dropped this as 'unmatured')")
+    check("delisting-is-a-loss-here", r2 < -0.4,
+          f"and it is a {r2:+.1%} loss — exactly the observation whose silent "
+          f"removal biased the mean upward")
+
+    # C. Not -100%: an acquisition delists too and is usually a GAIN.
+    up = close.iloc[:140].copy()
+    up.iloc[120:] = 18.0
+    r3, st3 = prices.forward_return_ex(up, entry_i=100, horizon=63,
+                                       data_end=today)
+    check("delisting-not-assumed-total-loss", st3 == "delisted" and r3 > 0.5,
+          f"an acquisition-shaped exit reads {r3:+.1%}, not -100% — assigning "
+          f"a wipeout would swap one bias for a larger one")
+
+    # D. Without data_end there is no way to tell, so it must NOT guess.
+    r4, st4 = prices.forward_return_ex(dead, entry_i=100, horizon=63,
+                                       data_end=None)
+    check("no-data-end-no-guess", r4 is None and st4 == "unmatured",
+          "with no reference for 'now', it declines to classify a delisting "
+          "rather than inventing one")
+
+    # E. Tolerance: a few days of vendor lag is not a delisting.
+    lagging = close.iloc[:197].copy()
+    r5, st5 = prices.forward_return_ex(lagging, entry_i=len(lagging) - 30,
+                                       horizon=63, data_end=today)
+    check("stale-tolerance", st5 == "unmatured",
+          f"a 3-session data lag reads {st5}, not delisted (tolerance "
+          f"{prices.STALE_BARS_TOLERANCE} bars)")
+
+
+def test_sensitivity_report():
+    print("\n--- survivorship sensitivity: the ceiling must be visible ---")
+    from qt import measurement as qm
+    n = 60
+    # 54 mildly positive survivors, 6 delisted wipeouts.
+    vals = [0.02] * 54 + [-0.80] * 6
+    stat = ["ok"] * 54 + ["delisted"] * 6
+    df = pd.DataFrame({"abnormal_ret": vals, "exit_status": stat,
+                       "event_ts": pd.date_range("2026-01-01", periods=n)})
+    s = qm.survivorship_sensitivity(df)
+    check("sens-counts", s["n_delisted"] == 6 and s["n_all"] == 60,
+          f"{s['n_delisted']}/{s['n_all']} delisted ({s['delisted_pct']:.0%})")
+    check("sens-gap", s["survivors"].mean > s["all"].mean,
+          f"survivors-only {s['survivors'].mean:+.2%} vs all "
+          f"{s['all'].mean:+.2%} — dropping delistings FLATTERS the result, "
+          f"which is what the old engine did silently")
+    txt = qm.format_sensitivity(s)
+    check("sens-warns", "CEILING" in txt,
+          "the report says plainly that 'all' is a ceiling, because the "
+          "universe is still missing names that delisted before it was read")
+
+    legacy = pd.DataFrame({"abnormal_ret": [0.01, 0.02],
+                           "event_ts": ["2026-01-01", "2026-01-02"]})
+    s2 = qm.survivorship_sensitivity(legacy)
+    check("sens-legacy-flagged", not s2["available"] and "survivor-only" in s2["note"],
+          "a ledger with no exit_status is flagged as silently survivor-only "
+          "rather than reported as if it were clean")
+
 def main():
     print("=" * 70)
     print("qt.prices — price layer validation (no network)")
@@ -152,6 +232,8 @@ def main():
     test_point_in_time()
     test_screen_reasons()
     test_forward_return()
+    test_delisting_vs_unmatured()
+    test_sensitivity_report()
     print("\n" + "=" * 70)
     if FAILURES:
         print(f"RESULT: {len(FAILURES)} FAILED -> {', '.join(FAILURES)}")
