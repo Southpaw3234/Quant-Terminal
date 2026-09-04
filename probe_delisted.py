@@ -41,6 +41,7 @@ def probe_yfinance() -> None:
     print("1. yfinance — does it serve DELISTED tickers?")
     print("=" * 68)
     hits = 0
+    served = set()
     for tk, why in {**DEAD, **ALIVE}.items():
         try:
             df = yf.download(tk, start="2022-01-01", end="2024-06-30",
@@ -53,13 +54,34 @@ def probe_yfinance() -> None:
         status = "DATA" if n else "none"
         if n and tk in DEAD:
             hits += 1
+            served.add(tk)
         print(f"  {tk:<7} {status:<5} rows={n:<5} last={last:<12} {why}")
     print(f"\n  -> {hits}/{len(DEAD)} delisted tickers returned history")
-    if hits:
-        print("  ✅ A historical ticker list would be USABLE — the price side works.")
+
+    # ⚠️ THE FIRST VERSION OF THIS VERDICT WAS `if hits:` AND IT WAS WRONG.
+    # The live run returned 1/6 -- only FRCB -- and printed "the price side
+    # works". One hit out of six is not a working price side, and FRCB is the
+    # weakest possible hit: it is STILL PRESENT in Finnhub's symbol list, so it
+    # was never purged and never tested the question. The three bankruptcies
+    # (BBBYQ, SIVBQ, WEWKQ) and both acquisitions returned nothing.
+    #
+    # A probe whose pass threshold is "at least one" is a probe that cannot
+    # fail. The bar is now the cases that actually matter: bankruptcies, which
+    # are what survivorship bias is made of.
+    bankrupt = [t for t in DEAD if t.endswith("Q")]
+    bankrupt_hits = sum(1 for t in bankrupt if t in served)
+    print(f"  -> {bankrupt_hits}/{len(bankrupt)} BANKRUPTCIES returned history "
+          f"({', '.join(bankrupt)})")
+    if bankrupt_hits >= max(2, len(bankrupt) // 2):
+        print("  ✅ Bankruptcy history is served — a historical ticker list")
+        print("     would make the universe reconstructable for free.")
     else:
-        print("  🔴 No delisted history. A ticker list alone cannot fix this;")
-        print("     recovering dead names requires a paid price source.")
+        print("  🔴 BANKRUPTCY HISTORY IS NOT SERVED. A ticker list alone")
+        print("     cannot fix survivorship; the dead names have no prices to")
+        print("     fetch. Recovering them requires a PAID price source.")
+        if hits:
+            print(f"     ({hits} non-bankruptcy hit(s) came back, but a name")
+            print("      still listed in the symbol source was never the test.)")
 
 
 def probe_finnhub(key: str) -> None:
