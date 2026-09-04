@@ -113,6 +113,9 @@ E1_STABILITY = qt_measurement.E1_STABILITY
 # return is computed -- the Referee is otherwise tested but decorative, and a
 # guard nothing calls is not a guard.
 SPEC_ID = os.environ.get("QT_SPEC_ID", "").strip()
+# Availability mode: dedup + settlement classification, NO returns, nothing
+# written. Bypasses the Referee because there is nothing to authorise.
+COUNT_ONLY = os.environ.get("QT_EVENT_COUNT_ONLY", "").strip() == "1"
 READ_DATE = os.environ.get("QT_READ_DATE", "").strip()
 
 REQUIRED_COLS = {"event_id", "ticker", "event_ts", "event_type"}
@@ -363,6 +366,54 @@ def _print_summary(s: dict) -> None:
           "separate step and is NOT evaluated here.")
 
 
+def _count_only(events: pd.DataFrame, prices: dict, h: int) -> None:
+    """Availability check: how many events would SETTLE at horizon h?
+
+    Answers the second blocking question in docs/V27_FORK_DECISION.md §⑥
+    without spending budget. It classifies each surviving event as
+    ok / unmatured / delisted using ONLY index arithmetic on series length
+    and dates — no price is divided by another price, so no return exists
+    even transiently. That distinction is what keeps this free under the
+    Referee: a READ is a verdict-producing summary, and nothing here can
+    produce one.
+
+    Writes nothing. Prints counts and exits.
+    """
+    from qt import prices as qt_prices
+    data_end = None
+    for _s in prices.values():
+        if len(_s) and (data_end is None or _s.index[-1] > data_end):
+            data_end = _s.index[-1]
+
+    counts = {"ok": 0, "unmatured": 0, "delisted": 0, "no_price": 0,
+              "no_entry": 0}
+    for _, r in events.iterrows():
+        s = prices.get(r["ticker"])
+        if s is None or len(s) == 0:
+            counts["no_price"] += 1
+            continue
+        ei = _entry_index(s, r["event_ts"])
+        if ei is None:
+            counts["no_entry"] += 1
+            continue
+        exit_i = ei + h
+        last_usable = len(s) - 2 if SETTLED_ONLY else len(s) - 1
+        if exit_i <= last_usable:
+            counts["ok"] += 1
+            continue
+        gap = len(pd.bdate_range(s.index[-1], data_end)) - 1 if data_end is not None else 0
+        counts["delisted" if gap > qt_prices.STALE_BARS_TOLERANCE else "unmatured"] += 1
+
+    settled = counts["ok"] + counts["delisted"]
+    print(f"\n=== COUNT ONLY — horizon {h} bars — NO returns computed ===")
+    for k, v in counts.items():
+        print(f"  {k:<10} {v:>5}")
+    print(f"  {'SETTLED':<10} {settled:>5}   (ok + delisted; this is the N a read would see)")
+    print(f"  E1 needs N >= {E1_MIN_N}: {'CLEARS' if settled >= E1_MIN_N else 'SHORT'} "
+          f"by {abs(settled - E1_MIN_N)}")
+    print("  Nothing written. Budget untouched.")
+
+
 def _referee_gate() -> None:
     """Refuse to compute a single return without authorisation.
 
@@ -376,6 +427,9 @@ def _referee_gate() -> None:
     to spend. ⚠️ The E1 workflow MUST set it — that is what makes the budget
     enforced in code rather than by memory.
     """
+    if COUNT_ONLY:
+        print("[event-study] COUNT-ONLY mode — no read, Referee not consulted.")
+        return
     if not SPEC_ID:
         print("[event-study] no QT_SPEC_ID — running unauthorised. This is "
               "correct ONLY for synthetic/test runs; a real read must set it.")
@@ -412,6 +466,10 @@ def main() -> None:
     events = _dedupe_overlaps(events, prices, HORIZON)
     if events.empty:
         print("[event-study] no independent events survived the filter.")
+        return
+
+    if COUNT_ONLY:
+        _count_only(events, prices, HORIZON)
         return
 
     fresh = run_study(events, prices, HORIZON)
