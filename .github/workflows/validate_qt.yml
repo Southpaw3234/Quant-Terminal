@@ -15,8 +15,16 @@ on:
     branches:
       - 'v28/**'
     paths:
+      # Every input the suites actually read. The Phase 1 commit changed
+      # validate_qt_phase1.py and data/registry/specifications.json and
+      # triggered NOTHING, because neither was listed — a paths filter that
+      # lags the tests it guards is a workflow that reports on a stale
+      # snapshot of the thing it is supposed to be watching.
       - 'qt/**'
       - 'validate_qt.py'
+      - 'validate_qt_phase1.py'
+      - 'data/registry/**'
+      - 'data/events/event_study.csv'
       - '.github/workflows/validate_qt.yml'
 
 permissions:
@@ -49,11 +57,15 @@ jobs:
 
       - name: Compile check
         run: |
-          python -m py_compile qt/__init__.py qt/ledger.py qt/guards.py
-          python -m py_compile validate_qt.py
+          python -m py_compile qt/__init__.py qt/ledger.py qt/guards.py \
+            qt/measurement.py qt/referee.py
+          python -m py_compile validate_qt.py validate_qt_phase1.py
 
       - name: Run Phase 0 validation
         run: python validate_qt.py
+
+      - name: Run Phase 1 validation (incl. the E1 reproduction gate)
+        run: python validate_qt_phase1.py
 
       - name: Assert the live pipeline is untouched
         run: |

@@ -1,0 +1,56 @@
+{
+  "_note": [
+    "The Referee's ledger of what the K=5 budget has been spent on.",
+    "docs/V27_PREREGISTRATION.md remains authoritative for humans; this file",
+    "is what qt.referee counts. Written by qt.referee.save(); edit by hand",
+    "only to correct a recording error, never to change a verdict or a date.",
+    "",
+    "form4_cluster_buy_v1 was declared before the registry existed. Its",
+    "parameters were fixed by merged code (PR #32 extractor defaults, PR #36",
+    "universe) on 2026-09-01, and the read ran 2026-09-02 -- so the substance",
+    "of pre-declaration held even though there was no registry to record it",
+    "at the time. This entry backfills that, and is the last one that will",
+    "ever need to.",
+    "",
+    "A REBUILD DOES NOT RESET THIS FILE. Clearing it to start fresh is the",
+    "rebound-building NEXT_ARCHITECTURE.md section 5 warned about."
+  ],
+  "k_budget": 5,
+  "terminal_date": "2027-03-31",
+  "specifications": {
+    "form4_cluster_buy_v1": {
+      "spec_id": "form4_cluster_buy_v1",
+      "params": {
+        "universe": "907 US primary-exchange common stocks, 250k <= ADV <= 5M, price >= $2, >= 200 bars",
+        "events": ">= 2 distinct insiders within 5 calendar days, aggregate >= $100,000, Form 4 code P, non-derivative, USD",
+        "horizon_bars": 21,
+        "entry": "first bar STRICTLY AFTER event_ts",
+        "control": "SPY, market-adjusted",
+        "source": "Finnhub insider-transactions (SEC EDGAR is a dead path from CI)"
+      },
+      "declared_at": "2026-09-01",
+      "read_at": "2026-09-02",
+      "result": {
+        "verdict": "NOT MET",
+        "run_id": "33582505245",
+        "n": 160,
+        "mean": 0.017647,
+        "sd": 0.1922,
+        "t": 1.16,
+        "stability": -0.52,
+        "first_third": 0.010061,
+        "last_third": -0.005196,
+        "pct_positive": 0.49,
+        "missed": [
+          "t 1.16 < 2.0",
+          "stability -0.52 < 0.50"
+        ],
+        "caveats": [
+          "SURVIVORSHIP: today's listed universe only; delisted and acquired names absent; biases UPWARD, largest exactly where this looks",
+          "NEXT-SESSION ENTRY: Finnhub carries no intraday filing time; biases DOWNWARD by up to one session",
+          "WRC/SPA at p<0.10 against K=5 was NOT evaluated -- the point estimate did not clear its own bar, so the correction was moot"
+        ]
+      }
+    }
+  }
+}

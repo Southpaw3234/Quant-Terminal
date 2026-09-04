@@ -166,6 +166,83 @@ def oversell_cap(qty, live_qty: float, already_sold: float = 0.0,
     return OversellResult(allow, False, False, "")
 
 
+# ────────────────────────────────────────────── position-read trustworthiness
+
+def position_read_trustworthy(n_positions: int, prior_book_size: int,
+                              acct_ok: bool = True,
+                              fills_since=None) -> tuple:
+    """Can this position read be believed? Returns (trustworthy, reason).
+
+    ⚠️ **THE 2026-09-01 FALSE-FLAT INCIDENT.** This function exists because of
+    a specific, evidenced failure, and it is the most important guard in this
+    module.
+
+    On 2026-09-01 Alpaca's position endpoint returned an EMPTY list. The
+    account read itself succeeded — equity came back as $116,590 — so
+    `quant_runner.py:3499` did this:
+
+        for _p_gc in _pos_list_gc:
+            _LIVE_QTY[str(_p_gc.symbol)] = float(_p_gc.qty)
+        _OVERSELL["pos_ok"] = True
+
+    An empty list iterates zero times and sets `pos_ok = True`. The system
+    recorded "successfully read zero positions" and could not distinguish that
+    from "the account is flat".
+
+    Everything downstream then agreed: `gross $0 (0.00x)`, `pos_map=0 symbols`,
+    `book=0 longs=0 shorts=0`, `flat: true`, and the flat-invariant gate printed
+    `OK — armed and flat (book=0)`. Two runs in a row, across nine hours.
+
+    **It was false.** HON x13 was short the whole time, reappeared in the
+    2026-09-02 read, and NO cover order was ever placed — `position_trim.yml`
+    has never run in the repository's history, and the operator placed nothing.
+
+    Why it matters more than one red gate:
+
+      * `close_long` walks the HELD BOOK. Against an empty read it closes
+        nothing and reports `closed 0 | errors 0` — a clean success. A
+        wind-down would have silently done nothing while looking healthy.
+      * The flat invariant, whose entire job is to detect a non-empty book,
+        was SATISFIED by a broker glitch.
+      * Any execution layer built on "the broker is the source of truth"
+        inherits this exactly. See docs/V28_AGENT_ARCHITECTURE.md §3.6.
+
+    🔑 **THE INVARIANT: a book cannot go from non-empty to flat without a
+    fill.** An empty read is self-evidencing only when the prior book was
+    already empty, or when a fill explains the change. Otherwise it is a
+    reporting failure until proven otherwise, and must be refused.
+
+    `fills_since=None` means "unknown", which FAILS CLOSED — the whole lesson
+    is that an unverified empty read was believed.
+    """
+    if not acct_ok:
+        return False, "account read failed — position data cannot be trusted"
+    try:
+        n_positions = int(n_positions)
+        prior_book_size = int(prior_book_size)
+    except (TypeError, ValueError) as exc:
+        return False, f"unparseable counts ({exc}) — fail-closed"
+
+    if n_positions > 0:
+        return True, f"{n_positions} position(s) returned — read is self-evidencing"
+    if prior_book_size <= 0:
+        return True, "empty read, and the prior book was already empty — consistent"
+    if fills_since is None:
+        return False, (f"EMPTY read against a prior book of {prior_book_size} "
+                       f"and fill history unknown — a book cannot go flat "
+                       f"without a fill (2026-09-01 false-flat)")
+    try:
+        fills_since = int(fills_since)
+    except (TypeError, ValueError) as exc:
+        return False, f"unparseable fill count ({exc}) — fail-closed"
+    if fills_since > 0:
+        return True, (f"empty read explained by {fills_since} fill(s) since the "
+                      f"last non-empty book")
+    return False, (f"EMPTY read against a prior book of {prior_book_size} with "
+                   f"ZERO fills — the book cannot have closed itself "
+                   f"(2026-09-01 false-flat)")
+
+
 # ────────────────────────────────────────────────────────────── kill switch
 
 def drawdown_halt(equity: float, peak_equity: float, max_dd: float,

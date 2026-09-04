@@ -177,6 +177,44 @@ def test_oversell():
           "enforcement off (no broker, no short possible) -> allowed")
 
 
+def test_position_read_trustworthy():
+    print("\n--- guards: the 2026-09-01 FALSE-FLAT (the important one) ---")
+    ok, why = guards.position_read_trustworthy(n_positions=1, prior_book_size=1)
+    check("pos-nonempty", ok, "a non-empty read is self-evidencing")
+
+    ok2, _ = guards.position_read_trustworthy(n_positions=0, prior_book_size=0)
+    check("pos-empty-to-empty", ok2,
+          "empty read against an already-empty book is consistent")
+
+    # THE INCIDENT. Prior book had HON; the endpoint returned nothing; no fill
+    # was placed. v25 believed this for nine hours across two runs.
+    ok3, why3 = guards.position_read_trustworthy(n_positions=0, prior_book_size=1,
+                                                 fills_since=0)
+    check("pos-false-flat-refused", not ok3,
+          f"empty read + prior book + ZERO fills -> REFUSED ({why3[:70]}…)")
+
+    ok4, why4 = guards.position_read_trustworthy(n_positions=0, prior_book_size=1)
+    check("pos-unknown-fills-refused", not ok4,
+          "empty read + prior book + UNKNOWN fill history -> REFUSED; the whole "
+          "lesson is that an unverified empty read was believed")
+
+    ok5, _ = guards.position_read_trustworthy(n_positions=0, prior_book_size=1,
+                                              fills_since=1)
+    check("pos-explained-by-fill", ok5,
+          "empty read explained by a fill -> trusted; a real cover still works")
+
+    ok6, _ = guards.position_read_trustworthy(0, 1, acct_ok=False)
+    check("pos-acct-failed", not ok6, "failed account read -> REFUSED")
+
+    # The exact v25 line: an empty list iterates zero times and sets
+    # pos_ok=True. That is what this replaces.
+    ok7, _ = guards.position_read_trustworthy(n_positions=0, prior_book_size=13,
+                                              fills_since=0)
+    check("pos-v25-regression", not ok7,
+          "quant_runner.py:3499 would have returned pos_ok=True here — "
+          "'successfully read zero positions' is not the same as 'flat'")
+
+
 def test_drawdown():
     print("\n--- guards: drawdown halt ---")
     halt, dd, _ = guards.drawdown_halt(90_000, 100_000, 0.15)
@@ -203,6 +241,7 @@ def main():
     test_gross_cap()
     test_sector_cap()
     test_oversell()
+    test_position_read_trustworthy()
     test_drawdown()
     print("\n" + "=" * 70)
     if FAILURES:
