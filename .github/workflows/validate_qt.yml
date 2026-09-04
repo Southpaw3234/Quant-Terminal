@@ -23,6 +23,7 @@ on:
       - 'qt/**'
       - 'validate_qt.py'
       - 'validate_qt_phase1.py'
+      - 'event_study.py'
       - 'data/registry/**'
       - 'data/events/event_study.csv'
       - '.github/workflows/validate_qt.yml'
