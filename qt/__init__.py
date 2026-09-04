@@ -35,6 +35,6 @@ production path untouched, and this package runs only under its own CI. See
 __version__ = "0.2.0"
 __phase__ = 1
 
-from . import guards, ledger, measurement, referee  # noqa: F401
+from . import guards, ledger, measurement, prices, referee  # noqa: F401
 
-__all__ = ["guards", "ledger", "measurement", "referee"]
+__all__ = ["guards", "ledger", "measurement", "prices", "referee"]
