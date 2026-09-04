@@ -61,7 +61,7 @@ ENV
 ---
   QT_EVENTS_CSV        input events   (default data/events/events.csv)
   QT_EVENT_OUT         output ledger  (default data/events/event_study.csv)
-  QT_EVENT_HORIZON     holding bars   (default 21)
+  QT_EVENT_HORIZON     holding bars   (default 63 = one quarter)
   QT_EVENT_BENCH       benchmark      (default SPY)
   QT_EVENT_PRICE_CSV   offline prices (tests; long format date,ticker,close)
   QT_EVENT_SETTLED     "0" disables the settlement test (tests only)
@@ -78,7 +78,12 @@ import pandas as pd
 
 EVENTS_CSV = Path(os.environ.get("QT_EVENTS_CSV", "data/events/events.csv"))
 OUT_CSV = Path(os.environ.get("QT_EVENT_OUT", "data/events/event_study.csv"))
-HORIZON = int(os.environ.get("QT_EVENT_HORIZON", "21"))
+HORIZON = int(os.environ.get("QT_EVENT_HORIZON", "63"))
+# 63 bars = one quarter. Moved from 21 by the 2026-09-04 fork decision
+# (docs/V27_FORK_DECISION.md): chosen by measurement, not preference --
+# against the frozen 205-event set, 252 bars (one year) yields ZERO settled
+# observations and 63 yields 170. A quarter is the longest horizon the
+# existing event history can actually support.
 BENCH = os.environ.get("QT_EVENT_BENCH", "SPY").strip().upper()
 PRICE_CSV = os.environ.get("QT_EVENT_PRICE_CSV", "").strip()
 SETTLED_ONLY = os.environ.get("QT_EVENT_SETTLED", "1").strip() != "0"
@@ -169,17 +174,19 @@ def _entry_index(s: pd.Series, event_ts) -> "int | None":
     return None if i >= len(s) else i
 
 
-def _fwd_ret(s: pd.Series, entry_i: int, h: int) -> "float | None":
-    """Return over h bars from entry, or None if unmatured / unsettled.
+def _fwd_ret(s: pd.Series, entry_i: int, h: int,
+             data_end=None) -> "tuple":
+    """Return AND status: ok | unmatured | delisted. Delegates to qt.prices.
 
-    Settlement test carried over from analyze_rank_ic.py: require a bar
-    AFTER the exit bar so the exit is provably a completed session.
+    🔴 The previous version returned a bare `None` when the series ran out,
+    which conflated "this event has not matured" with "this name STOPPED
+    TRADING" — and silently dropped the second. Delistings are overwhelmingly
+    losses, so the engine was discarding exactly the observations that would
+    pull the mean down. See qt.prices.forward_return_ex.
     """
-    exit_i = entry_i + h
-    last_usable = len(s) - 2 if SETTLED_ONLY else len(s) - 1
-    if exit_i > last_usable:
-        return None
-    return float(s.iloc[exit_i] / s.iloc[entry_i] - 1.0)
+    from qt import prices as qt_prices
+    return qt_prices.forward_return_ex(s, entry_i, h, data_end=data_end,
+                                       settled_only=SETTLED_ONLY)
 
 
 def _dedupe_overlaps(df: pd.DataFrame, prices: dict, h: int) -> pd.DataFrame:
@@ -218,7 +225,17 @@ def run_study(df: pd.DataFrame, prices: dict, h: int) -> pd.DataFrame:
     if bench is None and not has_ctl:
         print(f"[event-study] WARNING: benchmark {BENCH} unavailable and no "
               f"control_ticker column — returns will be RAW, not abnormal.")
-    rows, skipped = [], 0
+    # "Now", inferred from the data itself rather than the wall clock: the
+    # benchmark trades every session, so its last bar is the freshest date the
+    # run could possibly know about. A name whose series ends materially before
+    # it has STOPPED TRADING. Structural, like the settlement test — a
+    # clock-based version would drift with timezone and market calendar.
+    data_end = None
+    for _s in prices.values():
+        if len(_s) and (data_end is None or _s.index[-1] > data_end):
+            data_end = _s.index[-1]
+
+    rows, skipped, n_delisted, n_unmatured = [], 0, 0, 0
     for _, r in df.iterrows():
         tk = r["ticker"]
         s = prices.get(tk)
@@ -229,10 +246,13 @@ def run_study(df: pd.DataFrame, prices: dict, h: int) -> pd.DataFrame:
         if ei is None:
             skipped += 1
             continue
-        ev_ret = _fwd_ret(s, ei, h)
+        ev_ret, status = _fwd_ret(s, ei, h, data_end=data_end)
         if ev_ret is None:
             skipped += 1
+            n_unmatured += 1 if status == "unmatured" else 0
             continue
+        if status == "delisted":
+            n_delisted += 1
 
         ctl_tk = str(r["control_ticker"]).strip() if has_ctl else ""
         ctl_series = prices.get(ctl_tk) if ctl_tk else bench
@@ -240,24 +260,37 @@ def run_study(df: pd.DataFrame, prices: dict, h: int) -> pd.DataFrame:
         if ctl_series is not None and len(ctl_series):
             ci = _entry_index(ctl_series, r["event_ts"])
             if ci is not None:
-                ctl_ret = _fwd_ret(ctl_series, ci, h)
+                # The control is a live benchmark; a truncated control window
+                # is an immature event, never a delisting.
+                ctl_ret, _ = _fwd_ret(ctl_series, ci, h, data_end=None)
                 if ctl_ret is not None:
                     ctl_used = ctl_tk if ctl_tk else BENCH
         abn = ev_ret if ctl_ret is None else ev_ret - ctl_ret
 
+        # A delisted name has no bar at entry+h; its exit is its last trade.
+        exit_i = min(ei + h, len(s) - 1)
         rows.append({
             "event_id":     r["event_id"],
             "ticker":       tk,
             "event_type":   r["event_type"],
             "event_ts":     pd.Timestamp(r["event_ts"]).isoformat(),
             "entry_date":   s.index[ei].date().isoformat(),
-            "exit_date":    s.index[ei + h].date().isoformat(),
+            "exit_date":    s.index[exit_i].date().isoformat(),
             "horizon":      h,
             "event_ret":    round(ev_ret, 6),
             "control":      ctl_used,
             "control_ret":  "" if ctl_ret is None else round(ctl_ret, 6),
             "abnormal_ret": round(abn, 6),
+            "exit_status":  status,
         })
+    if n_delisted:
+        print(f"[event-study] ⚠️  {n_delisted} event(s) DELISTED mid-hold and "
+              f"are RECORDED at their last traded price, not dropped. The "
+              f"previous engine discarded these as 'unmatured', which removed "
+              f"disproportionately bad outcomes.")
+    if n_unmatured:
+        print(f"[event-study] {n_unmatured} event(s) genuinely not matured yet "
+              f"(series still trading) — correctly withheld.")
     if skipped:
         print(f"[event-study] skipped {skipped} event(s): no price, no entry "
               f"bar, or exit bar not yet settled")
@@ -410,6 +443,13 @@ def main() -> None:
     print(f"[event-study] wrote {OUT_CSV} ({len(merged)} row(s))")
 
     _print_summary(summarize(merged, "ALL"))
+
+    # Survivorship sensitivity. A long-horizon result on a survivor-biased
+    # universe is a CEILING, and the only honest way to quote one is beside
+    # the number showing how far it moves without the delistings.
+    from qt import measurement as _qm
+    print()
+    print(_qm.format_sensitivity(_qm.survivorship_sensitivity(merged)))
     for et, grp in merged.groupby("event_type"):
         if len(grp) >= 2:
             _print_summary(summarize(grp, str(et)))

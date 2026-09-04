@@ -150,11 +150,77 @@ def forward_return(close: pd.Series, entry_i: int, horizon: int,
     Safe on a back-adjusted series: the adjustment factor cancels in the
     ratio. Settlement requires a bar AFTER the exit bar, so the exit is
     provably a completed session — a structural test, not a clock test.
+
+    ⚠️ Legacy shape, kept for callers that only want a number. It CANNOT tell
+    a delisting from an immature event — see `forward_return_ex`, which is what
+    new code should call.
+    """
+    ret, _ = forward_return_ex(close, entry_i, horizon,
+                               settled_only=settled_only)
+    return ret
+
+
+# ──────────────────────────────────────────── survivorship inside the engine
+
+# How stale a series' last bar may be before the name is treated as having
+# STOPPED TRADING rather than merely not having matured. One trading week
+# absorbs ordinary vendor lag without absorbing a real delisting.
+STALE_BARS_TOLERANCE = 5
+
+
+def forward_return_ex(close: pd.Series, entry_i: int, horizon: int,
+                      data_end=None, settled_only: bool = True) -> tuple:
+    """Return AND why, as `(ret, status)`. Status is ok | unmatured | delisted.
+
+    🔴 **THIS EXISTS BECAUSE THE ORIGINAL WAS SURVIVORSHIP-BIASED IN CODE.**
+
+    `event_study._fwd_ret` computed `exit_i = entry_i + horizon` and returned
+    `None` whenever `exit_i` ran past the end of the series. That is correct for
+    an event too recent to have matured. It is **catastrophically wrong for a
+    name that stopped trading**, because both look identical: the series simply
+    runs out.
+
+    So an event whose stock was halted or delisted mid-hold was **silently
+    dropped, in the same bucket as a healthy event three weeks old.** Delistings
+    are overwhelmingly losses. The engine was discarding, without a trace,
+    precisely the observations that would have pulled the mean down — a
+    survivorship bias *inside the measurement*, on top of the one in the
+    universe.
+
+    It gets worse with horizon, which the 2026-09-04 fork decision just
+    tripled: at 21 bars few names vanish mid-hold, at 63 bars in a small,
+    illiquid universe many do.
+
+    **The fix is to distinguish the two cases and to REFUSE to guess the
+    delisting return.** `data_end` is the last date for which price data exists
+    anywhere in the run (typically the benchmark's last bar, which is a proxy
+    for "now"). If this name's series ends materially before that, the name
+    stopped trading; if it ends alongside it, the event simply has not matured.
+
+    ⚠️ **A delisting return is the move to the LAST TRADED PRICE, not −100%.**
+    Delisting is not synonymous with wipeout: acquisitions delist too and are
+    usually gains. Assigning −100% would swap one bias for a larger one in the
+    other direction. The honest handling is to record what was observed, FLAG
+    it, and let the caller report sensitivity with and without.
     """
     if close is None or len(close) == 0:
-        return None
+        return None, "no_data"
+    if entry_i < 0 or entry_i >= len(close):
+        return None, "no_entry"
+
     exit_i = entry_i + horizon
     last_usable = len(close) - 2 if settled_only else len(close) - 1
-    if entry_i < 0 or exit_i > last_usable:
-        return None
-    return float(close.iloc[exit_i] / close.iloc[entry_i] - 1.0)
+
+    if exit_i <= last_usable:
+        return float(close.iloc[exit_i] / close.iloc[entry_i] - 1.0), "ok"
+
+    # Ran off the end. Immature, or did this name stop trading?
+    if data_end is not None:
+        series_end = close.index[-1]
+        gap = len(pd.bdate_range(series_end, pd.Timestamp(data_end))) - 1
+        if gap > STALE_BARS_TOLERANCE:
+            # Stopped trading. Record the move to the last observed price.
+            ret = float(close.iloc[-1] / close.iloc[entry_i] - 1.0)
+            return ret, "delisted"
+
+    return None, "unmatured"

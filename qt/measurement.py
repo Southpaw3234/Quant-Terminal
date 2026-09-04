@@ -114,6 +114,65 @@ def summarize(df: pd.DataFrame, label: str = "ALL",
     return Read(label, n, mean, sd, t, first_m, last_m, stability, passes)
 
 
+def survivorship_sensitivity(df: pd.DataFrame,
+                             status_col: str = "exit_status",
+                             value_col: str = "abnormal_ret") -> dict:
+    """How much of the result depends on how delistings were handled?
+
+    🔑 **A long-horizon result on a survivor-biased universe is an upper bound,
+    not an estimate**, and the only honest way to quote one is beside the number
+    that says how far it moves when the delisted names are removed.
+
+    Reports the read three ways:
+      all         every settled observation, delistings included at their
+                  last traded price
+      survivors   delistings EXCLUDED — i.e. what the engine used to report
+                  by accident, before forward_return_ex existed
+      delisted    the delisted subset alone
+
+    ⚠️ If `survivors` is much better than `all`, the strategy's apparent edge is
+    partly an artifact of names that stopped trading, and the TRUE figure is
+    worse than `all` — because the universe is missing the delistings that never
+    made it into the symbol source at all. `all` is the ceiling of an estimate
+    whose floor is unknown.
+    """
+    if status_col not in df.columns:
+        return {"available": False,
+                "note": f"no {status_col} column — engine predates "
+                        f"delisting classification; ALL results are "
+                        f"survivor-only and silently so"}
+    delisted_mask = df[status_col].astype(str) == "delisted"
+    out = {
+        "available": True,
+        "n_all": int(len(df)),
+        "n_delisted": int(delisted_mask.sum()),
+        "all": summarize(df, "all"),
+        "survivors": summarize(df[~delisted_mask], "survivors"),
+    }
+    out["delisted_pct"] = (out["n_delisted"] / out["n_all"]) if out["n_all"] else 0.0
+    if out["n_delisted"] >= 2:
+        out["delisted"] = summarize(df[delisted_mask], "delisted")
+    return out
+
+
+def format_sensitivity(s: dict) -> str:
+    if not s.get("available"):
+        return f"[survivorship] {s.get('note', 'unavailable')}"
+    lines = [f"[survivorship] {s['n_delisted']}/{s['n_all']} "
+             f"({s['delisted_pct']:.1%}) of settled events DELISTED mid-hold"]
+    for key in ("all", "survivors", "delisted"):
+        r = s.get(key)
+        if r is not None:
+            lines.append(f"  {key:<10} {r.summary()}")
+    a, sv = s.get("all"), s.get("survivors")
+    if a is not None and sv is not None and np.isfinite(a.mean) and np.isfinite(sv.mean):
+        gap = sv.mean - a.mean
+        lines.append(f"  ⚠️  excluding delistings moves the mean {gap:+.4%}. "
+                     f"The universe is ALSO missing names that delisted before "
+                     f"the symbol source was read, so 'all' is a CEILING.")
+    return "\n".join(lines)
+
+
 def read_ledger(path) -> pd.DataFrame:
     """Load a scored event ledger. Raises rather than returning empty.
 
