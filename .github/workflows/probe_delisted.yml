@@ -1,0 +1,27 @@
+name: Survivorship probe — does free data serve delisted tickers?
+
+# Availability only. Computes no return, writes nothing, spends no K.
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "v28/survivorship-probe"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas requests "yfinance>=0.2.40,<2"
+      - name: Probe
+        env:
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+        run: python probe_delisted.py
