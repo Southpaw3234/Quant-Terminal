@@ -220,6 +220,41 @@ def test_live_registry():
     print(f"\n{r.status()}")
 
 
+
+
+def test_spec2_declared():
+    print("\n--- referee: spec #2 is DECLARED, UNREAD, and authorisable ---")
+    p = Path("data/registry/specifications.json")
+    r = referee.Referee(registry_path=p)
+    s2 = r.specs.get("form4_cluster_buy_v2")
+    check("spec2-present", s2 is not None, "form4_cluster_buy_v2 is in the live registry")
+    check("spec2-unread", s2 is not None and not s2.is_read,
+          "declared but NOT read — a declaration spends nothing")
+    check("spec2-k-unchanged", r.k_used() == 1,
+          f"K still {r.k_used()}/{r.k_budget} after declaring — budget is "
+          f"consumed by a READ, not a declaration")
+    v = r.authorize_read("form4_cluster_buy_v2", "2026-09-05")
+    check("spec2-authorisable", v.allowed,
+          f"a read dated after declaration is AUTHORISED: {v.reason[:60]}")
+    check("spec2-not-before-declared",
+          not r.authorize_read("form4_cluster_buy_v2", "2026-09-03").allowed,
+          "a read dated BEFORE 2026-09-04 is refused")
+    check("spec2-horizon-63", s2 is not None and s2.params.get("horizon_bars") == 63,
+          "frozen horizon is 63 bars (the fork decision)")
+    check("spec2-lookback-1095", s2 is not None and s2.params.get("lookback_days") == 1095,
+          "frozen lookback is 1,095 days")
+    check("spec2-output-not-v1-ledger",
+          s2 is not None and "event_study_v2.csv" in s2.params.get("output_ledger", "")
+          and "NEVER" in s2.params.get("output_ledger", ""),
+          "output ledger is event_study_v2.csv and the record says NEVER v1's")
+    check("spec2-prior-flagged",
+          s2 is not None and "REQUIRED BEFORE READ" in str(s2.result.get("prior", "")),
+          "the per-spec prior is flagged as required-before-read, not invented")
+    check("spec2-caveats-travel",
+          s2 is not None and len(s2.result.get("caveats_to_travel_with_any_number", [])) >= 5,
+          "survivorship / two-parameter / linear-accrual caveats stored WITH the spec")
+    print(f"\n{r.status()}")
+
 def main():
     print("=" * 70)
     print("qt Phase 1 — Measurement + Referee (no network)")
@@ -230,6 +265,7 @@ def main():
     test_referee_budget_and_persistence()
     test_referee_records_e1()
     test_live_registry()
+    test_spec2_declared()
     print("\n" + "=" * 70)
     if FAILURES:
         print(f"RESULT: {len(FAILURES)} FAILED -> {', '.join(FAILURES)}")

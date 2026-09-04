@@ -1,7 +1,7 @@
 # Specification #2 — proposal (UNDECLARED)
 
 **Drafted:** 2026-09-04
-**Status:** 🟡 **PROPOSAL. Not declared, not read.** Declaring costs nothing;
+**Status:** 🟢 **DECLARED 2026-09-04** as `form4_cluster_buy_v2` in `data/registry/specifications.json`. **Not read.** Declaring cost nothing;
 reading spends one of the four remaining specifications under
 `docs/V27_PREREGISTRATION.md`.
 
@@ -119,3 +119,32 @@ later — and cannot be tested if the budget is gone.
 `V27_PREREGISTRATION.md` §⑤ already names the failure mode this guards against:
 *"Testing more than K specifications and reporting the best."* Spending them
 quickly, on variations, is how that happens without anyone deciding to.
+
+---
+
+## ⑧ Declaration record — 2026-09-04
+
+Declared as **`form4_cluster_buy_v2`** after both §⑥ checks cleared:
+
+| check | result | run |
+|---|---|---|
+| Finnhub returns 1,095d? | **yes** — 561 events, 278 tickers; 2024/2025 at ~36k filings each | `33927199851` |
+| dedup at 63 bars? | **127 settle vs bar 40** on the v1 set; ~390 expected on the 561-event set | `33927201211` |
+
+**Inputs are frozen by file:** events `data/events/events_form4_1095d.csv`, universe
+`data/universe/v27_universe.csv`. **Output goes to `data/events/event_study_v2.csv`
+— never `event_study.csv`, which is v1's frozen ledger.** The E1 job refuses that
+combination with exit 4 before a price downloads.
+
+**Budget: K remains 1/5.** A declaration spends nothing.
+
+🔴 **STILL REQUIRED BEFORE THE READ — the §⑤ prior.** Blank until the operator
+fills it:
+
+```
+P(spec #2 clears all four E1 bars) = ______%     signed: ________  date: ______
+```
+
+The Referee will authorise the read without it; the *documents* will not. That
+gap is deliberate — the number has to be yours, written before any result exists
+to argue against.

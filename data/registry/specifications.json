@@ -12,6 +12,12 @@
     "at the time. This entry backfills that, and is the last one that will",
     "ever need to.",
     "",
+    "form4_cluster_buy_v2 was declared 2026-09-04 AFTER both availability",
+    "checks cleared (docs/V27_FORK_DECISION.md section 6) and BEFORE any",
+    "return on its inputs was computed. Budget is consumed by a READ, not a",
+    "declaration: K remains 1/5 until v2 is read. A per-spec prior is",
+    "REQUIRED BEFORE THE READ and is recorded in result.prior when given.",
+    "",
     "A REBUILD DOES NOT RESET THIS FILE. Clearing it to start fresh is the",
     "rebound-building NEXT_ARCHITECTURE.md section 5 warned about."
   ],
@@ -49,6 +55,42 @@
           "SURVIVORSHIP: today's listed universe only; delisted and acquired names absent; biases UPWARD, largest exactly where this looks",
           "NEXT-SESSION ENTRY: Finnhub carries no intraday filing time; biases DOWNWARD by up to one session",
           "WRC/SPA at p<0.10 against K=5 was NOT evaluated -- the point estimate did not clear its own bar, so the correction was moot"
+        ]
+      }
+    },
+    "form4_cluster_buy_v2": {
+      "spec_id": "form4_cluster_buy_v2",
+      "params": {
+        "universe": "907 US primary-exchange common stocks, 250k <= ADV <= 5M, price >= $2, >= 200 bars (UNCHANGED from v1; frozen data/universe/v27_universe.csv)",
+        "events": ">= 2 distinct insiders within 5 calendar days, aggregate >= $100,000, Form 4 code P, non-derivative, USD (UNCHANGED from v1)",
+        "lookback_days": 1095,
+        "horizon_bars": 63,
+        "entry": "first bar STRICTLY AFTER event_ts (UNCHANGED)",
+        "control": "SPY, market-adjusted (UNCHANGED)",
+        "source": "Finnhub insider-transactions, run 33927199851",
+        "events_file": "data/events/events_form4_1095d.csv (561 events, 278 tickers)",
+        "output_ledger": "data/events/event_study_v2.csv -- NEVER data/events/event_study.csv, which is v1's frozen ledger",
+        "delisting_handling": "recorded at LAST TRADED PRICE and flagged exit_status=delisted; NOT -100%; three-way sensitivity report required with the number",
+        "changed_from_v1": [
+          "horizon_bars 21 -> 63 (docs/V27_FORK_DECISION.md: 252 bars yields zero settled observations; 63 is the longest the data supports)",
+          "lookback_days 365 -> 1095 (docs/V27_SPEC2_PROPOSAL.md: N=474 needed for t=2.0 at observed mean/sd; 1095d yields 561 events)"
+        ]
+      },
+      "declared_at": "2026-09-04",
+      "read_at": "",
+      "result": {
+        "prior": "REQUIRED BEFORE READ -- docs/V27_SPEC2_PROPOSAL.md section 5: P(clears all four E1 bars) = ___%, signed, dated. The project prior was 15%; spec #1 has since failed with a mode more data does not repair, so a number BELOW 15% is the defensible direction.",
+        "availability_checks": {
+          "finnhub_returns_1095d": "YES -- run 33927199851: 110,454 raw tx, 11,443 code-P, 561 events; 2024=35,442 and 2025=37,276 filings, tier does not cap",
+          "dedup_at_63_bars": "YES -- run 33927201211 on the 205-event v1 set: 127 settle vs bar 40; on the 561-event set expect ~390 settled"
+        },
+        "caveats_to_travel_with_any_number": [
+          "TWO PARAMETERS CHANGED IN ONE SPECIFICATION: a failure will not say whether horizon or sample was wrong (docs/V27_FORK_DECISION.md section 5)",
+          "SURVIVORSHIP IS MATERIALLY WORSE THAN v1: three years of small-cap delistings are missing instead of one, all invisible, all biasing UPWARD. probe_delisted.py: 0/3 bankruptcies serve price history -- no free fix. Any pass is a CEILING with an unknown floor.",
+          "delisted=0 in the sensitivity report is EXPECTED and is the bias confirming itself: every ticker entered the universe as a survivor",
+          "ALL power projections assume the effect accrues linearly with horizon; if v1's +1.76% was a right-skewed noise draw, tripling the horizon multiplies noise and t does not move",
+          "NEXT-SESSION ENTRY biases DOWNWARD by up to one session (unchanged from v1)",
+          "WRC/SPA at p<0.10 against K=5 is REQUIRED for a pass and is a separate step"
         ]
       }
     }

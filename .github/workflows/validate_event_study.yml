@@ -23,6 +23,14 @@ on:
         description: 'Events file to count (default the frozen spec-1 set)'
         type: string
         default: 'data/events/events_form4.csv'
+      spec_id:
+        description: 'Registry spec_id to read (the Referee must have it DECLARED and UNREAD)'
+        type: string
+        default: 'form4_cluster_buy_v2'
+      out_csv:
+        description: 'Output ledger. NEVER event_study.csv for any spec but v1 -- it is v1 frozen'
+        type: string
+        default: 'data/events/event_study_v2.csv'
       run_e1:
         description: "THE E1 READ — computes returns and SPENDS one of K=5"
         type: boolean
@@ -102,20 +110,26 @@ jobs:
         run: pip install "numpy<2.4" pandas "yfinance>=0.2.40,<2"
       - name: Run the event study
         env:
-          QT_EVENTS_CSV: data/events/events_form4.csv
-          QT_EVENT_OUT: data/events/event_study.csv
+          QT_EVENTS_CSV: ${{ inputs.events_csv || 'data/events/events_form4_1095d.csv' }}
+          QT_EVENT_OUT: ${{ inputs.out_csv || 'data/events/event_study_v2.csv' }}
           # Horizon deliberately NOT pinned here: it follows event_study.py's
           # default, which docs/V27_FORK_DECISION.md moved to 63. A hardcoded
           # '21' would have silently run any future read at the retired horizon.
           QT_EVENT_BENCH: SPY
-          QT_SPEC_ID: form4_cluster_buy_v1
+          QT_SPEC_ID: ${{ inputs.spec_id || 'form4_cluster_buy_v2' }}
         run: |
           set -u
-          if [ ! -f data/events/events_form4.csv ]; then
+          if [ ! -f "$QT_EVENTS_CSV" ]; then
             echo "::error::no events file — run the extractor first."
             exit 1
           fi
-          echo "events: $(( $(wc -l < data/events/events_form4.csv) - 1 ))"
+          # HARD GUARD: v1's ledger is frozen evidence. The freeze would keep v1's
+          # rows and APPEND another spec's -- two specifications silently mixed in
+          # one file. Refuse before a single price downloads.
+          if [ "$QT_EVENT_OUT" = "data/events/event_study.csv" ] && [ "$QT_SPEC_ID" != "form4_cluster_buy_v1" ]; then
+            echo "::error::refusing to write spec $QT_SPEC_ID into v1's frozen ledger"; exit 4
+          fi
+          echo "spec=$QT_SPEC_ID events=$QT_EVENTS_CSV ($(( $(wc -l < "$QT_EVENTS_CSV") - 1 )) rows) out=$QT_EVENT_OUT"
           python event_study.py
       - name: Guard — S4 evidence untouched
         run: |
@@ -128,7 +142,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: v27-e1-read
-          path: data/events/event_study.csv
+          path: data/events/event_study*.csv
           if-no-files-found: error
 
   count:
