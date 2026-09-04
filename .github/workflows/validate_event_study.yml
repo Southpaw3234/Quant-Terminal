@@ -22,6 +22,7 @@ on:
   push:
     branches:
       - 'v27/**'
+      - 'v28/**'
     paths:
       - 'event_study.py'
       - 'validate_event_study.py'
