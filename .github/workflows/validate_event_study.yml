@@ -15,6 +15,14 @@ name: Validate event-study engine (v27 A2, read-only)
 on:
   workflow_dispatch:
     inputs:
+      run_count:
+        description: 'COUNT ONLY — how many events settle at the current horizon? No returns, no budget'
+        type: boolean
+        default: false
+      events_csv:
+        description: 'Events file to count (default the frozen spec-1 set)'
+        type: string
+        default: 'data/events/events_form4.csv'
       run_e1:
         description: "THE E1 READ — computes returns and SPENDS one of K=5"
         type: boolean
@@ -96,7 +104,9 @@ jobs:
         env:
           QT_EVENTS_CSV: data/events/events_form4.csv
           QT_EVENT_OUT: data/events/event_study.csv
-          QT_EVENT_HORIZON: '21'
+          # Horizon deliberately NOT pinned here: it follows event_study.py's
+          # default, which docs/V27_FORK_DECISION.md moved to 63. A hardcoded
+          # '21' would have silently run any future read at the retired horizon.
           QT_EVENT_BENCH: SPY
           QT_SPEC_ID: form4_cluster_buy_v1
         run: |
@@ -120,3 +130,37 @@ jobs:
           name: v27-e1-read
           path: data/events/event_study.csv
           if-no-files-found: error
+
+  count:
+    # Availability only. Dedup + settlement classification at the current
+    # horizon, NO returns computed, nothing written, Referee not consulted.
+    # Answers docs/V27_FORK_DECISION.md §⑥ item 2 for free.
+    if: github.event_name == 'workflow_dispatch' && inputs.run_count
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas "yfinance>=0.2.40,<2"
+      - name: Count settled events (no returns)
+        env:
+          QT_EVENTS_CSV: ${{ inputs.events_csv || 'data/events/events_form4.csv' }}
+          QT_EVENT_COUNT_ONLY: '1'
+          QT_EVENT_OUT: /tmp/never-written.csv
+        run: |
+          set -u
+          echo "events file: $QT_EVENTS_CSV ($(( $(wc -l < "$QT_EVENTS_CSV") - 1 )) rows)"
+          python event_study.py
+      - name: Guard — nothing written anywhere
+        run: |
+          set -u
+          if [ -f /tmp/never-written.csv ]; then
+            echo "::error::count-only mode wrote a ledger — it must not"; exit 1
+          fi
+          if ! git diff --quiet -- data/; then
+            echo "::error::count-only mode modified data/"; exit 1
+          fi
+          echo "OK — nothing written, budget untouched."

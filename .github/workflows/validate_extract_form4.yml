@@ -17,6 +17,10 @@ name: Validate Form 4 extractor (v27 A3, read-only)
 on:
   workflow_dispatch:
     inputs:
+      lookback_days:
+        description: 'Insider-history lookback in days (default 365; spec #2 asks for 1095)'
+        type: string
+        default: '365'
       run_extract:
         description: 'Count cluster-buy events across the A4 universe (availability only)'
         type: boolean
@@ -117,6 +121,7 @@ jobs:
         env:
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
           QT_F4_UNIVERSE: data/universe/v27_universe.csv
+          QT_F4_LOOKBACK_DAYS: ${{ inputs.lookback_days || '365' }}
         run: |
           set -u
           if [ -z "${FINNHUB_API_KEY}" ]; then
