@@ -24,6 +24,7 @@ on:
   push:
     branches:
       - 'v27/**'
+      - 'v28/**'
     paths:
       - 'build_universe.py'
       - 'validate_build_universe.py'

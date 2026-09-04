@@ -88,13 +88,32 @@ BENCH = os.environ.get("QT_EVENT_BENCH", "SPY").strip().upper()
 PRICE_CSV = os.environ.get("QT_EVENT_PRICE_CSV", "").strip()
 SETTLED_ONLY = os.environ.get("QT_EVENT_SETTLED", "1").strip() != "0"
 
-# E1 bars, from docs/V27_PREREGISTRATION.md. Mirrored here so the script can
-# print a verdict, but the DOCUMENT is authoritative -- if these ever
-# disagree, the document wins and this is the bug.
-E1_MIN_N = 40
-E1_MIN_EFFECT = 0.005      # +0.50% mean abnormal return per event
-E1_MIN_T = 2.0
-E1_STABILITY = 0.50        # final third >= 50% of first third
+# ── MERGED WITH THE qt PACKAGE, 2026-09-04 ──────────────────────────────────
+# The E1 bars and the summary arithmetic used to be duplicated here. They now
+# come from qt.measurement, which docs/V28_AGENT_ARCHITECTURE.md §3.2 makes the
+# ONLY role permitted to compute a return.
+#
+# 🔑 This swap is SAFE TO MAKE BECAUSE IT IS VERIFIABLE, and that is the whole
+# reason Phase 1's exit gate exists. validate_qt_phase1.py asserts that
+# qt.measurement.summarize reproduces the frozen E1 read EXACTLY from
+# data/events/event_study.csv -- n=160, mean +1.7647%, t +1.16, stability
+# -0.52. Replacing a private copy with a shared implementation is normally the
+# most dangerous kind of refactor precisely because a silent shift in a verdict
+# is invisible; here the shift would fail CI.
+from qt import ledger as qt_ledger              # noqa: E402
+from qt import measurement as qt_measurement    # noqa: E402
+from qt import referee as qt_referee            # noqa: E402
+
+E1_MIN_N = qt_measurement.E1_MIN_N
+E1_MIN_EFFECT = qt_measurement.E1_MIN_EFFECT
+E1_MIN_T = qt_measurement.E1_MIN_T
+E1_STABILITY = qt_measurement.E1_STABILITY
+
+# Referee gate. When QT_SPEC_ID is set, the read must be AUTHORISED before any
+# return is computed -- the Referee is otherwise tested but decorative, and a
+# guard nothing calls is not a guard.
+SPEC_ID = os.environ.get("QT_SPEC_ID", "").strip()
+READ_DATE = os.environ.get("QT_READ_DATE", "").strip()
 
 REQUIRED_COLS = {"event_id", "ticker", "event_ts", "event_type"}
 
@@ -296,94 +315,29 @@ def run_study(df: pd.DataFrame, prices: dict, h: int) -> pd.DataFrame:
               f"bar, or exit bar not yet settled")
     return pd.DataFrame(rows)
 
-
-# -------------------------------------------------------------- freezing
+# ────────────────────────────── freezing + summary, delegated to qt ─────────
+# Both were private copies here. qt.ledger and qt.measurement now own them.
+# The wrappers stay so this module's callers and its printed output are
+# unchanged -- the merge is an internal one, and a refactor that also changes
+# what a script prints is two changes wearing one commit.
 
 def _freeze_first_write(new_df: pd.DataFrame, path: Path,
                         key: str = "event_id") -> pd.DataFrame:
-    """First write wins; a written event's abnormal return NEVER moves.
+    """Delegates to qt.ledger. First write wins; a written row NEVER moves."""
+    merged, report = qt_ledger.freeze_first_write(
+        new_df, path, key=key, mutable_env="QT_EVENT_MUTABLE")
+    line = report.summary("event-study")
+    if report.frozen or report.appended or report.mutable or report.unreadable:
+        print(line)
+    return merged
 
-    Carried over from analyze_rank_ic.py (203d95c), keyed on event_id
-    instead of date. Drift is REPORTED rather than discarded -- how far a
-    recompute would have moved a written row is evidence about price-source
-    stability, and silently dropping it trades one blind spot for another.
-    """
-    if os.environ.get("QT_EVENT_MUTABLE", "").strip() == "1":
-        print("[event-study] QT_EVENT_MUTABLE=1 — written rows MAY MOVE. "
-              "Never set this on a scheduled run.")
-        return new_df
-    if not path.exists() or new_df.empty:
-        return new_df
-    try:
-        old = pd.read_csv(path)
-    except Exception as exc:
-        print(f"[event-study] existing {path} unreadable ({exc}) — writing fresh")
-        return new_df
-    if old.empty or key not in old.columns or key not in new_df.columns:
-        return new_df
-
-    new_by_key = {str(r[key]): r for _, r in new_df.iterrows()}
-    moved = []
-    for _, orow in old.iterrows():
-        nrow = new_by_key.get(str(orow[key]))
-        if nrow is None:
-            continue
-        for col in old.columns:
-            if col == key or col not in new_df.columns:
-                continue
-            ov, nv = orow[col], nrow[col]
-            try:
-                if pd.isna(ov) and pd.isna(nv):
-                    continue
-                same = float(ov) == float(nv)
-            except (TypeError, ValueError):
-                same = str(ov) == str(nv)
-            if not same:
-                moved.append(f"{orow[key]}.{col} {ov}->{nv}")
-    if moved:
-        print(f"[event-study] FROZE {len(moved)} recomputed value(s) that would "
-              f"have changed written rows — kept the originals: "
-              f"{'; '.join(moved[:8])}{' ...' if len(moved) > 8 else ''}")
-
-    fresh = new_df[~new_df[key].astype(str).isin(set(old[key].astype(str)))]
-    if len(fresh):
-        print(f"[event-study] appending {len(fresh)} new event(s)")
-    return pd.concat([old, fresh], ignore_index=True)
-
-
-# ------------------------------------------------------------- reporting
 
 def summarize(df: pd.DataFrame, event_type: str = "ALL") -> dict:
-    """E1 statistics. Reports the verdict; it does not decide it."""
-    x = pd.to_numeric(df["abnormal_ret"], errors="coerce").dropna().values
-    n = int(len(x))
-    if n < 2:
-        return {"event_type": event_type, "n": n, "mean": float("nan"),
-                "sd": float("nan"), "t": float("nan"),
-                "first_third": float("nan"), "last_third": float("nan"),
-                "stability": float("nan"), "pass": False}
-    mean = float(np.mean(x))
-    sd = float(np.std(x, ddof=1))
-    t = mean / (sd / np.sqrt(n)) if sd > 0 else float("nan")
-
-    # Stability (E1): ordered by event time, final third vs first third.
-    # v25's S3 produced +0.0254 over folds 1-6 that decayed to -0.0053 by
-    # folds 9-12 and still read as a near-miss. Here that fails outright.
-    ordered = df.sort_values("event_ts")
-    xs = pd.to_numeric(ordered["abnormal_ret"], errors="coerce").dropna().values
-    third = max(1, len(xs) // 3)
-    first_m = float(np.mean(xs[:third]))
-    last_m = float(np.mean(xs[-third:]))
-    stability = (last_m / first_m) if first_m > 0 else float("nan")
-
-    passed = bool(n >= E1_MIN_N and mean >= E1_MIN_EFFECT
-                  and np.isfinite(t) and t >= E1_MIN_T
-                  and np.isfinite(stability) and stability >= E1_STABILITY)
-    return {"event_type": event_type, "n": n, "mean": mean, "sd": sd, "t": t,
-            "first_third": first_m, "last_third": last_m,
-            "stability": stability, "pass": passed}
-
-
+    """Delegates to qt.measurement. Returns the legacy dict shape."""
+    r = qt_measurement.summarize(df, label=event_type)
+    return {"event_type": r.label, "n": r.n, "mean": r.mean, "sd": r.sd,
+            "t": r.t, "first_third": r.first_third, "last_third": r.last_third,
+            "stability": r.stability, "pass": r.passes}
 def _print_summary(s: dict) -> None:
     def flag(ok):
         return "OK  " if ok else "MISS"
@@ -409,7 +363,35 @@ def _print_summary(s: dict) -> None:
           "separate step and is NOT evaluated here.")
 
 
+def _referee_gate() -> None:
+    """Refuse to compute a single return without authorisation.
+
+    Runs BEFORE prices are fetched, so an unauthorised read costs nothing and
+    produces nothing. The Referee owns docs/V27_PREREGISTRATION.md's K budget
+    (V28_AGENT_ARCHITECTURE.md §3.4); until this call existed it was fully
+    tested and never invoked, which is a guard in name only.
+
+    Opt-in via QT_SPEC_ID rather than mandatory, because the same script runs
+    the hermetic synthetic suites where there is no specification and nothing
+    to spend. ⚠️ The E1 workflow MUST set it — that is what makes the budget
+    enforced in code rather than by memory.
+    """
+    if not SPEC_ID:
+        print("[event-study] no QT_SPEC_ID — running unauthorised. This is "
+              "correct ONLY for synthetic/test runs; a real read must set it.")
+        return
+    read_date = READ_DATE or pd.Timestamp.utcnow().date().isoformat()
+    ref = qt_referee.Referee()
+    verdict = ref.authorize_read(SPEC_ID, read_date)
+    print(f"[referee] {ref.k_used()}/{ref.k_budget} spent — "
+          f"'{SPEC_ID}' @ {read_date}: {verdict.reason}")
+    if not verdict:
+        print(f"::error::REFEREE REFUSED THE READ — {verdict.reason}")
+        sys.exit(3)
+
+
 def main() -> None:
+    _referee_gate()
     events = _load_events()
     if events.empty:
         print("[event-study] no usable events.")
