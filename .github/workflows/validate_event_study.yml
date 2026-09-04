@@ -97,6 +97,7 @@ jobs:
           QT_EVENT_OUT: data/events/event_study.csv
           QT_EVENT_HORIZON: '21'
           QT_EVENT_BENCH: SPY
+          QT_SPEC_ID: form4_cluster_buy_v1
         run: |
           set -u
           if [ ! -f data/events/events_form4.csv ]; then
