@@ -1,7 +1,7 @@
 # Specification #2 — proposal (UNDECLARED)
 
 **Drafted:** 2026-09-04
-**Status:** 🟢 **DECLARED 2026-09-04** as `form4_cluster_buy_v2` in `data/registry/specifications.json`. **Not read.** Declaring cost nothing;
+**Status:** 🔴 **READ 2026-09-05 — NOT MET.** `form4_cluster_buy_v2`, run 33934605296: n=406, mean +1.19%, t 0.62, stability undefined (first third negative), WRC-Bonf p 0.26 vs 0.02. **K is 2/5 spent.** Declared 2026-09-04;
 reading spends one of the four remaining specifications under
 `docs/V27_PREREGISTRATION.md`.
 

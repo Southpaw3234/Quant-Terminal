@@ -81,12 +81,40 @@
         ]
       },
       "declared_at": "2026-09-04",
-      "read_at": "",
+      "read_at": "2026-09-05",
       "result": {
         "prior": "P(spec #2 clears all four E1 bars) = 10%, signed Southpaw3234, 2026-09-04 -- recorded BEFORE the read was dispatched (see git timestamp of this commit vs read_at). Below the 15% project prior: spec #1 failed with a mode more data does not repair.",
         "availability_checks": {
           "finnhub_returns_1095d": "YES -- run 33927199851: 110,454 raw tx, 11,443 code-P, 561 events; 2024=35,442 and 2025=37,276 filings, tier does not cap",
           "dedup_at_63_bars": "YES -- run 33927201211 on the 205-event v1 set: 127 settle vs bar 40; on the 561-event set expect ~390 settled"
+        },
+        "read": {
+          "verdict": "NOT MET",
+          "run_id": "33934605296",
+          "dispatched": "2026-09-05T00:56:33Z",
+          "input_verified": "input guard OK -- events_form4_1095d.csv matched the registry; 561 rows; event dates 2023-09-08 to 2026-06-01",
+          "n": 406,
+          "n_events_in": 561,
+          "dropped_overlapping_63bar": 128,
+          "unmatured": 27,
+          "delisted": 0,
+          "distinct_tickers": 268,
+          "mean": 0.011851,
+          "t": 0.62,
+          "stability": null,
+          "stability_note": "UNDEFINED: first third is NEGATIVE (-0.1963%), last third +2.4770%. Undefined is a MISS by the sign-artifact rule. The effect runs the OPPOSITE direction to spec #1 (which decayed) -- noise going both ways across specs is what a null does.",
+          "first_third": -0.001963,
+          "last_third": 0.024770,
+          "pct_positive": 0.40,
+          "wrc_bonf_raw_p": 0.2595,
+          "wrc_bonf_bar": 0.02,
+          "k_tested_label": "3 unread slot(s) charged (correct: v1 read, v2 read, 3 remain)",
+          "missed": ["t 0.62 < 2.0", "stability undefined (first third < 0) < 0.50", "WRC-Bonf p 0.2595 > 0.02"],
+          "cleared": ["N 406 >= 40", "mean +1.19% >= +0.50%"],
+          "vs_miswired_peek": "The 365-day subset read +4.00% / t 1.08. On the full 1,095 days: +1.19% / t 0.62. Tripling the sample CUT the mean by 70% and t by 43%. The linear-accrual assumption behind every power projection is falsified on this spec: the recent third was the high end of noise, not a stable effect.",
+          "vs_prior": "Operator prior was 10%. Outcome is consistent with it. Two of two declared reads have failed; four of four pre-registered v25 criteria plus two v27 specifications now down.",
+          "ledger": "data/events/event_study_v2.csv, 406 rows, frozen on first write",
+          "anti_deferral": "This read STANDS. No bug found after it reopens it. The miswire deviation is attached above and did not shape the parameters, which were frozen before it."
         },
         "deviations": [
           {

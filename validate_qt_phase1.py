@@ -206,8 +206,9 @@ def test_live_registry():
         check("live-registry-present", False, f"{p} missing")
         return
     r = referee.Referee(registry_path=p)
-    check("live-k-used", r.k_used() == 1,
-          f"K {r.k_used()}/{r.k_budget} spent, {r.k_remaining()} remaining")
+    check("live-k-used", r.k_used() == 2,
+          f"K {r.k_used()}/{r.k_budget} spent, {r.k_remaining()} remaining "
+          f"(v1 read 2026-09-02, v2 read 2026-09-05)")
     check("live-e1-locked",
           not r.authorize_read("form4_cluster_buy_v1", "2026-12-15").allowed,
           "form4_cluster_buy_v1 is READ and cannot be read again")
@@ -223,19 +224,21 @@ def test_live_registry():
 
 
 def test_spec2_declared():
-    print("\n--- referee: spec #2 is DECLARED, UNREAD, and authorisable ---")
+    print("\n--- referee: spec #2 was DECLARED 09-04, then READ 09-05 — NOT MET ---")
     p = Path("data/registry/specifications.json")
     r = referee.Referee(registry_path=p)
     s2 = r.specs.get("form4_cluster_buy_v2")
     check("spec2-present", s2 is not None, "form4_cluster_buy_v2 is in the live registry")
-    check("spec2-unread", s2 is not None and not s2.is_read,
-          "declared but NOT read — a declaration spends nothing")
-    check("spec2-k-unchanged", r.k_used() == 1,
-          f"K still {r.k_used()}/{r.k_budget} after declaring — budget is "
-          f"consumed by a READ, not a declaration")
-    v = r.authorize_read("form4_cluster_buy_v2", "2026-09-05")
-    check("spec2-authorisable", v.allowed,
-          f"a read dated after declaration is AUTHORISED: {v.reason[:60]}")
+    check("spec2-read", s2 is not None and s2.is_read and s2.read_at == "2026-09-05",
+          f"read_at={s2.read_at if s2 else 'n/a'} — declared 09-04, read 09-05, "
+          f"in that order")
+    check("spec2-k-spent", r.k_used() == 2 and r.k_remaining() == 3,
+          f"K {r.k_used()}/{r.k_budget} spent — the read consumed one; "
+          f"{r.k_remaining()} remain")
+    v = r.authorize_read("form4_cluster_buy_v2", "2026-12-15")
+    check("spec2-anti-deferral", not v.allowed and "already read" in v.reason,
+          f"a second read of v2 is REFUSED — no bug found afterwards reopens it: "
+          f"{v.reason[:60]}")
     check("spec2-not-before-declared",
           not r.authorize_read("form4_cluster_buy_v2", "2026-09-03").allowed,
           "a read dated BEFORE 2026-09-04 is refused")
@@ -257,9 +260,20 @@ def test_spec2_declared():
           any("MISWIRED" in str(d.get("what", "")) for d in _dev),
           "the 2026-09-05 miswired dispatch is RECORDED as a deviation, with its "
           "result, so the accidental subset peek cannot be forgotten either way")
-    check("spec2-still-unread-after-miswire", not s2.is_read,
-          "read_at stays EMPTY — the declared inputs were never loaded, and "
-          "whether the peek contaminates spec #2 is the operator's call")
+    _rd = (s2.result.get("read") or {}) if s2 is not None else {}
+    check("spec2-read-recorded",
+          _rd.get("verdict") == "NOT MET" and _rd.get("n") == 406
+          and _rd.get("run_id") == "33934605296",
+          f"the declared read is RECORDED: n={_rd.get('n')} mean={_rd.get('mean')} "
+          f"t={_rd.get('t')} -> {_rd.get('verdict')} (run {_rd.get('run_id')})")
+    check("spec2-read-after-decision",
+          any("PROCEED" in str(d.get("operator_decision", "")) for d in _dev),
+          "the operator's PROCEED decision is recorded alongside the deviation, "
+          "and precedes the read in git history")
+    check("spec2-linear-accrual-falsified",
+          "falsified" in str(_rd.get("vs_miswired_peek", "")),
+          "the record says plainly that tripling the sample CUT the mean — the "
+          "power assumption behind every projection did not hold")
     check("spec2-caveats-travel",
           s2 is not None and len(s2.result.get("caveats_to_travel_with_any_number", [])) >= 5,
           "survivorship / two-parameter / linear-accrual caveats stored WITH the spec")
