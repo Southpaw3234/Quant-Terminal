@@ -1,0 +1,123 @@
+name: Validate 8-K CAR extractor (v27 spec #3, read-only)
+
+# Two jobs, deliberately separated — the same split extract_form4.yml uses:
+#
+#   validate  -- hermetic. No network, no secrets, no yfinance installed, so
+#                the pure-logic suite CANNOT reach a price even by accident.
+#                Runs on every push. This is the gate.
+#   extract   -- dispatch-only. Builds the declared event file for
+#                pead_8k_car_v3 and uploads it as an ARTIFACT. It does not
+#                commit: an emitted event set is specification-adjacent and
+#                enters the repo through a reviewed commit.
+#
+# WHAT NEITHER JOB DOES: compute a forward return. That is event_study.py,
+# and it is what spends one of K=5. This builds the SELECTION only.
+#
+# v27 SEQUENCING: not scheduled, not wired into quant_daily.yml. S4 reads
+# obs #30 ~2026-09-28; nothing here may run on a cron or write under
+# data/predictions/ before 09-29.
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_extract:
+        description: 'Build the event file over the A4 universe (SELECTION only, no returns, no K)'
+        type: boolean
+        default: false
+      limit:
+        description: 'Cap the universe for a smoke test (0 = all 907)'
+        type: string
+        default: '0'
+  push:
+    branches:
+      - 'v27/**'
+      - 'v28/**'
+    paths:
+      - 'extract_8k_car.py'
+      - 'validate_extract_8k_car.py'
+      - '.github/workflows/validate_extract_8k_car.yml'
+      - 'data/registry/specifications.json'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        # No requests, no yfinance. extract_8k_car.py imports both lazily
+        # inside the network shell precisely so this stays possible.
+        run: pip install "numpy<2.4" pandas
+      - name: Compile check
+        run: |
+          python -m py_compile extract_8k_car.py
+          python -m py_compile validate_extract_8k_car.py
+      - name: Run pure-logic validation
+        run: python validate_extract_8k_car.py
+      - name: Assert nothing under data/ changed
+        run: |
+          set -u
+          if ! git diff --quiet -- data/ 2>/dev/null; then
+            echo "::error::validation modified data/ — it must be read-only"
+            git --no-pager diff --stat -- data/
+            exit 1
+          fi
+          echo "OK — data/ untouched."
+
+  extract:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_extract
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas requests "yfinance>=0.2.40,<2"
+      - name: Refuse if the declared event file already exists
+        # The registry names ONE events file for spec #3. Rebuilding it after
+        # a read, or overwriting it with a differently-parameterised sweep,
+        # is how a frozen input stops being frozen.
+        run: |
+          set -u
+          if [ -f data/events/events_8k_car_1095d.csv ]; then
+            echo "::error::data/events/events_8k_car_1095d.csv already exists — refusing to rebuild a declared input"
+            exit 3
+          fi
+          echo "OK — no existing event file to clobber."
+      - name: Build the spec #3 event set
+        env:
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+          QT_8K_UNIVERSE: data/universe/v27_universe.csv
+          QT_8K_LIMIT: ${{ inputs.limit }}
+        run: |
+          set -u
+          if [ ! -f data/universe/v27_universe.csv ]; then
+            echo "::error::no A4 universe on this ref"; exit 1
+          fi
+          echo "universe: $(( $(wc -l < data/universe/v27_universe.csv) - 1 )) names"
+          python extract_8k_car.py
+      - name: Guard — S4 evidence and both frozen ledgers untouched
+        run: |
+          set -u
+          if ! git diff --quiet -- data/predictions/ data/shadow/ 2>/dev/null; then
+            echo "::error::the extractor modified S4 evidence — it must not"; exit 1
+          fi
+          for f in data/events/event_study.csv data/events/event_study_v2.csv; do
+            if [ -f "$f" ] && ! git diff --quiet -- "$f" 2>/dev/null; then
+              echo "::error::$f is a FROZEN ledger and was modified"; exit 1
+            fi
+          done
+          echo "OK — S4 evidence and both frozen ledgers untouched."
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v27-spec3-events
+          path: data/events/events_8k_car_1095d.csv
+          if-no-files-found: error
