@@ -6,68 +6,81 @@ quarters of history, fiscal period-end instead of announcement date, calendar
 reaching back a month. A PEAD specification needs, for every announcement in
 a three-year window, the exact bar the market first saw the number. That is
 the filing timestamp of the 8-K that carried it -- Item 2.02, "Results of
-Operations and Financial Condition" -- and EDGAR serves those for free, back
-to 2004, with acceptance timestamps.
+Operations and Financial Condition" -- and EDGAR serves those for free with
+acceptance timestamps.
 
-This probe answers, for the 907-name universe:
+TWO HOST FACTS, MEASURED 2026-09-05 (runs 33938339262 / 33938394855 and a
+local curl matrix), because both cost a failed run to learn:
 
-  1. CIK coverage    -- how many tickers map to an SEC registrant at all
-  2. 8-K Item 2.02   -- how many announcements in the 1,095-day window, per
-                        name, per year; how many are MATURED for a 63-bar
-                        horizon; and the acceptance-hour distribution, which
-                        decides whether "first bar after" is same-day or
-                        next-day
-  3. XBRL depth      -- on a 15-name sample, whether companyfacts carries
-                        enough quarterly diluted EPS to build a seasonal
-                        random-walk SUE (the estimate-free surprise measure)
+  * www.sec.gov 403s EVERYTHING from this network -- static files, Archives,
+    company_tickers.json -- with "Request Rate Threshold Exceeded". It failed
+    from the GitHub runner AND from the operator's machine, so it is not a
+    datacenter block and not something a retry fixes. The canonical
+    ticker->CIK map lives there and is therefore UNREACHABLE.
+  * data.sec.gov and efts.sec.gov both serve 200 -- but ONLY to a plain
+    descriptive User-Agent. A UA containing a URL is 403'd by the same WAF.
+    That is why the default below has no link in it.
 
-Full sweep, not a sample, for 1 and 2: 907 submissions files at <=10 req/s
-is about three minutes, and the event COUNT is what the spec design needs.
+So the ticker->CIK map is rebuilt from EDGAR full-text search, which returns
+`ciks`, `display_names` (carrying the ticker), `items` and `file_date` per
+hit, and accepts a date range. Announcement detail then comes from the
+submissions API, whose structured `items` field is authoritative and whose
+`acceptanceDateTime` decides same-day vs next-bar entry.
+
+SAMPLES rather than sweeps: ~2 requests per name at roughly a second each
+makes 907 names a 20-minute job, and availability is a question about
+coverage and per-name density, which a 150-name random sample answers to
+within a few points. The full sweep belongs in the extractor, which runs
+once and commits its output.
 
 Availability only. Computes no return, writes nothing under data/, spends
 no K.
-
-SEC fair-access policy: a descriptive User-Agent is required. The default
-identifies the repository; SEC_USER_AGENT overrides it.
 """
 from __future__ import annotations
 
 import collections
 import os
+import random
 import sys
 import time
 
 import pandas as pd
 import requests
 
-# `or`, not a default arg: the workflow passes SEC_USER_AGENT="" when the secret
-# is unset, and an empty env var does NOT fall through to a default (the same
-# trap as `inputs.x || default`). The SEC rejects an empty User-Agent.
-UA = (os.environ.get("SEC_USER_AGENT") or "").strip() or "Quant-Terminal research (https://github.com/Southpaw3234/Quant-Terminal)"
+# No URL in the default: the SEC's WAF 403s a User-Agent containing one, on
+# data.sec.gov as well as www. Measured, not guessed. SEC_USER_AGENT overrides.
+UA = (os.environ.get("SEC_USER_AGENT") or "").strip() or "Quant-Terminal research"
 UNIVERSE = os.environ.get("QT_U_FILE", "data/universe/v27_universe.csv")
 WINDOW_START, WINDOW_END = "2023-09-01", "2026-09-05"
-MATURE_BY = "2026-06-01"            # ~63 bars before the data end
+MATURE_BY = "2026-06-01"              # ~63 trading bars before the data end
+N_SAMPLE = int(os.environ.get("QT_PROBE_N", "150"))
 N_FACTS_SAMPLE = int(os.environ.get("QT_PROBE_FACTS_N", "15"))
-SLEEP = 0.12                          # SEC asks for <= 10 req/s
-TICKERS_URL = "https://www.sec.gov/files/company_tickers.json"
+SEED = 20260905
+SLEEP = 0.12                          # SEC fair access asks for <= 10 req/s
+FTS_URL = "https://efts.sec.gov/LATEST/search-index"
 SUBS_URL = "https://data.sec.gov/submissions/{name}"
 FACTS_URL = "https://data.sec.gov/api/xbrl/companyfacts/CIK{cik:010d}.json"
 
 
-def _get(sess, url):
-    """-> (status, json|None). status in {'ok','404','err'}."""
+def _get(sess, url, params=None):
+    """-> (status, json|None). status is 'ok', '404', or 'err:<code>'."""
+    last = ""
     for attempt in range(3):
         try:
-            r = sess.get(url, timeout=30)
-        except requests.RequestException:
+            r = sess.get(url, params=params, timeout=30)
+        except requests.RequestException as exc:
+            last = type(exc).__name__
             time.sleep(1.5 * (attempt + 1)); continue
         if r.status_code == 200:
-            return "ok", r.json()
+            try:
+                return "ok", r.json()
+            except ValueError:
+                return "err:notjson", None
         if r.status_code == 404:
             return "404", None
         last = r.status_code
         time.sleep(1.5 * (attempt + 1))
-    return f"err:{locals().get('last', '')}", None
+    return f"err:{last}", None
 
 
 def _universe() -> list:
@@ -75,48 +88,59 @@ def _universe() -> list:
     return sorted(df["ticker"].astype(str).str.upper().unique().tolist())
 
 
-def _cik_map(sess) -> dict:
-    st, body = _get(sess, TICKERS_URL)
+def _resolve_cik(sess, tk: str):
+    """ticker -> (cik, fts_hits) via full-text search over its 8-K 2.02 filings.
+
+    display_names look like 'Fossil Group, Inc.  (FOSL)  (CIK 0000883569)',
+    so the ticker is confirmed on the hit itself rather than assumed from the
+    query -- entityName is a fuzzy match and will happily return a different
+    registrant.
+    """
+    st, body = _get(sess, FTS_URL, params={
+        "q": '"Item 2.02"', "forms": "8-K", "entityName": tk,
+        "startdt": WINDOW_START, "enddt": WINDOW_END,
+    })
+    time.sleep(SLEEP)
     if st != "ok":
-        print(f"[probe] company_tickers.json unavailable ({st})"); sys.exit(2)
-    m = {}
-    for rec in body.values():
-        m[str(rec["ticker"]).upper()] = int(rec["cik_str"])
-    return m
-
-
-def _lookup(tk: str, m: dict):
-    for cand in (tk, tk.replace(".", "-"), tk.replace("-", "."), tk.replace("-", ""), tk.replace(".", "")):
-        if cand in m:
-            return m[cand]
-    return None
+        return None, 0, st
+    hits = (body.get("hits", {}) or {}).get("hits", []) or []
+    total = ((body.get("hits", {}) or {}).get("total", {}) or {}).get("value", 0)
+    for h in hits:
+        src = h.get("_source", {}) or {}
+        names = " ".join(src.get("display_names", []) or [])
+        if f"({tk})" in names or f"({tk}," in names or f", {tk})" in names:
+            ciks = src.get("ciks") or []
+            if ciks:
+                return int(ciks[0]), total, "ok"
+    return None, total, "no-ticker-match"
 
 
 def _eight_k_202(sess, cik: int):
-    """All 8-K filings carrying Item 2.02 inside the window, incl. older chunks."""
+    """Item 2.02 8-Ks inside the window, from the authoritative submissions doc."""
     st, body = _get(sess, SUBS_URL.format(name=f"CIK{cik:010d}.json"))
     time.sleep(SLEEP)
     if st != "ok":
         return st, []
-    out = []
-    chunks = [body.get("filings", {}).get("recent", {})]
-    for extra in body.get("filings", {}).get("files", []):
-        # only fetch older chunks that overlap the window
-        if str(extra.get("filingTo", "")) >= WINDOW_START:
+    chunks = [(body.get("filings", {}) or {}).get("recent", {}) or {}]
+    for extra in (body.get("filings", {}) or {}).get("files", []) or []:
+        if str(extra.get("filingTo", "")) >= WINDOW_START:   # only overlapping chunks
             st2, b2 = _get(sess, SUBS_URL.format(name=extra["name"]))
             time.sleep(SLEEP)
             if st2 == "ok":
                 chunks.append(b2)
+    out = []
     for ch in chunks:
-        forms = ch.get("form", []); dates = ch.get("filingDate", [])
-        items = ch.get("items", []); acc = ch.get("acceptanceDateTime", [])
-        rep = ch.get("reportDate", [])
+        forms = ch.get("form", []) or []
+        dates = ch.get("filingDate", []) or []
+        items = ch.get("items", []) or []
+        acc = ch.get("acceptanceDateTime", []) or []
+        rep = ch.get("reportDate", []) or []
         for i in range(len(forms)):
             if forms[i] != "8-K":
                 continue
             if "2.02" not in str(items[i] if i < len(items) else ""):
                 continue
-            d = str(dates[i])
+            d = str(dates[i] if i < len(dates) else "")
             if not (WINDOW_START <= d <= WINDOW_END):
                 continue
             out.append({
@@ -125,8 +149,8 @@ def _eight_k_202(sess, cik: int):
                 "reportDate": str(rep[i]) if i < len(rep) else "",
                 "items": str(items[i]),
             })
-    # one event per filing date per name (a same-day 8-K + 8-K pair is one announcement)
-    seen = set(); dedup = []
+    # one announcement per date: an 8-K plus its same-day amendment is one event
+    seen, dedup = set(), []
     for r in sorted(out, key=lambda r: r["filingDate"]):
         if r["filingDate"] in seen:
             continue
@@ -135,14 +159,17 @@ def _eight_k_202(sess, cik: int):
 
 
 def _eps_depth(sess, cik: int):
+    """Quarterly diluted EPS depth — the estimate-free SUE needs 8+ quarters."""
     st, body = _get(sess, FACTS_URL.format(cik=cik))
     time.sleep(SLEEP)
     if st != "ok":
         return st, 0, 0, ""
-    facts = body.get("facts", {}).get("us-gaap", {})
-    node = facts.get("EarningsPerShareDiluted") or facts.get("EarningsPerShareBasic") or {}
-    rows = node.get("units", {}).get("USD/shares", [])
-    q_ends = set(); fy_ends = set()
+    facts = (body.get("facts", {}) or {}).get("us-gaap", {}) or {}
+    tag = ("EarningsPerShareDiluted" if "EarningsPerShareDiluted" in facts
+           else "EarningsPerShareBasic" if "EarningsPerShareBasic" in facts else "NONE")
+    node = facts.get(tag, {}) if tag != "NONE" else {}
+    rows = (node.get("units", {}) or {}).get("USD/shares", []) or []
+    q_ends, fy_ends = set(), set()
     for r in rows:
         end = str(r.get("end", ""))
         if not (WINDOW_START[:4] <= end[:4] <= WINDOW_END[:4]):
@@ -151,62 +178,81 @@ def _eps_depth(sess, cik: int):
             q_ends.add(end)
         elif r.get("form") == "10-K" and r.get("fp") == "FY":
             fy_ends.add(end)
-    tag = "EarningsPerShareDiluted" if "EarningsPerShareDiluted" in facts else ("EarningsPerShareBasic" if "EarningsPerShareBasic" in facts else "NONE")
     return "ok", len(q_ends), len(fy_ends), tag
 
 
 def main() -> None:
     sess = requests.Session()
     sess.headers.update({"User-Agent": UA, "Accept-Encoding": "gzip, deflate"})
-    tickers = _universe()
-    print(f"[probe] {len(tickers)} tickers from {UNIVERSE}; window {WINDOW_START}..{WINDOW_END}; UA={UA!r}\n")
+    universe = _universe()
+    sample = sorted(random.Random(SEED).sample(universe, min(N_SAMPLE, len(universe))))
+    print(f"[probe] universe {len(universe)} from {UNIVERSE}; sampling {len(sample)}; "
+          f"window {WINDOW_START}..{WINDOW_END}; UA={UA!r}\n")
 
-    # ── 1. CIK coverage ────────────────────────────────────────────────
-    print("=" * 72); print("1. ticker -> CIK  (company_tickers.json)"); print("=" * 72)
-    m = _cik_map(sess)
-    ciks = {tk: _lookup(tk, m) for tk in tickers}
-    mapped = {tk: c for tk, c in ciks.items() if c}
-    unmapped = sorted(tk for tk, c in ciks.items() if not c)
-    print(f"  mapped {len(mapped)}/{len(tickers)}  ({100*len(mapped)/len(tickers):.1f}%)")
-    print(f"  unmapped ({len(unmapped)}): {' '.join(unmapped[:40])}{' ...' if len(unmapped) > 40 else ''}\n")
+    # ── 1. ticker -> CIK, via full-text search ─────────────────────────
+    print("=" * 72); print("1. ticker -> CIK  (efts full-text search; www.sec.gov is 403 from here)"); print("=" * 72)
+    t0 = time.time()
+    ciks, fails = {}, collections.Counter()
+    for k, tk in enumerate(sample):
+        cik, _tot, st = _resolve_cik(sess, tk)
+        if cik:
+            ciks[tk] = cik
+        else:
+            fails[st] += 1
+        if (k + 1) % 50 == 0:
+            print(f"  ...{k+1}/{len(sample)} resolved={len(ciks)} {time.time()-t0:.0f}s")
+    print(f"\n  resolved {len(ciks)}/{len(sample)}  ({100*len(ciks)/max(1,len(sample)):.1f}%)  in {time.time()-t0:.0f}s")
+    print(f"  unresolved reasons: {dict(fails)}")
+    print("  (an unresolved name has NO Item 2.02 8-K in the window, or is not an SEC registrant —\n"
+          "   a fund, a foreign issuer filing 6-K, or a shell. Both are real exclusions, not gaps.)\n")
 
-    # ── 2. 8-K Item 2.02 sweep ─────────────────────────────────────────
-    print("=" * 72); print("2. 8-K Item 2.02 filings (earnings announcements), FULL SWEEP"); print("=" * 72)
+    # ── 2. 8-K Item 2.02 announcements ─────────────────────────────────
+    print("=" * 72); print("2. 8-K Item 2.02 announcements (submissions API, structured items)"); print("=" * 72)
     t0 = time.time()
     status = collections.Counter(); events = []; per_name = {}
-    for k, (tk, cik) in enumerate(sorted(mapped.items())):
+    for k, (tk, cik) in enumerate(sorted(ciks.items())):
         st, evs = _eight_k_202(sess, cik)
         status[st] += 1
         per_name[tk] = len(evs)
         for e in evs:
             e["ticker"] = tk; events.append(e)
-        if (k + 1) % 100 == 0:
-            print(f"  ...{k+1}/{len(mapped)} names, {len(events)} events so far, {time.time()-t0:.0f}s")
-    print(f"\n  submissions fetched: {dict(status)}  in {time.time()-t0:.0f}s")
+        if (k + 1) % 50 == 0:
+            print(f"  ...{k+1}/{len(ciks)} names, {len(events)} announcements, {time.time()-t0:.0f}s")
+    print(f"\n  submissions fetched: {dict(status)} in {time.time()-t0:.0f}s")
     if events:
         print(f"  record: {events[0]}")
-    n_with = sum(1 for v in per_name.values() if v > 0)
     counts = sorted(per_name.values())
-    print(f"\n  names with >=1 announcement: {n_with}/{len(mapped)}  ({100*n_with/max(1,len(mapped)):.1f}%)")
-    print(f"  TOTAL 8-K 2.02 announcements in window: {len(events)}")
+    n_with = sum(1 for v in counts if v > 0)
+    print(f"\n  names with >=1 announcement: {n_with}/{len(sample)} of the SAMPLE "
+          f"({100*n_with/max(1,len(sample)):.1f}%)")
+    print(f"  announcements in sample: {len(events)}")
     if counts:
-        med = counts[len(counts)//2]
-        print(f"  per name over ~3.0y: min={counts[0]} median={med} max={counts[-1]}   "
-              f"(quarterly reporting = ~12)  >=10: {sum(1 for v in counts if v >= 10)}  ==0: {sum(1 for v in counts if v == 0)}")
+        print(f"  per name over ~3.0y: min={counts[0]} median={counts[len(counts)//2]} max={counts[-1]}"
+              f"   (quarterly reporting = ~12)   >=10: {sum(1 for v in counts if v >= 10)}"
+              f"   ==0: {sum(1 for v in counts if v == 0)}")
     by_year = collections.Counter(e["filingDate"][:4] for e in events)
     print(f"  by year: {dict(sorted(by_year.items()))}")
     mature = [e for e in events if e["filingDate"] <= MATURE_BY]
-    print(f"  MATURED for a 63-bar horizon (filed <= {MATURE_BY}): {len(mature)}")
+    scale = len(universe) / max(1, len(sample))
+    print(f"  MATURED for a 63-bar horizon (filed <= {MATURE_BY}): {len(mature)} in sample"
+          f"  ->  ~{int(len(mature)*scale):,} projected across all {len(universe)} names")
+
     hours = collections.Counter()
     for e in events:
         a = e["acceptance"]
         if "T" in a:
             hours[a.split("T")[1][:2]] += 1
-    print(f"  acceptance hour histogram (timestamp as served; decides same-day vs next-bar entry):")
+    print("\n  acceptance-hour histogram (ET as served; decides same-day vs next-bar entry):")
+    unit = max(1, sum(hours.values()) // 60)
     for h in sorted(hours):
-        print(f"    {h}h  {hours[h]:>5}  {'#' * min(60, hours[h] // max(1, len(events) // 300))}")
-    print(f"  (no timestamp: {len(events) - sum(hours.values())})")
-    # reportDate sanity: 2.02 8-Ks report the period end; the gap tells the lag
+        mark = "  <- during session" if "09" <= h <= "15" else ""
+        print(f"    {h}h {hours[h]:>5}  {'#' * (hours[h] // unit)}{mark}")
+    print(f"  no timestamp: {len(events) - sum(hours.values())}")
+    intraday = sum(v for h, v in hours.items() if "09" <= h <= "15")
+    if hours:
+        print(f"  {100*intraday/sum(hours.values()):.0f}% land inside the session — those need the NEXT bar, "
+              f"not the close of the filing day.")
+
     lags = []
     for e in events:
         try:
@@ -215,31 +261,36 @@ def main() -> None:
             pass
     if lags:
         lags.sort()
-        print(f"  filing minus reportDate (days): median {lags[len(lags)//2]}  p10 {lags[len(lags)//10]}  p90 {lags[9*len(lags)//10]}")
+        print(f"  filing minus reportDate (days): p10 {lags[len(lags)//10]}  median {lags[len(lags)//2]}  "
+              f"p90 {lags[9*len(lags)//10]}")
 
-    # ── 3. XBRL EPS depth on a sample ──────────────────────────────────
-    print("\n" + "=" * 72); print(f"3. companyfacts quarterly diluted EPS depth ({N_FACTS_SAMPLE}-name sample)"); print("=" * 72)
-    import random
-    rnd = random.Random(20260905)
-    sample = sorted(rnd.sample(sorted(mapped), min(N_FACTS_SAMPLE, len(mapped))))
+    # ── 3. XBRL EPS depth for an estimate-free SUE ─────────────────────
+    print("\n" + "=" * 72); print(f"3. companyfacts quarterly EPS depth ({N_FACTS_SAMPLE}-name sub-sample)"); print("=" * 72)
+    subs = sorted(random.Random(SEED).sample(sorted(ciks), min(N_FACTS_SAMPLE, len(ciks)))) if ciks else []
     ok_q = []
-    for tk in sample:
-        st, nq, nfy, tag = _eps_depth(sess, mapped[tk])
-        print(f"  {tk:<6} {st:<4} 10-Q quarters={nq:<3} 10-K years={nfy:<2} {tag}")
+    for tk in subs:
+        st, nq, nfy, tag = _eps_depth(sess, ciks[tk])
+        print(f"  {tk:<6} {st:<9} 10-Q quarters={nq:<3} 10-K years={nfy:<2} {tag}")
         if st == "ok":
             ok_q.append(nq)
     if ok_q:
-        print(f"\n  facts ok {len(ok_q)}/{len(sample)}; 10-Q quarters in window: median {sorted(ok_q)[len(ok_q)//2]}, "
-              f"names with >=8: {sum(1 for q in ok_q if q >= 8)}  (Q4 must be derived FY - Q1 - Q2 - Q3)")
+        ok_q.sort()
+        print(f"\n  facts ok {len(ok_q)}/{len(subs)}; 10-Q quarters in window: median {ok_q[len(ok_q)//2]}; "
+              f"names with >=8: {sum(1 for q in ok_q if q >= 8)}  (Q4 is derived FY - Q1 - Q2 - Q3)")
 
     # ── verdict ────────────────────────────────────────────────────────
     print("\n" + "=" * 72)
-    cov = n_with / max(1, len(tickers))
-    if cov >= 0.75 and len(mature) >= 400:
-        print(f"✅ CLEARS on availability: {n_with}/{len(tickers)} names announce via 8-K 2.02, "
-              f"{len(mature)} matured announcements. Enough to define a top-decile event set well above N>=40.")
+    cov = n_with / max(1, len(sample))
+    proj = int(len(mature) * scale)
+    if cov >= 0.70 and proj >= 1000:
+        print(f"✅ CLEARS ON AVAILABILITY: {cov:.0%} of names announce via 8-K Item 2.02, "
+              f"~{proj:,} matured announcements across the universe.")
+        print("   Announcement DATE and TIME are exact and free. That is the half Finnhub could not supply.")
+        print("   Still unresolved, and NOT an availability question: the surprise MEASURE. No free")
+        print("   analyst consensus exists, so a spec must use announcement-window abnormal return")
+        print("   (Chan-Jegadeesh-Lakonishok) or a seasonal-random-walk SUE from the EPS depth above.")
     else:
-        print(f"🔴 DOES NOT CLEAR: coverage {cov:.0%}, matured {len(mature)}.")
+        print(f"🔴 DOES NOT CLEAR: coverage {cov:.0%}, ~{proj:,} matured announcements projected.")
     print("[probe] done. Availability only -- no return computed, nothing written, K untouched.")
 
 
