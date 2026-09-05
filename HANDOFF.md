@@ -317,6 +317,27 @@ The +1.19% mean is **entirely a 10% right tail** — 40 events summing to +3,427
 
 **What it rules out for spec #3:** any hypothesis that is a bet on *which* small company recovers has this shape. Officers-only, larger threshold, first-buy-in-N-years — **variations on a distribution that has now failed at two horizons and two sample sizes, not new hypotheses.** A third specification needs a mechanism where the **median** is positive: slow information diffusion (post-earnings drift) or a mechanical flow (index-deletion rebound). K remains 2/5. **The Finnhub availability probe did NOT clear** (`probe_earnings.py`, PR #60, run `33938076855`): `/stock/earnings` covers the universe well (29/30 names return quarters, 27/30 with estimates) but is **capped at the last 4 quarters on this key** — one year — and its `period` field is the fiscal quarter END, **not the announcement date** that PEAD's entry bar needs; `/calendar/earnings` carries the date but reaches back **~1 month** (12/15 names, earliest 2026-08-06, max 1 announcement per name over a 3-year request). **An analyst-estimate PEAD cannot be built from this key.** The free path, if pursued: **EDGAR 8-K Item 2.02** filing dates for the announcement bar (full history, free) with the **announcement-window abnormal return** as the surprise measure (Chan–Jegadeesh–Lakonishok 1996), or a seasonal-random-walk SUE from SEC XBRL `companyfacts` — there is no free analyst consensus anywhere. That is a different event definition and a different extractor. Not started; not declared.
 
+**⑯ ✅ EDGAR CLEARS WHERE FINNHUB DID NOT: EARNINGS-ANNOUNCEMENT DATES ARE FREE, EXACT, AND DEEP.** Probe `probe_edgar_8k.py`, run `33939274269` (PR #61), 150-name sample of the 907 universe. **No K spent.**
+
+```
+names with >=1 8-K Item 2.02   115/150  (77%)
+announcements in sample        1,319     median 12 per name over ~3y (quarterly = 12), max 23
+matured for a 63-bar horizon   1,206  ->  ~7,292 projected across all 907 names
+filing minus reportDate        0 days at the median
+XBRL EPS depth (15 names)      15/15 return companyfacts; median 11 quarters of 10-Q diluted EPS
+```
+
+**The entry bar is unambiguous — 93% of announcements land OUTSIDE the session** (66.5% after the close, 26.2% pre-market). Only **7.4%** land intraday, and those are precisely the events where a same-day close would capture part of the announcement move itself.
+
+🔑 **TWO SEC HOST FACTS, EACH COSTING A FAILED RUN TO LEARN** (runs `33938339262`, `33938394855`):
+* **`www.sec.gov` 403s EVERYTHING from this network** — static files, Archives, `company_tickers.json` — "Request Rate Threshold Exceeded". It failed from the GitHub runner **and from the local machine**, so it is not a datacenter block and **no retry fixes it**. The canonical ticker→CIK map lives there and is **unreachable**.
+* **`data.sec.gov` and `efts.sec.gov` serve 200 — but only to a PLAIN descriptive User-Agent.** A UA containing a URL is 403'd by the same WAF, which is exactly what the first version sent. The default is now `'Quant-Terminal research'`, no link.
+* Route around it: rebuild the CIK map from **EDGAR full-text search**, confirming the ticker on each hit's `display_names` rather than trusting a fuzzy `entityName` match; take announcement detail from the **submissions API**, whose structured `items` field is authoritative.
+
+⚠️ **A number I reported wrong and then corrected.** The first passing run labelled the acceptance hour as ET. `acceptanceDateTime` is **UTC** — the trailing `Z` — so that reading put a 21:01Z after-close release at "9pm" and called 07:00 ET pre-market "during session", reporting **29% intraday**. DST-aware conversion gives **7.4%**. It mattered: the wrong number would have driven the entry-bar rule the wrong way.
+
+**WHAT THIS DOES NOT SETTLE.** Availability of the **date**, not of a **surprise measure**. There is **no free analyst consensus** at this universe size — that is what Finnhub's 4-quarter cap really denied us. A spec #3 must therefore use the **announcement-window abnormal return** (Chan–Jegadeesh–Lakonishok 1996) or a **seasonal-random-walk SUE** from the XBRL depth above. That is a design choice carrying its own prior, not a data question, and it is **not yet made**. K remains **2/5**; the extractor is not written and spec #3 is not declared.
+
 ## 🗓️ SESSION LEDGER — 2026-09-04 (Friday): 🔴 **THE 2026-09-01 FALSE-FLAT — ALPACA RETURNED AN EMPTY POSITION LIST AND EVERY GUARD BELIEVED IT.** HON was never covered; it was short the whole time. `pos_ok=True` on a zero-length list meant "successfully read zero positions", indistinguishable from "flat", and the flat-invariant gate printed `OK — armed and flat (book=0)` twice across nine hours. ⚠️ **S4 HAS MOVED MATERIALLY: N=14, mean +0.0315, t +0.98** — the required run-rate fell from ~5× the window mean to ~1.7×. Still not a pass; no longer arithmetically dismissible. 🆕 **v28 Phases 0 and 1 built and merged** (`qt/` package: ledger, guards, measurement, referee), neither spending K.
 
 **① THE FALSE-FLAT. This is the most consequential finding since the stale-signal bug.**
