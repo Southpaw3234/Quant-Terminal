@@ -22,11 +22,11 @@
     "for v2 but loaded v1's 365-day event file, not v2's declared 1,095-day",
     "file. See form4_cluster_buy_v2.result.deviations. read_at stays EMPTY.",
     "",
-    "2026-09-05: pead_8k_car_v3 declared after both availability probes
-    returned (33938076855 Finnhub, did not clear; 33939274269 EDGAR, cleared)
-    and before any return on its inputs was computed. K stays 2/5 -- a
-    DECLARATION SPENDS NOTHING, only a read does. Its prior is deliberately
-    empty and must be signed before dispatch.",
+    "2026-09-05: pead_8k_car_v3 declared after both availability probes",
+    "returned (33938076855 Finnhub, did not clear; 33939274269 EDGAR,",
+    "cleared) and before any return on its inputs was computed. K stays",
+    "2/5 -- a DECLARATION SPENDS NOTHING, only a read does. Its prior is",
+    "deliberately empty and must be signed before dispatch.",
     "",
     "A REBUILD DOES NOT RESET THIS FILE. Clearing it to start fresh is the",
     "rebound-building NEXT_ARCHITECTURE.md section 5 warned about."
