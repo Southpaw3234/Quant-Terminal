@@ -1,0 +1,102 @@
+name: Point-in-time universe (v27 survivorship fix, step 2)
+
+# validate  -- hermetic. No network, no yfinance. Runs on every push. Gate.
+# build     -- dispatch-only. Screens the union of today's universe and the
+#              recovered roster at every month-end and uploads the membership
+#              panel as an ARTIFACT. Does not commit.
+#
+# WHAT NEITHER JOB DOES: discover an event or compute a return. Step 3 does
+# that. This decides membership only.
+#
+# ⚠️ DOES NOT REPAIR SPECS #1-#3. Read and frozen; anti-deferral stands.
+#
+# v27 SEQUENCING: not scheduled, not wired into quant_daily.yml. Nothing here
+# may run on a cron or write under data/predictions/ before 2026-09-29.
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_build:
+        description: 'Build the membership panel (no returns, no K)'
+        type: boolean
+        default: false
+      limit:
+        description: 'Cap the candidate pool for a smoke test (0 = all)'
+        type: string
+        default: '0'
+  push:
+    branches:
+      - 'v27/**'
+      - 'v28/**'
+    paths:
+      - 'build_universe_pit.py'
+      - 'validate_universe_pit.py'
+      - 'qt/prices.py'
+      - '.github/workflows/build_universe_pit.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas
+      - name: Compile check
+        run: |
+          python -m py_compile build_universe_pit.py
+          python -m py_compile validate_universe_pit.py
+      - name: Run pure-logic validation
+        run: python validate_universe_pit.py
+      - name: Assert nothing under data/ changed
+        run: |
+          set -u
+          if ! git diff --quiet -- data/ 2>/dev/null; then
+            echo "::error::validation modified data/ — it must be read-only"; exit 1
+          fi
+          echo "OK — data/ untouched."
+
+  build:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_build
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas "yfinance>=0.2.40,<2"
+      - name: Build the membership panel
+        env:
+          QT_PIT_LIMIT: ${{ inputs.limit }}
+        run: |
+          set -u
+          for f in data/universe/v27_universe.csv data/universe/delisted_roster.csv; do
+            if [ ! -f "$f" ]; then echo "::error::missing $f"; exit 1; fi
+          done
+          python build_universe_pit.py
+      - name: Guard — frozen inputs, both ledgers and S4 untouched
+        run: |
+          set -u
+          if ! git diff --quiet -- data/predictions/ data/shadow/ 2>/dev/null; then
+            echo "::error::the build modified S4 evidence"; exit 1
+          fi
+          for f in data/universe/v27_universe.csv data/universe/delisted_roster.csv \
+                   data/events/event_study.csv data/events/event_study_v2.csv; do
+            if [ -f "$f" ] && ! git diff --quiet -- "$f" 2>/dev/null; then
+              echo "::error::$f is frozen and was modified"; exit 1
+            fi
+          done
+          echo "OK — frozen inputs and S4 evidence untouched."
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v27-universe-pit
+          path: data/universe/v27_universe_pit*.csv
+          if-no-files-found: error
