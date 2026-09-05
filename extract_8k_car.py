@@ -77,6 +77,12 @@ EVENT_TYPE = "8k_item202_car_ge5"
 UNIVERSE = os.environ.get("QT_8K_UNIVERSE", "data/universe/v27_universe.csv")
 OUT_CSV = os.environ.get("QT_8K_OUT", "data/events/events_8k_car_1095d.csv")
 LIMIT = int(os.environ.get("QT_8K_LIMIT", "0"))       # 0 = whole universe
+if LIMIT:
+    # A capped run is a SMOKE TEST, and its output is a partial event set. If
+    # it were written under the declared filename, a later "just commit the
+    # artifact" would silently make a 40-name subset the frozen input of
+    # spec #3. Rename it so that mistake is not available.
+    OUT_CSV = OUT_CSV.replace(".csv", f"_SMOKE{LIMIT}.csv")
 UA = (os.environ.get("SEC_USER_AGENT") or "").strip() or "Quant-Terminal research"
 SLEEP = 0.12
 ET = "America/New_York"

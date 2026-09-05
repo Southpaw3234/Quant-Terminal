@@ -119,5 +119,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: v27-spec3-events
-          path: data/events/events_8k_car_1095d.csv
+          path: data/events/events_8k_car_1095d*.csv
           if-no-files-found: error
