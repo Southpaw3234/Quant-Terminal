@@ -87,7 +87,7 @@ than pulling t toward 2.0.
 Stating a number before the read, as `V27_PREREGISTRATION.md` §⑥ requires:
 
 ```
-P(spec #2 clears all four E1 bars) = ______%     signed: ________  date: ______
+P(spec #2 clears all four E1 bars) = 10%        signed: Southpaw3234   date: 2026-09-04
 ```
 
 *Anchor, not a recommendation:* the project-level prior was set at 15%. Spec #1

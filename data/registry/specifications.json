@@ -79,7 +79,7 @@
       "declared_at": "2026-09-04",
       "read_at": "",
       "result": {
-        "prior": "REQUIRED BEFORE READ -- docs/V27_SPEC2_PROPOSAL.md section 5: P(clears all four E1 bars) = ___%, signed, dated. The project prior was 15%; spec #1 has since failed with a mode more data does not repair, so a number BELOW 15% is the defensible direction.",
+        "prior": "P(spec #2 clears all four E1 bars) = 10%, signed Southpaw3234, 2026-09-04 -- recorded BEFORE the read was dispatched (see git timestamp of this commit vs read_at). Below the 15% project prior: spec #1 failed with a mode more data does not repair.",
         "availability_checks": {
           "finnhub_returns_1095d": "YES -- run 33927199851: 110,454 raw tx, 11,443 code-P, 561 events; 2024=35,442 and 2025=37,276 filings, tier does not cap",
           "dedup_at_63_bars": "YES -- run 33927201211 on the 205-event v1 set: 127 settle vs bar 40; on the 561-event set expect ~390 settled"
