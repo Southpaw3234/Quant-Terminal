@@ -1,0 +1,114 @@
+name: Delisted roster (v27 survivorship fix, step 1)
+
+# Two jobs, the same split every v27 data producer uses:
+#
+#   validate  -- hermetic. No network, no secrets. Runs on every push. Gate.
+#   build     -- dispatch-only. Enumerates exchange departures, classifies each
+#                against what the common stock is doing now, and uploads the
+#                roster as an ARTIFACT. It does not commit: emitted data enters
+#                the repo through a reviewed commit.
+#
+# WHAT NEITHER JOB DOES: screen a universe, price anything into one, or compute
+# a return. This is inventory. The point-in-time screen is step 2 and the
+# re-run of event discovery is step 3.
+#
+# ⚠️ THIS DOES NOT REPAIR SPECS #1-#3. They are read and frozen, and
+# anti-deferral means no later improvement reopens them. This buys honesty for
+# what comes next.
+#
+# v27 SEQUENCING: not scheduled, not wired into quant_daily.yml. Nothing here
+# may run on a cron or write under data/predictions/ before 2026-09-29.
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_build:
+        description: 'Build the roster (inventory only — no returns, no K)'
+        type: boolean
+        default: false
+      limit:
+        description: 'Cap the candidate count for a smoke test (0 = all)'
+        type: string
+        default: '0'
+  push:
+    branches:
+      - 'v27/**'
+      - 'v28/**'
+    paths:
+      - 'build_delisted_roster.py'
+      - 'validate_delisted_roster.py'
+      - '.github/workflows/build_delisted_roster.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        # No requests: build_delisted_roster.py imports it lazily inside the
+        # network shell so the pure-logic suite cannot reach EDGAR by accident.
+        run: pip install "numpy<2.4" pandas
+      - name: Compile check
+        run: |
+          python -m py_compile build_delisted_roster.py
+          python -m py_compile validate_delisted_roster.py
+      - name: Run pure-logic validation
+        run: python validate_delisted_roster.py
+      - name: Assert nothing under data/ changed
+        run: |
+          set -u
+          if ! git diff --quiet -- data/ 2>/dev/null; then
+            echo "::error::validation modified data/ — it must be read-only"
+            git --no-pager diff --stat -- data/
+            exit 1
+          fi
+          echo "OK — data/ untouched."
+
+  build:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_build
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas requests
+      - name: Refuse to overwrite an existing roster
+        run: |
+          set -u
+          if [ -f data/universe/delisted_roster.csv ] && [ "${{ inputs.limit }}" = "0" ]; then
+            echo "::error::data/universe/delisted_roster.csv already exists — rebuilding it would move a file other steps key off. Delete it deliberately or run capped."
+            exit 3
+          fi
+          echo "OK — nothing to clobber."
+      - name: Build the roster
+        env:
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+          QT_ROSTER_LIMIT: ${{ inputs.limit }}
+        run: python build_delisted_roster.py
+      - name: Guard — the frozen universe, both ledgers and S4 untouched
+        run: |
+          set -u
+          if ! git diff --quiet -- data/predictions/ data/shadow/ 2>/dev/null; then
+            echo "::error::the roster build modified S4 evidence — it must not"; exit 1
+          fi
+          for f in data/universe/v27_universe.csv data/events/event_study.csv data/events/event_study_v2.csv; do
+            if [ -f "$f" ] && ! git diff --quiet -- "$f" 2>/dev/null; then
+              echo "::error::$f is frozen and was modified"; exit 1
+            fi
+          done
+          echo "OK — frozen inputs and S4 evidence untouched."
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v27-delisted-roster
+          path: data/universe/delisted_roster*.csv
+          if-no-files-found: error
