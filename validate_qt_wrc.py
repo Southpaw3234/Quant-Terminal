@@ -107,6 +107,26 @@ def test_declared_k_charge():
     check("charge-unread-counted", "3 unread slot(s) charged" in a.note,
           f"note says so: '{a.note}'")
 
+    # k_tested override: the E1 job passes ONE series while earlier specs sit
+    # frozen in their own ledgers, so it supplies the Referee's read count.
+    # The bar must not move; the label must.
+    solo = wrc.event_study_correction({"spec_c": strong}, k_declared=5,
+                                      alpha=0.10, B=200, rng=rng, k_tested=2)
+    c = solo["spec_c"]
+    check("ktested-bar-unchanged", abs(c.adjusted_alpha - 0.02) < 1e-12,
+          f"bar still alpha/K_declared = {c.adjusted_alpha:.3f} with k_tested=2")
+    check("ktested-label-correct", "3 unread slot(s) charged" in c.note
+          and c.k_tested == 2,
+          f"one series supplied, k_tested=2 -> '{c.note}'")
+    try:
+        wrc.event_study_correction({"a": strong, "b": null}, k_declared=5,
+                                   B=50, rng=rng, k_tested=1)
+        bad = False
+    except ValueError as exc:
+        bad = "fewer than" in str(exc)
+    check("ktested-refuses-undercount", bad,
+          "k_tested below the number of series supplied RAISES")
+
     # Joint version on aligned series charges the same way.
     d = np.column_stack([strong, null])
     j = wrc.joint_correction(d, k_declared=5, alpha=0.10, B=400, rng=rng)
