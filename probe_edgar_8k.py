@@ -40,10 +40,10 @@ import time
 import pandas as pd
 import requests
 
-UA = os.environ.get(
-    "SEC_USER_AGENT",
-    "Quant-Terminal research (https://github.com/Southpaw3234/Quant-Terminal)",
-).strip()
+# `or`, not a default arg: the workflow passes SEC_USER_AGENT="" when the secret
+# is unset, and an empty env var does NOT fall through to a default (the same
+# trap as `inputs.x || default`). The SEC rejects an empty User-Agent.
+UA = (os.environ.get("SEC_USER_AGENT") or "").strip() or "Quant-Terminal research (https://github.com/Southpaw3234/Quant-Terminal)"
 UNIVERSE = os.environ.get("QT_U_FILE", "data/universe/v27_universe.csv")
 WINDOW_START, WINDOW_END = "2023-09-01", "2026-09-05"
 MATURE_BY = "2026-06-01"            # ~63 bars before the data end
@@ -65,8 +65,9 @@ def _get(sess, url):
             return "ok", r.json()
         if r.status_code == 404:
             return "404", None
+        last = r.status_code
         time.sleep(1.5 * (attempt + 1))
-    return "err", None
+    return f"err:{locals().get('last', '')}", None
 
 
 def _universe() -> list:
