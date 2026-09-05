@@ -274,6 +274,18 @@ def test_spec2_declared():
           "falsified" in str(_rd.get("vs_miswired_peek", "")),
           "the record says plainly that tripling the sample CUT the mean — the "
           "power assumption behind every projection did not hold")
+    _tail = _rd.get("tail_analysis") or {}
+    check("spec2-tail-recorded",
+          _tail.get("median", 0) < 0 and _tail.get("mean_without_top_decile", 0) < 0
+          and "LOSES MONEY" in str(_tail.get("reading", "")),
+          f"the tail analysis is RECORDED: median {_tail.get('median')}, mean "
+          f"without top decile {_tail.get('mean_without_top_decile')} — the "
+          f"typical event loses; the mean is a 10% right tail")
+    check("spec2-tail-implication",
+          "MEDIAN" in str(_tail.get("implication_for_spec_3", ""))
+          and "variations" in str(_tail.get("implication_for_spec_3", "")),
+          "and it says what spec #3 must NOT be: a filter on the same "
+          "distribution")
     check("spec2-caveats-travel",
           s2 is not None and len(s2.result.get("caveats_to_travel_with_any_number", [])) >= 5,
           "survivorship / two-parameter / linear-accrual caveats stored WITH the spec")

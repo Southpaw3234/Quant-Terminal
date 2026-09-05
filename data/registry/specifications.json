@@ -114,6 +114,20 @@
           "vs_miswired_peek": "The 365-day subset read +4.00% / t 1.08. On the full 1,095 days: +1.19% / t 0.62. Tripling the sample CUT the mean by 70% and t by 43%. The linear-accrual assumption behind every power projection is falsified on this spec: the recent third was the high end of noise, not a stable effect.",
           "vs_prior": "Operator prior was 10%. Outcome is consistent with it. Two of two declared reads have failed; four of four pre-registered v25 criteria plus two v27 specifications now down.",
           "ledger": "data/events/event_study_v2.csv, 406 rows, frozen on first write",
+          "tail_analysis": {
+            "median": -0.0449,
+            "sd": 0.383,
+            "pct_positive": 0.40,
+            "top_decile_events": 40,
+            "top_decile_sum": 34.268,
+            "top_decile_share_of_positive_mass": 7.12,
+            "mean_without_top_decile": -0.0805,
+            "best_event": 2.686,
+            "worst_event": -0.772,
+            "spec1_for_comparison": {"median": -0.0017, "mean_without_top_decile": -0.028, "best_event": 1.182, "worst_event": -0.565, "pct_positive": 0.49},
+            "reading": "THE TYPICAL EVENT LOSES MONEY. Median -4.49% vs SPY over a quarter; 40% positive. The +1.19% mean is entirely a 10% right tail -- 40 events summing to +3,427%, seven times the total positive mass. Remove them and the other 366 average -8.05%. This is a losing strategy with a lottery-ticket tail, not a signal with noise around it. It worsened with more data exactly as a null does: spec #1 median -0.17% -> spec #2 -4.49%, hit rate 49% -> 40%. Not tradeable in reverse either: the +269% events are what a short book cannot survive. No instrument improvement fixes this -- matched controls, winsorizing, fixing survivorship, a longer horizon, a larger sample all push the median DOWN. The problem is the shape of the outcome distribution, not the measurement of it. And the universe is survivor-biased upward, so the true median is worse than -4.49%.",
+            "implication_for_spec_3": "Any hypothesis that is a bet on WHICH small company recovers will have this shape. A third specification must have a mechanism where the MEDIAN outcome is positive -- slow information diffusion (post-earnings drift) or a mechanical flow (index-deletion rebound), not a fundamental bet on survival. Filters on insider buying -- officers only, larger threshold, first buy in N years -- are variations on a distribution that has now failed at two horizons and two sample sizes, not new hypotheses."
+          },
           "anti_deferral": "This read STANDS. No bug found after it reopens it. The miswire deviation is attached above and did not shape the parameters, which were frozen before it."
         },
         "deviations": [
