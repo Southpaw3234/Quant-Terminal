@@ -498,8 +498,18 @@ def main() -> None:
     from qt import wrc as _wrc
     from qt import referee as _ref
     _label = SPEC_ID or "unspecified"
+    # k_tested counts specs READ including this one. Earlier reads sit frozen in
+    # their own ledgers and are not passed here, so ask the Referee rather than
+    # counting the one series supplied -- otherwise the "N unread slot(s)
+    # charged" label is off by the number of specs already spent. The BAR is
+    # alpha/K_declared either way; only the label was wrong.
+    if SPEC_ID:
+        _k_tested = _ref.Referee().k_used() + 1
+    else:
+        _k_tested = None          # synthetic/test runs: no registry context
     _mt = _wrc.event_study_correction({_label: merged["abnormal_ret"].values},
-                                      k_declared=_ref.K_BUDGET, alpha=0.10)
+                                      k_declared=_ref.K_BUDGET, alpha=0.10,
+                                      k_tested=_k_tested)
     print()
     print("=== E1 multiple-testing (WRC/SPA, declared K) ===")
     for _r in _mt.values():

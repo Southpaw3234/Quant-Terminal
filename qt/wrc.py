@@ -219,7 +219,7 @@ def bootstrap_mean_p(x, B: int = DEFAULT_B, mean_block: float = 1.0,
 
 def event_study_correction(series_by_spec: dict, k_declared: int,
                            alpha: float = 0.10, B: int = DEFAULT_B,
-                           rng=None) -> dict:
+                           rng=None, k_tested=None) -> dict:
     """Declared-K correction for UNALIGNED event-study specifications.
 
     `series_by_spec` maps spec_id -> 1-D array of per-event abnormal returns.
@@ -227,10 +227,23 @@ def event_study_correction(series_by_spec: dict, k_declared: int,
 
     ⚠️ Unread budget slots count in the divisor. With K_declared=5 and one
     spec read, the bar is 0.02. That is deliberate — see the module docstring.
+
+    `k_tested` is how many specifications have been READ including the ones
+    supplied here. It defaults to `len(series_by_spec)`, which is only right
+    when every read spec's series is passed in. The E1 job passes just the
+    spec being read while earlier specs sit frozen in their own ledgers, so it
+    supplies the Referee's count instead. **The bar does not depend on it** —
+    it is alpha / K_declared regardless — but the printed "N unread slot(s)
+    charged" does, and a label that is off by one is the kind of slightly-wrong
+    signal this project keeps having to catch.
     """
-    k_tested = len(series_by_spec)
-    if k_tested == 0:
+    n_supplied = len(series_by_spec)
+    if n_supplied == 0:
         raise ValueError("no specifications supplied")
+    k_tested = n_supplied if k_tested is None else int(k_tested)
+    if k_tested < n_supplied:
+        raise ValueError(f"k_tested={k_tested} is fewer than the {n_supplied} "
+                         f"series supplied — it counts read specs, not a subset")
     if k_tested > k_declared:
         raise ValueError(f"{k_tested} specs exceeds the declared K={k_declared}")
     adj = alpha / float(k_declared)
