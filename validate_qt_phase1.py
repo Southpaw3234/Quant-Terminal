@@ -291,6 +291,71 @@ def test_spec2_declared():
           "survivorship / two-parameter / linear-accrual caveats stored WITH the spec")
     print(f"\n{r.status()}")
 
+def test_spec3_declared():
+    print("\n--- referee: spec #3 DECLARED 09-05, UNREAD, prior still owed ---")
+    p = Path("data/registry/specifications.json")
+    r = referee.Referee(registry_path=p)
+    s3 = r.specs.get("pead_8k_car_v3")
+    check("spec3-present", s3 is not None, "pead_8k_car_v3 is in the live registry")
+    check("spec3-declared-unread",
+          s3 is not None and s3.declared_at == "2026-09-05" and not s3.is_read,
+          f"declared {s3.declared_at if s3 else 'n/a'}, read_at empty — "
+          f"declaration precedes any read, which is the whole point")
+    check("spec3-costs-no-k", r.k_used() == 2 and r.k_remaining() == 3,
+          f"K is still {r.k_used()}/{r.k_budget} — DECLARING SPENDS NOTHING; "
+          f"only a read does. {r.k_remaining()} slots remain")
+    check("spec3-read-would-be-authorised",
+          r.authorize_read("pead_8k_car_v3", "2026-12-15").allowed,
+          "the Referee WOULD authorise a read — declared, unread, in budget, "
+          "before terminal")
+    _p3 = s3.params if s3 is not None else {}
+    check("spec3-threshold-fixed-before-data",
+          "+5.0%" in str(_p3.get("selection_threshold", ""))
+          and "before the CAR distribution" in str(_p3.get("selection_threshold", "")),
+          "the +5.0% selection bar is RECORDED and the record says it was fixed "
+          "before the distribution was ever computed")
+    check("spec3-surprise-is-abnormal-return",
+          "ABNORMAL RETURN" in str(_p3.get("surprise_measure", ""))
+          and "NOT an analyst-estimate SUE" in str(_p3.get("surprise_measure", "")),
+          "surprise = announcement-window abnormal return, and the record says "
+          "plainly that it is not a consensus-based SUE")
+    check("spec3-entry-after-selection-window",
+          "STRICTLY AFTER the close of A+1" in str(_p3.get("entry", ""))
+          and "A+2" in str(_p3.get("entry", "")),
+          "entry is A+2 — strictly after the two sessions the SELECTION used, "
+          "so the selection window is never traded")
+    check("spec3-horizon-63", _p3.get("horizon_bars") == 63,
+          "horizon 63 bars, unchanged from the fork decision")
+    _out = str(_p3.get("output_ledger", ""))
+    check("spec3-ledger-not-v1-or-v2",
+          "event_study_v3.csv" in _out and "NEVER" in _out
+          and "event_study_v2.csv" in _out,
+          "output is v3's own ledger and the record names BOTH frozen files it "
+          "must never touch")
+    _res = s3.result if s3 is not None else {}
+    check("spec3-prior-still-owed",
+          "NOT YET RECORDED" in str(_res.get("prior", "")),
+          "THE PRIOR IS STILL OWED. This check is a TRIPWIRE: it must be "
+          "flipped to assert a signed prior before any read is dispatched")
+    check("spec3-extractor-not-built",
+          "NOT YET BUILT" in str(_res.get("availability_checks", {}).get("extractor", "")),
+          "the events file does not exist yet, and the record says so — the "
+          "threshold was fixed before the extractor that will produce it")
+    check("spec3-reversal-caveat",
+          any("REVERSAL" in c for c in _res.get("caveats_to_travel_with_any_number", [])),
+          "the short-term-reversal headwind built into selecting on a +5% move "
+          "is recorded as a DOWNWARD bias, not hidden")
+    check("spec3-is-not-a-variation",
+          "SLOW DIFFUSION OF PUBLIC INFORMATION" in str(_p3.get("why_this_is_not_a_variation_of_spec_1_or_2", "")),
+          "the record states the mechanism differs from specs #1 and #2 rather "
+          "than filtering the same distribution")
+    v = r.declare("pead_8k_car_v3", {"horizon_bars": 21}, "2026-09-06")
+    check("spec3-frozen-once-declared",
+          not v.allowed and "NEW specification" in v.reason,
+          f"redefining v3's parameters is REFUSED: {v.reason[:64]}")
+    print(f"\n{r.status()}")
+
+
 def main():
     print("=" * 70)
     print("qt Phase 1 — Measurement + Referee (no network)")
@@ -302,6 +367,7 @@ def main():
     test_referee_records_e1()
     test_live_registry()
     test_spec2_declared()
+    test_spec3_declared()
     print("\n" + "=" * 70)
     if FAILURES:
         print(f"RESULT: {len(FAILURES)} FAILED -> {', '.join(FAILURES)}")
