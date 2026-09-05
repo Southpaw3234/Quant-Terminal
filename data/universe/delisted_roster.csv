@@ -1,0 +1,435 @@
+cik,ticker,all_tickers,issuer_edgar,name_source,name_match,form,form25_date,exchange_now,first_bar,last_bar,bars_total,bars_after_form25,status
+1614067,ARDS,ARDS,"Aridis Pharmaceuticals, Inc.","Aridis Pharmaceuticals, Inc.",True,25-NSE,2023-09-08,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,751,otc-continuation
+1845149,CBRG,CBRG|CBRGF|CBRGU,Chain Bridge I,Leverage Shares 2X Long CBRS Daily ETF,False,25-NSE,2023-09-08,Cboe US,2026-05-15,2026-09-04,78,78,identity-mismatch
+1868269,LATG,LATG|LATGF|LATGU,LatAmGrowth SPAC,,False,25-NSE,2023-09-08,http:404,,,0,0,no-data
+1551986,NMTRQ,NMTRQ,"9 METERS BIOPHARMA, INC.","9 Meters Biopharma, Inc.",True,25-NSE,2023-09-08,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,751,otc-continuation
+1018735,NYMXF,NYMXF,NYMOX PHARMACEUTICAL CORP,Nymox Pharmaceutical Corporation,True,25-NSE,2023-09-08,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,751,otc-continuation
+1801602,SBIG,SBIG|SBIGW,"SpringBig Holdings, Inc.","SpringBig Holdings, Inc.",True,25-NSE,2023-09-08,OTC Markets OTCQB,2021-09-07,2026-09-04,1255,751,otc-continuation
+1597313,VRAYQ,VRAYQ,"ViewRay, Inc.","ViewRay Systems, Inc.",True,25-NSE,2023-09-08,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,751,otc-continuation
+716006,YELLQ,YELLQ,Yellow Corp,,False,25-NSE,2023-09-08,http:404,,,0,0,no-data
+1725134,DMSL,DMSL,"Digital Media Solutions, Inc.",,False,25-NSE,2023-10-10,http:404,,,0,0,no-data
+1717556,BBIG,BBIG,"Vinco Ventures, Inc.","Vinco Ventures, Inc.",True,25-NSE,2023-10-12,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,727,otc-continuation
+1340476,DESLF,DESLF|DRTTF,DIRTT ENVIRONMENTAL SOLUTIONS LTD,,False,25-NSE,2023-10-12,http:404,,,0,0,no-data
+834285,FRBK,FRBK|FRBKQ,REPUBLIC FIRST BANCORP INC,,False,25-NSE,2023-10-12,http:404,,,0,0,no-data
+1760764,GMVDF,GMVDF,G Medical Innovations Holdings Ltd.,G Medical Innovations Holdings Ltd,True,25-NSE,2023-10-12,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,727,otc-continuation
+1756499,MCLDF,MCLDF,mCloud Technologies Corp.,mCloud Technologies Corp.,True,25-NSE,2023-10-12,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,727,otc-continuation
+1777765,VQSSF,VQSSF,VIQ Solutions Inc.,VIQ Solutions Inc.,True,25-NSE,2023-10-12,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,727,otc-continuation
+884247,YVRLF,YVRLF,Liquid Media Group Ltd.,Liquid Media Group Ltd.,True,25-NSE,2023-10-12,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,727,otc-continuation
+810509,NAVB,NAVB,"NAVIDEA BIOPHARMACEUTICALS, INC.",,False,25-NSE,2023-10-23,http:404,,,0,0,no-data
+1804583,RAASY,RAASY,Cloopen Group Holding Ltd,Cloopen Group Holding Limited,True,25-NSE,2023-10-25,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,718,otc-continuation
+1067837,AUDAQ,AUDAQ,"AUDACY, INC.",,False,25-NSE,2023-10-30,http:404,,,0,0,no-data
+1810140,POLCQ,POLCQ,Polished.com Inc.,Polished.com Inc.,True,25-NSE,2023-10-30,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,715,otc-continuation
+1633438,AZREF,AZREF,Azure Power Global Ltd,Azure Power Global Limited,True,25-NSE,2023-10-31,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,714,otc-continuation
+84129,RADCQ,RADCQ,RITE AID CORP,,False,25-NSE,2023-10-31,http:404,,,0,0,no-data
+1862068,RBTC,RBTC|RBTCW,"Rubicon Technologies, Inc.",,False,25-NSE,2023-10-31,http:404,,,0,0,no-data
+1840780,LOCL,LOCL|LOCLW,Local Bounti Corporation/DE,Local Bounti Corporation,True,25-NSE,2023-11-02,NYSE,2021-09-07,2026-09-04,1255,712,still-listed
+1774675,SKIL,SKIL|SKILW,Skillsoft Corp.,Skillsoft Corp.,True,25-NSE,2023-11-09,NYSE,2021-09-07,2026-09-04,1255,707,still-listed
+1826889,BODI,BODI|BODYW,"Beachbody Company, Inc.","The Beachbody Company, Inc.",True,25-NSE,2023-11-13,NasdaqCM,2021-09-07,2026-09-04,1255,705,still-listed
+1617669,UFABQ,UFABQ,"Unique Fabricating, Inc.","Unique Fabricating, Inc.",True,25-NSE,2023-11-13,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,705,otc-continuation
+1044378,BIOCQ,BIOCQ,BIOCEPT INC,"Biocept, Inc.",True,25-NSE,2023-11-20,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,700,otc-continuation
+1829966,EBET,EBET,"EBET, Inc.","EBET, Inc.",True,25-NSE,2023-11-20,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,700,otc-continuation
+1865697,GGAAF,GGAAF,Genesis Growth Tech Acquisition Corp.,NeuroMind AI Corp.,False,25-NSE,2023-11-20,OTC Markets OTCPK,2022-02-03,2026-09-04,1151,700,identity-mismatch
+1113148,INFIQ,INFIQ,"INFINITY PHARMACEUTICALS, INC.","Infinity Pharmaceuticals, Inc.",True,25-NSE,2023-11-20,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,700,otc-continuation
+1792581,KRBP,KRBP,"Kiromic Biopharma, Inc.",,False,25-NSE,2023-11-20,http:404,,,0,0,no-data
+1606745,LTRPA,LTRPA|LTRPB,"Liberty TripAdvisor Holdings, Inc.",,False,25-NSE,2023-11-20,http:404,,,0,0,no-data
+1807983,MDNAF,MDNAF,Medicenna Therapeutics Corp.,Medicenna Therapeutics Corp.,True,25-NSE,2023-11-20,OTC Markets OTCQX,2021-09-07,2026-09-04,1255,700,otc-continuation
+1825024,OPAD,OPAD|OPADW,Offerpad Solutions Inc.,Offerpad Solutions Inc.,True,25-NSE,2023-11-20,NasdaqCM,2021-09-07,2026-09-04,1255,700,still-listed
+1136174,OTRK,OTRK|OTRKP,"Ontrak, Inc.",,False,25-NSE,2023-11-20,http:404,,,0,0,no-data
+1063537,RIBT,RIBT,RiceBran Technologies,RiceBran Technologies,True,25-NSE,2023-11-20,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,700,otc-continuation
+1739426,RVLPQ,RVLPQ,RVL Pharmaceuticals plc,RVL Pharmaceuticals plc,True,25-NSE,2023-11-20,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,700,otc-continuation
+1821075,SFRT,SFRT,"Appreciate Holdings, Inc.","Appreciate Holdings, Inc.",True,25-NSE,2023-11-20,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,700,otc-continuation
+1762322,SFTGQ,SFTGQ,"SHIFT TECHNOLOGIES, INC.",,False,25-NSE,2023-11-20,http:404,,,0,0,no-data
+1813658,TMPOQ,TMPOQ,"Tempo Automation Holdings, Inc.","Tempo Automation Holdings, Inc.",True,25-NSE,2023-11-20,OTC Markets OTCPK,2022-11-23,2026-09-04,948,700,otc-continuation
+1915403,SATX,SATX|STXYF,SatixFy Communications Ltd.,,False,25-NSE,2023-11-27,http:404,,,0,0,no-data
+1610682,USDP,USDP,USD Partners LP,USD Partners LP,True,25-NSE,2023-12-01,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,692,otc-continuation
+1862935,CURR,CURR|IFIN,InFinT Acquisition Corp,CURRENC Group Inc.,False,25-NSE,2023-12-13,NasdaqGM,2024-09-03,2026-09-04,504,504,identity-mismatch
+1839608,GETR,GETR|GETRW,"Getaround, Inc","Getaround, Inc.",True,25-NSE,2023-12-13,OTC Markets OTCPK,2022-12-09,2026-09-04,937,684,otc-continuation
+1770141,UPHL,UPHL,"UpHealth, Inc.","UpHealth, Inc.",True,25-NSE,2023-12-13,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,684,otc-continuation
+1253176,VAPO,VAPO,VAPOTHERM INC,,False,25-NSE,2023-12-18,http:404,,,0,0,no-data
+1885461,SUAC,SUAC|SUACU|SUACW,ShoulderUP Technology Acquisition Corp.,,False,25-NSE,2023-12-19,http:404,,,0,0,no-data
+1814215,BURU,BURU|BURUW,"Nuburu, Inc.","Nuburu, Inc.",True,25-NSE,2023-12-20,OTC Markets OTCPK,2023-02-01,2026-09-04,902,679,otc-continuation
+1740915,FTCHQ,FTCHQ,Farfetch Ltd,Farfetch Limited,True,25-NSE,2023-12-20,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,679,otc-continuation
+1861449,BRDSQ,BRDSQ,"Bird Global, Inc.",,False,25-NSE,2023-12-21,http:404,,,0,0,no-data
+1827871,ELIQQ,ELIQQ,"Electriq Power Holdings, Inc.","Electriq Power Holdings, Inc.",True,25-NSE,2023-12-21,OTC Markets OTCPK,2023-08-01,2026-09-04,778,678,otc-continuation
+1855457,KORE,KORE|KORGW,"KORE Group Holdings, Inc.",Kore Group Holdings Inc,True,25-NSE,2023-12-21,NYSE,2026-07-17,2026-09-04,36,36,still-listed
+1835817,NSTC,NSTC,Northern Star Investment Corp. III,,False,25-NSE,2023-12-21,http:404,,,0,0,no-data
+1835814,NSTD,NSTD,Northern Star Investment Corp. IV,,False,25-NSE,2023-12-21,http:404,,,0,0,no-data
+1790625,AGILQ,AGILQ,"AgileThought, Inc.","AgileThought, Inc.",True,25-NSE,2023-12-27,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,675,otc-continuation
+1368148,ATHXQ,ATHXQ,"ATHERSYS, INC / NEW","Athersys, Inc.",True,25-NSE,2023-12-27,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,675,otc-continuation
+1600132,BLPH,BLPH,"Bellerophon Therapeutics, Inc.",,False,25-NSE,2023-12-27,http:404,,,0,0,no-data
+1650575,BRQSF,BRQSF,"Borqs Technologies, Inc.","Borqs Technologies, Inc.",True,25-NSE,2023-12-27,OTC Markets OTCQB,2021-09-07,2026-09-04,1255,675,otc-continuation
+1478069,CFRXQ,CFRXQ,CONTRAFECT Corp,ContraFect Corporation,True,25-NSE,2023-12-27,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,675,otc-continuation
+1522602,CWBR,CWBR,"CohBar, Inc.",,False,25-NSE,2023-12-27,http:404,,,0,0,no-data
+1080319,ELYS,ELYS,"Elys Game Technology, Corp.","Elys BMG Group, Inc.",True,25-NSE,2023-12-27,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,675,otc-continuation
+1694665,EVLO,EVLO,"Evelo Biosciences, Inc.","Evelo Biosciences, Inc.",True,25-NSE,2023-12-27,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,675,otc-continuation
+819050,FRTX,FRTX,"Fresh Tracks Therapeutics, Inc.",,False,25-NSE,2023-12-27,http:404,,,0,0,no-data
+1775625,SDCCQ,SDCCQ,"SmileDirectClub, Inc.","SmileDirectClub, Inc.",True,25-NSE,2023-12-27,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,675,otc-continuation
+1830029,GRDI,GRDI|GRDIW,GRIID Infrastructure Inc.,,False,25-NSE,2024-01-02,http:404,,,0,0,no-data
+1834518,NSTB,NSTB,Northern Star Investment Corp. II,,False,25-NSE,2024-01-02,http:404,,,0,0,no-data
+1802749,ZEVY,ZEVY,"Lightning eMotors, Inc.","Lightning eMotors, Inc.",True,25-NSE,2024-01-03,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,671,otc-continuation
+1830210,BHIL,BHIL|BHILW,"Benson Hill, Inc.",,False,25-NSE,2024-01-05,http:404,,,0,0,no-data
+1793229,MPLN,MPLN|MPLNW,MultiPlan Corp,,False,25-NSE,2024-01-10,http:404,,,0,0,no-data
+1692819,VST,VST,Vistra Corp.,Vistra Corp.,True,25-NSE,2024-01-23,NYSE,2021-09-07,2026-09-04,1255,658,still-listed
+1291733,GOLLQ,GOLLQ,Gol Intelligent Airlines Inc.,,False,25-NSE,2024-01-29,http:404,,,0,0,no-data
+86115,SFES,SFES,SAFEGUARD SCIENTIFICS INC,"Safeguard Scientifics, Inc.",True,25,2024-02-02,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,650,otc-continuation
+1780097,BXRXQ,BXRXQ,"Baudax Bio, Inc.","Baudax Bio, Inc.",True,25-NSE,2024-02-15,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,641,otc-continuation
+1907685,CMRA,CMRA,"Comera Life Sciences Holdings, Inc.","Comera Life Sciences Holdings, Inc.",True,25-NSE,2024-02-15,OTC Markets OTCPK,2022-05-20,2026-09-04,1077,641,otc-continuation
+1424657,CUEN,CUEN|CUENW,Cuentas Inc.,Cuentas Inc.,True,25-NSE,2024-02-15,OTC Markets OTCQB,2021-09-07,2026-09-04,1255,641,otc-continuation
+1883788,DHAI,DHAI|DHAIW,"DIH HOLDING US, INC.","DIH Holding US, Inc.",True,25-NSE,2024-02-15,OTC Markets OTCPK,2024-02-09,2026-09-04,645,641,otc-continuation
+814549,EBIXQ,EBIXQ,EBIX INC,,False,25-NSE,2024-02-15,http:404,,,0,0,no-data
+1788841,MCOM,MCOM|MCOMW,micromobility.com Inc.,Micromobility.com Inc.,True,25-NSE,2024-02-15,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,641,otc-continuation
+1851682,MFLTY,MFLTY,Missfresh Ltd,Missfresh Limited,True,25-NSE,2024-02-15,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,641,otc-continuation
+1084267,MOBQ,MOBQ|MOBQW,"Mobiquity Technologies, Inc.","Mobiquity Technologies, Inc.",True,25-NSE,2024-02-15,OTC Markets OTCQB,2021-09-07,2026-09-04,1255,641,otc-continuation
+1840416,SEVCF,SEVCF,Sono Group N.V.,,False,25-NSE,2024-02-15,http:404,,,0,0,no-data
+1029744,SOFO,SOFO,SONIC FOUNDRY INC,"Sonic Foundry, Inc.",True,25-NSE,2024-02-15,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,641,otc-continuation
+1101026,ZIVO,ZIVO|ZIVOW,"Zivo Bioscience, Inc.","ZIVO Bioscience, Inc.",True,25-NSE,2024-02-15,OTC Markets OTCID,2021-09-07,2026-09-04,1255,641,otc-continuation
+1713923,AIJTY,AIJTY,Jianpu Technology Inc.,Jianpu Technology Inc.,True,25-NSE,2024-03-05,OTC Markets OTCQB,2021-09-07,2026-09-04,1255,629,otc-continuation
+1483510,EXPRQ,EXPRQ,"EXPRESS, INC.",,False,25-NSE,2024-03-14,http:404,,,0,0,no-data
+1078207,BFXXQ,BFXXQ,BOWFLEX INC.,,False,25-NSE,2024-03-15,http:404,,,0,0,no-data
+874292,AEYGQ,AEYGQ,ADDVANTAGE TECHNOLOGIES GROUP INC,"ADDvantage Technologies Group, Inc.",True,25-NSE,2024-03-21,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,617,otc-continuation
+1835059,ARVLF,ARVLF,Arrival,Arrival,True,25-NSE,2024-03-21,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,617,otc-continuation
+1605888,ATLN,ATLN|SQLLW,"SeqLL, Inc.",,False,25-NSE,2024-03-21,http:404,,,0,0,no-data
+1854583,CAUD,CAUD,"Collective Audience, Inc.","Collective Audience, Inc.",True,25-NSE,2024-03-21,OTC Markets OTCPK,2023-11-03,2026-09-04,711,617,otc-continuation
+1435064,CETX,CETX|CETXP,CEMTREX INC,"Cemtrex, Inc.",True,25-NSE,2024-03-21,NasdaqCM,2021-09-07,2026-09-04,1255,617,still-listed
+1178727,COMS,COMS,COMSovereign Holding Corp.,COMSovereign Holding Corp.,True,25-NSE,2024-03-21,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,617,otc-continuation
+887247,DMKPQ,DMKPQ,DMK PHARMACEUTICALS Corp,,False,25-NSE,2024-03-21,http:404,,,0,0,no-data
+1035354,ELOX,ELOX,"Eloxx Pharmaceuticals, Inc.","Eloxx Pharmaceuticals, Inc.",True,25-NSE,2024-03-21,NasdaqCM,2026-06-09,2026-09-04,62,62,still-listed
+1826000,LTCH,LTCH,"Latch, Inc.","Latch, Inc.",True,25-NSE,2024-03-21,OTC Markets OTCID,2021-09-07,2026-09-04,1255,617,otc-continuation
+1402479,MDVLQ,MDVLQ,"MedAvail Holdings, Inc.","MedAvail Holdings, Inc.",True,25-NSE,2024-03-21,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,617,otc-continuation
+1602078,NMRD,NMRD,Nemaura Medical Inc.,Nemaura Medical Inc.,True,25-NSE,2024-03-21,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,617,otc-continuation
+1881551,STI,STI,Solidion Technology Inc.,"Solidion Technology, Inc.",True,25-NSE,2024-03-21,NasdaqCM,2022-05-02,2026-09-04,1091,617,still-listed
+1532390,WTER,WTER,ALKALINE WATER Co INC,The Alkaline Water Company Inc.,True,25-NSE,2024-03-21,OTC Markets OTCID,2021-09-07,2026-09-04,1255,617,otc-continuation
+1854795,IRRX,IRRX,INTEGRATED RAIL & RESOURCES ACQUISITION CORP,,False,25-NSE,2024-03-26,http:404,,,0,0,no-data
+1709682,CTOS,CTOS|CTOSW,"Custom Truck One Source, Inc.","Custom Truck One Source, Inc.",True,25-NSE,2024-04-02,NYSE,2021-09-07,2026-09-04,1255,610,still-listed
+1865200,PORT,PORT|PORTU|PORTW,Southport Acquisition Corp,,False,25-NSE,2024-04-08,http:404,,,0,0,no-data
+768408,CYAN,CYAN,CYANOTECH CORP,Cyanotech Corporation,True,25-NSE,2024-04-09,OTC Markets OTCID,2021-09-07,2026-09-04,1255,605,otc-continuation
+1368365,MARK,MARK,"REMARK HOLDINGS, INC.","Remark Holdings, Inc.",True,25-NSE,2024-04-09,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,605,otc-continuation
+1172631,SUNWQ,SUNWQ,"Sunworks, Inc.","Sunworks, Inc.",True,25-NSE,2024-04-09,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,605,otc-continuation
+1720990,FSRNQ,FSRNQ,Fisker Inc./DE,,False,25-NSE,2024-04-10,http:404,,,0,0,no-data
+1823882,MIMOQ,MIMOQ,Airspan Networks Holdings Inc.,,False,25-NSE,2024-04-10,http:404,,,0,0,no-data
+1407973,SONX,SONX,"Sonendo, Inc.","Sonendo, Inc.",True,25-NSE,2024-04-11,OTC Markets OTCPK,2021-10-29,2026-09-04,1217,603,otc-continuation
+1509223,MTBLY,MTBLY,"Moatable, Inc.","Moatable, Inc.",True,25-NSE,2024-04-19,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,597,otc-continuation
+1543268,BETSF,BETSF,Bit Brother Ltd,Bit Brother Limited,True,25-NSE,2024-04-25,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,593,otc-continuation
+1305253,EIGRQ,EIGRQ,"Eiger BioPharmaceuticals, Inc.",,False,25-NSE,2024-04-25,http:404,,,0,0,no-data
+1124804,MDRX,MDRX,Veradigm Inc.,Veradigm Inc.,True,25-NSE,2024-04-25,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,593,otc-continuation
+1886362,MGAM,MGAM,"Mobile Global Esports, Inc.",Mobile Global Esports Inc.,True,25-NSE,2024-04-25,OTC Markets OTCPK,2022-07-29,2026-09-04,1030,593,otc-continuation
+1686850,MOTS,MOTS,"Motus GI Holdings, Inc.","Motus GI Holdings, Inc.",True,25-NSE,2024-04-25,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,593,otc-continuation
+1401395,NEPTF,NEPTF,Neptune Wellness Solutions Inc.,Neptune Wellness Solutions Inc.,True,25-NSE,2024-04-25,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,593,otc-continuation
+1029125,PBLA,PBLA,"Panbela Therapeutics, Inc.","Panbela Therapeutics, Inc.",True,25-NSE,2024-04-25,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,593,otc-continuation
+1596856,LEJUY,LEJUY,Leju Holdings Ltd,Leju Holdings Limited,True,25-NSE,2024-04-29,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,591,otc-continuation
+1871745,DSAQ,DSAQ|DSAQU|DSAQW,Direct Selling Acquisition Corp.,,False,25-NSE,2024-05-15,http:404,,,0,0,no-data
+1522860,AFIB,AFIB,"Acutus Medical, Inc.","Acutus Medical, Inc.",True,25-NSE,2024-05-16,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,578,otc-continuation
+1862490,DCFCQ,DCFCQ|DCFWQ,Tritium DCFC Ltd,Tritium DCFC Limited,True,25-NSE,2024-05-16,OTC Markets OTCPK,2022-01-14,2026-09-04,1164,578,otc-continuation
+1942808,EGOXF,EGOXF,Next.e.GO N.V.,Next.e.GO N.V.,True,25-NSE,2024-05-16,OTC Markets OTCPK,2023-10-20,2026-09-04,721,578,otc-continuation
+1558583,FUVV,FUVV,Arcimoto Inc,"Arcimoto, Inc.",True,25-NSE,2024-05-16,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,578,otc-continuation
+1859639,CZOOF,CZOOF,Cazoo Group Ltd,Cazoo Group Ltd,True,25-NSE,2024-05-23,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,573,otc-continuation
+1261249,AGRX,AGRX|AGXRW,AGILE THERAPEUTICS INC,,False,25-NSE,2024-06-03,http:404,,,0,0,no-data
+1879373,GTI,GTI,GRAPHJET TECHNOLOGY,,False,25-NSE,2024-06-03,http:404,,,0,0,no-data
+1634447,ISUNQ,ISUNQ,"ISUN, INC.","iSun, Inc.",True,25-NSE,2024-06-03,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,567,otc-continuation
+1844392,MRAI,MRAI,"Marpai, Inc.","Marpai, Inc.",True,25-NSE,2024-06-03,OTC Markets OTCQX,2021-10-27,2026-09-04,1219,567,otc-continuation
+1372183,NXTP,NXTP,NextPlay Technologies Inc.,"NextPlay Technologies, Inc.",True,25-NSE,2024-06-03,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,567,otc-continuation
+1437491,ROII,ROII,"RiskOn International, Inc.","RiskOn International, Inc.",True,25-NSE,2024-06-03,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,567,otc-continuation
+1840292,HLGN,HLGN|HLGNW,"Heliogen, Inc.",,False,25-NSE,2024-06-10,http:404,,,0,0,no-data
+1811109,AUVIQ,AUVIQ,"Applied UV, Inc.",,False,25-NSE,2024-06-28,http:404,,,0,0,no-data
+1768946,BPTSY,BPTSY,Biophytis SA,Biophytis S.A.,True,25-NSE,2024-06-28,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,549,otc-continuation
+1158420,GGEI,GGEI,Green Giant Inc.,Green Giant Inc.,True,25-NSE,2024-06-28,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,549,otc-continuation
+1628945,HLTHQ,HLTHQ,Cue Health Inc.,Cue Health Inc.,True,25-NSE,2024-06-28,OTC Markets OTCPK,2021-09-24,2026-09-04,1242,549,otc-continuation
+278165,OMQS,OMQS,OMNIQ Corp.,OMNIQ Corp.,True,25-NSE,2024-06-28,OTC Markets OTCQB,2021-09-07,2026-09-04,1255,549,otc-continuation
+1836100,PUCK,PUCK|PUCKW,Goal Acquisitions Corp.,Goal Acquisitions Corp.,True,25-NSE,2024-06-28,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,549,otc-continuation
+1838108,RMGCF,RMGCF,RMG Acquisition Corp. III,,False,25-NSE,2024-06-28,http:404,,,0,0,no-data
+811212,THMO,THMO,"ThermoGenesis Holdings, Inc.","ThermoGenesis Holdings, Inc.",True,25-NSE,2024-06-28,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,549,otc-continuation
+1828937,FOA,FOA|FOACW,Finance of America Companies Inc.,Finance of America Companies Inc.,True,25-NSE,2024-07-05,NYSE,2021-09-07,2026-09-04,1255,545,still-listed
+1101396,DLAPQ,DLAPQ,"DELTA APPAREL, INC","Delta Apparel, Inc.",True,25-NSE,2024-07-10,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,542,otc-continuation
+1831006,BLUAF,BLUAF|BLUAW|BLUVF,BlueRiver Acquisition Corp.,BlueRiver Acquisition Corp.,True,25-NSE,2024-07-15,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,539,otc-continuation
+1817640,BRZH,BRZH|BRZHR|BRZHW,Breeze Holdings Acquisition Corp.,,False,25-NSE,2024-07-19,http:404,,,0,0,no-data
+1867443,CNGL,CNGL,Canna-Global Acquisition Corp,Canna Global Acquisition Corp,True,25-NSE,2024-07-19,OTC Markets OTCPK,2026-07-17,2026-09-04,36,36,otc-continuation
+1823000,CNXX,CNXX|CNXXW,CONX Corp.,CONX Corp.,True,25-NSE,2024-07-19,OTC Markets OTCPK,2024-05-13,2026-09-04,581,535,otc-continuation
+1651944,DMTKQ,DMTKQ,"DermTech, Inc.",,False,25-NSE,2024-07-19,http:404,,,0,0,no-data
+720875,DYNT,DYNT,DYNATRONICS CORP,,False,25-NSE,2024-07-19,http:404,,,0,0,no-data
+1828522,EFTR,EFTR|EFTRW,"eFFECTOR Therapeutics, Inc.","eFFECTOR Therapeutics, Inc.",True,25-NSE,2024-07-19,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,535,otc-continuation
+1757143,PAIYY,PAIYY,Aesthetic Medical International Holdings Group Ltd,Aesthetic Medical International Holdings Group Limited,True,25-NSE,2024-07-19,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,535,otc-continuation
+1394319,TCON,TCON,"Tracon Pharmaceuticals, Inc.",,False,25-NSE,2024-07-19,http:404,,,0,0,no-data
+1121702,YTEN,YTEN,"YIELD10 BIOSCIENCE, INC.",,False,25-NSE,2024-07-19,http:404,,,0,0,no-data
+1847112,TRTLF,TRTLF|TRTUF|TRTWF,TortoiseEcofin Acquisition Corp. III,,False,25-NSE,2024-08-08,http:404,,,0,0,no-data
+724742,TPHS,TPHS,Trinity Place Holdings Inc.,Trinity Place Holdings Inc.,True,25-NSE,2024-08-09,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,520,otc-continuation
+1396033,LLFLQ,LLFLQ,"LL Flooring Holdings, Inc.",,False,25-NSE,2024-08-14,http:404,,,0,0,no-data
+1643988,LPTV,LPTV,"Loop Media, Inc.",,False,25-NSE,2024-08-15,http:404,,,0,0,no-data
+1309082,CEIN,CEIN,"CAMBER ENERGY, INC.","Camber Energy, Inc.",True,25-NSE,2024-08-16,OTC Markets OTCQB,2021-09-07,2026-09-04,1255,515,otc-continuation
+1537028,ICD,ICD|ICDI,"Independence Contract Drilling, Inc.",,False,25-NSE,2024-08-29,http:404,,,0,0,no-data
+1855631,AWIN,AWIN|AWINW,AERWINS Technologies Inc.,AERWINS Technologies Inc.,True,25-NSE,2024-09-06,OTC Markets OTCPK,2023-02-06,2026-09-04,899,501,otc-continuation
+811240,BIOL,BIOL,"BIOLASE, INC",,False,25-NSE,2024-09-06,http:404,,,0,0,no-data
+1865248,CMCAF,CMCAF|CMCAW,Capitalworks Emerging Markets Acquisition Corp,Piermont Valley Acquisition Corp,False,25-NSE,2024-09-06,OTC Markets OTCID,2024-06-12,2026-09-04,560,501,identity-mismatch
+1223389,CONNQ,CONNQ,CONNS INC,,False,25-NSE,2024-09-06,http:404,,,0,0,no-data
+1679063,CSSEQ,CSSEQ|CSSLQ|CSSNQ|CSSPQ,"Chicken Soup for the Soul Entertainment, Inc.","Chicken Soup for the Soul Entertainment, Inc.",True,25-NSE,2024-09-06,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,501,otc-continuation
+1563577,GRTX,GRTX,"Galera Therapeutics, Inc.",Galera Therapeutics Inc,True,25-NSE,2024-09-06,OTC Markets OTCPK,2026-07-17,2026-09-04,36,36,otc-continuation
+1817232,HGAS,HGAS|HGASW,Global Gas Corp,Global Gas Corporation,True,25-NSE,2024-09-06,OTC Markets OTCQB,2023-12-22,2026-09-04,677,501,otc-continuation
+837852,IDEX,IDEX,"IDEANOMICS, INC.",,False,25-NSE,2024-09-06,http:404,,,0,0,no-data
+1846235,IMAQ,IMAQ|IMAQR|IMAQW,International Media Acquisition Corp.,International Media Acquisition Corp.,True,25-NSE,2024-09-06,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,501,otc-continuation
+1865127,LSDIF,LSDIF,"Lucy Scientific Discovery, Inc.",Lucy Scientific Discovery Inc.,True,25-NSE,2024-09-06,OTC Markets OTCPK,2023-02-09,2026-09-04,896,501,otc-continuation
+1538210,NEXI,NEXI,"NexImmune, Inc.","NexImmune, Inc.",True,25-NSE,2024-09-06,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,501,otc-continuation
+1822145,PRST,PRST|PRSTW,Presto Automation Inc.,Presto Automation Inc.,True,25-NSE,2024-09-06,OTC Markets OTCPK,2022-09-22,2026-09-04,992,501,otc-continuation
+1784851,SHPWQ,SHPWQ,"Shapeways Holdings, Inc.","Shapeways Holdings, Inc.",True,25-NSE,2024-09-06,OTC Markets OTCPK,2021-10-04,2026-09-04,1236,501,otc-continuation
+1846750,TCOA,TCOA,Zalatoris Acquisition Corp.,,False,25-NSE,2024-09-06,http:404,,,0,0,no-data
+1459417,TWOUQ,TWOUQ,"2U, Inc.",,False,25-NSE,2024-09-06,http:404,,,0,0,no-data
+764195,VBIVQ,VBIVQ,VBI Vaccines Inc/BC,,False,25-NSE,2024-09-06,http:404,,,0,0,no-data
+768835,BIG,BIG,BIG LOTS INC,,False,25-NSE,2024-09-10,http:404,,,0,0,no-data
+1835512,LLAP,LLAP|LLAPW,Terran Orbital Corp,,False,25-NSE,2024-09-10,http:404,,,0,0,no-data
+1830214,DNA,DNA|DNA-WT,"Ginkgo Bioworks Holdings, Inc.","Ginkgo Bioworks Holdings, Inc.",True,25-NSE,2024-09-12,NYSE,2021-09-07,2026-09-04,1255,497,still-listed
+1853070,SOAR,SOAR,"Volato Group, Inc.","Volato Group, Inc.",True,25-NSE,2024-09-18,NYSE American,2022-01-21,2026-09-04,1160,493,still-listed
+1798270,IONM,IONM,Assure Holdings Corp.,Assure Holdings Corp.,True,25-NSE,2024-09-20,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,491,otc-continuation
+1844419,MAQC,MAQC|MAQCU|MAQCW,Maquia Capital Acquisition Corp,Maquia Capital Acquisition Corporation,True,25-NSE,2024-09-20,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,491,otc-continuation
+1431959,MMATQ,MMATQ,META MATERIALS INC.,Meta Materials Inc.,True,25-NSE,2024-09-20,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,491,otc-continuation
+1990145,NUVOQ,NUVOQ|NUVWQ,Holdco Nuvo Group D.G Ltd.,Holdco Nuvo Group D.G Ltd,True,25-NSE,2024-09-20,OTC Markets OTCPK,2024-05-02,2026-09-04,588,491,otc-continuation
+1820175,OCAX,OCAX|OCAXU|OCAXW,OCA Acquisition Corp.,,False,25-NSE,2024-09-20,http:404,,,0,0,no-data
+867773,SPWRQ,SPWRQ,SUNPOWER CORP,,False,25-NSE,2024-09-20,http:404,,,0,0,no-data
+1668370,TBLT,TBLT,"Toughbuilt Industries, Inc",ToughBuilt Industries Inc,True,25-NSE,2024-09-20,OTC Markets OTCPK,2025-10-01,2026-09-04,234,234,otc-continuation
+1584751,TLIS,TLIS,Talis Biomedical Corp,,False,25-NSE,2024-09-20,http:404,,,0,0,no-data
+1828105,HIPO,HIPO|HIPOW,Hippo Holdings Inc.,Hippo Holdings Inc.,True,25-NSE,2024-09-25,NYSE,2021-09-07,2026-09-04,1255,488,still-listed
+1825079,VLDX,VLDX|VLDXW,"Velo3D, Inc.",,False,25-NSE,2024-09-26,http:404,,,0,0,no-data
+1008654,TUPBQ,TUPBQ,TUPPERWARE BRANDS CORP,,False,25-NSE,2024-10-04,http:404,,,0,0,no-data
+1850502,NFSCF,NFSCF|NFSUF|NFSWF,Enphys Acquisition Corp.,,False,25-NSE,2024-10-10,http:404,,,0,0,no-data
+1592057,EVA,EVA|EVVAQ,Enviva Inc.,,False,25-NSE,2024-10-11,http:404,,,0,0,no-data
+1848898,AAGR,AAGR|AAGRW,African Agriculture Holdings Inc.,African Agriculture Holdings Inc.,True,25-NSE,2024-10-15,OTC Markets OTCPK,2023-12-07,2026-09-04,688,474,otc-continuation
+1876716,ASCBF,ASCBF|ASCRF|ASCWF|ASUUF,ASPAC II Acquisition Corp.,A SPAC II Acquisition Corp.,True,25-NSE,2024-10-15,OTC Markets OTCPK,2022-05-31,2026-09-04,1071,474,otc-continuation
+1723580,BFICQ,BFICQ|BFIWQ,"BurgerFi International, Inc.",,False,25-NSE,2024-10-15,http:404,,,0,0,no-data
+1630113,BTCY,BTCY,BIOTRICITY INC.,"Biotricity, Inc.",True,25-NSE,2024-10-15,OTC Markets OTCQB,2021-09-07,2026-09-04,1255,474,otc-continuation
+1757097,CNTGF,CNTGF,Centogene N.V.,,False,25-NSE,2024-10-15,http:404,,,0,0,no-data
+1101680,DZSI,DZSI,DZS INC.,,False,25-NSE,2024-10-15,http:404,,,0,0,no-data
+1391127,EGIOQ,EGIOQ,"Edgio, Inc.",,False,25-NSE,2024-10-15,http:404,,,0,0,no-data
+1948884,GPAK,GPAK,Gamer Pakistan Inc,Gamer Pakistan Inc.,True,25-NSE,2024-10-15,OTC Markets OTCPK,2023-10-09,2026-09-04,730,474,otc-continuation
+1662574,GROM,GROM|GROMW,"Grom Social Enterprises, Inc.","Grom Social Enterprises, Inc.",True,25-NSE,2024-10-15,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,474,otc-continuation
+1445283,KANT,KANT,"KINETA, INC./DE",,False,25-NSE,2024-10-15,http:404,,,0,0,no-data
+1844149,SPEC,SPEC|SPECW,Spectaire Holdings Inc.,Spectaire Holdings Inc.,True,25-NSE,2024-10-15,OTC Markets OTCPK,2023-10-20,2026-09-04,721,474,otc-continuation
+1853397,ZLSSF,ZLSSF,Zalatoris II Acquisition Corp,,False,25-NSE,2024-10-15,http:404,,,0,0,no-data
+1467761,MINM,MINM,"MINIM, INC.",,False,25-NSE,2024-10-24,http:404,,,0,0,no-data
+1855485,CLDI,CLDI|CLDWW,"Calidi Biotherapeutics, Inc.","Calidi Biotherapeutics, Inc.",True,25-NSE,2024-10-28,NYSE American,2021-11-01,2026-09-04,1216,465,still-listed
+1848756,PHYT,PHYT,Pyrophyte Acquisition Corp.,,False,25-NSE,2024-10-30,http:404,,,0,0,no-data
+1831359,JWSM,JWSM,Jaws Mustang Acquisition Corp,,False,25-NSE,2024-11-01,http:404,,,0,0,no-data
+319458,ENSV,ENSV,Enservco Corp,Enservco Corporation,True,25-NSE,2024-11-19,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,449,otc-continuation
+1860879,RRACF,RRACF|RRAUF|RRAWF,Rigel Resource Acquisition Corp.,,False,25-NSE,2024-11-20,http:404,,,0,0,no-data
+1815849,ATIP,ATIP|ATIPW,"ATI Physical Therapy, Inc.",,False,25-NSE,2024-12-04,http:404,,,0,0,no-data
+1867102,EVTL,EVTL|EVTWF,Vertical Aerospace Ltd.,Vertical Aerospace Ltd.,True,25-NSE,2024-12-04,NYSE,2021-09-07,2026-09-04,1255,439,still-listed
+1870143,RCFA,RCFA|RCFAF,Perception Capital Corp. IV,,False,25-NSE,2024-12-04,http:404,,,0,0,no-data
+1498710,SAVE,SAVE|SAVEQ,"Spirit Airlines, Inc.",,False,25-NSE,2024-12-05,http:404,,,0,0,no-data
+1834974,LEV,LEV|LEVWF,Lion Electric Co,,False,25-NSE,2024-12-06,http:404,,,0,0,no-data
+1411688,TCS,TCS,"Container Store Group, Inc.",,False,25-NSE,2024-12-10,http:404,,,0,0,no-data
+1011509,AUMN,AUMN,Golden Minerals Co,Golden Minerals Company,True,25-NSE,2024-12-16,OTC Markets OTCQB,2021-09-07,2026-09-04,1255,431,otc-continuation
+1880441,BFAC,BFAC,Battery Future Acquisition Corp.,,False,25-NSE,2024-12-16,http:404,,,0,0,no-data
+1882198,ATEK,ATEK,Athena Technology Acquisition Corp. II,Athena Technology Acquisition Corp. II,True,25-NSE,2024-12-19,OTC Markets OTCPK,2022-01-28,2026-09-04,1155,428,otc-continuation
+1863719,MNTN,MNTN,Everest Consolidator Acquisition Corp,"MNTN, Inc.",False,25-NSE,2024-12-23,NYSE,2025-05-22,2026-09-04,324,324,identity-mismatch
+1861121,EVE,EVE,EVe Mobility Acquisition Corp,,False,25-NSE,2024-12-27,http:404,,,0,0,no-data
+1288855,OPHC,OPHC,"OptimumBank Holdings, Inc.","OptimumBank Holdings, Inc.",True,25,2024-12-30,NYSE American,2021-09-07,2026-09-04,1255,422,still-listed
+1877557,WEL,WEL|WELNF|WELUF|WELWF,Integrated Wellness Acquisition Corp,,False,25-NSE,2025-01-02,http:404,,,0,0,no-data
+1816613,MKFG,MKFG|MKFGW,Markforged Holding Corp,,False,25-NSE,2025-01-06,http:404,,,0,0,no-data
+1852633,PNST,PNST|PNSTW,"Pinstripes Holdings, Inc.",,False,25-NSE,2025-01-06,http:404,,,0,0,no-data
+1779020,DNMR,DNMR|DNMRW,"Danimer Scientific, Inc.",,False,25-NSE,2025-01-17,http:404,,,0,0,no-data
+1213660,BIMI,BIMI,BIMI Holdings Inc.,BIMI Holdings Inc.,True,25-NSE,2025-01-24,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,406,otc-continuation
+1838162,SLAMF,SLAMF|SLMUF|SLMWF,Slam Corp.,Slam Corp.,True,25-NSE,2025-01-29,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,403,otc-continuation
+890447,VTNRQ,VTNRQ,Vertex Energy Inc.,,False,25-NSE,2025-01-29,http:404,,,0,0,no-data
+1851612,BHAC,BHAC|BHACU|BHACW,Focus Impact BH3 Acquisition Co,,False,25-NSE,2025-02-12,http:404,,,0,0,no-data
+29332,DXYN,DXYN,DIXIE GROUP INC,"The Dixie Group, Inc.",True,25-NSE,2025-02-12,OTC Markets OTCQB,2021-09-07,2026-09-04,1255,393,otc-continuation
+1828811,LICY,LICY,Li-Cycle Holdings Corp.,,False,25-NSE,2025-02-27,http:404,,,0,0,no-data
+1881741,AOGO,AOGO|AOGOU|AOGOW,Arogo Capital Acquisition Corp.,Arogo Capital Acquisition Corp.,True,25-NSE,2025-03-05,OTC Markets OTCPK,2022-02-11,2026-09-04,1145,379,otc-continuation
+1851909,CDAQF,CDAQF|CDAUF|CDAWF,Compass Digital Acquisition Corp.,Compass Digital Acquisition Corp.,True,25-NSE,2025-03-05,OTC Markets OTCPK,2026-07-17,2026-09-04,36,36,otc-continuation
+1831874,IRAA,IRAA|IRAAU|IRAAW,Iris Acquisition Corp,,False,25-NSE,2025-03-05,http:404,,,0,0,no-data
+1884072,JEWL,JEWL,Adamas One Corp.,Adamas One Corp.,True,25-NSE,2025-03-05,OTC Markets OTCPK,2022-12-09,2026-09-04,937,379,otc-continuation
+1684144,ZOM,ZOM|ZOMDF,Zomedica Corp.,,False,25-NSE,2025-03-13,http:404,,,0,0,no-data
+1637873,ACVA,ACVA,ACV Auctions Inc.,ACV Auctions Inc.,True,25,2025-03-14,NYSE,2021-09-07,2026-09-04,1255,372,still-listed
+1852016,AEAE,AEAE|AEAEU|AEAEW,AltEnergy Acquisition Corp,AltEnergy Acquisition Corp.,True,25-NSE,2025-03-21,OTC Markets OTCPK,2021-12-13,2026-09-04,1187,367,otc-continuation
+1868573,APXIF,APXIF,APx Acquisition Corp. I,,False,25-NSE,2025-03-21,http:404,,,0,0,no-data
+1886799,BGXXQ,BGXXQ,Bright Green Corp,Bright Green Corporation,True,25-NSE,2025-03-21,OTC Markets OTCPK,2025-02-18,2026-09-04,390,367,otc-continuation
+1865861,CCTSF,CCTSF|CTSUF|CTSWF,Cactus Acquisition Corp. 1 Ltd,Cactus Acquisition Corp. 1 Limited,True,25-NSE,2025-03-21,OTC Markets OTCPK,2022-01-03,2026-09-04,1173,367,otc-continuation
+1854480,DEVS,DEVS,DevvStream Corp.,,False,25-NSE,2025-03-21,http:404,,,0,0,no-data
+1850262,INTE,INTE|INTEU|INTEW,Integral Acquisition Corp 1,Integral Acquisition Corporation 1,True,25-NSE,2025-03-21,OTC Markets OTCPK,2021-12-22,2026-09-04,1180,367,otc-continuation
+1855756,LILMF,LILMF|LILWF,Lilium N.V.,Lilium N.V.,True,25-NSE,2025-03-21,OTC Markets OTCPK,2021-09-16,2026-09-04,1248,367,otc-continuation
+1851860,SMFL,SMFL,"SMART FOR LIFE, INC.","Smart for Life, Inc.",True,25-NSE,2025-03-21,OTC Markets OTCPK,2022-02-16,2026-09-04,1142,367,otc-continuation
+1834975,VEVMQ,VEVMQ,VICINITY MOTOR CORP,Vicinity Motor Corp.,True,25-NSE,2025-03-21,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,367,otc-continuation
+1800347,ETWO,ETWO,"E2open Parent Holdings, Inc.",,False,25-NSE,2025-03-26,http:404,,,0,0,no-data
+1429560,TRVN,TRVN,TREVENA INC,"Trevena, Inc.",True,25-NSE,2025-04-08,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,355,otc-continuation
+1859035,MCAG,MCAG|MCAGR|MCAGU,Mountain Crest Acquisition Corp. V,Mountain Crest Acquisition Corp. V,True,25-NSE,2025-04-11,OTC Markets OTCPK,2021-12-03,2026-09-04,1193,352,otc-continuation
+1559998,VINOQ,VINOQ,"Gaucho Group Holdings, Inc.",,False,25-NSE,2025-04-11,http:404,,,0,0,no-data
+1805833,SST,SST|SST-WT,"System1, Inc.","System1, Inc.",True,25-NSE,2025-04-22,NYSE,2021-09-07,2026-09-04,1255,346,still-listed
+1476963,SCPX,SCPX,"Scorpius Holdings, Inc.","Scorpius Holdings, Inc.",True,25-NSE,2025-05-01,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,339,otc-continuation
+1460602,ORGS,ORGS,Orgenesis Inc.,Orgenesis Inc.,True,25-NSE,2025-05-08,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,334,otc-continuation
+1879814,TLGUF,TLGUF|TLGWF|TLGYF,TLGY ACQUISITION CORP,,False,25-NSE,2025-05-08,http:404,,,0,0,no-data
+1888734,GLLI,GLLI|GLLIR|GLLIU|GLLIW,GLOBALINK INVESTMENT INC.,,False,25-NSE,2025-05-09,http:404,,,0,0,no-data
+1866838,IGTA,IGTA|IGTAR|IGTAU|IGTAW,Inception Growth Acquisition Ltd,Inception Growth Acquisition Limited,True,25-NSE,2025-05-09,OTC Markets OTCPK,2022-01-21,2026-09-04,1160,333,otc-continuation
+1847355,TGAAF,TGAAF|TGAUF|TGAWF,Target Global Acquisition I Corp.,Target Global Acquisition I Corp.,True,25-NSE,2025-05-09,OTC Markets OTCPK,2022-02-01,2026-09-04,1153,333,otc-continuation
+831001,C,C|C-PN,CITIGROUP INC,Citigroup Inc.,True,25,2025-05-12,NYSE,2021-09-07,2026-09-04,1255,332,still-listed
+1166272,GNTLF,GNTLF,GENETIC TECHNOLOGIES LTD,Genetic Technologies Limited,True,25-NSE,2025-05-12,OTC Markets OTCPK,2026-07-17,2026-09-04,36,36,otc-continuation
+1848861,HAIAF,HAIAF|HAIUF|HAIWF,Healthcare AI Acquisition Corp.,Healthcare AI Acquisition Corp.,True,25-NSE,2025-05-12,OTC Markets OTCPK,2022-02-01,2026-09-04,1153,332,otc-continuation
+1865468,KACLF,KACLF|KACRF|KACUF|KACWF,Kairous Acquisition Corp. Ltd,Kairous Acquisition Corp. Limited,True,25-NSE,2025-05-12,OTC Markets OTCPK,2022-01-21,2026-09-04,1160,332,otc-continuation
+1866501,WBX,WBX|WBXWF,Wallbox N.V.,Wallbox N.V.,True,25-NSE,2025-05-12,NYSE,2021-09-07,2026-09-04,1255,332,still-listed
+1871638,BZAI,BZAI|BZAIW,"Blaize Holdings, Inc.","Blaize Holdings, Inc.",True,25-NSE,2025-05-13,NasdaqGM,2022-01-31,2026-09-04,1154,331,still-listed
+1865111,ALSAF,ALSAF|ALSTF|ALSUF|ALSWF,Alpha Star Acquisition Corp,Alpha Star Acquisition Corporation,True,25-NSE,2025-05-20,OTC Markets OTCID,2022-01-20,2026-09-04,1161,326,otc-continuation
+1857855,FNVTF,FNVTF|FNVWF,Finnovate Acquisition Corp.,,False,25-NSE,2025-05-21,http:404,,,0,0,no-data
+1889123,FLD,FLD|FLDDW,"Fold Holdings, Inc.","Fold Holdings, Inc.",True,25-NSE,2025-05-22,NasdaqCM,2022-02-09,2026-09-04,1147,324,still-listed
+1857410,IVCBF,IVCBF,Investcorp Europe Acquisition Corp I,Invest Acquisition Corporation,True,25-NSE,2025-05-22,OTC Markets OTCPK,2022-02-08,2026-09-04,1148,324,otc-continuation
+1859807,NVAC,NVAC|NVACR|NVACW,NorthView Acquisition Corp,,False,25-NSE,2025-05-22,http:404,,,0,0,no-data
+1816723,GRFX,GRFX|GRFXY,Graphex Group Ltd,,False,25-NSE,2025-05-23,http:404,,,0,0,no-data
+1432364,AZUL,AZUL,AZUL SA,Azul S.A.,True,25-NSE,2025-05-30,NYSE,2026-05-28,2026-09-04,70,70,still-listed
+1750153,GOEVQ,GOEVQ|GOEWQ,Canoo Inc.,Canoo Inc.,True,25-NSE,2025-06-03,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,317,otc-continuation
+1580063,BIORQ,BIORQ,"BIORA THERAPEUTICS, INC.","Biora Therapeutics, Inc.",True,25-NSE,2025-06-04,OTC Markets OTCPK,2025-08-11,2026-09-04,270,270,otc-continuation
+1848437,CRTAF,CRTAF|CRTUF|CRTWF,Cartica Acquisition Corp,,False,25-NSE,2025-06-04,http:404,,,0,0,no-data
+1875493,CSLMF,CSLMF|CSLRF|CSLUF|CSLWF,CSLM ACQUISITION CORP.,,False,25-NSE,2025-06-04,http:404,,,0,0,no-data
+933738,ENGCQ,ENGCQ,ENGLOBAL CORP,,False,25-NSE,2025-06-04,http:404,,,0,0,no-data
+1866226,WTMA,WTMA|WTMAR|WTMAU,Welsbach Technology Metals Acquisition Corp.,,False,25-NSE,2025-06-04,http:404,,,0,0,no-data
+1868419,CYCU,CYCU|CYCUW,"Cycurion, Inc.","Cycurion, Inc.",True,25-NSE,2025-06-05,NasdaqGM,2025-02-18,2026-09-04,390,315,still-listed
+1894057,PPYA,PPYA,Papaya Growth Opportunity Corp. I,Papaya Growth Opportunity Corp. I,True,25-NSE,2025-06-05,OTC Markets OTCPK,2022-03-04,2026-09-04,1131,315,otc-continuation
+1900679,TETEF,TETEF|TETUF|TETWF,Technology & Telecommunication Acquisition Corp,Technology & Telecommunication Acquisition Corporation,True,25-NSE,2025-06-05,OTC Markets OTCPK,2022-03-09,2026-09-04,1128,315,otc-continuation
+1852019,IXAQF,IXAQF|IXQWF,IX Acquisition Corp.,IX Acquisition Corp.,True,25-NSE,2025-06-06,OTC Markets OTCPK,2021-11-30,2026-09-04,1196,314,otc-continuation
+1584754,PARENT,PARENT,ATECH,,False,25-NSE,2025-06-06,http:404,,,0,0,no-data
+1774983,BROG,BROG,Brooge Energy Ltd,,False,25,2025-06-09,http:404,,,0,0,no-data
+1799983,GB,GB|GB-WT,Global Blue Group Holding AG,,False,25-NSE,2025-06-10,http:404,,,0,0,no-data
+1772695,NOVA,NOVA,Sunnova Energy International Inc.,,False,25-NSE,2025-06-10,http:404,,,0,0,no-data
+1851959,CNDA,CNDA|CNDAU|CNDAW,Concord Acquisition Corp II,Concord Acquisition Corp II,True,25-NSE,2025-06-11,OTC Markets OTCID,2021-10-22,2026-09-04,1222,311,otc-continuation
+1004724,RHEP,RHEP|RHEPA|RHEPB,"REGIONAL HEALTH PROPERTIES, INC","Regional Health Properties, Inc.",True,25-NSE,2025-06-11,OTC Markets OTCQB,2021-09-07,2026-09-04,1255,311,otc-continuation
+1601936,CYTOF,CYTOF,Altamira Therapeutics Ltd.,Altamira Therapeutics Ltd.,True,25-NSE,2025-06-17,OTC Markets OTCID,2021-09-07,2026-09-04,1255,307,otc-continuation
+1730773,BSFC,BSFC,Blue Star Foods Corp.,Blue Star Foods Corp.,True,25-NSE,2025-06-20,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,305,otc-continuation
+1900402,EGRVF,EGRVF|EGSVF|EGUVF,Evergreen Corp,,False,25-NSE,2025-06-20,http:404,,,0,0,no-data
+1801417,BYNO,BYNO|BYNOU|BYNOW,byNordic Acquisition Corp,byNordic Acquisition Corporation,True,25-NSE,2025-06-23,OTC Markets OTCPK,2022-04-05,2026-09-04,1109,304,otc-continuation
+1874074,MMVVF,MMVVF,MultiMetaVerse Holdings Ltd,MultiMetaVerse Holdings Limited,True,25-NSE,2025-06-23,OTC Markets OTCPK,2023-01-06,2026-09-04,919,304,otc-continuation
+1850453,MOYFF,MOYFF|MYNAY,Mynaric AG,,False,25-NSE,2025-06-23,http:404,,,0,0,no-data
+1947861,NMHI,NMHI|NMHIW,Nature's Miracle Holding Inc.,Nature's Miracle Holding Inc.,True,25-NSE,2025-06-24,OTC Markets OTCPK,2022-04-14,2026-09-04,1102,303,otc-continuation
+1210618,SPIEF,SPIEF,"SPI Energy Co., Ltd.",,False,25-NSE,2025-06-25,http:404,,,0,0,no-data
+95552,SUP,SUP,SUPERIOR INDUSTRIES INTERNATIONAL INC,,False,25-NSE,2025-06-25,http:404,,,0,0,no-data
+1858007,GDST,GDST|GDSTR|GDSTU|GDSTW,Goldenstone Acquisition Ltd.,Chi Special Acquisition Corp.,True,25-NSE,2025-07-08,OTC Markets OTCPK,2022-04-14,2026-09-04,1102,294,otc-continuation
+1883984,ALCE,ALCE|ACLEW,"Alternus Clean Energy, Inc.",Alternus Clean Energy Inc,True,25-NSE,2025-07-09,OTC Markets OTCPK,2026-07-17,2026-09-04,36,36,otc-continuation
+1599407,EFSH,EFSH,1847 Holdings LLC,,False,25-NSE,2025-07-09,http:404,,,0,0,no-data
+1845550,PLMJF,PLMJF|PLMUF|PLMWF,Plum Acquisition Corp. III,Plum Acquisition Corp III,True,25-NSE,2025-07-10,OTC Markets OTCPK,2026-07-17,2026-09-04,36,36,otc-continuation
+1691936,SNAX,SNAX|SNAXW,"STRYVE FOODS, INC.","Stryve Foods, Inc.",True,25-NSE,2025-07-10,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,292,otc-continuation
+1492674,TTOO,TTOO,"T2 Biosystems, Inc.","T2 Biosystems, Inc.",True,25-NSE,2025-07-10,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,292,otc-continuation
+1061027,VIRX,VIRX,"Viracta Therapeutics, Inc.",,False,25-NSE,2025-07-10,http:404,,,0,0,no-data
+1133818,BPTH,BPTH,"BIO-PATH HOLDINGS, INC.","Bio-Path Holdings, Inc.",True,25-NSE,2025-07-11,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,291,otc-continuation
+1889450,FTII,FTII|FTIIU|FTIIW,FutureTech II Acquisition Corp.,FutureTech II Acquisition Corp.,True,25-NSE,2025-07-11,OTC Markets OTCPK,2022-04-08,2026-09-04,1106,291,otc-continuation
+1893311,LUXH,LUXH|LUXHP,LUXURBAN HOTELS INC.,,False,25-NSE,2025-07-11,http:404,,,0,0,no-data
+1892747,VMCAF,VMCAF|VMCUF|VMCWF,Valuence Merger Corp. I,Valuence Merger Corp. I,True,25-NSE,2025-07-11,OTC Markets OTCPK,2025-03-11,2026-09-04,375,291,otc-continuation
+1913577,DNQAF,DNQAF|DNQUF|DNQWF,Denali Capital Acquisition Corp.,,False,25-NSE,2025-07-14,http:404,,,0,0,no-data
+1852889,IVAUF,IVAUF|IVAWF|IVCAF,Investcorp AI Acquisition Corp.,Libity,False,25-NSE,2025-07-14,OTC Markets OTCPK,2022-05-10,2026-09-04,1085,290,identity-mismatch
+1882464,MSSAF,MSSAF|MSSRF|MSSUF|MSSWF,Metal Sky Star Acquisition Corp,Metal Sky Star Acquisition Corporation,True,25-NSE,2025-07-14,OTC Markets OTCPK,2022-05-31,2026-09-04,1071,290,otc-continuation
+1907730,YOTA,YOTA|YOTAR|YOTAU|YOTAW,Yotta Acquisition Corp,Yotta Acquisition Corporation,True,25-NSE,2025-07-14,OTC Markets OTCPK,2022-06-27,2026-09-04,1053,290,otc-continuation
+1903392,CLRCF,CLRCF|CLRRF|CLRUF|CLRWF,ClimateRock,ClimateRock,True,25-NSE,2025-07-15,OTC Markets OTCPK,2022-06-02,2026-09-04,1069,289,otc-continuation
+1889112,REEUF,REEUF|REEWF|RENEF,Cartesian Growth Corp II,Cartesian Growth Corporation II,True,25-NSE,2025-07-15,OTC Markets OTCPK,2022-05-06,2026-09-04,1087,289,otc-continuation
+1973368,SVUHF,SVUHF|SVUWF,SRIVARU Holding Ltd,SRIVARU Holding Limited,True,25-NSE,2025-07-15,OTC Markets OTCPK,2022-09-27,2026-09-04,989,289,otc-continuation
+1903464,AIMTF,AIMTF|AIMUF|AIMWF,Aimfinity Investment Corp. I,,False,25-NSE,2025-07-16,http:404,,,0,0,no-data
+1861063,AQUC,AQUC,Aquaron Acquisition Corp.,Aquaron Acquisition Corp.,True,25-NSE,2025-07-17,OTC Markets OTCPK,2022-10-19,2026-09-04,973,287,otc-continuation
+850033,BPT,BPT|BPPTU,BP PRUDHOE BAY ROYALTY TRUST,,False,25-NSE,2025-07-17,http:404,,,0,0,no-data
+1845459,NKGN,NKGN|NKGNW,"NKGen Biotech, Inc.","NKGen Biotech, Inc.",True,25-NSE,2025-07-17,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,287,otc-continuation
+1644963,ATXI,ATXI,"AVENUE THERAPEUTICS, INC.","Avenue Therapeutics, Inc.",True,25-NSE,2025-07-18,OTC Markets OTCID,2021-09-07,2026-09-04,1255,286,otc-continuation
+1845942,BNIX,BNIX|BNIXR|BNIXW,Bannix Acquisition Corp.,,False,25-NSE,2025-07-18,http:404,,,0,0,no-data
+2000640,DMNID,DMNID|DMNIF,Damon Inc.,,False,25-NSE,2025-07-18,http:404,,,0,0,no-data
+1995194,PITEF,PITEF|PITWF,Heramba Electric plc,Heramba Electric plc,True,25-NSE,2025-07-18,OTC Markets OTCPK,2024-07-30,2026-09-04,528,286,otc-continuation
+1854463,WINV,WINV,WinVest Acquisition Corp.,WinVest Acquisition Corp.,True,25-NSE,2025-07-18,OTC Markets OTCPK,2021-10-04,2026-09-04,1236,286,otc-continuation
+1955104,ZAPPF,ZAPPF|ZAPWF,Zapp Electric Vehicles Group Ltd,Zapp Electric Vehicles Group Limited,True,25-NSE,2025-07-18,OTC Markets OTCPK,2023-08-17,2026-09-04,766,286,otc-continuation
+1608390,AFMDQ,AFMDQ,Affimed N.V.,Affimed N.V.,True,25-NSE,2025-07-21,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,285,otc-continuation
+1912582,AIEV,AIEV,"Thunder Power Holdings, Inc.","Thunder Power Holdings, Inc.",True,25-NSE,2025-07-21,OTC Markets OTCQB,2022-08-08,2026-09-04,1024,285,otc-continuation
+1070050,APCX,APCX|APCXW,AppTech Payments Corp.,AppTech Payments Corp.,True,25-NSE,2025-07-21,OTC Markets OTCQB,2021-09-07,2026-09-04,1255,285,otc-continuation
+882361,APTOF,APTOF,Aptose Biosciences Inc.,Aptose Biosciences Inc,True,25-NSE,2025-07-21,OTC Markets OTCPK,2026-07-02,2026-09-04,45,45,otc-continuation
+727207,AXDXQ,AXDXQ,"Accelerate Diagnostics, Inc",,False,25-NSE,2025-07-21,http:404,,,0,0,no-data
+1729944,BACK,BACK,"IMAC Holdings, Inc.","IMAC Holdings, Inc.",True,25-NSE,2025-07-21,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,285,otc-continuation
+1058623,CMLS,CMLS,CUMULUS MEDIA INC,,False,25-NSE,2025-07-21,http:404,,,0,0,no-data
+1708176,HOFV,HOFV,Hall of Fame Resort & Entertainment Co,,False,25-NSE,2025-07-21,http:404,,,0,0,no-data
+1487839,LKCOF,LKCOF,Luokung Technology Corp.,Luokung Technology Corp.,True,25-NSE,2025-07-21,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,285,otc-continuation
+1816319,LYTHF,LYTHF,Lytus Technologies Holdings PTV. Ltd.,Lytus Technologies Holdings PTV. Ltd.,True,25-NSE,2025-07-21,OTC Markets OTCPK,2022-06-15,2026-09-04,1060,285,otc-continuation
+1844505,QTIH,QTIH|QTIWW,"QT IMAGING HOLDINGS, INC.",,False,25-NSE,2025-07-21,http:404,,,0,0,no-data
+1708331,VRPX,VRPX,"Virpax Pharmaceuticals, Inc.","Virpax Pharmaceuticals, Inc.",True,25-NSE,2025-07-21,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,285,otc-continuation
+1854275,ZCAR,ZCAR|ZCARW,"Zoomcar Holdings, Inc.","Zoomcar Holdings, Inc.",True,25-NSE,2025-07-21,OTC Markets OTCQB,2022-01-04,2026-09-04,1172,285,otc-continuation
+1895249,CNTM,CNTM,"ConnectM Technology Solutions, Inc.","ConnectM Technology Solutions, Inc.",True,25-NSE,2025-07-22,OTC Markets OTCQX,2022-07-01,2026-09-04,1049,284,otc-continuation
+1583771,HEPA,HEPA|CTRVP,"Hepion Pharmaceuticals, Inc.","Hepion Pharmaceuticals, Inc.",True,25-NSE,2025-07-22,OTC Markets OTCQB,2021-09-07,2026-09-04,1255,284,otc-continuation
+1914818,STBXF,STBXF,Starbox Group Holdings Ltd.,Starbox Group Holdings Ltd.,True,25-NSE,2025-07-22,OTC Markets OTCPK,2022-08-23,2026-09-04,1013,284,otc-continuation
+1964021,NCNCF,NCNCF|NCNWF,noco-noco Inc.,noco-noco Inc.,True,25-NSE,2025-08-04,OTC Markets OTCPK,2023-08-28,2026-09-04,759,275,otc-continuation
+1553788,SBEV,SBEV|SBEVW,"SPLASH BEVERAGE GROUP, INC.",Splash Beverage Group Inc,True,25-NSE,2025-08-05,NYSE American,2026-07-17,2026-09-04,36,36,still-listed
+1906133,ICCT,ICCT,iCoreConnect Inc.,,False,25-NSE,2025-08-06,http:404,,,0,0,no-data
+1566826,LGMK,LGMK,"LogicMark, Inc.","LogicMark, Inc.",True,25-NSE,2025-08-06,OTC Markets OTCID,2021-09-07,2026-09-04,1255,273,otc-continuation
+1463361,UNBX,UNBX,"Unity Biotechnology, Inc.",,False,25-NSE,2025-08-06,http:404,,,0,0,no-data
+1775085,CLEUF,CLEUF,China Liberal Education Holdings Ltd,China Liberal Education Holdings Limited,True,25-NSE,2025-08-07,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,272,otc-continuation
+1722969,NXUR,NXUR,"Nxu, Inc.","Nxu, Inc.",True,25-NSE,2025-08-07,OTC Markets OTCPK,2023-05-15,2026-09-04,831,272,otc-continuation
+1869974,OCEA,OCEA|OCEAW,"Ocean Biomedical, Inc.","Ocean Biomedical, Inc.",True,25-NSE,2025-08-08,OTC Markets OTCPK,2023-02-15,2026-09-04,892,271,otc-continuation
+1293818,OPGN,OPGN,OPGEN INC,,False,25-NSE,2025-08-08,http:404,,,0,0,no-data
+1381074,RTCJD,RTCJD|RTCJF,Baijiayun Group Ltd,,False,25-NSE,2025-08-08,http:404,,,0,0,no-data
+1872812,TCBPY,TCBPY|TCBWF,TC BioPharm,,False,25-NSE,2025-08-08,http:404,,,0,0,no-data
+1812360,FOXO,FOXO|FOXOW,FOXO TECHNOLOGIES INC.,FOXO Technologies Inc.,True,25-NSE,2025-08-22,OTC Markets OTCID,2022-09-19,2026-09-04,995,261,otc-continuation
+1981462,LDTCF,LDTCF|LDTDF,LeddarTech Holdings Inc.,LeddarTech Holdings Inc.,True,25-NSE,2025-08-22,OTC Markets OTCPK,2023-12-22,2026-09-04,677,261,otc-continuation
+1869601,EMCGF,EMCGF|EMCRF|EMCUF|EMCWF,Embrace Change Acquisition Corp.,Embrace Change Acquisition Corp.,True,25-NSE,2025-09-18,OTC Markets OTCPK,2022-09-30,2026-09-04,986,243,otc-continuation
+1842356,PETXQ,PETXQ,Wag! Group Co.,,False,25-NSE,2025-09-18,http:404,,,0,0,no-data
+1455684,TPICQ,TPICQ,"TPI COMPOSITES, INC",TPI Composites Inc,True,25-NSE,2025-09-18,OTC Markets OTCPK,2026-07-06,2026-09-04,45,45,otc-continuation
+1991946,CGBSF,CGBSF,Crown LNG Holdings Ltd,Crown LNG Holdings Limited,True,25-NSE,2025-10-01,OTC Markets OTCPK,2024-07-10,2026-09-04,542,234,otc-continuation
+1668010,DBGI,DBGI,"Digital Brands Group, Inc.","Digital Brands Group, Inc.",True,25-NSE,2025-10-01,NasdaqCM,2021-09-07,2026-09-04,1255,234,still-listed
+1915380,DMYY,DMYY,"dMY Squared Technology Group, Inc.",,False,25-NSE,2025-10-01,http:404,,,0,0,no-data
+1220754,MODVQ,MODVQ,ModivCare Inc,,False,25-NSE,2025-10-01,http:404,,,0,0,no-data
+1347242,LIPO,LIPO,LIPELLA PHARMACEUTICALS INC.,Lipella Pharmaceuticals Inc.,True,25-NSE,2025-10-06,OTC Markets OTCPK,2022-12-20,2026-09-04,930,231,otc-continuation
+1859007,ZVSA,ZVSA,"ZyVersa Therapeutics, Inc.","ZyVersa Therapeutics, Inc.",True,25-NSE,2025-10-06,OTC Markets OTCPK,2022-02-11,2026-09-04,1145,231,otc-continuation
+1137883,BCLI,BCLI,BRAINSTORM CELL THERAPEUTICS INC.,Brainstorm Cell Therapeutics Inc.,True,25-NSE,2025-10-09,OTC Markets OTCQB,2021-09-07,2026-09-04,1255,228,otc-continuation
+857949,ENFY,ENFY,Enlightify Inc.,Enlightify Inc.,True,25-NSE,2025-10-27,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,216,otc-continuation
+1937441,AMBI,AMBI,Ambipar Emergency Response,,False,25-NSE,2025-10-29,http:404,,,0,0,no-data
+1809158,KUKE,KUKE,Kuke Music Holding Ltd,,False,25-NSE,2025-11-05,http:404,,,0,0,no-data
+1843477,SVII,SVII|SVIIR|SVIIU|SVIIW,Spring Valley Acquisition Corp. II,,False,25-NSE,2025-11-12,http:404,,,0,0,no-data
+1397047,FPAY,FPAY,"FlexShopper, Inc.",,False,25-NSE,2025-11-14,http:404,,,0,0,no-data
+1946399,LSBCF,LSBCF|LSBWF,"LakeShore Biopharma Co., Ltd.",,False,25-NSE,2025-11-14,http:404,,,0,0,no-data
+1456772,OPI,OPI|OPIRQ|OPITQ,OFFICE PROPERTIES INCOME TRUST,Office Properties Income Trust,True,25-NSE,2025-11-14,NasdaqCM,2026-06-18,2026-09-04,55,55,still-listed
+1879848,PEVM,PEVM,PHOENIX MOTOR INC.,Phoenix Motor Inc.,True,25-NSE,2025-11-14,OTC Markets OTCPK,2022-06-08,2026-09-04,1065,202,otc-continuation
+1833835,PSFE,PSFE|PSEWF,Paysafe Ltd,Paysafe Limited,True,25-NSE,2025-11-17,NYSE,2021-09-07,2026-09-04,1255,201,still-listed
+1815903,PTPI,PTPI,"Petros Pharmaceuticals, Inc.","Petros Pharmaceuticals, Inc.",True,25-NSE,2025-11-20,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,198,otc-continuation
+1300734,SISI,SISI,"SHINECO, INC.","Shineco, Inc.",True,25-NSE,2025-11-20,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,198,otc-continuation
+1888151,FMTOF,FMTOF,Femto Technologies Inc.,Femto Technologies Inc.,True,25-NSE,2025-11-21,OTC Markets OTCQB,2022-05-31,2026-09-04,1071,197,otc-continuation
+72444,VXRT,VXRT,"Vaxart, Inc.","Vaxart, Inc.",True,25-NSE,2025-11-21,OTC Markets OTCQX,2021-09-07,2026-09-04,1255,197,otc-continuation
+1899658,WLGSF,WLGSF,"WANG & LEE GROUP, Inc.","WANG & LEE GROUP, Inc.",True,25-NSE,2025-11-21,OTC Markets OTCPK,2023-04-20,2026-09-04,848,197,otc-continuation
+1842939,XAGE,XAGE|XAGEW,"Longevity Health Holdings, Inc.","Longevity Health Holdings, Inc.",True,25-NSE,2025-11-21,OTC Markets OTCQB,2021-09-23,2026-09-04,1243,197,otc-continuation
+1845097,AMBP,AMBP,Ardagh Metal Packaging S.A.,Ardagh Metal Packaging S.A.,True,25-NSE,2025-12-03,NYSE,2021-09-07,2026-09-04,1255,190,still-listed
+1812173,RBOT,RBOT,Vicarious Surgical Inc.,Vicarious Surgical Inc.,True,25-NSE,2025-12-17,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,180,otc-continuation
+1819574,BARK,BARK,"Bark, Inc.","BARK, Inc.",True,25-NSE,2025-12-19,NYSE,2021-09-07,2026-09-04,1255,178,still-listed
+1499961,BINI,BINI,"BOLLINGER INNOVATIONS, INC.","Bollinger Innovations, Inc.",True,25-NSE,2026-01-08,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,166,otc-continuation
+1783398,UWMC,UWMC|UWMCW,UWM Holdings Corp,UWM Holdings Corporation,True,25-NSE,2026-01-08,NYSE,2021-09-07,2026-09-04,1255,166,still-listed
+1398453,XIN,XIN,"Xinyuan Real Estate Co., Ltd.",,False,25-NSE,2026-01-14,http:404,,,0,0,no-data
+1159167,IRBTQ,IRBTQ,IROBOT CORP,,False,25-NSE,2026-01-15,http:404,,,0,0,no-data
+1819395,SONDQ,SONDQ|SONWQ,Sonder Holdings Inc.,Sonder Holdings Inc.,True,25-NSE,2026-01-20,OTC Markets OTCPK,2022-01-19,2026-09-04,1162,159,otc-continuation
+1744494,ADN,ADN|ADNH|ADNWW,"ADVENT TECHNOLOGIES HOLDINGS, INC.",,False,25-NSE,2026-01-21,http:404,,,0,0,no-data
+1936255,FORL,FORL|FORLU|FORLW,Four Leaf Acquisition Corp,Four Leaf Acquisition Corporation,True,25-NSE,2026-01-21,OTC Markets OTCPK,2023-05-16,2026-09-04,830,158,otc-continuation
+1915328,ISLUF,ISLUF|ISLWF|ISRLF,Israel Acquisitions Corp,Israel Acquisitions Corp,True,25-NSE,2026-01-21,OTC Markets OTCPK,2023-01-13,2026-09-04,914,158,otc-continuation
+1758057,LAZRQ,LAZRQ,"Luminar Technologies, Inc./DE",,False,25-NSE,2026-01-23,http:404,,,0,0,no-data
+868278,PRPH,PRPH,"ProPhase Labs, Inc.","ProPhase Labs, Inc.",True,25-NSE,2026-01-23,OTC Markets OTCID,2021-09-07,2026-09-04,1255,156,otc-continuation
+1022899,PTIX,PTIX|PTIXW,"Protagenic Therapeutics, Inc.\new","Protagenic Therapeutics, Inc.",True,25-NSE,2026-01-23,OTC Markets OTCQB,2021-09-07,2026-09-04,1255,156,otc-continuation
+846475,ZYXIQ,ZYXIQ,ZYNEX INC,,False,25-NSE,2026-01-23,http:404,,,0,0,no-data
+1804176,BFLY,BFLY|BFLYW,"Butterfly Network, Inc.","Butterfly Network, Inc.",True,25-NSE,2026-02-02,NYSE,2021-09-07,2026-09-04,1255,150,still-listed
+1532286,NINE,NINE,"Nine Energy Service, Inc.","Nine Energy Service, Inc.",True,25-NSE,2026-02-05,NYSE American,2026-03-31,2026-09-04,110,110,still-listed
+1519061,TSEOF,TSEOF,Trinseo PLC,,False,25-NSE,2026-03-18,http:404,,,0,0,no-data
+1823466,NOTE,NOTE|NOTEW,"FiscalNote Holdings, Inc.","FiscalNote Holdings, Inc.",True,25-NSE,2026-04-03,OTC Markets OTCID,2021-09-07,2026-09-04,1255,107,otc-continuation
+1899830,PERF,PERF|PERFF,Perfect Corp.,Perfect Corp.,True,25-NSE,2026-05-01,NYSE,2022-10-31,2026-09-04,965,88,still-listed
+1254699,QVCCQ,QVCCQ|QVCDQ,QVC INC,,False,25-NSE,2026-05-04,OTC Markets OTCPK,2026-07-17,2026-09-04,36,36,identity-mismatch
+1705012,FABTQ,FABTQ|FATAQ|FATPQ,"Fat Brands, Inc",FAT Brands Inc.,True,25-NSE,2026-05-14,OTC Markets OTCPK,2026-07-17,2026-09-04,36,36,otc-continuation
+1802450,MSPR,MSPR|MSPRW|MSPRZ,"MSP Recovery, Inc.","MSP Recovery, Inc.",True,25-NSE,2026-05-18,OTC Markets OTCPK,2022-05-24,2026-09-04,1075,77,otc-continuation
+1527599,SYBX,SYBX,"SYNLOGIC, INC.","Synlogic, Inc.",True,25-NSE,2026-05-18,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,77,otc-continuation
+1782037,YGMZF,YGMZF,MingZhu Logistics Holdings Ltd,MingZhu Logistics Holdings Limited,True,25-NSE,2026-05-18,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,77,otc-continuation
+1900720,EPWKF,EPWKF,EPWK Holdings Ltd.,EPWK Holdings Ltd.,True,25-NSE,2026-06-02,OTC Markets OTCPK,2025-02-06,2026-09-04,397,67,otc-continuation
+1939365,IVPR,IVPR,"INSPIRE VETERINARY PARTNERS, INC.","Inspire Veterinary Partners, Inc.",True,25-NSE,2026-06-04,OTC Markets OTCPK,2023-08-30,2026-09-04,757,65,otc-continuation
+2011954,TWNPQ,TWNPQ,Twin Hospitality Group Inc.,Twin Hospitality Group Inc.,True,25-NSE,2026-06-04,OTC Markets OTCPK,2025-01-28,2026-09-04,404,65,otc-continuation
+1865494,IOBTQ,IOBTQ,"IO Biotech, Inc.","IO Biotech, Inc.",True,25-NSE,2026-06-08,OTC Markets OTCPK,2021-11-05,2026-09-04,1212,63,otc-continuation
+1355096,QVCAQ,QVCAQ|QVCGQ|QVCPQ,"QVC Group, Inc.",QVC Group Inc,True,25-NSE,2026-06-08,OTC Markets OTCPK,2026-07-17,2026-09-04,36,36,otc-continuation
+1994624,STAI,STAI,ScanTech AI Systems Inc.,ScanTech AI Systems Inc.,True,25-NSE,2026-06-08,OTC Markets OTCPK,2025-01-03,2026-09-04,419,63,otc-continuation
+1984014,BLMZF,BLMZF,Harrison Global Holdings Inc.,Harrison Global Holdings Inc.,True,25-NSE,2026-06-15,OTC Markets OTCPK,2024-07-24,2026-09-04,532,58,otc-continuation
+1849221,PMNT,PMNT,Perfect Moment Ltd.,Perfect Moment Ltd. Common Stock,True,25-NSE,2026-06-18,OTC Markets OTCQB,2024-02-08,2026-09-04,646,55,otc-continuation
+1962738,CASIF,CASIF,"CASI Pharmaceuticals, Inc.","CASI Pharmaceuticals, Inc.",True,25-NSE,2026-06-23,OTC Markets OTCQB,2021-09-07,2026-09-04,1255,53,otc-continuation
+1659323,ITRMF,ITRMF,Iterum Therapeutics plc,Iterum Therapeutics plc,True,25-NSE,2026-06-23,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,53,otc-continuation
+2049717,JMG,JMG,JM Group Ltd,,False,25-NSE,2026-06-23,http:404,,,0,0,no-data
+1782941,TIRXF,TIRXF,TIAN RUIXIANG HOLDINGS LTD,Tian Ruixiang Holdings Ltd.,True,25-NSE,2026-06-26,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,50,otc-continuation
+1819438,GWH,GWH|GWH-WT,"ESS Tech, Inc.","ESS Tech, Inc.",True,25-NSE,2026-07-02,NYSE,2021-09-07,2026-09-04,1255,46,still-listed
+1922097,LANV,LANV|LANWF,Lanvin Group Holdings Ltd,Lanvin Group Holdings Limited,True,25-NSE,2026-07-06,NYSE,2021-09-07,2026-09-04,1255,45,still-listed
+1870600,SBDS,SBDS,"Solo Brands, Inc.","Solo Brands, Inc.",True,25-NSE,2026-07-08,OTC Markets OTCQB,2021-10-28,2026-09-04,1218,43,otc-continuation
+1901336,ALCUF,ALCUF|ALCWF|ALCYF,Alchemy Investments Acquisition Corp 1,Alchemy Investments Acquisition Corp 1,True,25-NSE,2026-07-10,OTC Markets OTCPK,2023-05-05,2026-09-04,837,41,otc-continuation
+1808220,GOCOQ,GOCOQ,"GoHealth, Inc.",GoHealth Inc,True,25-NSE,2026-07-10,OTC Markets OTCPK,2026-07-17,2026-09-04,36,36,otc-continuation
+720154,NOTVQ,NOTVQ,"Inotiv, Inc.",Inotiv Inc,True,25-NSE,2026-07-10,OTC Markets OTCPK,2026-07-17,2026-09-04,36,36,otc-continuation
+1742927,RVPH,RVPH,"REVIVA PHARMACEUTICALS HOLDINGS, INC.","Reviva Pharmaceuticals Holdings, Inc.",True,25-NSE,2026-07-10,OTC Markets OTCQB,2021-09-07,2026-09-04,1255,41,otc-continuation
+1901799,BTMCQ,BTMCQ,Bitcoin Depot Inc.,Bitcoin Depot Inc,True,25-NSE,2026-07-13,OTC Markets OTCPK,2026-07-17,2026-09-04,36,36,otc-continuation
+1870404,CERO,CERO,"CERO THERAPEUTICS HOLDINGS, INC.","CERo Therapeutics Holdings, Inc.",True,25-NSE,2026-07-13,OTC Markets OTCQB,2021-11-30,2026-09-04,1196,40,otc-continuation
+1837254,MEHA,MEHA,Functional Brands Inc.,Functional Brands Inc.,True,25-NSE,2026-07-13,OTC Markets OTCID,2025-11-05,2026-09-04,209,40,otc-continuation
+1843588,REE,REE,REE Automotive Ltd.,REE Automotive Ltd,True,25-NSE,2026-07-13,NasdaqGM,2026-07-14,2026-09-04,39,39,still-listed
+2014955,SDM,SDM,Smart Digital Group Ltd,,False,25-NSE,2026-07-13,http:404,,,0,0,no-data
+1648087,AREB,AREB|AREBW,AMERICAN REBEL HOLDINGS INC,"American Rebel Holdings, Inc.",True,25-NSE,2026-07-14,OTC Markets OTCID,2022-02-07,2026-09-04,1149,39,otc-continuation
+1141284,ASNS,ASNS,ACTELIS NETWORKS INC,"Actelis Networks, Inc.",True,25-NSE,2026-07-14,OTC Markets OTCQB,2022-05-13,2026-09-04,1082,39,otc-continuation
+1759136,BHATF,BHATF,Blue Hat Interactive Entertainment Technology,Blue Hat Interactive Entertainment Technology,True,25-NSE,2026-07-14,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,39,otc-continuation
+1967478,CPTAF,CPTAF,Captivision Inc.,Captivision Inc.,True,25-NSE,2026-07-14,OTC Markets OTCPK,2023-11-16,2026-09-04,702,39,otc-continuation
+827187,SNBRQ,SNBRQ,Sleep Number Corp,Sleep Number Corporation,True,25-NSE,2026-07-14,OTC Markets OTCPK,2021-09-07,2026-09-04,1255,39,otc-continuation
+1517496,SLAI,SLAI|SLAIY,SOLAI Ltd,SOLAI Limited,True,25-NSE,2026-08-04,NYSE,2026-07-17,2026-09-04,36,24,still-listed
+1863006,VLN,VLN|VLNWF,Valens Semiconductor Ltd.,Valens Semiconductor Ltd.,True,25-NSE,2026-08-11,NYSE,2021-09-30,2026-09-04,1238,19,still-listed
+1753539,BKSY,BKSY|BKSYW,BlackSky Technology Inc.,BlackSky Technology Inc.,True,25-NSE,2026-08-26,NYSE,2021-09-07,2026-09-04,1255,8,still-listed
+1819142,SES,SES|SESCW,SES AI Corp,SES AI Corporation,True,25-NSE,2026-08-31,NYSE,2021-09-07,2026-09-04,1255,5,still-listed
