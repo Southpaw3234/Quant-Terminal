@@ -122,6 +122,51 @@ def enumerate_delistings(sess) -> tuple:
     return total_seen, sorted(found.items())
 
 
+YAHOO_CHART = "https://query1.finance.yahoo.com/v8/finance/chart/{sym}"
+
+
+def classify(sess, sym: str) -> tuple:
+    """-> (exchange, first_date, last_date). Which KIND of name is this?
+
+    A row count alone cannot tell three very different situations apart, and
+    the first draft of this probe conflated them:
+
+      still on NYSE/Nasdaq  the Form 25 removed a WARRANT or a UNIT, or the
+                            issuer TRANSFERRED exchanges. Not a delisting at
+                            all -- a false positive in the enumeration.
+      OTC Markets           delisted from the exchange and still trading over
+                            the counter. SAME company, continuous price
+                            history, and exactly the data a survivorship
+                            correction needs.
+      nothing               the true hole.
+
+    Measured 2026-09-05: ACVA is still on NYSE (ACV Auctions, alive), while
+    AAGR and AFIB moved to OTCPK and their series run to the present. So the
+    delisted enumeration DOES over-count, and the price coverage IS real.
+    """
+    st, r = _get(sess, YAHOO_CHART.format(sym=sym), params={"range": "5y", "interval": "1d"},
+                 headers={"User-Agent": "Mozilla/5.0"})
+    if st != 200 or r is None:
+        return f"http:{st}", "", ""
+    try:
+        res = ((r.json().get("chart") or {}).get("result") or [None])[0] or {}
+    except ValueError:
+        return "err", "", ""
+    meta = res.get("meta") or {}
+    ts = res.get("timestamp") or []
+    fmt = lambda t: pd.Timestamp(t, unit="s").strftime("%Y-%m-%d") if t else ""
+    return str(meta.get("fullExchangeName") or "?"), fmt(ts[0] if ts else 0), fmt(ts[-1] if ts else 0)
+
+
+def bucket_of(exchange: str) -> str:
+    e = (exchange or "").upper()
+    if "OTC" in e or "PINK" in e:
+        return "otc-continuation"
+    if any(x in e for x in ("NYSE", "NASDAQ", "AMEX", "NASDAQGS", "NASDAQCM")):
+        return "still-listed"
+    return "no-data"
+
+
 def try_yfinance(sym: str) -> tuple:
     try:
         import yfinance as yf
@@ -191,9 +236,13 @@ def main() -> None:
         print("  ⚠️ ALPACA_API_KEY/ALPACA_SECRET_KEY not set — Alpaca column will read 'nokey'")
     sample = [t for t, _ in delisted[:N_PRICE_TEST]]
     score = collections.Counter()
-    print(f"\n  {'ticker':<8} {'delisted':<12} {'yfinance':<14} {'stooq':<14} {'alpaca':<14}")
+    buckets = collections.Counter()
+    print(f"\n  {'ticker':<8} {'form25':<12} {'exchange now':<22} {'series ends':<12} "
+          f"{'yf':<7} {'stooq':<7} {'alpaca':<7}")
     for tk in sample:
         when = dict(delisted).get(tk, "")
+        exch, _first, last = classify(sess, tk); time.sleep(SLEEP)
+        b = bucket_of(exch); buckets[b] += 1
         # FAIL SOFT per source. A probe that dies on source 3 throws away what
         # sources 1 and 2 already established.
         def _safe(fn, *a):
@@ -208,20 +257,36 @@ def main() -> None:
         else:
             a_ok, a_n = False, "nokey"
         score["yfinance"] += int(y_ok); score["stooq"] += int(s_ok); score["alpaca"] += int(a_ok)
-        print(f"  {tk:<8} {when:<12} {str(y_n):<14} {str(s_n):<14} {str(a_n):<14}")
+        print(f"  {tk:<8} {when:<12} {exch[:22]:<22} {last:<12} "
+              f"{str(y_n):<7} {str(s_n):<7} {str(a_n):<7}")
 
     n = len(sample)
     print(f"\n  {'source':<12} {'served':<10} rate")
     for src in ("yfinance", "stooq", "alpaca"):
         print(f"  {src:<12} {score[src]}/{n:<8} {100*score[src]/max(1,n):.0f}%")
+    print(f"\n  WHAT THESE NAMES ACTUALLY ARE:")
+    for b in ("still-listed", "otc-continuation", "no-data"):
+        print(f"    {buckets[b]:>3}/{n}  {b}")
+    print(f"    still-listed  = the Form 25 removed a warrant/unit or was an exchange TRANSFER.")
+    print(f"                    A FALSE POSITIVE in the enumeration above, not a delisting.")
+    print(f"    otc-continue  = delisted from the exchange, still trading OTC. SAME company,")
+    print(f"                    continuous history — exactly what a survivorship fix needs.")
+    print(f"    no-data       = the true hole.")
 
     print("\n" + "=" * 72)
-    best = max(("stooq", score["stooq"]), ("alpaca", score["alpaca"]), key=lambda kv: kv[1])
+    best = max((("yfinance", score["yfinance"]), ("stooq", score["stooq"]),
+                ("alpaca", score["alpaca"])), key=lambda kv: kv[1])
     if best[1] >= 0.6 * n:
-        print(f"✅ THE CEILING IS REMOVABLE AT ZERO COST: {best[0]} serves {best[1]}/{n} "
-              f"delisted names.\n   A survivorship-corrected universe can be rebuilt from Form 25 "
-              f"plus {best[0]} without\n   buying anything. That does not raise measured returns -- it "
-              f"LOWERS them, which is the point.")
+        print(f"✅ THE CEILING IS LARGELY REMOVABLE AT ZERO COST: {best[0]} serves {best[1]}/{n}.")
+        print(f"   Most exchange delistings CONTINUE trading OTC and the series runs to the")
+        print(f"   present, so the price path a strategy would actually have experienced is")
+        print(f"   obtainable. This does not raise measured returns — it LOWERS them, which is")
+        print(f"   the whole point of removing a ceiling.")
+        print(f"   ⚠️ TWO THINGS THIS DOES NOT SETTLE. (1) The enumeration over-counts: "
+              f"{buckets['still-listed']}/{n}")
+        print(f"   of these are still listed, so Form 25 alone is not a delisting filter. (2) A")
+        print(f"   ticker can be REUSED after a delisting; matching by CIK rather than symbol is")
+        print(f"   required before any of this is spliced into a universe.")
     elif best[1] > 0:
         print(f"🟡 PARTIAL: {best[0]} serves {best[1]}/{n}. Enough to BOUND the bias — price the "
               f"names\n   that are available, treat the rest as a stated unknown — but not to "
