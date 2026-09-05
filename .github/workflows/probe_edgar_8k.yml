@@ -1,0 +1,44 @@
+name: Availability probe — EDGAR 8-K Item 2.02 announcement dates for the A4 universe
+
+# The Finnhub probe did not clear (4 quarters, no announcement date). This
+# asks EDGAR the same question: CIK coverage of the 907, 8-K Item 2.02 count
+# in the 1,095-day window (full sweep), acceptance-hour distribution, and
+# XBRL quarterly-EPS depth on a sample. No key needed. Computes no return,
+# writes nothing under data/, spends no K.
+#
+# Push trigger scoped to its own branch because workflow_dispatch is only
+# available once the file is on the default branch.
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'v27/edgar-8k-probe'
+    paths:
+      - 'probe_edgar_8k.py'
+      - '.github/workflows/probe_edgar_8k.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas requests
+      - name: Probe
+        env:
+          # SEC fair-access asks for a descriptive User-Agent. Optional secret;
+          # the script's default identifies the repository.
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+        run: python probe_edgar_8k.py
+      - name: Guard — nothing written under data/
+        run: |
+          set -u
+          if ! git diff --quiet -- data/; then echo "::error::probe wrote under data/"; exit 1; fi
+          echo "OK — data/ untouched, K untouched."
