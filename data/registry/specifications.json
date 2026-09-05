@@ -15,8 +15,12 @@
     "form4_cluster_buy_v2 was declared 2026-09-04 AFTER both availability",
     "checks cleared (docs/V27_FORK_DECISION.md section 6) and BEFORE any",
     "return on its inputs was computed. Budget is consumed by a READ, not a",
-    "declaration: K remains 1/5 until v2 is read. A per-spec prior is",
-    "REQUIRED BEFORE THE READ and is recorded in result.prior when given.",
+    "declaration: K remains 1/5 until v2 is read. The per-spec prior was",
+    "recorded 2026-09-04 20:44:54 ET, sixteen seconds before dispatch.",
+    "",
+    "2026-09-05 00:45Z: a MISWIRED dispatch (run 33933992017) was authorised",
+    "for v2 but loaded v1's 365-day event file, not v2's declared 1,095-day",
+    "file. See form4_cluster_buy_v2.result.deviations. read_at stays EMPTY.",
     "",
     "A REBUILD DOES NOT RESET THIS FILE. Clearing it to start fresh is the",
     "rebound-building NEXT_ARCHITECTURE.md section 5 warned about."
@@ -79,18 +83,44 @@
       "declared_at": "2026-09-04",
       "read_at": "",
       "result": {
-        "prior": "REQUIRED BEFORE READ -- docs/V27_SPEC2_PROPOSAL.md section 5: P(clears all four E1 bars) = ___%, signed, dated. The project prior was 15%; spec #1 has since failed with a mode more data does not repair, so a number BELOW 15% is the defensible direction.",
+        "prior": "P(spec #2 clears all four E1 bars) = 10%, signed Southpaw3234, 2026-09-04 -- recorded BEFORE the read was dispatched (see git timestamp of this commit vs read_at). Below the 15% project prior: spec #1 failed with a mode more data does not repair.",
         "availability_checks": {
           "finnhub_returns_1095d": "YES -- run 33927199851: 110,454 raw tx, 11,443 code-P, 561 events; 2024=35,442 and 2025=37,276 filings, tier does not cap",
           "dedup_at_63_bars": "YES -- run 33927201211 on the 205-event v1 set: 127 settle vs bar 40; on the 561-event set expect ~390 settled"
         },
+        "deviations": [
+          {
+            "when": "2026-09-05T00:45:10Z",
+            "run_id": "33933992017",
+            "what": "MISWIRED READ. The Referee authorised form4_cluster_buy_v2 (K_tested=2 printed correctly) and the output went to event_study_v2.csv correctly, but the engine LOADED events_form4.csv -- v1's 205-event, 365-day file -- instead of the declared events_form4_1095d.csv. The 561-event declared input was never opened. Proof: the ledger's event dates span 2025-09-04 to 2026-06-01, the v1 window; the 1,095-day file starts 2023-09-08.",
+            "cause": "The e1 job resolved QT_EVENTS_CSV as `inputs.events_csv || 'data/events/events_form4_1095d.csv'`. But `events_csv` is a dispatch input shared with the count job, whose DECLARED DEFAULT is the v1 file -- so on every dispatch it is non-empty and the fallback never fires. Same failure class as `if typ and typ not in ...`: a fallback that cannot trigger. Caught because 'dropped 51 / wrote 127 / 27 unmatured' matched check 2 on the v1 set to the digit.",
+            "what_actually_ran": "An UNDECLARED specification: horizon 63 bars x lookback 365 days. Never registered. Its event set is a strict subset (roughly one third) of spec #2's.",
+            "result_seen": {
+              "n": 127,
+              "mean": 0.040017,
+              "t": 1.08,
+              "stability": 0.29,
+              "first_third": 0.069827,
+              "last_third": 0.020051,
+              "delisted": 0,
+              "wrc_bonf_raw_p": 0.125,
+              "wrc_bonf_bar": 0.02,
+              "verdict": "NOT MET",
+              "reading": "Effect size roughly tripled vs v1 (+1.76% -> +4.00%) as linear accrual predicts; t did not move (1.16 -> 1.08) because dispersion scaled too; stability improved from a sign reversal (-0.52) to a decay (0.29) -- no longer reversing, still failing the 0.50 bar."
+            },
+            "k_effect": "record_read was NOT called. read_at for form4_cluster_buy_v2 remains EMPTY. The declared inputs were never loaded, so under the letter of the rule spec #2 has not been read. BUT a return on roughly one third of its data has now been seen, and that is exactly the kind of peek the pre-registration exists to prevent. Whether this contaminates spec #2 -- forfeit it, or proceed on the declared inputs with this deviation attached -- is a Referee-level decision left to the operator. Recorded here so it cannot be forgotten either way. Mitigating facts: the parameters were frozen BEFORE the peek, so it cannot have shaped the design; and the peek was a NOT MET, so it supplies no favourable selection pressure.",
+            "artifact": "data/events/event_study_v2_MISWIRED_365d.csv (127 rows). NOT event_study_v2.csv, which stays reserved for the declared read. If the operator forfeits spec #2, this file is the record of why.",
+            "fix": "The e1 job gets its own e1_events_csv input defaulting to the 1,095-day file, and REFUSES (exit 5) to run if the events file it is about to load does not match the registry's declared events_file for the spec. The Referee already knew the right file; the job never asked it."
+          }
+        ],
         "caveats_to_travel_with_any_number": [
           "TWO PARAMETERS CHANGED IN ONE SPECIFICATION: a failure will not say whether horizon or sample was wrong (docs/V27_FORK_DECISION.md section 5)",
           "SURVIVORSHIP IS MATERIALLY WORSE THAN v1: three years of small-cap delistings are missing instead of one, all invisible, all biasing UPWARD. probe_delisted.py: 0/3 bankruptcies serve price history -- no free fix. Any pass is a CEILING with an unknown floor.",
           "delisted=0 in the sensitivity report is EXPECTED and is the bias confirming itself: every ticker entered the universe as a survivor",
           "ALL power projections assume the effect accrues linearly with horizon; if v1's +1.76% was a right-skewed noise draw, tripling the horizon multiplies noise and t does not move",
           "NEXT-SESSION ENTRY biases DOWNWARD by up to one session (unchanged from v1)",
-          "WRC/SPA at p<0.10 against K=5 is REQUIRED for a pass -- evaluated inline by event_study.py via qt.wrc.event_study_correction since PR #53; the bar is alpha/K_declared = 0.02 and unread slots are charged"
+          "WRC/SPA at p<0.10 against K=5 is REQUIRED for a pass -- evaluated inline by event_study.py via qt.wrc.event_study_correction since PR #53; the bar is alpha/K_declared = 0.02 and unread slots are charged",
+          "A MISWIRED DISPATCH on 2026-09-05 exposed roughly one third of this spec's data at 63 bars before the declared read (see deviations). The parameters were frozen before that peek."
         ]
       }
     }
