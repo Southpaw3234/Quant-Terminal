@@ -362,8 +362,8 @@ def _print_summary(s: dict) -> None:
           f"bar >= {E1_STABILITY:.2f}]  "
           f"(first {s['first_third']:+.4%} -> last {s['last_third']:+.4%})")
     print(f"  E1 verdict     : {'PASS' if s['pass'] else 'NOT MET'}")
-    print("  NOTE: E1 also requires WRC/SPA p < 0.10 against K=5. That is a "
-          "separate step and is NOT evaluated here.")
+    print("  (point estimate only — WRC/SPA against the declared K follows "
+          "below and is REQUIRED for a pass)")
 
 
 def _count_only(events: pd.DataFrame, prices: dict, h: int) -> None:
@@ -490,6 +490,22 @@ def main() -> None:
     from qt import measurement as _qm
     print()
     print(_qm.format_sensitivity(_qm.survivorship_sensitivity(merged)))
+
+    # Multiple-testing correction against the DECLARED K. E1 requires WRC/SPA
+    # at p<0.10 against K=5; until qt.wrc existed this was a NOTE nobody could
+    # act on. Event sets are unaligned across specs, so the honest route is a
+    # per-spec bootstrap p charged at alpha/K_declared -- unread slots count.
+    from qt import wrc as _wrc
+    from qt import referee as _ref
+    _label = SPEC_ID or "unspecified"
+    _mt = _wrc.event_study_correction({_label: merged["abnormal_ret"].values},
+                                      k_declared=_ref.K_BUDGET, alpha=0.10)
+    print()
+    print("=== E1 multiple-testing (WRC/SPA, declared K) ===")
+    for _r in _mt.values():
+        print("  " + _r.summary())
+    print("  A point-estimate PASS above is NOT an E1 pass unless this line also "
+          "reads PASS. The bar is alpha/K_declared, and unread slots are charged.")
     for et, grp in merged.groupby("event_type"):
         if len(grp) >= 2:
             _print_summary(summarize(grp, str(et)))

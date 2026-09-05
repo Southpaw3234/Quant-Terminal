@@ -25,6 +25,7 @@ on:
       - 'validate_qt.py'
       - 'validate_qt_phase1.py'
       - 'validate_qt_prices.py'
+      - 'validate_qt_wrc.py'
       - 'event_study.py'
       - 'data/registry/**'
       - 'data/events/event_study.csv'
@@ -61,9 +62,9 @@ jobs:
       - name: Compile check
         run: |
           python -m py_compile qt/__init__.py qt/ledger.py qt/guards.py \
-            qt/measurement.py qt/referee.py qt/prices.py
+            qt/measurement.py qt/referee.py qt/prices.py qt/wrc.py
           python -m py_compile validate_qt.py validate_qt_phase1.py \
-            validate_qt_prices.py
+            validate_qt_prices.py validate_qt_wrc.py
 
       - name: Run Phase 0 validation
         run: python validate_qt.py
@@ -73,6 +74,9 @@ jobs:
 
       - name: Run price-layer validation (back-adjustment semantics)
         run: python validate_qt_prices.py
+
+      - name: Run WRC/SPA validation (the data-snooping demonstration)
+        run: python validate_qt_wrc.py
 
       - name: Assert the live pipeline is untouched
         run: |
