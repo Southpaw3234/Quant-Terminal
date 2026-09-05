@@ -83,10 +83,25 @@ def test_no_lookahead():
           before.eligible,
           "a company that delists in mid-2024 IS in the universe in March 2024 — "
           "exactly the name today's screen can never see")
-    check("dead-name-carries-stale-adv-after",
-          after.eligible or after.reason in ("too_illiquid", "no_price", "short_history"),
-          f"after it stops trading the screen reports {after.reason} from the last "
-          f"{b.ADV_LOOKBACK} real bars — step 3 must not treat that as a live listing")
+    # 🔑 THIS CHECK CAUGHT A REAL DEFECT, and its first version hid it. It
+    # originally allowed either answer — `after.eligible or after.reason in
+    # (...)` — which passes whatever happens and decides nothing. The screen
+    # alone DOES report this dead name as eligible in 2025, off its final 60
+    # bars, forever. Liveness is what makes the answer right.
+    check("screen-alone-would-zombie-it",
+          after.eligible,
+          "the ADV screen BY ITSELF still calls a name that stopped trading in "
+          "June 2024 eligible in March 2025 — this is the defect, recorded")
+    check("liveness-kills-the-zombie",
+          not b.is_live(c2, pd.Timestamp("2025-03-31")),
+          "is_live() refuses it: no bar within "
+          f"{b.MAX_STALE_DAYS} days of the as-of date")
+    check("liveness-allows-a-living-name",
+          b.is_live(c2, pd.Timestamp("2024-03-29")),
+          "and it does NOT refuse the same name while it was still trading")
+    check("liveness-refuses-empty-history",
+          not b.is_live(c2, pd.Timestamp("2022-01-01")),
+          "a name with no bars before the as-of date is not live on it")
 
 
 def test_screen_tuple_is_declared():

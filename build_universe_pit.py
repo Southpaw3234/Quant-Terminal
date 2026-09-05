@@ -82,6 +82,30 @@ ADV_LOOKBACK = int(os.environ.get("QT_U_ADV_LOOKBACK", "60"))
 
 USABLE_STATUS = ("otc-continuation", "still-listed")
 
+# 🔑 LIVENESS. Not a new screen threshold — the RESTORATION of one that was
+# free before and is not any more.
+#
+# `dollar_adv` takes the last 60 bars strictly before the as-of date, however
+# old they are. Against today's listings that was harmless: every candidate
+# was live by construction, so a name always had recent bars. Against a pool
+# that now contains dead companies it is a hole — a name that stopped trading
+# in June 2024 keeps screening ELIGIBLE in 2025 off its final 60 bars, forever.
+# Step 3 would then hunt for events on a company that no longer trades.
+#
+# So the original screen had an implicit liveness requirement it never had to
+# state. Adding it here makes the point-in-time screen EQUIVALENT to the
+# declared one rather than looser than it. Omitting it would be the change.
+MAX_STALE_DAYS = int(os.environ.get("QT_PIT_MAX_STALE_DAYS", "15"))
+
+
+def is_live(close: pd.Series, asof, max_stale_days: int = MAX_STALE_DAYS) -> bool:
+    """Did this name trade recently enough before `asof` to be listed on it?"""
+    prior = close[close.index < pd.Timestamp(asof)]
+    if len(prior) == 0:
+        return False
+    gap = (pd.Timestamp(asof) - prior.index[-1]).days
+    return gap <= max_stale_days
+
 
 # ═══════════════════════════════════════════════════ pure logic (no network)
 
@@ -105,7 +129,6 @@ def candidate_pool(universe_df: pd.DataFrame, roster_df: pd.DataFrame) -> tuple:
             continue
         if tk not in pool:
             pool[tk] = (str(r.get("cik", "")), "roster")
-        excluded["added_from_roster"] += 0
     return sorted((t, c, s) for t, (c, s) in pool.items()), excluded
 
 
@@ -122,8 +145,9 @@ def evaluate(pool, prices: dict, grid) -> tuple:
             e = qtp.screen_as_of(close, volume, d, adv_max=ADV_MAX,
                                  adv_min=ADV_MIN, price_min=PRICE_MIN,
                                  min_history=MIN_HISTORY, lookback=ADV_LOOKBACK)
-            funnel[e.reason] += 1
-            if e.eligible:
+            live = is_live(close, d)
+            funnel[e.reason if live else "stale_no_longer_trading"] += 1
+            if e.eligible and live:
                 rows.append({
                     "date": d.strftime("%Y-%m-%d"),
                     "ticker": tk,
@@ -183,6 +207,7 @@ def main() -> None:
           f"+ {sum(1 for _,_,s in pool if s=='roster')} from the roster")
     print(f"[pit] roster rows NOT pooled: "
           f"{ {k: v for k, v in excluded.items() if v} }")
+    print(f"[pit] liveness: a name must have traded within {MAX_STALE_DAYS} days of the as-of date")
     print(f"[pit] {len(grid)} month-ends {grid[0].date()} .. {grid[-1].date()}\n")
 
     t0 = time.time()
