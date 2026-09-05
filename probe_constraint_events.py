@@ -140,6 +140,7 @@ def main() -> None:
 
     t0 = time.time()
     totals = collections.Counter()
+    left = []
     names_with = collections.Counter()
     resolved = 0
     for k, tk in enumerate(sample):
@@ -152,6 +153,8 @@ def main() -> None:
             totals[label] += n
             if n:
                 names_with[label] += 1
+                if label == "25-NSE":
+                    left.append(tk)
         if (k + 1) % 40 == 0:
             print(f"  ...{k+1}/{len(sample)} names, {resolved} resolved, {time.time()-t0:.0f}s")
 
@@ -180,9 +183,15 @@ def main() -> None:
     print(f"    it BELOW 3.01 on prior, not on availability. Availability was never its problem.")
     print(f"  * SC TO-I at ~{int(totals['SC TO-I']*scale):,} is the thin one; issuer tenders are rare")
     print(f"    in this size band.")
-    print(f"  * 25-NSE at ~{int(totals['25-NSE']*scale):,} counts names in OUR universe that LEFT —")
-    print(f"    expected to be near zero BY CONSTRUCTION, since the universe is today's listings.")
-    print(f"    A non-zero count here would mean the screen is staler than believed.")
+    print(f"  * 25-NSE: {names_with['25-NSE']}/{resolved} names have a Form 25 filed against them "
+          f"(~{int(totals['25-NSE']*scale):,} projected)")
+    print(f"    the names: {', '.join(left) if left else 'none'}")
+    print(f"    ⚠️ DO NOT read this as 'the universe is stale'. A Form 25 removes A SECURITY, not")
+    print(f"    necessarily the common stock. Warrants and units from de-SPACed shells are delisted")
+    print(f"    routinely while the common keeps trading, and an exchange TRANSFER files one too.")
+    print(f"    Every name above is still in a universe screened on recent bars, so the common")
+    print(f"    most likely survived. Which it is can be settled by reading those filings. It is")
+    print(f"    NOT settled by this count, and the earlier draft of this probe overclaimed it.")
     print("\n[constraints] done. Availability only — no return computed, nothing written, K untouched.")
 
 

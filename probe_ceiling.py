@@ -179,8 +179,14 @@ def main() -> None:
     print("\n" + "=" * 72)
     print(f"2. CAN ANY SOURCE PRICE THEM — {N_PRICE_TEST} delisted names, 3 sources")
     print("=" * 72)
-    key = (os.environ.get("ALPACA_API_KEY") or "").strip()
-    secret = (os.environ.get("ALPACA_SECRET_KEY") or "").strip()
+    # .strip() does NOT remove a byte-order mark, and requests encodes headers
+    # as latin-1, so a BOM-prefixed secret raises UnicodeEncodeError before the
+    # request is ever sent. Measured: run 33942204384 died exactly there. The
+    # live pipeline is unaffected -- alpaca-py encodes headers as UTF-8 -- but a
+    # BOM inside a stored secret is worth knowing about.
+    _BOM = "﻿"
+    key = (os.environ.get("ALPACA_API_KEY") or "").replace(_BOM, "").strip()
+    secret = (os.environ.get("ALPACA_SECRET_KEY") or "").replace(_BOM, "").strip()
     if not (key and secret):
         print("  ⚠️ ALPACA_API_KEY/ALPACA_SECRET_KEY not set — Alpaca column will read 'nokey'")
     sample = [t for t, _ in delisted[:N_PRICE_TEST]]
@@ -188,10 +194,17 @@ def main() -> None:
     print(f"\n  {'ticker':<8} {'delisted':<12} {'yfinance':<14} {'stooq':<14} {'alpaca':<14}")
     for tk in sample:
         when = dict(delisted).get(tk, "")
-        y_ok, y_n = try_yfinance(tk)
-        s_ok, s_n = try_stooq(sess, tk); time.sleep(SLEEP)
+        # FAIL SOFT per source. A probe that dies on source 3 throws away what
+        # sources 1 and 2 already established.
+        def _safe(fn, *a):
+            try:
+                return fn(*a)
+            except Exception as exc:
+                return False, f"err:{type(exc).__name__}"
+        y_ok, y_n = _safe(try_yfinance, tk)
+        s_ok, s_n = _safe(try_stooq, sess, tk); time.sleep(SLEEP)
         if key and secret:
-            a_ok, a_n = try_alpaca(sess, tk, key, secret); time.sleep(SLEEP)
+            a_ok, a_n = _safe(try_alpaca, sess, tk, key, secret); time.sleep(SLEEP)
         else:
             a_ok, a_n = False, "nokey"
         score["yfinance"] += int(y_ok); score["stooq"] += int(s_ok); score["alpaca"] += int(a_ok)
