@@ -300,6 +300,23 @@ E1: NOT MET   — cleared N and mean; missed t, stability, WRC
 
 🔑 **THE LINEAR-ACCRUAL ASSUMPTION IS FALSIFIED.** The 365-day subset read +4.00% / t 1.08; the full 1,095 days read +1.19% / t 0.62. **Tripling the sample cut the mean by 70% and t by 43.** Every power projection in `V27_FORK_DECISION.md` §⑤ and `V27_SPEC2_PROPOSAL.md` §② assumed the effect accrues linearly with horizon and holds across the sample; it does neither. The recent third was the high end of noise. Stability is undefined because the first third is *negative* — the effect runs the opposite direction to spec #1's decay, which is what a null does across specifications. **Outcome consistent with the 10% prior.** Frozen ledger `event_study_v2.csv` (406 rows) committed; registry carries the full read block, the miswire deviation, the PROCEED decision, and the anti-deferral statement. **This read stands.** Two of two declared v27 reads have failed; with v25's S1–S3 that is **five pre-registered criteria down, S4 pending.** Three specifications remain. **Recommendation: do not spend #3 on a variation of this theme** — the effect size on the recent year was noise, the hypothesis has now failed at two horizons and two sample sizes, and the strongest argument for holding budget is that a better hypothesis cannot be tested if it is gone.
 
+**⑮ 🔑 THE FINDING OF TWO SPECIFICATIONS, WRITTEN DOWN: THE TYPICAL INSIDER-CLUSTER-BUY EVENT LOSES MONEY.** Recorded in the registry as `tail_analysis` against v2's read (PR #60), pinned by two new `validate_qt_phase1.py` assertions. It was not in ⑭ and it is the actual result.
+
+```
+                         spec #1 (21 bars, n=160)   spec #2 (63 bars, n=406)
+mean                     +1.76%                     +1.19%
+MEDIAN                   −0.17%                     −4.49%
+% positive               49%                        40%
+mean WITHOUT top decile  −2.80%                     −8.05%
+best / worst             +118% / −56%               +269% / −77%
+```
+
+The +1.19% mean is **entirely a 10% right tail** — 40 events summing to +3,427%, **seven times the whole positive mass**. Remove them and the other 366 average −8.05%. It is a losing strategy with a lottery-ticket tail, not a signal with noise around it, and it **worsened with more data exactly as a null does** (median −0.17% → −4.49%, hit rate 49% → 40%). The universe is survivor-biased upward, so the true median is worse than −4.49%.
+
+🔑 **No instrument improvement fixes this** — matched controls, winsorizing, the survivorship fix, a longer horizon, a larger sample **all push the median down**. The problem is the shape of the outcome distribution, not the measurement of it. Not tradeable in reverse either: the +269% events are what a short book cannot survive.
+
+**What it rules out for spec #3:** any hypothesis that is a bet on *which* small company recovers has this shape. Officers-only, larger threshold, first-buy-in-N-years — **variations on a distribution that has now failed at two horizons and two sample sizes, not new hypotheses.** A third specification needs a mechanism where the **median** is positive: slow information diffusion (post-earnings drift) or a mechanical flow (index-deletion rebound). K remains 2/5; the third slot stays unspent until an availability probe clears (`probe_earnings.py`, PR #60 — schema, history depth, small-cap coverage; no return computed).
+
 ## 🗓️ SESSION LEDGER — 2026-09-04 (Friday): 🔴 **THE 2026-09-01 FALSE-FLAT — ALPACA RETURNED AN EMPTY POSITION LIST AND EVERY GUARD BELIEVED IT.** HON was never covered; it was short the whole time. `pos_ok=True` on a zero-length list meant "successfully read zero positions", indistinguishable from "flat", and the flat-invariant gate printed `OK — armed and flat (book=0)` twice across nine hours. ⚠️ **S4 HAS MOVED MATERIALLY: N=14, mean +0.0315, t +0.98** — the required run-rate fell from ~5× the window mean to ~1.7×. Still not a pass; no longer arithmetically dismissible. 🆕 **v28 Phases 0 and 1 built and merged** (`qt/` package: ledger, guards, measurement, referee), neither spending K.
 
 **① THE FALSE-FLAT. This is the most consequential finding since the stale-signal bug.**
