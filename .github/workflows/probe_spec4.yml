@@ -1,0 +1,86 @@
+name: Availability probes — spec #4 constraint events, and the survivorship ceiling
+
+# Two independent questions, one workflow:
+#
+#   ceiling      How big is the survivorship hole (Form 25 delisting notices),
+#                and does ANY source price the names in it? yfinance is the
+#                incumbent and the reason the ceiling exists; Stooq is free;
+#                Alpaca is already paid for. If Alpaca serves delisted bars the
+#                ceiling costs nothing to remove.
+#   constraints  Are the spec #4 candidate events countable on the A4 universe,
+#                and at what density?
+#
+# Neither computes a return, neither writes under data/, neither spends K.
+#
+# v27 SEQUENCING: not scheduled, not wired into quant_daily.yml. Nothing here
+# may run on a cron or write under data/predictions/ before 2026-09-29.
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_ceiling:
+        description: 'Probe the survivorship ceiling (Form 25 + yfinance/Stooq/Alpaca)'
+        type: boolean
+        default: true
+      run_constraints:
+        description: 'Probe constraint-event availability on the A4 universe'
+        type: boolean
+        default: true
+  push:
+    branches:
+      - 'v27/**'
+      - 'v28/**'
+    paths:
+      - 'probe_ceiling.py'
+      - 'probe_constraint_events.py'
+      - '.github/workflows/probe_spec4.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  ceiling:
+    if: github.event_name == 'push' || inputs.run_ceiling
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas requests "yfinance>=0.2.40,<2"
+      - name: Probe the ceiling
+        env:
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+          # Read-only market-data calls. This job places no orders and never
+          # touches the trading endpoint.
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+        run: python probe_ceiling.py
+      - name: Guard — nothing written under data/
+        run: |
+          set -u
+          if ! git diff --quiet -- data/; then echo "::error::probe wrote under data/"; exit 1; fi
+          echo "OK — data/ untouched, K untouched."
+
+  constraints:
+    if: github.event_name == 'push' || inputs.run_constraints
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas requests
+      - name: Probe constraint-event availability
+        env:
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+        run: python probe_constraint_events.py
+      - name: Guard — nothing written under data/
+        run: |
+          set -u
+          if ! git diff --quiet -- data/; then echo "::error::probe wrote under data/"; exit 1; fi
+          echo "OK — data/ untouched, K untouched."
