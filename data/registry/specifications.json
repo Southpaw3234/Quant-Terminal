@@ -90,7 +90,7 @@
           "delisted=0 in the sensitivity report is EXPECTED and is the bias confirming itself: every ticker entered the universe as a survivor",
           "ALL power projections assume the effect accrues linearly with horizon; if v1's +1.76% was a right-skewed noise draw, tripling the horizon multiplies noise and t does not move",
           "NEXT-SESSION ENTRY biases DOWNWARD by up to one session (unchanged from v1)",
-          "WRC/SPA at p<0.10 against K=5 is REQUIRED for a pass and is a separate step"
+          "WRC/SPA at p<0.10 against K=5 is REQUIRED for a pass -- evaluated inline by event_study.py via qt.wrc.event_study_correction since PR #53; the bar is alpha/K_declared = 0.02 and unread slots are charged"
         ]
       }
     }
