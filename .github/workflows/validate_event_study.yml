@@ -148,9 +148,43 @@ jobs:
             exit 5
           fi
           echo "input guard OK: $QT_EVENTS_CSV matches the registry's declared events_file"
+          # OUTPUT GUARD, the mirror of the input guard above. The registry names
+          # each spec's declared output_ledger; this job never asked it, and the
+          # only protection was the hardcoded v1 check below -- which names ONE
+          # file. Dispatching spec #3 while leaving out_csv at its default
+          # (event_study_v2.csv) passed every check and would have written into
+          # spec #2's frozen ledger.
+          #
+          # 🔑 THAT WOULD NOT HAVE FAILED LOUDLY. qt.ledger.freeze_first_write
+          # protects rows ALREADY written and APPENDS new ones, so the result is
+          # not a crash and not an overwrite: it is two specifications silently
+          # mixed in one file, discoverable only by noticing the row count moved.
+          DECLARED_OUT=$(python - <<'PY'
+          import json, os
+          r = json.load(open("data/registry/specifications.json"))
+          s = r["specifications"].get(os.environ["QT_SPEC_ID"], {})
+          print((s.get("params", {}).get("output_ledger", "") or "").split(" ")[0])
+          PY
+          )
+          if [ -n "$DECLARED_OUT" ] && [ "$DECLARED_OUT" != "$QT_EVENT_OUT" ]; then
+            echo "::error::spec $QT_SPEC_ID declares output_ledger=$DECLARED_OUT but this job was about to write $QT_EVENT_OUT — refusing. A frozen ledger APPENDS, so this would mix two specifications in one file."
+            exit 6
+          fi
+          if [ -n "$DECLARED_OUT" ]; then
+            echo "output guard OK: $QT_EVENT_OUT matches the registry's declared output_ledger"
+          else
+            echo "output guard: spec $QT_SPEC_ID declares no output_ledger — falling through to the v1 check below"
+          fi
           # HARD GUARD: v1's ledger is frozen evidence. The freeze would keep v1's
           # rows and APPEND another spec's -- two specifications silently mixed in
           # one file. Refuse before a single price downloads.
+          #
+          # KEPT, not replaced: form4_cluster_buy_v1 was declared before the
+          # registry carried an output_ledger field, so DECLARED_OUT is empty for
+          # it and the guard above cannot fire. Backfilling that field would mean
+          # hand-editing the params of an already-READ specification, which is
+          # exactly the edit the registry's own note forbids. So v1 keeps its
+          # hardcoded guard and the two together cover every spec.
           if [ "$QT_EVENT_OUT" = "data/events/event_study.csv" ] && [ "$QT_SPEC_ID" != "form4_cluster_buy_v1" ]; then
             echo "::error::refusing to write spec $QT_SPEC_ID into v1's frozen ledger"; exit 4
           fi
