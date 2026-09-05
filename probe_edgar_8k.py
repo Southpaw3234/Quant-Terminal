@@ -237,21 +237,44 @@ def main() -> None:
     print(f"  MATURED for a 63-bar horizon (filed <= {MATURE_BY}): {len(mature)} in sample"
           f"  ->  ~{int(len(mature)*scale):,} projected across all {len(universe)} names")
 
-    hours = collections.Counter()
+    # acceptanceDateTime is served in UTC (the trailing Z). Reading the raw
+    # hour as ET puts a 21:01Z after-close release at "9pm" and a 12:00Z
+    # pre-market release "inside the session" -- backwards, and it would drive
+    # the entry-bar rule the wrong way. Convert, then bucket against the
+    # actual session. DST matters here: the same clock hour is a different
+    # session position in January and July, so tz_convert does the work.
+    hours = collections.Counter(); buckets = collections.Counter(); n_ts = 0
     for e in events:
         a = e["acceptance"]
-        if "T" in a:
-            hours[a.split("T")[1][:2]] += 1
-    print("\n  acceptance-hour histogram (ET as served; decides same-day vs next-bar entry):")
-    unit = max(1, sum(hours.values()) // 60)
+        if "T" not in a:
+            continue
+        try:
+            et = pd.Timestamp(a).tz_convert("America/New_York")
+        except Exception:
+            continue
+        n_ts += 1
+        hours[f"{et.hour:02d}"] += 1
+        mins = et.hour * 60 + et.minute
+        if mins < 9 * 60 + 30:
+            buckets["pre-market (before 09:30 ET)"] += 1
+        elif mins < 16 * 60:
+            buckets["INSIDE the session (09:30-16:00 ET)"] += 1
+        else:
+            buckets["after the close (after 16:00 ET)"] += 1
+    print("\n  acceptance hour, converted to ET (served as UTC; DST-aware):")
+    unit = max(1, n_ts // 60)
     for h in sorted(hours):
-        mark = "  <- during session" if "09" <= h <= "15" else ""
-        print(f"    {h}h {hours[h]:>5}  {'#' * (hours[h] // unit)}{mark}")
-    print(f"  no timestamp: {len(events) - sum(hours.values())}")
-    intraday = sum(v for h, v in hours.items() if "09" <= h <= "15")
-    if hours:
-        print(f"  {100*intraday/sum(hours.values()):.0f}% land inside the session — those need the NEXT bar, "
-              f"not the close of the filing day.")
+        print(f"    {h}h ET {hours[h]:>5}  {'#' * (hours[h] // unit)}")
+    print(f"  no timestamp: {len(events) - n_ts}")
+    for b, v in sorted(buckets.items(), key=lambda kv: -kv[1]):
+        print(f"    {v:>5}  {100*v/max(1,n_ts):>5.1f}%  {b}")
+    inside = buckets["INSIDE the session (09:30-16:00 ET)"]
+    if n_ts:
+        print(f"\n  ENTRY-BAR CONSEQUENCE: {100*(n_ts-inside)/n_ts:.0f}% of announcements land OUTSIDE "
+              f"the session,\n  so for almost every event the first tradeable bar is unambiguous — the next "
+              f"open.\n  The {inside} ({100*inside/n_ts:.0f}%) that land intraday are the ones where a "
+              f"same-day close would\n  capture part of the announcement move itself, and the study must skip "
+              f"to the next bar.")
 
     lags = []
     for e in events:
