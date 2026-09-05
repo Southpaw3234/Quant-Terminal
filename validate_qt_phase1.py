@@ -247,9 +247,19 @@ def test_spec2_declared():
           s2 is not None and "event_study_v2.csv" in s2.params.get("output_ledger", "")
           and "NEVER" in s2.params.get("output_ledger", ""),
           "output ledger is event_study_v2.csv and the record says NEVER v1's")
-    check("spec2-prior-flagged",
-          s2 is not None and "REQUIRED BEFORE READ" in str(s2.result.get("prior", "")),
-          "the per-spec prior is flagged as required-before-read, not invented")
+    _prior = str(s2.result.get("prior", "")) if s2 is not None else ""
+    check("spec2-prior-recorded",
+          "= 10%" in _prior and "signed" in _prior and "BEFORE the read" in _prior,
+          f"the per-spec prior is RECORDED, signed, dated before the read: "
+          f"{_prior[:58]}...")
+    _dev = (s2.result.get("deviations") or []) if s2 is not None else []
+    check("spec2-miswire-recorded",
+          any("MISWIRED" in str(d.get("what", "")) for d in _dev),
+          "the 2026-09-05 miswired dispatch is RECORDED as a deviation, with its "
+          "result, so the accidental subset peek cannot be forgotten either way")
+    check("spec2-still-unread-after-miswire", not s2.is_read,
+          "read_at stays EMPTY — the declared inputs were never loaded, and "
+          "whether the peek contaminates spec #2 is the operator's call")
     check("spec2-caveats-travel",
           s2 is not None and len(s2.result.get("caveats_to_travel_with_any_number", [])) >= 5,
           "survivorship / two-parameter / linear-accrual caveats stored WITH the spec")

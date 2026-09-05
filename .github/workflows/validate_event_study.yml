@@ -31,6 +31,14 @@ on:
         description: 'Output ledger. NEVER event_study.csv for any spec but v1 -- it is v1 frozen'
         type: string
         default: 'data/events/event_study_v2.csv'
+      e1_events_csv:
+        # E1 ONLY. Deliberately separate from `events_csv` above: that one's
+        # default is the count job's v1 file, so `inputs.events_csv || <1095d>`
+        # was non-empty on every dispatch and the fallback never fired. That is
+        # how the 2026-09-05 dispatch (run 33933992017) read the wrong spec.
+        description: 'E1 ONLY: events file to READ. Default = spec #2 declared input.'
+        type: string
+        default: 'data/events/events_form4_1095d.csv'
       run_e1:
         description: "THE E1 READ — computes returns and SPENDS one of K=5"
         type: boolean
@@ -110,7 +118,7 @@ jobs:
         run: pip install "numpy<2.4" pandas "yfinance>=0.2.40,<2"
       - name: Run the event study
         env:
-          QT_EVENTS_CSV: ${{ inputs.events_csv || 'data/events/events_form4_1095d.csv' }}
+          QT_EVENTS_CSV: ${{ inputs.e1_events_csv || 'data/events/events_form4_1095d.csv' }}
           QT_EVENT_OUT: ${{ inputs.out_csv || 'data/events/event_study_v2.csv' }}
           # Horizon deliberately NOT pinned here: it follows event_study.py's
           # default, which docs/V27_FORK_DECISION.md moved to 63. A hardcoded
@@ -123,6 +131,23 @@ jobs:
             echo "::error::no events file — run the extractor first."
             exit 1
           fi
+          # INPUT GUARD (added after the 2026-09-05 miswire). The registry already
+          # names each spec's declared events_file; the job never asked it. A job
+          # that loads a file the registry did not name is not reading the declared
+          # specification, whatever the Referee authorised. Refuse, before a price
+          # downloads.
+          DECLARED=$(python - <<'PY'
+          import json, os
+          r = json.load(open("data/registry/specifications.json"))
+          s = r["specifications"].get(os.environ["QT_SPEC_ID"], {})
+          print((s.get("params", {}).get("events_file", "") or "").split(" ")[0])
+          PY
+          )
+          if [ -n "$DECLARED" ] && [ "$DECLARED" != "$QT_EVENTS_CSV" ]; then
+            echo "::error::spec $QT_SPEC_ID declares events_file=$DECLARED but this job was about to read $QT_EVENTS_CSV — refusing (the 2026-09-05 miswire)"
+            exit 5
+          fi
+          echo "input guard OK: $QT_EVENTS_CSV matches the registry's declared events_file"
           # HARD GUARD: v1's ledger is frozen evidence. The freeze would keep v1's
           # rows and APPEND another spec's -- two specifications silently mixed in
           # one file. Refuse before a single price downloads.
