@@ -1,0 +1,43 @@
+name: Availability probe — Finnhub earnings surprises for the A4 universe
+
+# Candidate spec #3 is PEAD. Before it is drafted: which endpoint, how much
+# history, what coverage on small caps. ~45 API calls. Computes no return,
+# writes nothing under data/, spends no K.
+#
+# Push trigger scoped to its own branch because workflow_dispatch is only
+# available once the file is on the default branch.
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'v27/tail-analysis-earnings-probe'
+    paths:
+      - 'probe_earnings.py'
+      - '.github/workflows/probe_earnings.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas requests
+      - name: Probe
+        env:
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+        run: |
+          set -u
+          if [ -z "${FINNHUB_API_KEY}" ]; then echo "::error::FINNHUB_API_KEY not set"; exit 1; fi
+          python probe_earnings.py
+      - name: Guard — nothing written under data/
+        run: |
+          set -u
+          if ! git diff --quiet -- data/; then echo "::error::probe wrote under data/"; exit 1; fi
+          echo "OK — data/ untouched, K untouched."
