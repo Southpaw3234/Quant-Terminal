@@ -103,10 +103,14 @@ def test_classification():
 def test_constants():
     print("\n--- the roster does not screen, price, or spend ---")
     src = open("build_delisted_roster.py", encoding="utf-8").read()
+    # Assert the WRITE, not the mention. The first draft of this check failed
+    # on the docstring, which names the frozen universe file while explaining
+    # why the roster exists. A test that cannot tell a sentence from a write
+    # is worse than no test: it trains you to edit prose to make CI green.
     check("writes-only-the-roster",
-          "data/universe/delisted_roster.csv" in src
-          and "v27_universe.csv" not in src,
-          "it writes the roster and never touches the frozen universe file")
+          src.count(".to_csv(") == 1 and "df.to_csv(OUT_CSV" in src,
+          "exactly ONE write in the file and it targets OUT_CSV — the frozen "
+          "universe cannot be written even though the docstring names it")
     check("no-return-computed",
           "forward_return" not in src and "event_study" not in src,
           "no forward return, no engine import — this is inventory, not measurement")
