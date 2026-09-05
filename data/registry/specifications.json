@@ -22,6 +22,12 @@
     "for v2 but loaded v1's 365-day event file, not v2's declared 1,095-day",
     "file. See form4_cluster_buy_v2.result.deviations. read_at stays EMPTY.",
     "",
+    "2026-09-05: pead_8k_car_v3 declared after both availability probes",
+    "returned (33938076855 Finnhub, did not clear; 33939274269 EDGAR,",
+    "cleared) and before any return on its inputs was computed. K stays",
+    "2/5 -- a DECLARATION SPENDS NOTHING, only a read does. Its prior is",
+    "deliberately empty and must be signed before dispatch.",
+    "",
     "A REBUILD DOES NOT RESET THIS FILE. Clearing it to start fresh is the",
     "rebound-building NEXT_ARCHITECTURE.md section 5 warned about."
   ],
@@ -164,6 +170,50 @@
           "NEXT-SESSION ENTRY biases DOWNWARD by up to one session (unchanged from v1)",
           "WRC/SPA at p<0.10 against K=5 is REQUIRED for a pass -- evaluated inline by event_study.py via qt.wrc.event_study_correction since PR #53; the bar is alpha/K_declared = 0.02 and unread slots are charged",
           "A MISWIRED DISPATCH on 2026-09-05 exposed roughly one third of this spec's data at 63 bars before the declared read (see deviations). The parameters were frozen before that peek."
+        ]
+      }
+    },
+    "pead_8k_car_v3": {
+      "spec_id": "pead_8k_car_v3",
+      "params": {
+        "hypothesis": "POST-EARNINGS-ANNOUNCEMENT DRIFT. Small-cap prices underreact to earnings news, so a large positive announcement-window abnormal return is followed by continued positive drift over the next quarter. Direction is LONG-ONLY and pre-registered: positive surprises only. The short leg is NOT tested here, and testing it later is a SEPARATE specification consuming another slot.",
+        "universe": "907 US primary-exchange common stocks, 250k <= ADV <= 5M, price >= $2, >= 200 bars (UNCHANGED from v1/v2; frozen data/universe/v27_universe.csv)",
+        "event_source": "SEC EDGAR 8-K Item 2.02 ('Results of Operations and Financial Condition'), taken from the submissions API's structured `items` field; ticker->CIK rebuilt from EDGAR full-text search. NOT Finnhub: its earnings endpoint caps at 4 quarters and carries no announcement date (probe run 33938076855). www.sec.gov is 403 from CI AND from the operator's machine; data.sec.gov and efts.sec.gov answer only a User-Agent with no URL in it (probe run 33939274269).",
+        "lookback_days": 1095,
+        "event_window": "2023-09-01 .. 2026-09-05; one announcement per ticker per filing date (an 8-K and its same-day amendment are one event)",
+        "announcement_day_A": "acceptanceDateTime is served in UTC; convert to ET, DST-aware. A = the filing day D when D is a trading day and acceptance precedes its 16:00 ET close (this covers pre-market and intraday). Otherwise A = the next trading day after D. Measured on the probe: 66.5% after the close, 26.2% pre-market, 7.4% intraday.",
+        "surprise_measure": "ANNOUNCEMENT-WINDOW ABNORMAL RETURN (Chan-Jegadeesh-Lakonishok 1996), NOT an analyst-estimate SUE -- no free consensus exists at this universe size. CAR = the compounded stock return over sessions [A, A+1] MINUS the compounded SPY return over those same two sessions.",
+        "selection_threshold": "CAR[A, A+1] >= +5.0%. ABSOLUTE, and fixed HERE, before the CAR distribution has ever been computed. Deliberately not a cross-sectional decile (whose peer ranking would include later events) and not a trailing-window percentile (which would burn a year of the sample warming up). An absolute bar is point-in-time by construction.",
+        "entry": "the first bar STRICTLY AFTER the close of A+1 -- the open of A+2. event_ts is therefore SET TO the close of A+1 so that the engine's existing look-ahead guard produces this entry with no new code path. Entering at A+1's close would trade on the second day of the selection window itself.",
+        "horizon_bars": 63,
+        "control": "SPY, market-adjusted (UNCHANGED from v1/v2)",
+        "independence": "qt event-study _dedupe_overlaps, unchanged: the FIRST qualifying event per ticker wins, and any later event whose 63-bar window overlaps it is dropped. Quarterly reporting against a 63-bar hold means announcements nearly TILE, so expect heavy dropping -- roughly one surviving event per ticker per two quarters.",
+        "delisting_handling": "recorded at LAST TRADED PRICE and flagged exit_status=delisted; NOT -100%; three-way survivorship sensitivity required with the number (UNCHANGED)",
+        "events_file": "data/events/events_8k_car_1095d.csv",
+        "output_ledger": "data/events/event_study_v3.csv -- NEVER data/events/event_study.csv (v1, frozen) and NEVER data/events/event_study_v2.csv (v2, frozen)",
+        "expected_n": "~7,292 matured announcements projected universe-wide (probe run 33939274269, 150-name sample). Even a pessimistic 5% qualification rate at the +5.0% bar gives ~365 events before dedup and ~180 after -- more than 4x the N>=40 floor. THIS IS WHAT MAKES AN ABSOLUTE THRESHOLD SAFE: N would have to arrive four times below a pessimistic estimate before the floor were in question.",
+        "why_this_is_not_a_variation_of_spec_1_or_2": "Specs #1 and #2 bet on WHICH small company recovers, and produced a median-negative, tail-dominated distribution twice (see form4_cluster_buy_v2.result.read.tail_analysis). This bets instead on SLOW DIFFUSION OF PUBLIC INFORMATION: a mechanism whose claimed median is positive, whose event is a SCHEDULED PUBLIC DISCLOSURE rather than a discretionary private act, and whose event count is roughly thirteen times larger. Different event class, different mechanism, different failure mode."
+      },
+      "declared_at": "2026-09-05",
+      "read_at": "",
+      "result": {
+        "prior": "NOT YET RECORDED. The per-spec prior belongs to the operator and MUST be written here, signed and dated, BEFORE any read is authorised -- the sequence spec #2 followed, where it was recorded sixteen seconds before dispatch. A read dispatched without it is a protocol breach even when the Referee would permit it.",
+        "declaration_note": "Declared 2026-09-05 UTC / 2026-09-04 ET. Dates in this file follow the UTC date of the recording run, matching form4_cluster_buy_v2.read_at. DECLARING COSTS NOTHING AGAINST K: qt.referee.k_used counts READS, so K stays 2/5 until this specification is read. Nothing here is a commitment to read it.",
+        "availability_checks": {
+          "announcement_dates_exist": "YES -- probe run 33939274269: 115/150 sampled names file 8-K Item 2.02, median 12 per name over ~3 years, ~7,292 matured universe-wide, timestamps exact to the second",
+          "entry_bar_is_unambiguous": "YES -- 93% of announcements land OUTSIDE the session (66.5% after the close, 26.2% pre-market); only 7.4% land intraday",
+          "quarterly_eps_depth": "YES but UNUSED by this spec -- 15/15 sampled names return companyfacts, median 11 quarters of 10-Q diluted EPS. That would support a seasonal-random-walk SUE, which is the ALTERNATIVE surprise measure NOT chosen here.",
+          "analyst_consensus": "NO -- and that is precisely why the surprise measure is an abnormal return. Finnhub caps at 4 quarters (run 33938076855) and no free source covers a 907-name small-cap universe.",
+          "extractor": "NOT YET BUILT. data/events/events_8k_car_1095d.csv does not exist. Building it computes the SELECTION (CAR over [A, A+1]) but NOT the outcome (the 63-bar forward return after entry) -- exactly as extract_form4.py computed insider clustering before spec #1 was read. The threshold is fixed above FIRST so that the extractor cannot be tuned toward a target N."
+        },
+        "caveats_to_travel_with_any_number": [
+          "SHORT-TERM REVERSAL IS A HEADWIND BUILT INTO THE SELECTION. Buying after a >= +5% two-day move means buying into a move that may partly mean-revert. This biases the result DOWNWARD. It is not a flaw to be fixed but the honest price of using the price reaction as the surprise proxy, and it is why entry is A+2 rather than A+1.",
+          "PEAD IS THE MOST-PUBLISHED ANOMALY IN THE LITERATURE. Fifty years of publication is fifty years of arbitrage. A prior ABOVE the 15% project prior would be difficult to defend.",
+          "SURVIVORSHIP: unchanged and still unfixable free. Today's listed universe only; three years of small-cap delistings absent; biases UPWARD. probe_delisted.py: 0/3 bankruptcies serve price history. Any pass is a CEILING with an unknown floor.",
+          "THE UNIVERSE SCREEN IS NOT POINT-IN-TIME FOR EVENT SELECTION: names were screened on ADV as of 2026-09, so a 2023 announcement is selected using a liquidity fact from 2026. Unchanged from v1/v2, and it biases UPWARD.",
+          "23% OF THE UNIVERSE CONTRIBUTES NO EVENTS -- funds, foreign issuers filing 6-K, shells. A real exclusion rather than a data gap, but it narrows the effective universe below 907.",
+          "ONE PARAMETER FAMILY, ONE TEST. Threshold, window, horizon and direction are all fixed above. Changing ANY of them after the read is a NEW specification consuming another slot; qt.referee.declare refuses to silently redefine a declared spec.",
+          "WRC/SPA at p < alpha/K_declared = 0.02 is REQUIRED for a pass, with unread slots charged (qt.wrc.event_study_correction)"
         ]
       }
     }
