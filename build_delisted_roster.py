@@ -163,39 +163,73 @@ def _get(sess, url, params=None, headers=None):
     return -1, None
 
 
+# 🔑 EDGAR FULL-TEXT SEARCH IS NOT A RELIABLE ENUMERATOR OF A FORM TYPE.
+# Measured 2026-09-06 on 25-NSE filings -- same form, same years, only the
+# search word changed:
+#
+#            q="delisting"    q="securities"
+#     2016         118             610
+#     2019          96               0
+#     2022         118             622
+#     2024         216             630
+#
+# Whether a word appears in one exchange's boilerplate decides whether the
+# filing is found, and which word wins changes BY YEAR. The first roster used
+# q="delisting" alone and therefore under-counted every year by a different and
+# unknown amount -- including the 2023-2026 window it was built to measure.
+#
+# The right instrument is EDGAR's quarterly full-index, which lists every
+# filing by form with no text matching at all. It lives on www.sec.gov, which
+# returns 403 to this network for everything (probe_edgar_8k.py), so it is
+# unreachable.
+#
+# What remains is to UNION several queries and treat the result as a lower
+# bound. It is a much better lower bound than one word, and the per-query
+# contribution is printed so the shortfall stays visible.
+QUERIES = ['"delisting"', '"securities"', '"certification"', '"notification"',
+           '"removal from listing"']
+
+
 def enumerate_candidates(sess) -> dict:
-    """CIK -> {tickers, issuer, form, date}. Earliest filing per CIK wins."""
+    """CIK -> {tickers, issuer, form, date}. Earliest filing per CIK wins.
+
+    Unions several text queries, because no single one enumerates the form.
+    """
     cands: dict = {}
     for form in ("25-NSE", "25"):
-        st, r = _get(sess, FTS_URL, params={
-            "q": '"delisting"', "forms": form,
-            "startdt": WINDOW_START, "enddt": WINDOW_END})
-        time.sleep(SLEEP_SEC)
-        total = 0
-        if st == 200:
-            total = (((r.json().get("hits") or {}).get("total") or {}).get("value")) or 0
-        print(f"  forms={form}: {total} filings")
-        for page in range(MAX_PAGES):
-            st2, r2 = _get(sess, FTS_URL, params={
-                "q": '"delisting"', "forms": form, "from": page * 10,
+        for q in QUERIES:
+            before = len(cands)
+            st, r = _get(sess, FTS_URL, params={
+                "q": q, "forms": form,
                 "startdt": WINDOW_START, "enddt": WINDOW_END})
             time.sleep(SLEEP_SEC)
-            if st2 != 200:
-                break
-            hits = ((r2.json().get("hits") or {}).get("hits") or [])
-            if not hits:
-                break
-            for h in hits:
-                src = h.get("_source", {}) or {}
-                cik = cik_of(src)
-                tks = tickers_of(src.get("display_names"))
-                if not cik or not tks:
-                    continue
-                d = str(src.get("file_date", ""))
-                prev = cands.get(cik)
-                if prev is None or (d and d < prev["date"]):
-                    cands[cik] = {"tickers": tks, "issuer": issuer_of(src.get("display_names")),
-                                  "form": form, "date": d}
+            total = 0
+            if st == 200:
+                total = (((r.json().get("hits") or {}).get("total") or {}).get("value")) or 0
+            for page in range(MAX_PAGES):
+                st2, r2 = _get(sess, FTS_URL, params={
+                    "q": q, "forms": form, "from": page * 10,
+                    "startdt": WINDOW_START, "enddt": WINDOW_END})
+                time.sleep(SLEEP_SEC)
+                if st2 != 200:
+                    break
+                hits = ((r2.json().get("hits") or {}).get("hits") or [])
+                if not hits:
+                    break
+                for h in hits:
+                    src = h.get("_source", {}) or {}
+                    cik = cik_of(src)
+                    tks = tickers_of(src.get("display_names"))
+                    if not cik or not tks:
+                        continue
+                    d = str(src.get("file_date", ""))
+                    prev = cands.get(cik)
+                    if prev is None or (d and d < prev["date"]):
+                        cands[cik] = {"tickers": tks,
+                                      "issuer": issuer_of(src.get("display_names")),
+                                      "form": form, "date": d}
+            print(f"  forms={form:<7} q={q:<24} {total:>5} filings, "
+                  f"+{len(cands) - before} new issuers (total {len(cands)})")
             if (page + 1) % 20 == 0:
                 print(f"    ...{form} page {page+1}, {len(cands)} issuers so far")
     return cands

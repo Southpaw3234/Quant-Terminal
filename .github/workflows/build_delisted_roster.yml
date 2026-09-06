@@ -108,6 +108,7 @@ jobs:
           # A NEW file. The existing roster is what the current universe was
           # built from and must not move underneath it.
           QT_ROSTER_OUT: data/universe/delisted_roster_2015.csv
+          QT_ROSTER_PAGES: '400'
         run: python build_delisted_roster.py
       - name: Guard — the frozen universe, both ledgers and S4 untouched
         run: |
