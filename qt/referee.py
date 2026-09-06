@@ -72,13 +72,31 @@ class Spec:
 class Referee:
     """Counts K, refuses undeclared or over-budget reads, records verdicts."""
 
-    def __init__(self, registry_path=DEFAULT_REGISTRY, k_budget: int = K_BUDGET,
-                 terminal_date: str = TERMINAL_DATE):
+    def __init__(self, registry_path=DEFAULT_REGISTRY, k_budget: "int | None" = None,
+                 terminal_date: "str | None" = None):
+        """Budget and terminal date come from the REGISTRY FILE by default.
+
+        🔑 THEY USED TO COME FROM MODULE CONSTANTS, AND THAT WAS A BUG WITH
+        TEETH. When the V29 programme opened its own registry -- K=3, terminal
+        2027-06-30 -- constructing `Referee(registry_path=v29_file)` reported
+        "K 0/5 spent, terminal 2027-03-31": v29's specifications counted
+        against v27's budget and v27's deadline. Caught on run 34050966073,
+        where the status line printed the wrong numbers next to the right spec.
+
+        A referee that enforces the wrong budget is worse than no referee,
+        because it still looks like one. Explicit arguments override the file;
+        the file overrides the constants; the constants are the last resort.
+        """
         self.path = Path(registry_path)
-        self.k_budget = k_budget
-        self.terminal_date = terminal_date
         self.specs: dict = {}
+        self._file_k = None
+        self._file_terminal = None
         self._load()
+        self.k_budget = (k_budget if k_budget is not None
+                         else self._file_k if self._file_k is not None
+                         else K_BUDGET)
+        self.terminal_date = (terminal_date if terminal_date is not None
+                              else self._file_terminal or TERMINAL_DATE)
 
     # ───────────────────────────────────────────────────────── persistence
 
@@ -93,6 +111,12 @@ class Referee:
             raise ValueError(
                 f"registry at {self.path} is unreadable ({exc}) — refusing to "
                 f"proceed with an unknown K budget") from exc
+        fk = raw.get("k_budget")
+        if isinstance(fk, int) and fk > 0:
+            self._file_k = fk
+        ft = raw.get("terminal_date")
+        if isinstance(ft, str) and ft:
+            self._file_terminal = ft
         for sid, d in (raw.get("specifications") or {}).items():
             self.specs[sid] = Spec(**d)
 
