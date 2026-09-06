@@ -31,6 +31,7 @@ on:
       - 'extract_fundamentals.py'
       - 'validate_fundamentals.py'
       - '.github/workflows/extract_fundamentals.yml'
+      - 'data/universe/v29_universe_pit.csv'
 
 permissions:
   contents: read
@@ -61,9 +62,16 @@ jobs:
           echo "OK — data/ untouched."
 
   extract:
-    if: github.event_name == 'workflow_dispatch' && inputs.run_extract
+    # Dispatch when the workflow is on the default branch; otherwise gated on
+    # an explicit [sweep] marker in the commit message, because this is a
+    # multi-hour job and must never fire on an unrelated push.
+    if: >-
+      (github.event_name == 'workflow_dispatch' && inputs.run_extract) ||
+      (github.event_name == 'push' && contains(github.event.head_commit.message, '[sweep]'))
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    # ~3,000 CIK lookups plus ~3,000 companyfacts documents at roughly 3 MB
+    # each. The transfer, not the rate limit, is what makes this long.
+    timeout-minutes: 350
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -74,11 +82,16 @@ jobs:
       - name: Sweep XBRL fundamentals
         env:
           SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
-          QT_FUND_LIMIT: ${{ inputs.limit }}
+          # Defaulted for the push path, where `inputs` does not exist.
+          QT_FUND_LIMIT: ${{ inputs.limit || '0' }}
+          # The V29 panel and window, per data/registry/v29_specifications.json.
+          QT_PIT_PANEL: data/universe/v29_universe_pit.csv
+          QT_FUND_START: '2015-09-01'
+          QT_FUND_END: '2025-09-01'
         run: |
           set -u
-          if [ ! -f data/universe/v27_universe_pit.csv ]; then
-            echo "::error::no point-in-time universe — build it first"; exit 1
+          if [ ! -f data/universe/v29_universe_pit.csv ]; then
+            echo "::error::no V29 point-in-time universe — build it first"; exit 1
           fi
           python extract_fundamentals.py
       - name: Guard — every frozen input and S4 untouched
