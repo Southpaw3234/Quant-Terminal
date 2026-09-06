@@ -1,0 +1,78 @@
+name: V29 value model — selection, and (guarded) the read
+
+# ⚠️ TWO MODES.
+#   select  builds the quarterly portfolios and stops. No returns, no K.
+#   read    computes the return series, evaluates every criterion, and SPENDS
+#           ONE OF K=3. Anti-deferral makes it permanent.
+#
+# `read` needs BOTH the Referee's authorisation and confirm_read=true. Two
+# independent switches, because the failure mode is not a wrong number -- it
+# is spending a third of the budget by running something that looked like a
+# rehearsal.
+#
+# Nothing here runs on a cron or writes under data/predictions/.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'select (free) or read (SPENDS ONE OF K=3, permanent)'
+        type: choice
+        options: [select, read]
+        default: select
+      confirm_read:
+        description: 'Second switch. Required for mode=read. Leave false unless you mean it.'
+        type: boolean
+        default: false
+  push:
+    branches:
+      - 'v29/**'
+    paths:
+      - 'run_value_backtest.py'
+      - '.github/workflows/run_value_backtest.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas "yfinance>=0.2.40,<2"
+      - name: Compile check
+        run: python -m py_compile run_value_backtest.py
+      - name: Run
+        env:
+          # A push can only ever select. Spending a slot requires a deliberate
+          # dispatch with both switches set.
+          QT_V29_MODE: ${{ inputs.mode || 'select' }}
+          QT_V29_CONFIRM_READ: ${{ (github.event_name == 'workflow_dispatch' && inputs.confirm_read) && '1' || '0' }}
+        run: |
+          set -u
+          echo "mode=$QT_V29_MODE confirm=$QT_V29_CONFIRM_READ"
+          python run_value_backtest.py
+      - name: Guard — registries, frozen data and S4 untouched
+        run: |
+          set -u
+          if ! git diff --quiet -- data/predictions/ data/shadow/ 2>/dev/null; then
+            echo "::error::modified S4 evidence"; exit 1
+          fi
+          for f in data/registry/specifications.json data/registry/v29_specifications.json \
+                   data/universe/v29_universe_pit.csv data/fundamentals/fundamentals_pit.csv \
+                   data/events/events_8k_car_1095d.csv; do
+            if [ -f "$f" ] && ! git diff --quiet -- "$f" 2>/dev/null; then
+              echo "::error::$f is frozen and was modified"; exit 1
+            fi
+          done
+          echo "OK — registries, frozen inputs and S4 evidence untouched."
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v29-portfolios
+          path: data/portfolios/*.csv
+          if-no-files-found: error
