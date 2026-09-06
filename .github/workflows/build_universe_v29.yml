@@ -18,6 +18,15 @@ on:
         description: 'Cap candidates for a smoke test (0 = the whole market)'
         type: string
         default: '0'
+  # Branch-scoped push trigger, because workflow_dispatch is only available
+  # once the file is on the default branch and this has to run before it
+  # merges. Same pattern as the probe workflows.
+  push:
+    branches:
+      - 'v29/**'
+    paths:
+      - 'build_universe_v29.py'
+      - '.github/workflows/build_universe_v29.yml'
 
 permissions:
   contents: read
@@ -38,7 +47,8 @@ jobs:
       - name: Build the widened point-in-time universe
         env:
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
-          QT_V29_LIMIT: ${{ inputs.limit }}
+          # Defaulted for the push path, where `inputs` does not exist.
+          QT_V29_LIMIT: ${{ inputs.limit || '0' }}
         run: |
           set -u
           if [ -z "${FINNHUB_API_KEY}" ]; then echo "::error::FINNHUB_API_KEY not set"; exit 1; fi
