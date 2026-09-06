@@ -158,16 +158,30 @@ def main() -> None:
     print(f"\n[v29] {len(panel):,} eligible name-months; {len(dates)} month-ends; "
           f"{len(rebal)} quarterly rebalances {rebal[0]}..{rebal[-1]}")
 
-    members_by_date = {d: dict(zip(g["ticker"].astype(str).str.upper(), g["adv"]))
-                       for d, g in panel.groupby("date") if d in set(rebal)}
+    # Normalise identifiers ONCE, on the frames, before anything indexes by
+    # them. Coercing at each use is how a float NaN ends up as a dict key and
+    # a later sorted() dies comparing it to a string -- which is exactly what
+    # happened on run 34050877302.
+    TICKER_RE = r"^[A-Z][A-Z0-9.\-]{0,5}$"
+    for frame, label in ((panel, "panel"), (funds, "fundamentals")):
+        frame["ticker"] = frame["ticker"].astype("string").str.upper()
+        before = len(frame)
+        frame.drop(frame.index[~frame["ticker"].str.match(TICKER_RE, na=False)],
+                   inplace=True)
+        if before != len(frame):
+            print(f"[v29] dropped {before - len(frame):,} {label} rows with an "
+                  f"unusable ticker")
+
+    rebal_set = set(rebal)
+    members_by_date = {d: dict(zip(g["ticker"].tolist(), g["adv"].tolist()))
+                       for d, g in panel.groupby("date") if d in rebal_set}
     fcols = ["shares", "cash", "debt_lt", "op_income", "equity", "assets"]
-    funds["ticker"] = funds["ticker"].astype(str).str.upper()
     funds_by_date = {}
-    for d, g in funds[funds["asof"].isin(set(rebal))].groupby("asof"):
-        funds_by_date[d] = {row["ticker"]: {c: row.get(c) for c in fcols}
+    for d, g in funds[funds["asof"].isin(rebal_set)].groupby("asof"):
+        funds_by_date[d] = {str(row["ticker"]): {c: row.get(c) for c in fcols}
                             for _, row in g.iterrows()}
 
-    names = sorted({t for m in members_by_date.values() for t in m})
+    names = sorted({str(t) for m in members_by_date.values() for t in m})
     print(f"[v29] pricing {len(names):,} names + {BENCHMARK}")
     prices = _load_prices(names, start="2015-01-01")
     if BENCHMARK not in prices:
