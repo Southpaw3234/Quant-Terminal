@@ -47,20 +47,39 @@ def portfolio_daily_returns(schedule, returns: pd.DataFrame,
     the effective date until the next one. `returns` is a date x ticker frame
     of simple daily returns.
 
-    Weights are fixed at the rebalance. A held name with no return that day
-    earns `delisting_return`, so it stays in the book at its declared
-    assumption rather than vanishing from a mean of survivors.
+    Weights are fixed at the rebalance. Taking the mean of whatever names still
+    have data would silently DELETE the loser: a position that falls 90% and
+    stops trading leaves the average, and the average improves.
+
+    THE TWO-TIER RULE for a name that stops trading:
+
+      TIER 1  If prices continue -- and most exchange delistings continue
+              trading over the counter -- the ACTUAL returns are used and no
+              assumption applies at all. This needs no code: the returns are
+              simply present. Measuring beats assuming.
+      TIER 2  If nothing trades anywhere, `delisting_return` is charged ONCE,
+              on the first missing day, and the sleeve earns zero after that.
+
+    🔑 ONCE IS THE WHOLE POINT, and the first version got it wrong. It applied
+    the value on EVERY missing day, which is harmless at 0 (the sleeve sits in
+    cash) and nonsense at -55%: charging that daily compounds to near-total
+    loss inside a week, which is not what a delisting return means. A non-zero
+    assumption was unusable until this was fixed.
+
+    Charging resets per rebalance period, because a name re-entering the book
+    later is a new position rather than the same one still dying.
     """
     if returns is None or returns.empty or not schedule:
         return pd.Series(dtype="float64")
     sched = sorted(schedule, key=lambda kv: pd.Timestamp(kv[0]))
     idx = returns.index
     out = pd.Series(0.0, index=idx, dtype="float64")
-    live = None
+    live, period = None, -1
+    charged: set = set()
     for d in idx:
-        for eff, names in sched:
+        for i, (eff, names) in enumerate(sched):
             if pd.Timestamp(eff) <= d:
-                live = names
+                live, period = names, i
             else:
                 break
         if not live:
@@ -70,7 +89,13 @@ def portfolio_daily_returns(schedule, returns: pd.DataFrame,
         total = 0.0
         for tk in live:
             r = returns[tk].get(d, np.nan) if tk in returns.columns else np.nan
-            total += w * (delisting_return if (r is None or not np.isfinite(r)) else float(r))
+            if r is not None and np.isfinite(r):
+                total += w * float(r)
+                continue
+            key = (period, tk)
+            if key not in charged:
+                charged.add(key)
+                total += w * float(delisting_return)   # ONCE, not every day
         out.loc[d] = total
     return out
 

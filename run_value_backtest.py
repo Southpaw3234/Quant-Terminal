@@ -58,6 +58,10 @@ N_HOLD = 20
 TIER = "moderate"
 REBALANCE_EVERY = 3            # months
 COST_BPS = 75.0
+# TWO-TIER delisting rule, per the registry. Tier 1 (prices continue OTC) uses
+# actual returns and never reaches this constant. Tier 2 charges it ONCE on the
+# first missing day. Shumway & Warther NASDAQ performance-delisting figure.
+DELISTING_RETURN = -0.55
 MAX_DE = 2.0
 NW_LAG = 10
 MIN_PER_TIER = 60
@@ -253,7 +257,8 @@ def main() -> None:
     for eff, names_ in schedule:
         turn[pd.Timestamp(eff)] = ct.turnover(prev, names_)
         prev = names_
-    gross = ct.portfolio_daily_returns(schedule, rets)
+    gross = ct.portfolio_daily_returns(schedule, rets,
+                                       delisting_return=DELISTING_RETURN)
     net = ct.apply_costs(gross, turn, COST_BPS)
     start = pd.Timestamp(schedule[0][0])
     net, bench = net[net.index >= start], bench[bench.index >= start]

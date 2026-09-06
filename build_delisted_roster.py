@@ -53,7 +53,7 @@ UA = (os.environ.get("SEC_USER_AGENT") or "").strip() or "Quant-Terminal researc
 WINDOW_START = os.environ.get("QT_ROSTER_START", "2023-09-01")
 WINDOW_END = os.environ.get("QT_ROSTER_END", "2026-09-05")
 OUT_CSV = os.environ.get("QT_ROSTER_OUT", "data/universe/delisted_roster.csv")
-MAX_PAGES = int(os.environ.get("QT_ROSTER_PAGES", "120"))
+MAX_PAGES = int(os.environ.get("QT_ROSTER_PAGES", "400"))
 LIMIT = int(os.environ.get("QT_ROSTER_LIMIT", "0"))       # 0 = every candidate
 FTS_URL = "https://efts.sec.gov/LATEST/search-index"
 YAHOO_CHART = "https://query1.finance.yahoo.com/v8/finance/chart/{sym}"

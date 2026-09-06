@@ -34,6 +34,7 @@ on:
     branches:
       - 'v27/**'
       - 'v28/**'
+      - 'v29/**'
     paths:
       - 'build_delisted_roster.py'
       - 'validate_delisted_roster.py'
@@ -72,9 +73,14 @@ jobs:
           echo "OK — data/ untouched."
 
   build:
-    if: github.event_name == 'workflow_dispatch' && inputs.run_build
+    # Dispatch when the workflow is on the default branch; otherwise gated on
+    # an explicit [roster] marker in the commit message, so a long sweep never
+    # fires on an unrelated push.
+    if: >-
+      (github.event_name == 'workflow_dispatch' && inputs.run_build) ||
+      (github.event_name == 'push' && contains(github.event.head_commit.message, '[roster]'))
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

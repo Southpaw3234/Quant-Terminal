@@ -119,11 +119,31 @@ def test_portfolio_construction():
           abs(out2.iloc[6] - 0.05) < 1e-12,
           "THE TRAP: a mean of surviving names would pay 10% here, silently "
           "deleting the dead sleeve. Weights stay fixed, so the book pays 5%")
-    out3 = ct.portfolio_daily_returns(sched, dead, delisting_return=-1.0)
-    check("delisting-assumption-is-a-parameter",
-          abs(out3.iloc[6] - (-0.45)) < 1e-12,
-          "a -100% delisting assumption gives 0.5(0.10) + 0.5(-1.00) = -45%; "
-          "the value is DECLARED, and the registry records it as unmade")
+    # THE TWO-TIER RULE. B stops trading after day 4, so tier 2 applies.
+    out3 = ct.portfolio_daily_returns(sched, dead, delisting_return=-0.55)
+    first_missing, later = out3.iloc[5], out3.iloc[6]
+    check("delisting-return-charged-ONCE",
+          abs(first_missing - (0.5 * 0.10 + 0.5 * -0.55)) < 1e-12
+          and abs(later - 0.05) < 1e-12,
+          f"first missing day {first_missing:+.3f} = 0.5(+10%) + 0.5(-55%); the "
+          f"NEXT day {later:+.3f} = 0.5(+10%) + 0 — the dead sleeve is charged "
+          f"once and then sits at zero")
+    check("charging-daily-would-be-nonsense",
+          abs(later - 0.05) < 1e-12,
+          "THE BUG THIS REPLACES: the first version charged the value EVERY "
+          "missing day. Harmless at 0, but -55% daily compounds to near-total "
+          "loss inside a week, which made any non-zero assumption unusable")
+    twice = [(IDX[0], ["A", "B"]), (IDX[7], ["A", "B"])]
+    out5 = ct.portfolio_daily_returns(twice, dead, delisting_return=-0.55)
+    check("charge-resets-per-rebalance",
+          abs(out5.iloc[7] - (0.5 * 0.10 + 0.5 * -0.55)) < 1e-12,
+          "a name re-entering the book at the next rebalance is a NEW position "
+          "and is charged again, rather than the same one still dying")
+    check("tier-1-needs-no-assumption",
+          abs(ct.portfolio_daily_returns(sched, rets, delisting_return=-0.55).iloc[6]
+              - 0.05) < 1e-12,
+          "when prices CONTINUE — as most exchange delistings do, over the "
+          "counter — the actual returns are used and the assumption never fires")
 
     later = [(IDX[0], ["A"]), (IDX[5], ["B"])]
     out4 = ct.portfolio_daily_returns(later, rets)

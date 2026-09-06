@@ -43,6 +43,7 @@
         "portfolio": "20 names, equal weight, long only",
         "rebalance": "quarterly at month-end, entering the following session",
         "costs": "75 bps round trip applied to turnover, INSIDE the criterion",
+        "delisting_return": "TWO-TIER, fixed 2026-09-06. TIER 1: where the company keeps trading -- and most exchange delistings continue over the counter, 18 of 24 in probe run 33942599424 -- its ACTUAL prices are used and no assumption applies. Measuring beats assuming. TIER 2: where no price exists anywhere, -55% is charged ONCE on the first missing day and the sleeve earns zero thereafter. -55% is Shumway & Warther's NASDAQ performance-delisting figure, and this universe is mostly NASDAQ microcap. It is likely GENEROUS rather than conservative: the names with no data at all are the ones that truly vanished, which skews toward bankruptcy and deregistration. This parameter was recorded as EXPLICITLY UNMADE at declaration, so fixing it now -- before any return was computed and before the backtest was run -- completes the declaration rather than amending it. It does not move again.",
         "benchmark": "IWM. One benchmark.",
         "measurement": "calendar-time daily return series, Newey-West lag 10",
         "order_of_operations": "quality gate, THEN risk tier, THEN rank on value. Ranking first and filtering after produces a different portfolio and is not what this declares.",
@@ -67,7 +68,7 @@
           "SURVIVORSHIP IS CORRECTED ONLY FROM 2023. The delisted roster covers 2023-2026; this window starts 2015. Form 25 filings reach further back and the roster CAN be extended, but until it is, the first eight years carry the same upward bias every v27 read carried. THIS IS THE LARGEST KNOWN WEAKNESS IN THE SPECIFICATION.",
           "LONG-TERM DEBT ONLY: short-term borrowings are missing from enterprise value, overstating EBIT/EV for revolver-funded companies",
           "ANNUAL FLOWS: fundamentals are up to fifteen months stale by construction -- conservative, and it costs responsiveness",
-          "COSTS ARE AN ASSUMPTION, NOT A MEASUREMENT. 75 bps is a judgement about a band where real spreads vary enormously, and the result is sensitive to it.",
+          "COSTS ARE AN ASSUMPTION, NOT A MEASUREMENT. 75 bps is a judgement about a band where real spreads vary enormously, and the result is sensitive to it. MEASURED 2026-09-06 (run 34050431641, Corwin-Schultz over the declared window): median 106-210 bps by ADV bucket, 1.4-2.8x the declared figure, against an estimator noise floor of ~60 bps. The parameter is SIGNED and does not move; if costs sink the read that is the pre-registration working.",
           "NO SHORT LEG, so no market hedge; excess return over IWM is the only adjustment",
           "VALUE UNDERPERFORMS FOR YEARS AT A STRETCH. A ten-year read can be negative while the strategy is sound and positive while it is not.",
           "TWENTY ILLIQUID SMALL CAPS carry single-name risk that a backtest reports as volatility and a live account experiences as something worse."
