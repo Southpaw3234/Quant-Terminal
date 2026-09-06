@@ -406,6 +406,7 @@ def main():
     test_referee_records_e1()
     test_live_registry()
     test_spec2_declared()
+    test_v29_registry_budget()
     test_spec3_declared()
     print("\n" + "=" * 70)
     if FAILURES:
