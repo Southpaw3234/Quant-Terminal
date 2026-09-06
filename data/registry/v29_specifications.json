@@ -51,7 +51,7 @@
       "declared_at": "2026-09-05",
       "read_at": "",
       "result": {
-        "prior": "P(this specification clears all eight criteria) = 20-25%, midpoint 22.5%, accepted by the operator 2026-09-05 against the range proposed, BEFORE any ratio was computed. Above v27's 15% because the mechanism is structural rather than informational: value in names too small for institutional capital is not arbitraged away by publication, it is left alone because it cannot be traded at size. Not higher, because value is the most-published anomaly in finance and this is built entirely from free data. THE OPERATOR SHOULD COUNTERSIGN A POINT VALUE in docs/V29_PREREGISTRATION.md before dispatch; the range is recorded as given.",
+        "prior": "P(this specification clears all eight criteria) = 20-25%, midpoint 22.5%, accepted by the operator 2026-09-05 against the range proposed, BEFORE any ratio was computed. Above v27's 15% because the mechanism is structural rather than informational: value in names too small for institutional capital is not arbitraged away by publication, it is left alone because it cannot be traded at size. Not higher, because value is the most-published anomaly in finance and this is built entirely from free data. COUNTERSIGNED by the operator 2026-09-06 in docs/V29_PREREGISTRATION.md, before any ratio was computed and before the backtest existed. Every parameter and criterion is frozen from that date.",
         "declaration_note": "Declaring costs NOTHING against K -- qt.referee.k_used counts READS. K stays 0/3 until this is read. Nothing here is a commitment to read it.",
         "criteria": [
           "N >= 1,000 trading days with a live book",

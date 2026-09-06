@@ -1,6 +1,6 @@
 # V29 pre-registration — systematic value, risk-tiered
 
-**Status:** 🟡 **DRAFTED, AWAITING OPERATOR SIGNATURE.**
+**Status:** ✅ **SIGNED 2026-09-06.** Parameters, criteria and prior are frozen.
 Separate from `docs/V27_PREREGISTRATION.md`. v27's K=5 covers **event studies** and 2 are spent;
 spending its remainder on a portfolio model would blur two programmes with different criteria.
 
@@ -121,5 +121,10 @@ redefine one silently.
 
 ```
 Prior accepted:  20-25% (midpoint 22.5%)
-Operator:        ______________________  Date: ____________
+Operator:        Southpaw3234            Date: 2026-09-06
 ```
+
+**SIGNED 2026-09-06.** The operator countersigned the recorded 20-25% range, midpoint 22.5%,
+before any ratio was computed and before the backtest existed. Every parameter in section 2 and
+every criterion in section 4 is frozen from this point. Changing one is a new specification
+consuming another of the three slots.
