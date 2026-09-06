@@ -15,6 +15,12 @@ on:
     branches:
       - 'v27/**'
       - 'v28/**'
+      # v29 added when the value programme opened. The commit that ADDED
+      # validate_qt_scoring.py to this workflow could not run it, because the
+      # branch it landed on was not listed. Same failure class as the paths
+      # filter documented below: a trigger that lags the tests it guards
+      # reports on a snapshot of something it is not watching.
+      - 'v29/**'
     paths:
       # Every input the suites actually read. The Phase 1 commit changed
       # validate_qt_phase1.py and data/registry/specifications.json and
