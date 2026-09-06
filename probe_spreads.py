@@ -169,9 +169,11 @@ def main() -> None:
             print(f"\n🟡 SOMEWHAT LOW: median {thin:.0f} bps at the thin end vs 75 declared.")
         else:
             print(f"\n✅ THE ASSUMPTION HOLDS: median {thin:.0f} bps at the thin end.")
-    print("\n   Corwin-Schultz clips negative estimates to zero before averaging, which")
-    print("   biases the result DOWNWARD. These figures are therefore conservative, and")
-    print("   the true spreads are likely wider than shown.")
+    print("\n   ⚠️ THE ESTIMATOR HAS A FLOOR OF ROUGHLY 60 bps. Clipping the negative half")
+    print("   of a distribution centred on zero leaves a positive mean, so any estimate")
+    print("   near 60 is indistinguishable from no spread at all. Only the EXCESS above")
+    print("   that floor carries information, and at this resolution the ordering between")
+    print("   adjacent buckets is not reliable.")
     print("[spreads] done. No return computed, nothing written, K untouched.")
 
 

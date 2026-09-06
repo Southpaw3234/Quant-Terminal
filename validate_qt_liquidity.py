@@ -76,16 +76,18 @@ def test_zero_spread():
     print("\n--- and roughly zero when there is no spread? ---")
     h, l = synth(spread=0.0, seed=3)
     est = lq.spread_estimate(h, l)
-    check("near-zero-on-a-frictionless-series",
-          est["spread_bps"] < 60,
-          f"no spread applied -> {est['spread_bps']:.0f} bps, small relative to "
-          f"the hundreds of bps the thin end is being tested for")
+    check("noise-floor-is-measured-not-assumed",
+          40 < est["spread_bps"] < 90,
+          f"no spread applied -> {est['spread_bps']:.0f} bps. This is the FLOOR, "
+          f"not an error: clipping the negative half of a distribution centred "
+          f"on zero leaves a positive mean. Any estimate near it is "
+          f"indistinguishable from no spread at all")
     check("negatives-are-reported",
           0.0 < est["pct_negative"] < 0.9,
           f"{est['pct_negative']:.0%} of pairs estimate NEGATIVE, which is the "
-          f"estimator's known misbehaviour. It is reported rather than hidden, "
-          f"and clipping them to zero biases the result DOWNWARD — the safe "
-          f"direction when checking whether a cost assumption is too low")
+          f"estimator's known misbehaviour. Reported rather than hidden, and "
+          f"clipping them to zero is what CREATES the floor above — it biases "
+          f"the mean UPWARD, not downward")
 
 
 def test_edges():

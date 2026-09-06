@@ -32,13 +32,18 @@ separates them.
 Corwin and Schultz (2012), "A Simple Way to Estimate Bid-Ask Spreads from
 Daily High and Low Prices".
 
-⚠️ ITS KNOWN WEAKNESS, stated rather than discovered: the estimator produces
-NEGATIVE spreads on a meaningful fraction of days, which is nonsense as a
-spread and is the estimator telling you the two-day range was smaller than the
-one-day ranges implied. The published convention sets those to zero before
-averaging. That convention BIASES THE RESULT DOWNWARD, so a spread estimated
-this way is, if anything, optimistic -- which is the safe direction when the
-number is being used to check whether a declared cost assumption is too low.
+⚠️ ITS KNOWN WEAKNESS, AND THE DIRECTION OF THE BIAS, WHICH I FIRST GOT
+BACKWARDS. The estimator produces NEGATIVE spreads on 30-40% of pairs: the
+two-day range came out smaller than the one-day ranges implied. The published
+convention clips those to zero before averaging.
+
+That clipping biases the mean UPWARD, not downward, and most so when the true
+spread is SMALL. Scatter around zero, discard the negative half, and the
+average is positive even with no spread at all. Measured on synthetic
+frictionless bars the floor is roughly 60 bps, so an estimate near 60 is
+indistinguishable from no spread, and only the excess above the floor carries
+information. An earlier version of this docstring claimed the opposite and
+called the result conservative; it is not.
 
 Pure functions. No network, no files.
 """
