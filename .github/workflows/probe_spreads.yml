@@ -29,11 +29,8 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install deps
-        run: pip install "numpy<2.4" pandas requests
-      - name: Probe quoted spreads by ADV bucket
-        env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+        run: pip install "numpy<2.4" pandas "yfinance>=0.2.40,<2"
+      - name: Estimate spreads over the DECLARED window from daily bars
         run: python probe_spreads.py
       - name: Guard — nothing written under data/
         run: |
