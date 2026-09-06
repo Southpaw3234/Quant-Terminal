@@ -164,12 +164,22 @@ def test_evaluate():
     rng = np.random.default_rng(7)
     n = 1200
     bench = pd.Series(rng.normal(0.0002, 0.01, n))
-    strong = bench + 0.0008
+    # NOISE MATTERS HERE. The first version of this test used `bench + 0.0008`,
+    # a CONSTANT excess. Constant means zero variance, zero standard error, and
+    # a t-statistic of 4e16 — it passed while proving nothing, because no real
+    # strategy has a riskless edge. The excess now carries its own dispersion,
+    # so t and the information ratio are finite and have to be earned.
+    strong = bench + 0.0008 + rng.normal(0, 0.004, n)
     res = ct.evaluate(strong, bench)
     check("strong-strategy-clears",
-          res["verdict"] == "MET" and res["t_excess"] > 2.0,
-          f"a constant +8 bps a day over the benchmark: t {res['t_excess']:.1f}, "
-          f"IR {res['information_ratio']:.1f}, verdict {res['verdict']}")
+          res["verdict"] == "MET" and 2.0 < res["t_excess"] < 100.0,
+          f"+8 bps a day with 40 bps of tracking error: t {res['t_excess']:.1f}, "
+          f"IR {res['information_ratio']:.2f}, maxDD {res['max_dd']:.1%} vs "
+          f"benchmark {res['max_dd_bench']:.1%}, verdict {res['verdict']}")
+    check("t-is-finite-and-plausible",
+          np.isfinite(res["t_excess"]) and res["t_excess"] < 100.0,
+          f"t {res['t_excess']:.1f} is a number a real strategy could produce — "
+          f"an unbounded t means the test built a riskless edge, not a good one")
     null = bench + rng.normal(0, 0.005, n)
     res2 = ct.evaluate(null, bench)
     check("null-strategy-fails",
