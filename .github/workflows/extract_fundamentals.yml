@@ -1,0 +1,115 @@
+name: Point-in-time fundamentals (V29 value model, data layer)
+
+# validate  -- hermetic. No network. Every push. Gate.
+# extract   -- dispatch-only. Sweeps SEC XBRL over the point-in-time universe
+#              and uploads the panel as an ARTIFACT. Does not commit.
+#
+# WHAT NEITHER JOB DOES: compute a ratio, rank a stock, or measure a return.
+# Which ratios and how they are combined are SPECIFICATION choices and belong
+# in a signed pre-registration. See docs/V29_VALUE_MODEL.md.
+#
+# v27 SEQUENCING: not scheduled, not wired into quant_daily.yml. Nothing here
+# may run on a cron or write under data/predictions/ before 2026-09-29.
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_extract:
+        description: 'Sweep XBRL fundamentals (data only — no ratios, no returns, no K)'
+        type: boolean
+        default: false
+      limit:
+        description: 'Cap the names for a smoke test (0 = all)'
+        type: string
+        default: '0'
+  push:
+    branches:
+      - 'v27/**'
+      - 'v28/**'
+      - 'v29/**'
+    paths:
+      - 'extract_fundamentals.py'
+      - 'validate_fundamentals.py'
+      - '.github/workflows/extract_fundamentals.yml'
+      - 'data/universe/v29_universe_pit.csv'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas
+      - name: Compile check
+        run: |
+          python -m py_compile extract_fundamentals.py
+          python -m py_compile validate_fundamentals.py
+      - name: Run pure-logic validation
+        run: python validate_fundamentals.py
+      - name: Assert nothing under data/ changed
+        run: |
+          set -u
+          if ! git diff --quiet -- data/ 2>/dev/null; then
+            echo "::error::validation modified data/ — it must be read-only"; exit 1
+          fi
+          echo "OK — data/ untouched."
+
+  extract:
+    # Dispatch when the workflow is on the default branch; otherwise gated on
+    # an explicit [sweep] marker in the commit message, because this is a
+    # multi-hour job and must never fire on an unrelated push.
+    if: >-
+      (github.event_name == 'workflow_dispatch' && inputs.run_extract) ||
+      (github.event_name == 'push' && contains(github.event.head_commit.message, '[sweep]'))
+    runs-on: ubuntu-latest
+    # ~3,000 CIK lookups plus ~3,000 companyfacts documents at roughly 3 MB
+    # each. The transfer, not the rate limit, is what makes this long.
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas requests
+      - name: Sweep XBRL fundamentals
+        env:
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+          # Defaulted for the push path, where `inputs` does not exist.
+          QT_FUND_LIMIT: ${{ inputs.limit || '0' }}
+          # The V29 panel and window, per data/registry/v29_specifications.json.
+          QT_PIT_PANEL: data/universe/v29_universe_pit.csv
+          QT_FUND_START: '2015-09-01'
+          QT_FUND_END: '2025-09-01'
+        run: |
+          set -u
+          if [ ! -f data/universe/v29_universe_pit.csv ]; then
+            echo "::error::no V29 point-in-time universe — build it first"; exit 1
+          fi
+          python extract_fundamentals.py
+      - name: Guard — every frozen input and S4 untouched
+        run: |
+          set -u
+          if ! git diff --quiet -- data/predictions/ data/shadow/ 2>/dev/null; then
+            echo "::error::the sweep modified S4 evidence"; exit 1
+          fi
+          for f in data/universe/v27_universe.csv data/universe/v27_universe_pit.csv \
+                   data/universe/delisted_roster.csv data/events/events_8k_car_1095d.csv \
+                   data/events/event_study.csv data/events/event_study_v2.csv; do
+            if [ -f "$f" ] && ! git diff --quiet -- "$f" 2>/dev/null; then
+              echo "::error::$f is frozen and was modified"; exit 1
+            fi
+          done
+          echo "OK — frozen data and S4 evidence untouched."
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v29-fundamentals-pit
+          path: data/fundamentals/fundamentals_pit*.csv
+          if-no-files-found: error

@@ -1,0 +1,75 @@
+name: V29 universe — widened floor, ten-year window
+
+# build only: dispatch-only, uploads an artifact, does not commit. The pure
+# logic it depends on (screen_as_of, is_live, month_ends) is already covered by
+# validate_qt.yml and validate_universe_pit.py; this script adds streaming and
+# a symbol filter, not new screening semantics.
+#
+# ⚠️ Survivorship is corrected only from 2023 while this window opens in 2015.
+# Declared in data/registry/v29_specifications.json as the largest known
+# weakness of the specification.
+#
+# Nothing here runs on a cron or writes under data/predictions/.
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Cap candidates for a smoke test (0 = the whole market)'
+        type: string
+        default: '0'
+  # Branch-scoped push trigger, because workflow_dispatch is only available
+  # once the file is on the default branch and this has to run before it
+  # merges. Same pattern as the probe workflows.
+  push:
+    branches:
+      - 'v29/**'
+    paths:
+      - 'build_universe_v29.py'
+      - '.github/workflows/build_universe_v29.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas requests "yfinance>=0.2.40,<2"
+      - name: Compile check
+        run: python -m py_compile build_universe_v29.py
+      - name: Build the widened point-in-time universe
+        env:
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+          # Defaulted for the push path, where `inputs` does not exist.
+          QT_V29_LIMIT: ${{ inputs.limit || '0' }}
+        run: |
+          set -u
+          if [ -z "${FINNHUB_API_KEY}" ]; then echo "::error::FINNHUB_API_KEY not set"; exit 1; fi
+          python build_universe_v29.py
+      - name: Guard — every frozen input and S4 untouched
+        run: |
+          set -u
+          if ! git diff --quiet -- data/predictions/ data/shadow/ 2>/dev/null; then
+            echo "::error::the build modified S4 evidence"; exit 1
+          fi
+          for f in data/universe/v27_universe.csv data/universe/v27_universe_pit.csv \
+                   data/universe/delisted_roster.csv data/events/events_8k_car_1095d.csv \
+                   data/events/event_study.csv data/events/event_study_v2.csv \
+                   data/registry/specifications.json data/registry/v29_specifications.json; do
+            if [ -f "$f" ] && ! git diff --quiet -- "$f" 2>/dev/null; then
+              echo "::error::$f is frozen and was modified"; exit 1
+            fi
+          done
+          echo "OK — frozen data, both registries and S4 evidence untouched."
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v29-universe-pit
+          path: data/universe/v29_universe_pit*.csv
+          if-no-files-found: error

@@ -15,6 +15,12 @@ on:
     branches:
       - 'v27/**'
       - 'v28/**'
+      # v29 added when the value programme opened. The commit that ADDED
+      # validate_qt_scoring.py to this workflow could not run it, because the
+      # branch it landed on was not listed. Same failure class as the paths
+      # filter documented below: a trigger that lags the tests it guards
+      # reports on a snapshot of something it is not watching.
+      - 'v29/**'
     paths:
       # Every input the suites actually read. The Phase 1 commit changed
       # validate_qt_phase1.py and data/registry/specifications.json and
@@ -26,6 +32,10 @@ on:
       - 'validate_qt_phase1.py'
       - 'validate_qt_prices.py'
       - 'validate_qt_wrc.py'
+      - 'validate_qt_scoring.py'
+      - 'validate_qt_calendar_time.py'
+      - 'validate_qt_liquidity.py'
+      - 'validate_qt_execution.py'
       - 'event_study.py'
       - 'data/registry/**'
       - 'data/events/event_study.csv'
@@ -62,9 +72,13 @@ jobs:
       - name: Compile check
         run: |
           python -m py_compile qt/__init__.py qt/ledger.py qt/guards.py \
-            qt/measurement.py qt/referee.py qt/prices.py qt/wrc.py
+            qt/measurement.py qt/referee.py qt/prices.py qt/wrc.py \
+            qt/scoring.py qt/calendar_time.py qt/liquidity.py \
+            qt/execution.py qt/reconcile.py
           python -m py_compile validate_qt.py validate_qt_phase1.py \
-            validate_qt_prices.py validate_qt_wrc.py
+            validate_qt_prices.py validate_qt_wrc.py validate_qt_scoring.py \
+            validate_qt_calendar_time.py validate_qt_liquidity.py \
+            validate_qt_execution.py
 
       - name: Run Phase 0 validation
         run: python validate_qt.py
@@ -77,6 +91,18 @@ jobs:
 
       - name: Run WRC/SPA validation (the data-snooping demonstration)
         run: python validate_qt_wrc.py
+
+      - name: Run scoring validation (V29 value + risk tiers)
+        run: python validate_qt_scoring.py
+
+      - name: Run calendar-time validation (V29 measurement)
+        run: python validate_qt_calendar_time.py
+
+      - name: Run liquidity validation (the spread estimator)
+        run: python validate_qt_liquidity.py
+
+      - name: Run execution + reconciliation validation
+        run: python validate_qt_execution.py
 
       - name: Assert the live pipeline is untouched
         run: |

@@ -1,0 +1,78 @@
+{
+  "_note": [
+    "V29 -- the systematic value programme. SEPARATE from v27's ledger.",
+    "docs/V29_PREREGISTRATION.md is authoritative for humans; this file is",
+    "what qt.referee counts. Same machinery, different budget: v27's K=5",
+    "covers EVENT STUDIES, and spending its remainder on a portfolio model",
+    "would blur two programmes with different criteria.",
+    "",
+    "K = 3, deliberately smaller than v27's 5. The reality-check correction",
+    "charges every declared slot, read or not, so three shots face an easier",
+    "bar. Budget is consumed by a READ, never by a declaration.",
+    "",
+    "value_ebit_ev_v1 was declared 2026-09-05 after the operator fixed the",
+    "objective (risk-adjusted return), the metric, the universe and the",
+    "budget, and BEFORE any ratio was computed or any backtest run. The",
+    "scoring layer qt/scoring.py existed at declaration; the widened universe",
+    "and the fundamentals sweep did not.",
+    "",
+    "THE RISK TIER IS A MULTIPLE-TESTING PROBLEM, not a feature. Three tiers",
+    "are three strategies. MODERATE is primary and is the only tier that can",
+    "pass. Promoting low or high later is a NEW declaration.",
+    "",
+    "A REBUILD DOES NOT RESET THIS FILE."
+  ],
+  "k_budget": 3,
+  "terminal_date": "2027-06-30",
+  "specifications": {
+    "value_ebit_ev_v1": {
+      "spec_id": "value_ebit_ev_v1",
+      "params": {
+        "objective": "RISK-ADJUSTED RETURN. The operator's 'maximise profits with minimal risk' resolves to excess return per unit of risk, with an explicit drawdown condition so that 'minimal risk' is a bar the strategy must clear rather than an adjective attached afterwards. Fixed here because the same backtest ranks strategies differently under each reading of the phrase.",
+        "universe": "point-in-time monthly membership, screened as of each date. ADV floor $50,000/day (LOWERED from $250,000), ADV ceiling $5,000,000/day, price >= $2.00, >= 200 bars.",
+        "why_the_adv_floor_moved": "With $10,000 across 20 positions a position is $500; at 5% participation that needs $10,000 of daily volume. The old $250,000 floor was 25x what the capital requires and excluded exactly the names large capital cannot reach. $50,000 keeps 5x headroom and still sits far below institutional reach.",
+        "window": "2015-09-01 .. 2025-09-01, ten years (v27 used three, which was a Finnhub artefact; XBRL runs to 2011)",
+        "fundamentals": "SEC XBRL keyed on `filed`, never on fiscal period `end`; flows from annual filings only; restatements resolved to the latest filing at or before each date (extract_fundamentals.py)",
+        "primary_value_metric": "EBIT / enterprise value. ONE metric. No alternatives are tried, and trying one later is a new specification.",
+        "enterprise_value": "market cap + long-term debt - cash. Long-term debt only, because that is what XBRL supplies reliably; short-term borrowings are missing, which understates EV and overstates the ratio for revolver-funded companies.",
+        "quality_gate": "operating income > 0, book equity > 0, debt/equity <= 2.0. Applied BEFORE ranking.",
+        "risk_components": "volatility (252d), max drawdown (252d), leverage, illiquidity (-log ADV), thin equity (1 - equity/assets). Each converted to a cross-sectional percentile at the rebalance date.",
+        "risk_composite": "equal-weighted mean of available percentiles; at least 3 of 5 required, else NaN. Unknown risk must never sort into the low tier. Weights are DECLARED, not fitted -- fitting them would manufacture a score calibrated on this sample and nowhere else.",
+        "tiers": "terciles of the day's scored set: low / moderate / high",
+        "primary_tier": "MODERATE. Three tiers are THREE STRATEGIES; low and high are reported as description, cannot pass, and cannot be substituted. Promoting one later is a new declaration spending another slot.",
+        "portfolio": "20 names, equal weight, long only",
+        "rebalance": "quarterly at month-end, entering the following session",
+        "costs": "75 bps round trip applied to turnover, INSIDE the criterion",
+        "benchmark": "IWM. One benchmark.",
+        "measurement": "calendar-time daily return series, Newey-West lag 10",
+        "order_of_operations": "quality gate, THEN risk tier, THEN rank on value. Ranking first and filtering after produces a different portfolio and is not what this declares.",
+        "output_ledger": "data/portfolios/value_ebit_ev_v1.csv -- NEVER any v27 events file or event_study ledger"
+      },
+      "declared_at": "2026-09-05",
+      "read_at": "",
+      "result": {
+        "prior": "P(this specification clears all eight criteria) = 20-25%, midpoint 22.5%, accepted by the operator 2026-09-05 against the range proposed, BEFORE any ratio was computed. Above v27's 15% because the mechanism is structural rather than informational: value in names too small for institutional capital is not arbitraged away by publication, it is left alone because it cannot be traded at size. Not higher, because value is the most-published anomaly in finance and this is built entirely from free data. COUNTERSIGNED by the operator 2026-09-06 in docs/V29_PREREGISTRATION.md, before any ratio was computed and before the backtest existed. Every parameter and criterion is frozen from that date.",
+        "declaration_note": "Declaring costs NOTHING against K -- qt.referee.k_used counts READS. K stays 0/3 until this is read. Nothing here is a commitment to read it.",
+        "criteria": [
+          "N >= 1,000 trading days with a live book",
+          "at least 60 eligible names per tier at the median rebalance -- below that, 20 holdings is not a selection and the spec MISSES rather than being quietly resized",
+          "annualised excess return over IWM > 0",
+          "t >= 2.0 on the mean daily excess return, Newey-West lag 10",
+          "information ratio >= 0.5",
+          "maximum drawdown no worse than IWM's over the same window",
+          "stability: final-third excess >= 50% of first-third; undefined if the first third is <= 0, which is a MISS",
+          "WRC/SPA at p < alpha/K_declared = 0.0167, unread slots charged"
+        ],
+        "caveats_to_travel_with_any_number": [
+          "SURVIVORSHIP IS CORRECTED ONLY FROM 2023. The delisted roster covers 2023-2026; this window starts 2015. Form 25 filings reach further back and the roster CAN be extended, but until it is, the first eight years carry the same upward bias every v27 read carried. THIS IS THE LARGEST KNOWN WEAKNESS IN THE SPECIFICATION.",
+          "LONG-TERM DEBT ONLY: short-term borrowings are missing from enterprise value, overstating EBIT/EV for revolver-funded companies",
+          "ANNUAL FLOWS: fundamentals are up to fifteen months stale by construction -- conservative, and it costs responsiveness",
+          "COSTS ARE AN ASSUMPTION, NOT A MEASUREMENT. 75 bps is a judgement about a band where real spreads vary enormously, and the result is sensitive to it.",
+          "NO SHORT LEG, so no market hedge; excess return over IWM is the only adjustment",
+          "VALUE UNDERPERFORMS FOR YEARS AT A STRETCH. A ten-year read can be negative while the strategy is sound and positive while it is not.",
+          "TWENTY ILLIQUID SMALL CAPS carry single-name risk that a backtest reports as volatility and a live account experiences as something worse."
+        ]
+      }
+    }
+  }
+}

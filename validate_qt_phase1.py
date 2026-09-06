@@ -291,6 +291,45 @@ def test_spec2_declared():
           "survivorship / two-parameter / linear-accrual caveats stored WITH the spec")
     print(f"\n{r.status()}")
 
+def test_v29_registry_budget():
+    print("\n--- the Referee reads the BUDGET from the registry it was handed ---")
+    v29 = Path("data/registry/v29_specifications.json")
+    if not v29.exists():
+        check("v29-registry-present", False, "data/registry/v29_specifications.json missing")
+        return
+    r29 = referee.Referee(registry_path=v29)
+    check("v29-budget-from-file",
+          r29.k_budget == 3,
+          f"K {r29.k_budget}, not 5. THE BUG THIS CATCHES: budget and terminal "
+          f"date used to come from module constants, so a v29 registry reported "
+          f"v27's K=5 and v27's deadline — v29 specs counted against the wrong "
+          f"budget while the status line looked entirely normal")
+    check("v29-terminal-from-file",
+          r29.terminal_date == "2027-06-30",
+          f"terminal {r29.terminal_date}, not v27's 2027-03-31")
+    check("v29-unread", r29.k_used() == 0 and r29.k_remaining() == 3,
+          "no V29 read has been taken")
+    check("v29-spec-declared",
+          "value_ebit_ev_v1" in r29.specs and not r29.specs["value_ebit_ev_v1"].is_read,
+          "value_ebit_ev_v1 is declared and unread")
+    check("v29-read-would-be-authorised",
+          r29.authorize_read("value_ebit_ev_v1", "2026-12-01").allowed,
+          "the Referee would allow a read — declared, unread, in budget")
+    check("v29-refuses-past-its-own-terminal",
+          not r29.authorize_read("value_ebit_ev_v1", "2027-08-01").allowed,
+          "and refuses one past 2027-06-30, which under the old behaviour would "
+          "have been checked against v27's earlier deadline instead")
+    r27 = referee.Referee(registry_path=Path("data/registry/specifications.json"))
+    check("v27-budget-unchanged",
+          r27.k_budget == 5 and r27.terminal_date == "2027-03-31",
+          "and v27 still reads 5 and 2027-03-31 from its own file — the fix "
+          "changes where the numbers come from, not what they are")
+    check("explicit-argument-still-wins",
+          referee.Referee(registry_path=v29, k_budget=9).k_budget == 9,
+          "an explicit argument overrides the file, which overrides the constants")
+    print(f"\n{r29.status()}")
+
+
 def test_spec3_declared():
     print("\n--- referee: spec #3 DECLARED 09-05, UNREAD, prior still owed ---")
     p = Path("data/registry/specifications.json")
@@ -367,6 +406,7 @@ def main():
     test_referee_records_e1()
     test_live_registry()
     test_spec2_declared()
+    test_v29_registry_budget()
     test_spec3_declared()
     print("\n" + "=" * 70)
     if FAILURES:
