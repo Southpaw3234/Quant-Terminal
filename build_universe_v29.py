@@ -154,8 +154,18 @@ def main() -> None:
         extra = sorted({str(t).upper() for t in usable["ticker"]} - set(symbols))
         symbols = sorted(set(symbols) | set(extra))
         added = len(extra)
-        print(f"  + {added} delisted names from the roster (2023-2026 only — the")
-        print(f"    first eight years of this window are NOT survivorship-corrected)")
+        # Report what the roster ACTUALLY covers rather than a hardcoded claim.
+        # The first version printed "2023-2026 only" and kept printing it after
+        # the roster was extended to ten years — a message that describes the
+        # code's history instead of its input is worse than no message.
+        try:
+            _rd = pd.to_datetime(roster["form25_date"], errors="coerce").dropna()
+            _cov = f"{_rd.min().date()}..{_rd.max().date()}" if len(_rd) else "unknown"
+        except Exception:
+            _cov = "unknown"
+        print(f"  + {added} delisted names from {ROSTER}")
+        print(f"    roster covers {_cov}; any part of this window OUTSIDE that span")
+        print(f"    is NOT survivorship-corrected")
     if LIMIT:
         symbols = symbols[:LIMIT]
     grid = month_ends(START, END)
