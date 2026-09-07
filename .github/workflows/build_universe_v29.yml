@@ -49,6 +49,10 @@ jobs:
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
           # Defaulted for the push path, where `inputs` does not exist.
           QT_V29_LIMIT: ${{ inputs.limit || '0' }}
+          # The TEN-YEAR roster (1,840 issuers from the five-query union), not
+          # the three-year one the first build used. This is the whole point of
+          # extending it: the recovered names have to reach the candidate pool.
+          QT_ROSTER_FILE: data/universe/delisted_roster_2015.csv
         run: |
           set -u
           if [ -z "${FINNHUB_API_KEY}" ]; then echo "::error::FINNHUB_API_KEY not set"; exit 1; fi
