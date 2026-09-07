@@ -39,6 +39,9 @@ they belong in a pre-registration rather than in an extractor. See
 docs/V29_VALUE_MODEL.md.
 
 Writes data/fundamentals/fundamentals_pit.csv. No return computed, no K.
+
+Re-swept 2026-09-07 over the universe rebuilt on the ten-year roster, which
+added 190 distinct names the three-year roster could not reach.
 """
 from __future__ import annotations
 
