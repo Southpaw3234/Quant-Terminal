@@ -1,0 +1,39 @@
+name: Spread probe — is the declared 75 bps round trip right?
+
+# Read-only market-data calls. Places no order and never touches the trading
+# endpoint. Computes no return, writes nothing under data/, spends no K.
+#
+# It CANNOT change the declared cost parameter, which is signed. If the
+# evidence says the true figure is far higher, the specification is likely to
+# fail on costs, and the measurement is evidence for the NEXT one.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'v29/**'
+    paths:
+      - 'probe_spreads.py'
+      - '.github/workflows/probe_spreads.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas "yfinance>=0.2.40,<2"
+      - name: Estimate spreads over the DECLARED window from daily bars
+        run: python probe_spreads.py
+      - name: Guard — nothing written under data/
+        run: |
+          set -u
+          if ! git diff --quiet -- data/; then echo "::error::probe wrote under data/"; exit 1; fi
+          echo "OK — data/ untouched, K untouched."

@@ -34,6 +34,7 @@ on:
     branches:
       - 'v27/**'
       - 'v28/**'
+      - 'v29/**'
     paths:
       - 'build_delisted_roster.py'
       - 'validate_delisted_roster.py'
@@ -72,9 +73,14 @@ jobs:
           echo "OK — data/ untouched."
 
   build:
-    if: github.event_name == 'workflow_dispatch' && inputs.run_build
+    # Dispatch when the workflow is on the default branch; otherwise gated on
+    # an explicit [roster] marker in the commit message, so a long sweep never
+    # fires on an unrelated push.
+    if: >-
+      (github.event_name == 'workflow_dispatch' && inputs.run_build) ||
+      (github.event_name == 'push' && contains(github.event.head_commit.message, '[roster]'))
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -85,15 +91,24 @@ jobs:
       - name: Refuse to overwrite an existing roster
         run: |
           set -u
-          if [ -f data/universe/delisted_roster.csv ] && [ "${{ inputs.limit }}" = "0" ]; then
-            echo "::error::data/universe/delisted_roster.csv already exists — rebuilding it would move a file other steps key off. Delete it deliberately or run capped."
+          if [ -f data/universe/delisted_roster_2015.csv ]; then
+            echo "::error::data/universe/delisted_roster_2015.csv already exists — refusing to rebuild a file other steps key off"
             exit 3
           fi
           echo "OK — nothing to clobber."
       - name: Build the roster
         env:
           SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
-          QT_ROSTER_LIMIT: ${{ inputs.limit }}
+          # Defaulted for the push path, where `inputs` does not exist.
+          QT_ROSTER_LIMIT: ${{ inputs.limit || '0' }}
+          # TEN YEARS, not three. The 2023 start was an artefact of the first
+          # run and left eight of the ten declared years uncorrected.
+          QT_ROSTER_START: '2015-01-01'
+          QT_ROSTER_END: '2026-09-06'
+          # A NEW file. The existing roster is what the current universe was
+          # built from and must not move underneath it.
+          QT_ROSTER_OUT: data/universe/delisted_roster_2015.csv
+          QT_ROSTER_PAGES: '400'
         run: python build_delisted_roster.py
       - name: Guard — the frozen universe, both ledgers and S4 untouched
         run: |
