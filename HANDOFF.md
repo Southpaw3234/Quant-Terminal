@@ -78,7 +78,7 @@ alpha question as answered.
 > guard` is the working example — it sits *after* the flat gate and reported ✓
 > from underneath a ✗ on 8/26. **One open item — do it before anything else:**
 >
-> ⚠️ **REFRESHED 2026-09-08.** HON is unchanged and the dry-run backing the plan below is now **twelve days old (8/26)**. Re-run `mode=dry-run` and confirm it NAMES HON at qty 13 before dispatching `execute` — the broker read has been caught wrong in BOTH directions. Two other items are now owed and neither costs K and neither is a trade: **(a)** re-run the V29 selection pass against the landed 114,414-row panel (`run_value_backtest.yml`, `mode=select`), and **(b)** write the operator's signed prior into `pead_8k_car_v3` — 🔑 **the Referee does NOT check it** (`qt/referee.py:161` tests already-read, date order, terminal date and K, and nothing else), so a read dispatched without it is a real protocol breach that no code will stop. Spec #3 must ALSO choose, in the registry and before dispatch, between the frozen 1,869-row `events_8k_car_1095d.csv` its declaration names and the new 1,294-row `events_8k_car_pit_1095d.csv`. See the 09-07/08 ledger ⑤ ⑥ ⑨.
+> ⚠️ **REFRESHED 2026-09-08.** ✅ The V29 selection re-run is DONE (run `34180162057`, K still 0/3, criterion 2 clears at median 98). ✅ A fresh HON dry-run at 02:27Z (`34180133352`) NAMES HON, qty exactly 13, `openBUY=0` — the plan is confirmed and only `mode=execute` remains. HON itself is unchanged: `equity=$113,862.15`, one position, gross $2,727 (0.02×), `HON short=-13 openBUY=0 price=209.80 cover=13 cost=$2,727`. The stale 8/26 plan quoted below has been SUPERSEDED by that 09-08 dry-run; dispatch `mode=execute` on the same workflow and it fills at the next open. One item is still owed, and it costs no K and is not a trade: write the operator's signed prior into `pead_8k_car_v3` — 🔑 **the Referee does NOT check it** (`qt/referee.py:161` tests already-read, date order, terminal date and K, and nothing else), so a read dispatched without it is a real protocol breach that no code will stop. Spec #3 must ALSO choose, in the registry and before dispatch, between the frozen 1,869-row `events_8k_car_1095d.csv` its declaration names and the new 1,294-row `events_8k_car_pit_1095d.csv`. See the 09-07/08 ledger ⑤ ⑥ ⑨.
 >
 > 1. 🔴 **COVER HON — NOT DONE.** `gh workflow run position_trim.yml --repo Southpaw3234/Quant-Terminal -f mode=execute -f sleeve=short-cover`
 >    — DAY orders, fills at the next open, ~$2,838 (latest 8/20 21:16Z dry-run `32418542070`), takes gross to $0.00× / zero
@@ -282,7 +282,20 @@ Decision, stated rather than buried: **left ON.** Commenting the schedules out w
 
 **⑧ HON: UNCHANGED, UNCOVERED, AND STILL THE ONLY BLOCKER.** `open_positions.json` on master: `qty -13, avg_entry 125.65, price 209.61, market_value -2,724.93, unrealized -1,091.42`. Every trading run still red. ⚠️ **The last dry-run is 8/26 and is now twelve days old** — re-run `mode=dry-run` and confirm the plan NAMES HON at qty 13 before dispatching `execute`. The broker read has been caught wrong in both directions. **A trade: the operator fires it.**
 
-**⑨ NOT DONE, AND OWED.** The V29 selection pass has **not** been re-run against the landed panel — that is now a single dispatch of `run_value_backtest.yml` in `select` mode, and it is the last item of 09-05/06 ⑩. `pead_8k_car_v3` still has no prior. Neither costs K.
+**⑨ THE SELECTION PASS RE-RAN AGAINST THE LANDED PANEL — GREEN, AND CRITERION 2 CLEARS WITH MORE ROOM.** Run `34180162057`, `mode=select`, 3m40s, **K untouched at 0/3**. 40 quarterly rebalances 2015-09-30..2025-06-30, 3,133/3,133 names priced, 16 panel rows dropped on an unusable ticker.
+
+```
+                                    pre-rebuild (09-06)   after the panel landed
+  eligible names, moderate tier            median 94            median 98
+  distinct names across 40 quarters              206                  213
+  quality gate, candidate name-quarters            —      11,185 ok of 37,886
+```
+
+⚠️ **The minimum is 56, below the 60 floor.** The criterion is written on the MEDIAN rebalance and so clears at 98, but at least one quarter selects 20 from 56 rather than from 60+. Recorded now so it cannot be discovered after a read. The gate does heavy lifting in this universe: 16,292 unprofitable and 8,575 with no `op_income` at all, so only ~30% of candidate name-quarters survive to be ranked.
+
+🔑 **The portfolio CSV is an ARTIFACT, not a commit — and here that is harmless, unlike ①.** `read` mode re-derives the selection from `PANEL` and `FUNDS` in the repo before computing any return (`run_value_backtest.py:158`), so nothing downstream depends on the file persisting. **That is precisely why landing the panel mattered:** the read consumes the repo's copy of the fundamentals and universe, and until tonight the repo's copy was the stale one.
+
+**⑩ STILL OWED, NEITHER COSTS K, NEITHER IS A TRADE.** `pead_8k_car_v3` has no prior, and spec #3 has not chosen its event file (⑥).
 
 ## 🗓️ SESSION LEDGER — 2026-09-05/06: 🆕 **A SECOND PROGRAMME OPENED — V29, systematic value, its own pre-registration SIGNED (K=3, terminal 2027-06-30), its own registry, nothing read.** 🔑 **THE SURVIVORSHIP FIX I BUILT WAS AIMED AT THE SMALLER PROBLEM: correcting it adds 15 events; the LIQUIDITY SCREEN'S LOOK-AHEAD removes 590, 32% of spec #3's set.** 🔴 **The Referee was enforcing v27's budget on V29's registry — K read 0/5 against a declared 3.** v27 K still **2/5**; V29 K **0/3**. Live pipeline untouched throughout.
 
