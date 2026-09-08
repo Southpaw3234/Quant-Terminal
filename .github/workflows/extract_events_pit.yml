@@ -1,0 +1,104 @@
+name: Point-in-time event discovery (v27 survivorship fix, step 3)
+
+# validate  -- hermetic. No network, no requests, no yfinance. Every push.
+# extract   -- dispatch-only. Discovers events over the universe that EXISTED
+#              at the time and uploads the set as an ARTIFACT. Does not commit.
+#
+# ⚠️ THIS DOES NOT PRODUCE SPEC #3'S INPUT. pead_8k_car_v3 declares
+# data/events/events_8k_car_1095d.csv, that file is frozen, and the read job's
+# INPUT GUARD checks it against the registry. This writes a different file, for
+# a FUTURE specification. Pointing spec #3 at it would be a different
+# specification wearing spec #3's name.
+#
+# v27 SEQUENCING: not scheduled, not wired into quant_daily.yml. Nothing here
+# may run on a cron or write under data/predictions/ before 2026-09-29.
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_extract:
+        description: 'Discover events point-in-time (SELECTION only — no returns, no K)'
+        type: boolean
+        default: false
+      limit:
+        description: 'Cap the candidate names for a smoke test (0 = all)'
+        type: string
+        default: '0'
+  push:
+    branches:
+      - 'v27/**'
+      - 'v28/**'
+    paths:
+      - 'extract_events_pit.py'
+      - 'validate_events_pit.py'
+      - 'extract_8k_car.py'
+      - '.github/workflows/extract_events_pit.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas
+      - name: Compile check
+        run: |
+          python -m py_compile extract_events_pit.py
+          python -m py_compile validate_events_pit.py
+      - name: Run pure-logic validation
+        run: python validate_events_pit.py
+      - name: Assert nothing under data/ changed
+        run: |
+          set -u
+          if ! git diff --quiet -- data/ 2>/dev/null; then
+            echo "::error::validation modified data/ — it must be read-only"; exit 1
+          fi
+          echo "OK — data/ untouched."
+
+  extract:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_extract
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas requests "yfinance>=0.2.40,<2"
+      - name: Discover events point-in-time
+        env:
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+          QT_PIT_EVENTS_LIMIT: ${{ inputs.limit }}
+        run: |
+          set -u
+          if [ ! -f data/universe/v27_universe_pit.csv ]; then
+            echo "::error::no point-in-time panel — run step 2 first"; exit 1
+          fi
+          python extract_events_pit.py
+      - name: Guard — spec #3's frozen input, both ledgers and S4 untouched
+        run: |
+          set -u
+          if ! git diff --quiet -- data/predictions/ data/shadow/ 2>/dev/null; then
+            echo "::error::step 3 modified S4 evidence"; exit 1
+          fi
+          for f in data/events/events_8k_car_1095d.csv data/events/event_study.csv \
+                   data/events/event_study_v2.csv data/universe/v27_universe.csv \
+                   data/universe/v27_universe_pit.csv data/universe/delisted_roster.csv; do
+            if [ -f "$f" ] && ! git diff --quiet -- "$f" 2>/dev/null; then
+              echo "::error::$f is frozen and was modified"; exit 1
+            fi
+          done
+          echo "OK — spec #3's declared input and all frozen data untouched."
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v27-events-pit
+          path: data/events/events_8k_car_pit_1095d*.csv
+          if-no-files-found: error
