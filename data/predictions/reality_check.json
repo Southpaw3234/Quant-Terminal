@@ -1,10 +1,10 @@
 {
-  "sr_live": 0.8133,
-  "sr_boot_p95": 4.0871,
-  "wrc_p_value": 0.493,
-  "spa_stat": -3.2738,
-  "spa_p_value": 0.957,
-  "n_days": 73,
+  "sr_live": 0.9923,
+  "sr_boot_p95": 4.1338,
+  "wrc_p_value": 0.504,
+  "spa_stat": -3.1415,
+  "spa_p_value": 0.963,
+  "n_days": 74,
   "n_bootstrap": 1000,
   "significant": false
 }
