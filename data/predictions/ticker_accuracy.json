@@ -72,12 +72,12 @@
     "rolling_acc": 0.0
   },
   "ADBE": {
-    "correct": 0,
+    "correct": 1,
     "total": 1,
     "recent": [
-      0
+      1
     ],
-    "rolling_acc": 0.0
+    "rolling_acc": 1.0
   },
   "CRM": {
     "correct": 0,
@@ -1416,12 +1416,12 @@
     "rolling_acc": 1.0
   },
   "VLO": {
-    "correct": 1,
+    "correct": 0,
     "total": 1,
     "recent": [
-      1
+      0
     ],
-    "rolling_acc": 1.0
+    "rolling_acc": 0.0
   },
   "DVN": {
     "correct": 0,
