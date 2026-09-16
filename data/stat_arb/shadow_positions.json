@@ -1,1 +1,15 @@
-{}
+{
+  "JPM/BAC": {
+    "y": "JPM",
+    "x": "BAC",
+    "side": -1,
+    "entry_date": "2026-09-16",
+    "entry_z": 2.9261,
+    "half_life": 3.56,
+    "hedge_ratio": 1.432453,
+    "last_y": 350.0,
+    "last_x": 58.279998779296875,
+    "days_held": 0,
+    "cum_pnl": 0.0
+  }
+}
