@@ -7,8 +7,21 @@
     "entry_z": 2.9261,
     "half_life": 3.56,
     "hedge_ratio": 1.432453,
-    "last_y": 350.0,
-    "last_x": 58.279998779296875,
+    "last_y": 349.239990234375,
+    "last_x": 58.154998779296875,
+    "days_held": 1,
+    "cum_pnl": 0.26638308866511196
+  },
+  "INTC/TXN": {
+    "y": "INTC",
+    "x": "TXN",
+    "side": -1,
+    "entry_date": "2026-09-17",
+    "entry_z": 2.1277,
+    "half_life": 6.66,
+    "hedge_ratio": 0.834879,
+    "last_y": 110.2750015258789,
+    "last_x": 258.489990234375,
     "days_held": 0,
     "cum_pnl": 0.0
   }
