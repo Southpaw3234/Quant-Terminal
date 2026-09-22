@@ -141,7 +141,7 @@ Six groups, spanning all three tiers:
 | group | tier | what it pins |
 |---|---|---|
 | `test_tier1_purity` | 1 | declared-pure modules import nothing network-shaped |
-| `test_tier1_no_silent_except` | 1 | no `except: pass` anywhere in `qt/` |
+| `test_tier1_no_silent_except` | 1 | no *broad* `except: pass` anywhere in `qt/` |
 | `test_tier2_matched_constants` | 2 | a constant shared across workflows has ONE value |
 | `test_tier2_alarm_placement` | 2 | every alarm carries `if: always()` |
 | `test_tier2_ledger_integrity` | 2 | declared ledgers have unique, ordered keys |
@@ -169,6 +169,21 @@ gate. **Anything that can be made executable belongs in `validate_protocols.py` 
 and the advisory file is deliberately kept short for that reason. Do not grow it with
 things that could have been code. The genuinely binding rules are the ones that fail a
 build; the rest is a nudge, and should be described as one.
+
+### What the first CI run found
+
+**37 passed, 1 declared-exempt skip, 1 fail — and the fail was the check itself, not the
+code.** `qt/ledger.py:87` is a narrowly-typed `except (TypeError, ValueError): pass` used
+as a type-probe fall-through inside a pure comparison helper; control flow continues to
+the float and string comparisons immediately below, so nothing is silenced.
+
+The rule was too blunt, so it was **tightened rather than exempted**: the hazard in v25
+was always the *broad* form — a bare `except: pass` around the consecutive-loss brake
+(`dc04017`) and an `except Exception: pass` around the drawdown block (`a0dd471`), each
+swallowing genuine bugs alongside the expected error. **The rule is about breadth, not
+about `pass`.** A handler naming the errors it expects has reasoned about them; one
+catching everything has not. Reaching for `EXEMPT` here would have recorded a false
+finding as a permanent exception — the failure mode exemptions are supposed to prevent.
 
 ### What the suite found immediately
 

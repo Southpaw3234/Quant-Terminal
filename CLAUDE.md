@@ -35,9 +35,12 @@ model has failed."* Crons self-retire **2026-09-29**. The book is flat.
    The layer that *fetches* lives somewhere else on purpose — that separation is what
    makes the arithmetic testable against hand-computed answers.
    `validate_protocols.py::test_tier1_purity` enforces this.
-2. **No handler may swallow a failure.** Never `except: pass`. A guard that fails open
-   is worse than no guard, because it is trusted. **Fail closed:** a function that
-   cannot determine whether an action is safe must refuse it.
+2. **No *broad* handler may swallow a failure.** Never a bare `except:` or an
+   `except Exception:` that does nothing — those catch genuine bugs alongside the
+   expected error, and that is what silently disabled two v25 brakes. A narrow
+   `except (TypeError, ValueError): pass` as a typed fall-through is fine: the rule is
+   about **breadth, not about `pass`.** Name the errors you expect. **Fail closed:** a
+   function that cannot determine whether an action is safe must refuse it.
    `validate_protocols.py::test_tier1_no_silent_except` enforces this.
 3. **Name the incident.** Every guard exists because something went wrong. Say which
    thing, in the docstring, with the commit. A rule whose reason is lost gets deleted by

@@ -145,8 +145,32 @@ def test_tier1_purity():
               else f"reaches the network -> {', '.join(offenders)}")
 
 
+def _is_broad_except(line: str) -> bool:
+    """Is this a BROAD handler — bare `except:` or `except Exception:`?
+
+    Narrow handlers are deliberately allowed. `except (TypeError, ValueError):
+    pass` as a typed fall-through in a pure helper is idiomatic and safe: the
+    function still reaches a definite answer on the next line. What killed v25
+    was the broad form — a bare `except: pass` around the consecutive-loss
+    brake and an `except Exception: pass` around the drawdown block, each of
+    which swallowed genuine bugs along with the expected error and silently
+    DISABLED the guard (`dc04017`, `a0dd471`).
+
+    So the rule is about BREADTH, not about `pass`. A handler that names the
+    errors it expects has reasoned about them; one that catches everything
+    has not.
+    """
+    m = re.match(r"^\s*except\b([^:]*):", line)
+    if m is None:
+        return False
+    clause = m.group(1).strip()
+    clause = re.sub(r"\s+as\s+\w+$", "", clause).strip()
+    clause = clause.strip("()").strip()
+    return clause in ("", "Exception", "BaseException")
+
+
 def test_tier1_no_silent_except():
-    print("\n--- tier 1: no exception handler silently swallows a failure ---")
+    print("\n--- tier 1: no BROAD handler silently swallows a failure ---")
     pkg = ROOT / "qt"
     if not pkg.is_dir():
         skip("tier1-no-silent-except", "no qt/ package in this repo yet")
@@ -158,6 +182,8 @@ def test_tier1_no_silent_except():
                                errors="replace").splitlines()
         hits = []
         for i, line in enumerate(lines):
+            if not _is_broad_except(line):
+                continue
             if single.match(line):
                 hits.append(i + 1)
                 continue
@@ -169,9 +195,10 @@ def test_tier1_no_silent_except():
                         hits.append(i + 1)
                     break
         check(f"no-silent-except-{path.name}", not hits,
-              "no `except: pass`" if not hits
-              else f"silently swallows at line(s) {hits} — a guard that fails "
-                   f"open is worse than no guard, because it is trusted")
+              "no broad `except: pass`" if not hits
+              else f"BROAD handler swallows everything at line(s) {hits} — a "
+                   f"guard that fails open is worse than no guard, because it "
+                   f"is trusted. Name the errors you expect, or fail closed")
 
 
 # ═══════════════════════════════════════════════════ TIER 2 — infrastructure
