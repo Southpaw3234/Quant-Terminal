@@ -7,9 +7,35 @@
     "entry_z": 2.9261,
     "half_life": 3.56,
     "hedge_ratio": 1.432453,
-    "last_y": 350.8299865722656,
-    "last_x": 57.910400390625,
-    "days_held": 3,
-    "cum_pnl": -88.2060005505414
+    "last_y": 338.8699951171875,
+    "last_x": 56.53010177612305,
+    "days_held": 4,
+    "cum_pnl": 14.348891853716012
+  },
+  "INTC/TXN": {
+    "y": "INTC",
+    "x": "TXN",
+    "side": -1,
+    "entry_date": "2026-09-22",
+    "entry_z": 2.1981,
+    "half_life": 7.66,
+    "hedge_ratio": 0.85064,
+    "last_y": 122.37000274658203,
+    "last_x": 271.19000244140625,
+    "days_held": 0,
+    "cum_pnl": 0.0
+  },
+  "META/AMZN": {
+    "y": "META",
+    "x": "AMZN",
+    "side": -1,
+    "entry_date": "2026-09-22",
+    "entry_z": 2.4159,
+    "half_life": 10.13,
+    "hedge_ratio": 1.187601,
+    "last_y": 749.7799072265625,
+    "last_x": 254.65499877929688,
+    "days_held": 0,
+    "cum_pnl": 0.0
   }
 }
