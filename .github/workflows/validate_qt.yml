@@ -81,7 +81,8 @@ jobs:
           python -m py_compile validate_qt.py validate_qt_phase1.py \
             validate_qt_prices.py validate_qt_wrc.py validate_qt_scoring.py \
             validate_qt_calendar_time.py validate_qt_liquidity.py \
-            validate_qt_execution.py validate_qt_roster_update.py
+            validate_qt_execution.py validate_qt_roster_update.py \
+            validate_protocols.py
           python -m py_compile update_roster.py check_held_positions.py
 
       - name: Run Phase 0 validation
@@ -110,6 +111,12 @@ jobs:
 
       - name: Run roster-update validation (append-only merge)
         run: python validate_qt_roster_update.py
+
+      # docs/CARRY_FORWARD.md §⑧. Tiers 2 and 3 were prose until this suite
+      # existed, and prose is the arrangement qt/referee.py was built to
+      # replace. Stdlib only, so it runs before any dependency is installed.
+      - name: Run protocol validation (Tier 1 construction, Tier 2 wiring, Tier 3 discipline)
+        run: python validate_protocols.py
 
       - name: Assert the live pipeline is untouched
         run: |
