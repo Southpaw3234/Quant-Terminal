@@ -21,6 +21,10 @@ on:
       # filter documented below: a trigger that lags the tests it guards
       # reports on a snapshot of something it is not watching.
       - 'v29/**'
+      # docs/** added 2026-09-21 for the same reason v29/** was: the commit
+      # that ADDED validate_protocols.py landed on docs/carry-forward and
+      # triggered nothing. Third instance of this exact class in one file.
+      - 'docs/**'
     paths:
       # Every input the suites actually read. The Phase 1 commit changed
       # validate_qt_phase1.py and data/registry/specifications.json and
@@ -37,6 +41,11 @@ on:
       - 'validate_qt_liquidity.py'
       - 'validate_qt_execution.py'
       - 'validate_qt_roster_update.py'
+      - 'validate_protocols.py'
+      # CLAUDE.md is an INPUT: test_tier3_protocol_file reads it and asserts
+      # it declares each required rule. Omitting it would be the paths-filter
+      # trap again — a suite whose input can change without re-running it.
+      - 'CLAUDE.md'
       - 'update_roster.py'
       - 'check_held_positions.py'
       - 'event_study.py'
