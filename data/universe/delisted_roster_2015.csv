@@ -1839,3 +1839,26 @@ cik,ticker,all_tickers,issuer_edgar,name_source,name_match,form,form25_date,exch
 60714,LXU,LXU,"LSB INDUSTRIES, INC.","LSB Industries, Inc.",True,25-NSE,2026-08-25,NYSE,2021-09-07,2026-09-04,1255,9,still-listed
 1581091,RMAX,RMAX,"RE/MAX Holdings, Inc.",RE/MAX Holdings Inc,True,25-NSE,2026-08-25,NYSE,2026-07-17,2026-09-04,36,9,still-listed
 58492,LEG,LEG,LEGGETT & PLATT INC,Leggett & Platt Inc,True,25-NSE,2026-08-27,NYSE,2026-07-17,2026-09-04,36,7,still-listed
+1430162,CSAN,CSAN,Cosan S.A.,Cosan S.A.,True,25,2026-09-08,NYSE,2026-09-18,2026-10-02,11,11,still-listed
+1637459,KHC,KHC,Kraft Heinz Co,The Kraft Heinz Company,True,25,2026-09-08,NYSE,2021-10-04,2026-10-02,1255,19,still-listed
+1828185,BRNS,BRNS,Barinthus Biotherapeutics plc.,Barinthus Biotherapeutics PLC,True,25,2026-09-09,NasdaqCM,2026-07-17,2026-10-02,55,18,still-listed
+818686,TEVA,TEVA|TEVJF,TEVA PHARMACEUTICAL INDUSTRIES LTD,Teva Pharmaceutical Industries Limited,True,25-NSE,2026-09-14,NYSE,2021-10-04,2026-10-02,1255,15,still-listed
+732026,TRT,TRT,TRIO-TECH INTERNATIONAL,Trio-Tech International,True,25,2026-09-15,NasdaqGM,2021-10-04,2026-10-02,1255,14,still-listed
+1527613,CIMG,CIMG,CIMG Inc.,CIMG Inc.,True,25-NSE,2026-09-17,OTC Markets OTCID,2021-10-04,2026-10-02,1255,12,otc-continuation
+1039684,OKE,OKE,ONEOK INC /NEW/,"ONEOK, Inc.",True,25-NSE,2026-09-18,NYSE,2021-10-04,2026-10-02,1255,11,still-listed
+62709,MRSH,MRSH,"MARSH & MCLENNAN COMPANIES, INC.","Marsh & McLennan Companies, Inc.",True,25-NSE,2026-09-21,NYSE,2021-10-04,2026-10-02,1255,10,still-listed
+1060822,CRI,CRI,CARTERS INC,"Carter's, Inc.",False,25-NSE,2026-09-22,NYSE,2021-10-04,2026-10-02,1255,9,identity-mismatch
+1840199,WALD,WALD|WALDW,Waldencast plc,Waldencast plc,True,25,2026-09-24,NasdaqCM,2021-10-04,2026-10-02,1255,7,still-listed
+1637147,ZSPC,ZSPC,"zSpace, Inc.","zSpace, Inc.",True,25,2026-09-25,OTC Markets OTCQB,2024-12-05,2026-10-02,457,6,otc-continuation
+1552275,SUN,SUN,Sunoco LP,Sunoco LP,True,25,2026-09-28,NYSE,2021-10-04,2026-10-02,1255,5,still-listed
+1522727,USAC,USAC,"USA Compression Partners, LP","USA Compression Partners, LP",True,25,2026-09-28,NYSE,2021-10-04,2026-10-02,1255,5,still-listed
+2089661,SUNC,SUNC,SunocoCorp LLC,SunocoCorp LLC,True,25,2026-09-28,NYSE,2025-11-06,2026-10-02,227,5,still-listed
+1889983,KVACF,KVACF|KVAUF|KVAWF,Keen Vision Acquisition Corp.,Keen Vision Acquisition Corporation,True,25-NSE,2026-09-30,OTC Markets OTCPK,2023-09-15,2026-10-02,765,3,otc-continuation
+1893219,ABPO,ABPO|ABPWW,"Abpro Holdings, Inc.","Abpro Holdings, Inc.",True,25-NSE,2026-09-30,OTC Markets OTCPK,2022-03-09,2026-10-02,1147,3,otc-continuation
+1880343,AMZE,AMZE,"AMAZE HOLDINGS, INC.","Amaze Holdings, Inc.",True,25-NSE,2026-10-01,NYSE American,2021-12-14,2026-10-02,1205,2,still-listed
+1004989,SGRP,SGRP,"SPAR Group, Inc.","SPAR Group, Inc.",True,25-NSE,2026-10-01,OTC Markets OTCQB,2021-10-04,2026-10-02,1255,2,otc-continuation
+1741534,UOKAF,UOKAF,MDJM LTD,MDJM Ltd,True,25-NSE,2026-10-01,OTC Markets OTCQB,2021-10-04,2026-10-02,1255,2,otc-continuation
+912595,MAA,MAA|MAA-PI,MID AMERICA APARTMENT COMMUNITIES INC.,"Mid-America Apartment Communities, Inc.",True,25-NSE,2026-10-01,NYSE,2021-10-04,2026-10-02,1255,2,still-listed
+1762239,KAVL,KAVL,"Kaival Brands Innovations Group, Inc.","Kaival Brands Innovations Group, Inc.",True,25-NSE,2026-10-02,OTC Markets OTCQB,2021-10-04,2026-10-02,1255,1,otc-continuation
+1796898,MAXNQ,MAXNQ,"Maxeon Solar Technologies, Ltd.","Maxeon Solar Technologies, Ltd.",True,25-NSE,2026-10-02,OTC Markets OTCPK,2021-10-04,2026-10-02,1255,1,otc-continuation
+2080023,VACI,VACI,Viking Acquisition Corp I,Viking Acquisition Corp. I,True,25-NSE,2026-10-02,NYSE,2026-10-01,2026-10-01,1,0,still-listed
