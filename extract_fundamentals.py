@@ -58,6 +58,13 @@ OUT_CSV = os.environ.get("QT_FUND_OUT", "data/fundamentals/fundamentals_pit.csv"
 START = os.environ.get("QT_FUND_START", "2023-09-01")
 END = os.environ.get("QT_FUND_END", "2026-09-05")
 LIMIT = int(os.environ.get("QT_FUND_LIMIT", "0"))
+# 'annual' reproduces the v1 panel byte for byte. 'ttm' is the basis declared
+# by value_ebit_ev_v2 on 2026-11-08. The DEFAULT STAYS 'annual' so a re-sweep
+# of v1's frozen panel cannot silently change basis.
+FLOWS = (os.environ.get("QT_FUND_FLOWS", "annual") or "annual").strip().lower()
+if FLOWS not in ("annual", "ttm"):
+    print(f"[fundamentals] QT_FUND_FLOWS must be 'annual' or 'ttm', got {FLOWS!r}")
+    sys.exit(2)
 if LIMIT:
     OUT_CSV = OUT_CSV.replace(".csv", f"_SMOKE{LIMIT}.csv")
 SLEEP = 0.12
@@ -112,7 +119,12 @@ def collect_facts(companyfacts: dict, tags: list, unit: str, annual_only: bool) 
             form, fp = str(r.get("form", "")), str(r.get("fp", ""))
             if annual_only and not (form.startswith("10-K") and fp == "FY"):
                 continue
-            out.append({"end": str(end), "val": float(val), "filed": str(filed),
+            # `start` is captured for TTM construction, which identifies a
+            # period by its DURATION rather than by `fp`. Many filers report
+            # both a discrete quarter and a year-to-date figure for the same
+            # period end, and only the duration separates them.
+            out.append({"end": str(end), "start": str(r.get("start") or ""),
+                        "val": float(val), "filed": str(filed),
                         "form": form, "fp": fp, "tag": tag})
         if out:
             return out
@@ -138,11 +150,125 @@ def known_as_of(facts: list, asof) -> "dict | None":
     return max(same, key=lambda f: f["filed"])
 
 
-def snapshot(facts_by_metric: dict, asof) -> dict:
-    """One row: every metric as known on `asof`, plus how stale it was."""
+# ────────────────────────────────────────── trailing twelve months (v2 flows)
+#
+# Declared by value_ebit_ev_v2 on 2026-11-08, BEFORE this code existed, so the
+# construction could not be tuned toward a nicer answer.
+#
+# TTM = FY(n-1) + YTD(current) - YTD(same period, prior year).
+#
+# 🔑 That form needs only YEAR-TO-DATE figures and never a derived discrete
+# quarter. Deriving Q4 as FY minus Q1+Q2+Q3 compounds three restatement
+# histories into one number; this needs three facts, each as filed.
+#
+# Periods are identified by DURATION, not by the `fp` field. Filers routinely
+# report a discrete quarter AND a year-to-date figure against the same period
+# end, and `fp` says "Q3" for both. Duration is what separates them.
+
+_ANNUAL_DAYS = (350, 380)
+_YTD_DAYS = ((80, 100), (170, 195), (260, 285))     # Q1, Q2, Q3 year-to-date
+
+
+def _duration_days(f) -> "int | None":
+    if not f.get("start"):
+        return None
+    try:
+        return (pd.Timestamp(f["end"]) - pd.Timestamp(f["start"])).days
+    except (ValueError, TypeError):
+        return None
+
+
+def period_bucket(f) -> "str | None":
+    """'FY', 'Q1'..'Q3' for a year-to-date window, or None if unusable.
+
+    None covers discrete quarters, 52/53-week stubs and anything whose length
+    does not match a standard reporting window. Unusable is NOT an error — it
+    simply cannot take part in a TTM, and a name with no usable window drops
+    out of that rebalance rather than falling back to a different basis.
+    """
+    days = _duration_days(f)
+    if days is None:
+        return None
+    if _ANNUAL_DAYS[0] <= days <= _ANNUAL_DAYS[1]:
+        return "FY"
+    for i, (lo, hi) in enumerate(_YTD_DAYS, start=1):
+        if lo <= days <= hi:
+            return f"Q{i}"
+    return None
+
+
+def ttm_as_of(facts: list, asof) -> "dict | None":
+    """Trailing twelve months as KNOWN on `asof`. None when it cannot be formed.
+
+    Point-in-time rules are the same as `known_as_of`: only facts already
+    FILED on or before the date are visible, and within a period the latest
+    filing wins so a restatement counts only once it had actually happened.
+
+    ⚠️ RETURNS None RATHER THAN FALLING BACK. value_ebit_ev_v2 declares that
+    where a TTM cannot be formed the metric is NULL and the name drops out of
+    the rebalance. Falling back to the annual figure would silently mix two
+    bases in one series, which is the exact failure the change exists to
+    avoid.
+    """
+    d = str(asof)[:10]
+    visible = [f for f in facts
+               if f.get("filed", "") <= d and period_bucket(f) is not None]
+    if not visible:
+        return None
+
+    def latest(cands):
+        return max(cands, key=lambda f: f["filed"]) if cands else None
+
+    newest_end = max(f["end"] for f in visible)
+    at_newest = [f for f in visible if f["end"] == newest_end]
+
+    # A freshly filed annual IS the trailing twelve months. No arithmetic.
+    fy_now = latest([f for f in at_newest if period_bucket(f) == "FY"])
+    if fy_now is not None:
+        return {"val": fy_now["val"], "end": fy_now["end"],
+                "filed": fy_now["filed"], "basis": "FY"}
+
+    cur = latest([f for f in at_newest if period_bucket(f) != "FY"])
+    if cur is None:
+        return None
+    bucket = period_bucket(cur)
+    e_cur, s_cur = pd.Timestamp(cur["end"]), pd.Timestamp(cur["start"])
+
+    # The same year-to-date window one year earlier. ±45 days absorbs 52/53-week
+    # fiscal calendars and period-end drift.
+    prior = latest([f for f in visible if period_bucket(f) == bucket
+                    and abs((pd.Timestamp(f["end"])
+                             - (e_cur - pd.DateOffset(years=1))).days) <= 45])
+    # The fiscal year that ended immediately before the current one began.
+    fy_prev = latest([f for f in visible if period_bucket(f) == "FY"
+                      and abs((pd.Timestamp(f["end"])
+                               - (s_cur - pd.Timedelta(days=1))).days) <= 20])
+    if prior is None or fy_prev is None:
+        return None
+
+    return {"val": fy_prev["val"] + cur["val"] - prior["val"],
+            "end": cur["end"],
+            # A TTM is only KNOWN once all three of its parts are filed.
+            "filed": max(cur["filed"], prior["filed"], fy_prev["filed"]),
+            "basis": f"FY+{bucket}-{bucket}"}
+
+
+def snapshot(facts_by_metric: dict, asof, flows: str = "annual") -> dict:
+    """One row: every metric as known on `asof`, plus how stale it was.
+
+    `flows='ttm'` switches income-statement items to a trailing-twelve-month
+    basis. Stocks are instantaneous and are unaffected either way.
+    """
     row, filed_dates = {}, []
     for name in METRICS:
-        f = known_as_of(facts_by_metric.get(name, []), asof)
+        kind = METRICS[name][1]
+        facts = facts_by_metric.get(name, [])
+        if flows == "ttm" and kind == "flow":
+            f = ttm_as_of(facts, asof)
+            if f is not None:
+                row[f"{name}_basis"] = f["basis"]
+        else:
+            f = known_as_of(facts, asof)
         if f is None:
             row[name] = None
             continue
@@ -214,8 +340,14 @@ def main() -> None:
     print(f"[fundamentals] {len(tickers)} names from {PANEL}; {len(grid)} month-ends "
           f"{grid[0].date()}..{grid[-1].date()}")
     print(f"[fundamentals] metrics: {', '.join(METRICS)}")
-    print(f"[fundamentals] flows taken from ANNUAL filings only; every value keyed "
-          f"on `filed`, never `end`\n")
+    if FLOWS == "ttm":
+        print(f"[fundamentals] flows on a TRAILING TWELVE MONTH basis "
+              f"(FY(n-1) + YTD - YTD prior year), per value_ebit_ev_v2; a name "
+              f"whose TTM cannot be formed is NULL for that month and does NOT "
+              f"fall back to the annual figure")
+    else:
+        print(f"[fundamentals] flows taken from ANNUAL filings only")
+    print(f"[fundamentals] every value keyed on `filed`, never `end`\n")
 
     sess = requests.Session()
     sess.headers.update({"User-Agent": UA, "Accept-Encoding": "gzip, deflate"})
@@ -235,13 +367,17 @@ def main() -> None:
         stats["with_facts"] += 1
         by_metric = {}
         for name, (unit, kind, tags) in METRICS.items():
-            by_metric[name] = collect_facts(body, tags, unit, annual_only=(kind == "flow"))
+            # TTM needs the 10-Q windows as well, so flows are collected
+            # unfiltered in that mode and the basis is decided in ttm_as_of.
+            by_metric[name] = collect_facts(
+                body, tags, unit,
+                annual_only=(kind == "flow" and FLOWS == "annual"))
             if by_metric[name]:
                 stats[f"has_{name}"] += 1
         for d in grid:
             if (tk, d.strftime("%Y-%m-%d")) not in pairs:
                 continue                      # not in the universe that month
-            snap = snapshot(by_metric, d)
+            snap = snapshot(by_metric, d, flows=FLOWS)
             if snap.get("latest_filed") is None:
                 stats["month_no_data"] += 1
                 continue
