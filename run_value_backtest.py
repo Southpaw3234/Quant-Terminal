@@ -44,6 +44,7 @@ from qt import calendar_time as ct
 from qt import guards as gu
 from qt import referee as ref
 from qt import scoring as sc
+from qt import wrc
 
 REGISTRY = os.environ.get("QT_V29_REGISTRY", "data/registry/v29_specifications.json")
 SPEC_ID = os.environ.get("QT_V29_SPEC", "value_ebit_ev_v1")
@@ -66,6 +67,13 @@ DELISTING_RETURN = -0.55
 MAX_DE = 2.0
 NW_LAG = 10
 MIN_PER_TIER = 60
+# Criterion 8. alpha * (K_tested / K_declared) is what produces the declared
+# bar of 0.0167 at K_tested=1 against K=3 — the unread slots are charged, and
+# that is the whole point of fixing alpha here rather than the bar itself.
+WRC_ALPHA = 0.05
+# Stationary-bootstrap mean block. A DAILY excess series carries real serial
+# dependence; an iid resample would destroy it and understate the p-value.
+WRC_BLOCK = 5.0
 
 
 def _load_prices(tickers, start):
@@ -297,10 +305,47 @@ def main() -> None:
 
     res = ct.evaluate(net, bench, min_days=1000, min_t=2.0, min_ir=0.5,
                       min_stability=0.5, lag=NW_LAG)
+
+    # ── CRITERION 8: WRC / SPA, unread slots charged ───────────────────
+    # DECLARED since 2026-09-05 and never implemented. The 2026-11-08 read
+    # of value_ebit_ev_v1 scored seven of eight criteria and had to record
+    # the eighth as NEVER COMPUTED. That did not change its verdict — four
+    # criteria missed independently, and these tests can only ever make a
+    # result harder to pass, never easier — but a declared criterion the
+    # instrument cannot score is an instrument that does not match its own
+    # specification.
+    #
+    # qt.wrc.joint_correction already does exactly this; nothing statistical
+    # is invented here. 🔑 The declaration's bar of p < 0.0167 IS
+    # alpha * (K_tested / K_declared) at alpha=0.05, K_tested=1, K=3 — the
+    # unread slots are what make it 0.0167 rather than 0.05, and they are
+    # charged whether or not they are ever spent.
+    #
+    # Stationary bootstrap, not iid: this is a DAILY series with real serial
+    # dependence, unlike the event-level abnormal returns qt.wrc's
+    # event-study adapter handles.
+    excess = (net - bench).dropna()
+    jc = wrc.joint_correction(excess.to_numpy(), k_declared=r.k_budget,
+                              alpha=WRC_ALPHA, mean_block=WRC_BLOCK)
+    res["wrc_p"] = float(jc["WRC"].p_value)
+    res["spa_p"] = float(jc["SPA"].p_value)
+    res["wrc_bar"] = float(jc["WRC"].adjusted_alpha)
+    res["wrc_k_label"] = (f"K_tested={jc['WRC'].k_tested} of K_declared="
+                          f"{jc['WRC'].k_declared}; unread slots charged")
+    _c8 = bool(jc["WRC"].passes and jc["SPA"].passes)
+    _c8_text = (f"criterion 8 -- WRC p {jc['WRC'].p_value:.4f} / SPA p "
+                f"{jc['SPA'].p_value:.4f} vs bar {jc['WRC'].adjusted_alpha:.4f}")
+    (res["cleared"] if _c8 else res["missed"]).append(_c8_text)
+    if not _c8 and res.get("verdict") != "NOT MET":
+        res["verdict"] = "NOT MET"
+
     print("\n" + "=" * 74); print("THE READ"); print("=" * 74)
     for k in ("n_days", "ann_return", "ann_bench", "ann_excess", "t_excess",
               "information_ratio", "max_dd", "max_dd_bench", "stability"):
         print(f"  {k:<20} {res[k]}")
+    print()
+    print("  " + jc["WRC"].summary())
+    print("  " + jc["SPA"].summary())
     print(f"\n  CLEARED: {res['cleared']}")
     print(f"  MISSED:  {res['missed']}")
     print(f"\n  VERDICT: {res['verdict']}")
