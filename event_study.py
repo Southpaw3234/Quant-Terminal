@@ -125,6 +125,16 @@ REQUIRED_COLS = {"event_id", "ticker", "event_ts", "event_type"}
 
 def _load_events() -> pd.DataFrame:
     if not EVENTS_CSV.exists():
+        if SPEC_ID:
+            # A7: a green run is not a delivered artifact. Exiting 0 here means
+            # a dispatched READ of a declared specification reports SUCCESS
+            # having measured nothing at all — the exact shape of the river
+            # pin, the 2026-08-25 stale base and the 09-07 panel. The hermetic
+            # synthetic suites carry no spec and nothing to deliver, so they
+            # keep the quiet exit below.
+            print(f"[event-study] FATAL: spec '{SPEC_ID}' names an events file "
+                  f"that does not exist: {EVENTS_CSV}")
+            sys.exit(2)
         print(f"[event-study] no events file at {EVENTS_CSV} — nothing to do.")
         sys.exit(0)
     df = pd.read_csv(EVENTS_CSV)
