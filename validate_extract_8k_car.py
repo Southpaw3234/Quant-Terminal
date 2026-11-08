@@ -135,10 +135,26 @@ def test_threshold():
           ex.WINDOW_START == "2023-09-01" and ex.WINDOW_END == "2026-09-05"
           and "1095" in str(spec["params"]["lookback_days"]),
           "the event window matches the declared 1,095-day lookback")
-    check("output-path-matches-registry",
-          "events_8k_car_1095d.csv" in str(spec["params"]["events_file"]),
-          "and the output filename is the one the registry names, which the "
-          "read job's INPUT GUARD will check")
+    # ⚠️ RE-POINTED 2026-11-08. This used to assert that the registry's
+    # events_file was THIS extractor's output. Spec #3 was amended to the
+    # point-in-time set, so the chain gained a link and this extractor became
+    # an INTERMEDIATE rather than the thing the specification reads:
+    #
+    #     extract_8k_car.py      -> events_8k_car_1095d.csv      (frozen)
+    #     extract_events_pit.py  -> events_8k_car_pit_1095d.csv  (what #3 reads)
+    #
+    # Asserting both links is stronger than the single one it replaces: a
+    # rename anywhere along the chain now fails here, rather than surfacing as
+    # an exit-5 refusal at dispatch.
+    import extract_events_pit as expit
+    check("output-feeds-the-pit-extractor",
+          ex.OUT_CSV == expit.FROZEN,
+          "this extractor's output is exactly the frozen input the PIT "
+          "extractor consumes — the chain holds end to end")
+    check("registry-names-the-pit-output",
+          str(spec["params"]["events_file"]) == expit.OUT_CSV,
+          "and the registry names the PIT extractor's output, which the read "
+          "job's INPUT GUARD will check")
 
 
 def test_entry_bar():

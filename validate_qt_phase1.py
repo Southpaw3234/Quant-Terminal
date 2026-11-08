@@ -379,10 +379,19 @@ def test_spec3_declared():
           "output is v3's own ledger and the record names BOTH frozen files it "
           "must never touch")
     _res = s3.result if s3 is not None else {}
-    check("spec3-prior-still-owed",
-          "NOT YET RECORDED" in str(_res.get("prior", "")),
-          "THE PRIOR IS STILL OWED. This check is a TRIPWIRE: it must be "
-          "flipped to assert a signed prior before any read is dispatched")
+    # ⚠️ TRIPWIRE FLIPPED 2026-11-08, when the operator signed the prior. The
+    # old assertion ("NOT YET RECORDED" is present) existed to go red the
+    # moment a prior was written, so the check could be replaced with a real
+    # one. This is that real one: a prior must be present, signed, dated, and
+    # NOT the placeholder. The Referee does not test this field at all
+    # (qt/referee.py:161), so this suite is the only thing that does.
+    _prior3 = str(_res.get("prior", ""))
+    check("spec3-prior-signed",
+          "NOT YET RECORDED" not in _prior3
+          and "signed Southpaw3234" in _prior3
+          and "%" in _prior3,
+          "the prior is RECORDED, signed and dated — and it is the operator's "
+          "record, not the Referee's, that makes a read legitimate")
     check("spec3-extractor-not-built",
           "NOT YET BUILT" in str(_res.get("availability_checks", {}).get("extractor", "")),
           "the events file does not exist yet, and the record says so — the "
