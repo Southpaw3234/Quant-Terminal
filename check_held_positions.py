@@ -50,6 +50,21 @@ def _bom(s: str) -> str:
     return (s or "").replace("﻿", "").strip()
 
 
+def _num(d: dict, key: str):
+    """-> float, or None when the field is absent or unparseable.
+
+    Never 0.0 on a missing key. A field that is not there must fail CLOSED,
+    not read as "flat" — that exact substitution is the bug class here.
+    """
+    v = d.get(key)
+    if v is None:
+        return None
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return None
+
+
 def read_positions(sess, key: str, secret: str) -> tuple:
     """-> (positions, trustworthy, why). Never guesses a flat book."""
     import requests
@@ -64,14 +79,50 @@ def read_positions(sess, key: str, secret: str) -> tuple:
         return [], False, f"account read failed (HTTP {acct.status_code})"
     if pos.status_code != 200:
         return [], False, f"position read failed (HTTP {pos.status_code})"
+
     rows = pos.json() or []
-    if not rows:
-        # THE 2026-09-01 FAILURE. An empty list is not evidence of a flat book;
-        # it is evidence of an empty response, and those are different things.
-        return [], False, ("EMPTY position list. This is NOT proof of a flat "
-                           "book — on 2026-09-01 the broker returned exactly "
-                           "this while the account was short")
-    return rows, True, "ok"
+    if rows:
+        return rows, True, "ok"
+
+    # ── EMPTY LIST ──────────────────────────────────────────────────────────
+    # THE 2026-09-01 FAILURE. An empty list is not, by itself, evidence of a
+    # flat book; it is evidence of an empty response, and those are different
+    # things.
+    #
+    # But the invariant has always allowed one way out (qt.guards.
+    # position_read_trustworthy): an empty read is self-evidencing when
+    # something INDEPENDENT agrees. /v2/account is a different endpoint with
+    # its own computation of the book, so when it also reports zero market
+    # value the two reads corroborate rather than repeat.
+    #
+    # What 2026-09-01 looked like: HON short ~$2,714, so a truthful account
+    # object carried short_market_value ~ -2714 while /v2/positions returned
+    # []. THE DISAGREEMENT IS THE ALARM — and the old code never looked.
+    #
+    # Refusing unconditionally is not the safe choice it appears to be. Once
+    # the book is correctly and permanently flat, it fails EVERY run forever:
+    # 30 consecutive failures 2026-09-29 to 11-07, at which point a red X
+    # carries no information and a real outage is indistinguishable from a
+    # correct flat read. That is the HON red streak inverted.
+    a = acct.json() or {}
+    lmv = _num(a, "long_market_value")
+    smv = _num(a, "short_market_value")
+
+    if lmv is None or smv is None:
+        return [], False, ("EMPTY position list, and /v2/account did not report "
+                           "long_market_value / short_market_value — nothing "
+                           "independent can corroborate it, so this FAILS CLOSED")
+
+    if abs(lmv) >= 0.01 or abs(smv) >= 0.01:
+        return [], False, (f"DISAGREEMENT — /v2/positions returned 0 rows but "
+                           f"/v2/account reports long_market_value={lmv:,.2f}, "
+                           f"short_market_value={smv:,.2f}. This is the "
+                           f"2026-09-01 shape. Treat the book as NOT flat.")
+
+    return [], True, (f"flat, CORROBORATED by two independent reads: "
+                      f"/v2/positions returned 0 rows and /v2/account reports "
+                      f"long_market_value={lmv:,.2f}, "
+                      f"short_market_value={smv:,.2f}")
 
 
 def price_state(sess, sym: str) -> dict:
@@ -147,6 +198,19 @@ def main() -> None:
                   f"({pf['rebalance'].max()}): {', '.join(last['ticker'].tolist())}")
             print("   That is what the model would hold, NOT what the account holds.")
         sys.exit(2)
+
+    if not held:
+        # Trustworthy AND empty. Without this the per-position loop below
+        # prints "0 positions:" over an empty table and then "All 0 held names
+        # traded within N days", which reads like a template that failed
+        # rather than an all-clear.
+        print("\n✅ FLAT — no open positions.")
+        print(f"   {why}")
+        print("   Expected state: new entries are off (QT_MAX_GROSS='0') and the")
+        print("   trading cron retired 2026-09-29, so nothing in this system can")
+        print("   open a position. A non-empty book here would be the surprise.")
+        print("[held] read-only. No order placed, no research input written.")
+        return
 
     syms = sorted({str(p.get("symbol", "")).upper() for p in held if p.get("symbol")})
     print(f"[held] {len(syms)} positions: {', '.join(syms)}\n")
