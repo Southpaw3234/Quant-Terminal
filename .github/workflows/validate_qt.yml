@@ -127,27 +127,50 @@ jobs:
       - name: Run protocol validation (Tier 1 construction, Tier 2 wiring, Tier 3 discipline)
         run: python validate_protocols.py
 
-      - name: Assert the live pipeline is untouched
+      # ⚠️ INVERTED 2026-11-08. This step used to assert that quant_runner.py,
+      # trading_model_v25.1.ipynb and quant_daily.yml were UNCHANGED, because
+      # Phase 0 ran alongside a live pipeline it must not perturb. Its own
+      # error text carried the expiry: "it must not before 2026-09-29". The
+      # crons retired on that date, the final reads landed, and
+      # docs/CARRY_FORWARD.md §⑤ says to leave the monolith behind.
+      #
+      # So the assertion flips rather than disappears. It used to protect the
+      # pipeline from qt/; it now protects the repository from the pipeline
+      # coming back. A deletion that nothing enforces is a deletion that gets
+      # quietly reverted by a merge, and then qt/ is entangled again.
+      - name: Assert the retired pipeline stays retired
         run: |
           set -u
-          git fetch -q origin master
-          BASE=origin/master
-          echo "comparing this branch against ${BASE}"
-          for f in quant_runner.py trading_model_v25.1.ipynb \
-                   .github/workflows/quant_daily.yml; do
-            # No 2>/dev/null: if git itself fails, the message must be visible
-            # rather than silently becoming a violation report.
-            if ! git diff --quiet "$BASE" -- "$f"; then
-              echo "::error::Phase 0 modified $f — it must not before 2026-09-29"
-              git --no-pager diff --stat "$BASE" -- "$f"
-              exit 1
+          GONE=0
+          for f in quant_runner.py \
+                   trading_model_v22.ipynb trading_model_v23.ipynb \
+                   trading_model_v23.1.ipynb trading_model_v23.2.ipynb \
+                   trading_model_v23.3.ipynb trading_model_v23.4.ipynb \
+                   trading_model_v25.1.ipynb \
+                   model_intraday.py stat_arb.py shadow_stat_arb.py \
+                   analyze_rank_ic.py analyze_shadow_intraday.py \
+                   analyze_stat_arb.py \
+                   .github/workflows/quant_daily.yml \
+                   .github/workflows/preflight.yml; do
+            if [ -e "$f" ]; then
+              echo "::error::$f is back. docs/CARRY_FORWARD.md §⑤ retires it: the"
+              echo "::error::279-name / 5-day-horizon / daily-rebalance frame is"
+              echo "::error::measured and closed, and qt/ already replaced what was"
+              echo "::error::worth keeping."
+              GONE=1
             fi
           done
+          if ls probe_*.py >/dev/null 2>&1; then
+            echo "::error::a probe_*.py is back — probes answered their question;"
+            echo "::error::they are history, not tools (§⑤)"
+            GONE=1
+          fi
+          [ "$GONE" -eq 0 ] || exit 1
           if ! git diff --quiet -- data/ 2>/dev/null; then
             echo "::error::validation wrote under data/ — it must not"
             exit 1
           fi
-          echo "OK — monolith, notebook, live workflow and data/ all untouched."
+          echo "OK — the retired pipeline is absent and data/ is untouched."
 
       - name: Assert qt imports nothing it should not
         # A guard module that can import the broker SDK is one refactor away
