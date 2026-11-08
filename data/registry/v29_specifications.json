@@ -50,9 +50,56 @@
         "output_ledger": "data/portfolios/value_ebit_ev_v1.csv -- NEVER any v27 events file or event_study ledger"
       },
       "declared_at": "2026-09-05",
-      "read_at": "",
+      "read_at": "2026-11-08",
       "result": {
         "prior": "P(this specification clears all eight criteria) = 20-25%, midpoint 22.5%, accepted by the operator 2026-09-05 against the range proposed, BEFORE any ratio was computed. Above v27's 15% because the mechanism is structural rather than informational: value in names too small for institutional capital is not arbitraged away by publication, it is left alone because it cannot be traded at size. Not higher, because value is the most-published anomaly in finance and this is built entirely from free data. COUNTERSIGNED by the operator 2026-09-06 in docs/V29_PREREGISTRATION.md, before any ratio was computed and before the backtest existed. Every parameter and criterion is frozen from that date.",
+        "read": {
+          "verdict": "NOT MET",
+          "run_id": "42453397592",
+          "dispatched": "2026-11-08T06:06:44Z",
+          "completed": "2026-11-08T06:10:30Z",
+          "k_spent": "1 of 3",
+          "input_verified": "input guard OK -- both declared inputs fingerprinted BEFORE dispatch and byte-identical to master. data/fundamentals/fundamentals_pit.csv 114,414 rows, sha256 6c9ee57112021fc767517b4bc7ad51bb49615326899838b958227e7c4a837eda; data/universe/v29_universe_pit.csv 152,006 rows, sha256 3b48776cc092aa910f31398c0c5355bde4c3641b2959764acbf78d9fa88773f7. Both windows 2015-09-30..2025-08-31. Checked BY HAND because the A7 content guard is specified but NOT YET IMPLEMENTED in run_value_backtest.py, which still tests only os.path.exists(). This is the 2026-09-07 hazard -- a stale panel of 111,398 rows / 2,225 names sat on master for a day and would have been read silently -- and it was closed for this read by manual verification, not by code.",
+          "universe": "152,006 eligible name-months, 120 month-ends, 40 quarterly rebalances 2015-09-30..2025-06-30. 16 panel rows dropped on an unusable ticker. 3,132 names priced + IWM; 3,087 of 3,133 returned usable history (5 failed downloads).",
+          "selection": {
+            "quality_gate_candidate_name_quarters": {
+              "ok": 11106,
+              "unprofitable": 16008,
+              "no_op_income": 8552,
+              "over_levered": 886,
+              "negative_equity": 657,
+              "no_equity": 206
+            },
+            "eligible_moderate_tier_per_rebalance": {"min": 58, "median": 98, "max": 113},
+            "portfolios_formed": 40,
+            "distinct_names": 210,
+            "ledger": "data/portfolios/value_ebit_ev_v1.csv, 800 rows -- ARTIFACT ONLY, not committed. Harmless here: read mode re-derives the selection from PANEL and FUNDS before computing any return, so nothing downstream depends on the file persisting."
+          },
+          "n_days": 2792,
+          "ann_return": 0.1273956459864649,
+          "ann_bench": 0.10034547990555898,
+          "ann_excess": 0.027050166080905935,
+          "t_excess": 0.708656111675648,
+          "information_ratio": 0.20493701753521779,
+          "max_dd": 0.5094899081313272,
+          "max_dd_bench": 0.41133300209317863,
+          "stability": null,
+          "cleared": [
+            "criterion 1 -- N 2,792 trading days >= 1,000",
+            "criterion 2 -- median 98 eligible names per rebalance >= 60 (min 58, max 113)",
+            "criterion 3 -- annualised excess over IWM +2.71% > 0"
+          ],
+          "missed": [
+            "criterion 4 -- t 0.71 < 2.0 (Newey-West lag 10)",
+            "criterion 5 -- information ratio 0.205 < 0.5",
+            "criterion 6 -- max drawdown 50.9% is WORSE than IWM's 41.1% over the same window",
+            "criterion 7 -- stability UNDEFINED: first-third excess <= 0, which the declaration states is a MISS"
+          ],
+          "criterion_8_not_evaluated": "RECORDED AS A GAP, NOT AS A PASS. Criterion 8 declares WRC/SPA at p < alpha/K_declared = 0.0167 with unread slots charged. run_value_backtest.py contains no WRC, SPA or bootstrap code and the read log shows no such computation, so criterion 8 was NEVER COMPUTED. It does not change the verdict: four criteria miss independently and WRC can only ever make a result harder to pass, never easier. Stated here so the record does not read as seven-of-eight by omission.",
+          "reading": "IT MADE MONEY AND THAT IS NOT THE SAME AS AN EDGE. 12.74%/yr against IWM's 10.03% is a +2.71% annual excess, and at t = 0.71 over 2,792 days that gap is indistinguishable from luck. The decisive number is criterion 6: a 50.9% maximum drawdown against the benchmark's 41.1%. The strategy took MORE risk than simply holding the index and did not reliably pay for it. Stability is the familiar shape -- the first third of the sample is <= 0, so the excess is concentrated in a later stretch rather than persistent, which is the same way form4_cluster_buy_v2 died. Three criteria clearing is not three-eighths of a pass; the four that missed are the four that decide whether anything is tradeable.",
+          "vs_prior": "Operator prior was 20-25%, midpoint 22.5%, countersigned 2026-09-06 in docs/V29_PREREGISTRATION.md before any ratio was computed. Outcome is consistent with it. This was the highest prior the project ever recorded -- above v27's 15% because the mechanism was structural rather than informational -- and it still missed. Programme tally: v25 four of four pre-registered criteria failed, v27 two of two reads failed, V29 one of one read failed.",
+          "anti_deferral": "This read STANDS. No bug found afterwards reopens it. The uncomputed criterion 8 is a gap in the implementation, not grounds to re-read: it could only have lowered the verdict, and the declaration's own clause is that a read specification cannot be re-read."
+        },
         "declaration_note": "Declaring costs NOTHING against K -- qt.referee.k_used counts READS. K stays 0/3 until this is read. Nothing here is a commitment to read it.",
         "criteria": [
           "N >= 1,000 trading days with a live book",
