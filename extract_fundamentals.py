@@ -178,13 +178,51 @@ def _duration_days(f) -> "int | None":
         return None
 
 
-def period_bucket(f) -> "str | None":
+def fiscal_year_starts(facts: list) -> list:
+    """The `start` dates of every annual window present, for YTD alignment."""
+    return [f["start"] for f in facts
+            if f.get("start") and _duration_days(f) is not None
+            and _ANNUAL_DAYS[0] <= _duration_days(f) <= _ANNUAL_DAYS[1]]
+
+
+def _starts_a_fiscal_year(start: str, fy_starts: list) -> bool:
+    """Does `start` fall on a fiscal-year boundary, to within a week?
+
+    Compared modulo 365 so a YTD window in any year matches the fiscal
+    calendar, and with ±7 days of slack for 52/53-week filers whose year
+    start drifts.
+    """
+    try:
+        s = pd.Timestamp(start)
+    except (ValueError, TypeError):
+        return False
+    for fy in fy_starts:
+        try:
+            off = abs((s - pd.Timestamp(fy)).days) % 365
+        except (ValueError, TypeError):
+            continue
+        if off <= 7 or off >= 358:
+            return True
+    return False
+
+
+def period_bucket(f, fy_starts: "list | None" = None) -> "str | None":
     """'FY', 'Q1'..'Q3' for a year-to-date window, or None if unusable.
 
+    ⚠️ DURATION ALONE IS NOT ENOUGH, and the test suite pins why: a DISCRETE
+    second quarter is ~90 days and so is a Q1 YEAR-TO-DATE window. `fp` says
+    "Q2" for the discrete one and cannot be trusted either. What separates
+    them is the START — a year-to-date window begins on the fiscal year's
+    first day, a discrete quarter begins mid-year.
+
+    Pass `fy_starts` to enforce that. Without it the function reports the
+    duration bucket only, which is useful for inspection and NOT safe for
+    TTM arithmetic; `ttm_as_of` always passes it.
+
     None covers discrete quarters, 52/53-week stubs and anything whose length
-    does not match a standard reporting window. Unusable is NOT an error — it
-    simply cannot take part in a TTM, and a name with no usable window drops
-    out of that rebalance rather than falling back to a different basis.
+    does not match a standard window. Unusable is NOT an error — it simply
+    cannot take part in a TTM, and a name with no usable window drops out of
+    that rebalance rather than falling back to a different basis.
     """
     days = _duration_days(f)
     if days is None:
@@ -193,6 +231,9 @@ def period_bucket(f) -> "str | None":
         return "FY"
     for i, (lo, hi) in enumerate(_YTD_DAYS, start=1):
         if lo <= days <= hi:
+            if fy_starts is not None and not _starts_a_fiscal_year(
+                    f.get("start", ""), fy_starts):
+                return None
             return f"Q{i}"
     return None
 
@@ -211,8 +252,14 @@ def ttm_as_of(facts: list, asof) -> "dict | None":
     avoid.
     """
     d = str(asof)[:10]
+    # Fiscal-year boundaries are taken from the WHOLE fact set, not just the
+    # visible slice: the calendar a company reports on is not itself a
+    # point-in-time fact, and a name whose first 10-K is not yet filed has no
+    # TTM anyway for want of FY(n-1).
+    fy_starts = fiscal_year_starts(facts)
     visible = [f for f in facts
-               if f.get("filed", "") <= d and period_bucket(f) is not None]
+               if f.get("filed", "") <= d
+               and period_bucket(f, fy_starts) is not None]
     if not visible:
         return None
 
@@ -223,24 +270,24 @@ def ttm_as_of(facts: list, asof) -> "dict | None":
     at_newest = [f for f in visible if f["end"] == newest_end]
 
     # A freshly filed annual IS the trailing twelve months. No arithmetic.
-    fy_now = latest([f for f in at_newest if period_bucket(f) == "FY"])
+    fy_now = latest([f for f in at_newest if period_bucket(f, fy_starts) == "FY"])
     if fy_now is not None:
         return {"val": fy_now["val"], "end": fy_now["end"],
                 "filed": fy_now["filed"], "basis": "FY"}
 
-    cur = latest([f for f in at_newest if period_bucket(f) != "FY"])
+    cur = latest([f for f in at_newest if period_bucket(f, fy_starts) != "FY"])
     if cur is None:
         return None
-    bucket = period_bucket(cur)
+    bucket = period_bucket(cur, fy_starts)
     e_cur, s_cur = pd.Timestamp(cur["end"]), pd.Timestamp(cur["start"])
 
     # The same year-to-date window one year earlier. ±45 days absorbs 52/53-week
     # fiscal calendars and period-end drift.
-    prior = latest([f for f in visible if period_bucket(f) == bucket
+    prior = latest([f for f in visible if period_bucket(f, fy_starts) == bucket
                     and abs((pd.Timestamp(f["end"])
                              - (e_cur - pd.DateOffset(years=1))).days) <= 45])
     # The fiscal year that ended immediately before the current one began.
-    fy_prev = latest([f for f in visible if period_bucket(f) == "FY"
+    fy_prev = latest([f for f in visible if period_bucket(f, fy_starts) == "FY"
                       and abs((pd.Timestamp(f["end"])
                                - (s_cur - pd.Timedelta(days=1))).days) <= 20])
     if prior is None or fy_prev is None:

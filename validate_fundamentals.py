@@ -179,12 +179,20 @@ TTM_FACTS = [
 
 def test_ttm():
     print("\n--- trailing twelve months (value_ebit_ev_v2) ---")
-    check("duration-not-fp-identifies-the-window",
-          f.period_bucket(TTM_FACTS[2]) == "Q2"
-          and f.period_bucket(TTM_FACTS[3]) is None,
+    fys = f.fiscal_year_starts(TTM_FACTS)
+    check("start-not-fp-identifies-the-window",
+          f.period_bucket(TTM_FACTS[2], fys) == "Q2"
+          and f.period_bucket(TTM_FACTS[3], fys) is None,
           "both rows say fp=Q2 against the same period end; the 181-day "
           "year-to-date window is usable and the 90-day discrete quarter is "
           "not. Taking the discrete figure would understate TTM by a quarter")
+    check("duration-alone-is-not-enough",
+          f.period_bucket(TTM_FACTS[3]) == "Q1",
+          "⚠️ CAUGHT BY THIS SUITE BEFORE ANY SWEEP RAN. A DISCRETE second "
+          "quarter is ~90 days and so is a Q1 YEAR-TO-DATE window, so on "
+          "duration alone the discrete figure masquerades as Q1. Only the "
+          "START separates them, and period_bucket refuses to guess without "
+          "the fiscal-year boundaries")
 
     t = f.ttm_as_of(TTM_FACTS, "2024-09-30")
     check("ttm-arithmetic",
