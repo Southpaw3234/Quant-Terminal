@@ -121,6 +121,58 @@
           "TWENTY ILLIQUID SMALL CAPS carry single-name risk that a backtest reports as volatility and a live account experiences as something worse."
         ]
       }
+    },
+    "value_ebit_ev_v2": {
+      "spec_id": "value_ebit_ev_v2",
+      "params": {
+        "hypothesis": "SAME MECHANISM AS v1, TWO MECHANICAL CHANGES. Small-cap value: EBIT/EV over a point-in-time universe, long only, quarterly rebalance. v1 was READ 2026-11-08 and MISSED -- ann excess +2.71% at t 0.71, IR 0.205, max drawdown 50.9% against IWM's 41.1%, stability undefined on a non-positive first third. This specification changes TWO things and nothing else: flows become trailing-twelve-month instead of annual-only, and the portfolio holds 50 names instead of 20. NEITHER CHANGE CLAIMS NEW PREDICTIVE POWER. The first attacks staleness, which v1's own caveats record as up to fifteen months by construction. The second attacks criterion 6, which v1 missed on drawdown rather than on return.",
+        "universe": "UNCHANGED from v1: data/universe/v29_universe_pit.csv, 152,006 eligible name-months, 120 month-ends, 2015-09-30..2025-08-31, point-in-time",
+        "value_metric": "UNCHANGED: EBIT / enterprise value, where EV = market cap + long-term debt - cash",
+        "flows": "⚠️ CHANGE 1 OF 2. TRAILING TWELVE MONTHS, not annual-only. TTM is constructed as FY(n-1) + YTD(current period of year n) - YTD(same period of year n-1), which needs only year-to-date figures and never a derived discrete quarter. extract_fundamentals.py's own docstring names this as the correct refinement and the reason it was deferred: 'mixing a quarter into a series of years silently divides a ratio by four'. Where a TTM cannot be formed from facts VISIBLE at the as-of date, the metric is NULL and the name drops out of that rebalance -- it NEVER falls back to the annual figure, because a mixed series is the failure this change exists to avoid. Stocks (assets, equity, cash, debt) are instantaneous and are UNCHANGED from v1.",
+        "n_hold": "⚠️ CHANGE 2 OF 2. FIFTY names, equal weight, long only (v1: twenty). v1 concentrated into 20 illiquid small caps out of a median 98 eligible, and missed criterion 6 on a 50.9% drawdown against the benchmark's 41.1%. This is a PORTFOLIO CONSTRUCTION change and is expected to cut idiosyncratic risk; it is also expected to DILUTE the mean excess by reaching further down the value ranking. It may therefore fix criteria 5 and 6 while making criterion 4 harder. That trade is the point of the test.",
+        "order_of_operations": "UNCHANGED: quality gate, THEN risk tier, THEN rank on value",
+        "quality_gate": "UNCHANGED: drops unprofitable, no op_income, debt/equity > 2.0, negative or missing equity",
+        "tiers": "UNCHANGED: terciles, primary tier MODERATE, low and high reported but cannot pass",
+        "rebalance": "UNCHANGED: quarterly at month-end, entering the following session",
+        "costs": "UNCHANGED: 75 bps round trip applied to turnover, INSIDE the criterion. NOT re-estimated for this spec even though the 2026-09-06 measurement found 106-210 bps. Holding it fixed keeps v1 and v2 comparable; raising it here would confound the two declared changes with a third.",
+        "benchmark": "UNCHANGED: IWM. ⚠️ NOT the S&P 500. Any claim about beating SPY is a DIFFERENT specification against a different and substantially harder benchmark, and nothing in this read speaks to it.",
+        "delisting_return": "UNCHANGED: two-tier, actual prices where the name keeps trading, -55% charged once where no price exists",
+        "measurement": "UNCHANGED: calendar-time daily return series, Newey-West lag 10",
+        "panel": "data/universe/v29_universe_pit.csv (frozen, shared with v1)",
+        "funds": "data/fundamentals/fundamentals_ttm.csv -- ⚠️ DOES NOT EXIST YET. A separate file from v1's fundamentals_pit.csv, which stays frozen and untouched so v1's read remains reproducible.",
+        "output_ledger": "data/portfolios/value_ebit_ev_v2.csv -- NEVER value_ebit_ev_v1.csv"
+      },
+      "declared_at": "2026-11-08",
+      "read_at": "",
+      "result": {
+        "prior": "NOT YET RECORDED. The per-spec prior belongs to the operator and MUST be written here, signed and dated, BEFORE any read is authorised. qt/referee.py:161 authorize_read does NOT test this field -- it checks already-read, date order, terminal date and K budget, and nothing else -- so a read dispatched without a prior is a protocol breach that no code will stop. ⚠️ ANCHOR FOR WHOEVER SIGNS IT: v1 carried 20-25% and missed on four of eight. The MECHANISM here is identical to v1's; only the plumbing differs. A prior ABOVE v1's would be difficult to defend.",
+        "declaration_note": "Declared 2026-11-08. DECLARING COSTS NOTHING AGAINST K: qt.referee.k_used counts READS. K stays 1/3 until this is read, leaving two slots. Nothing here is a commitment to read it. Parameters are fixed NOW, before fundamentals_ttm.csv exists, so the extractor cannot be tuned toward a nicer answer -- the sequence pead_8k_car_v3 followed.",
+        "criteria": [
+          "N >= 1,000 trading days with a live book",
+          "at least 60 eligible names per tier at the median rebalance -- below that, 50 holdings is not a selection and the spec MISSES rather than being quietly resized",
+          "annualised excess return over IWM > 0",
+          "t >= 2.0 on the mean daily excess return, Newey-West lag 10",
+          "information ratio >= 0.5",
+          "maximum drawdown no worse than IWM's over the same window",
+          "stability: final-third excess >= 50% of first-third; undefined if the first third is <= 0, which is a MISS",
+          "WRC/SPA at p < alpha/K_declared = 0.0167, unread slots charged -- IMPLEMENTED 2026-11-08, unlike v1's read where it was declared and never computed"
+        ],
+        "availability_checks": {
+          "ttm_extractor": "NOT YET BUILT. data/fundamentals/fundamentals_ttm.csv does not exist. extract_fundamentals.py currently takes flows from annual filings only (annual_only=True) and collect_facts does not capture the period `start`, which TTM construction requires. Building it computes INPUTS only -- no ratio, no selection, no return -- exactly as the v1 panel did before v1 was read.",
+          "universe": "YES -- unchanged and already landed: 152,006 name-months, 3,259 tickers, sha256 3b48776cc092aa910f31398c0c5355bde4c3641b2959764acbf78d9fa88773f7",
+          "eligible_names_at_50": "UNKNOWN UNTIL A SELECT PASS. v1 measured a median of 98 eligible names in the moderate tier, min 58. Holding 50 of a median 98 is a far weaker selection than 20 of 98, and criterion 2's floor of 60 now bites harder: at the min-58 rebalance the spec would select 50 from 58. A select pass must be run and recorded before any read."
+        },
+        "caveats_to_travel_with_any_number": [
+          "⚠️ TWO PARAMETERS MOVE AT ONCE, AND THAT IS A DELIBERATE COST. The registry's own discipline is ONE PARAMETER FAMILY, ONE TEST. Testing TTM flows and 50 names together means a MISS will not say which change was wrong, and only one slot would remain to isolate it. The operator chose both on 2026-11-08 with this stated. Recorded here so the limitation is in the record rather than discovered afterwards.",
+          "SURVIVORSHIP IS CORRECTED ONLY FROM 2023, unchanged from v1 and still the largest known weakness. The window starts 2015; the first eight years carry an upward bias.",
+          "COSTS ARE STILL AN ASSUMPTION AND ARE STILL UNDERSTATED. 75 bps declared against 106-210 bps measured. Held fixed for comparability with v1, which means this read inherits the same upward bias.",
+          "FIFTY NAMES RAISES TURNOVER COST EXPOSURE, not lowers it: more positions means more names entering and leaving at each rebalance, charged at a cost figure already known to be too low.",
+          "TTM IS LESS CONSERVATIVE THAN ANNUAL-ONLY. It is fresher, but it admits restated and interim figures that an annual-only series excluded. Fresher is not automatically better, and if v2 beats v1 the reason may be recency rather than accuracy.",
+          "LONG-TERM DEBT ONLY in enterprise value, unchanged from v1",
+          "NO SHORT LEG, so no market hedge; excess over IWM is the only adjustment",
+          "VALUE UNDERPERFORMS FOR YEARS AT A STRETCH. A ten-year read can be negative while the strategy is sound and positive while it is not."
+        ]
+      }
     }
   }
 }
