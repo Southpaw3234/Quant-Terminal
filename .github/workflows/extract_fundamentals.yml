@@ -18,6 +18,11 @@ on:
         description: 'Sweep XBRL fundamentals (data only — no ratios, no returns, no K)'
         type: boolean
         default: false
+      flows:
+        description: 'Flow basis. ttm -> fundamentals_ttm.csv (v2). annual -> fundamentals_pit.csv (v1, FROZEN — the guard will refuse to change it)'
+        type: choice
+        options: [ttm, annual]
+        default: ttm
       limit:
         description: 'Cap the names for a smoke test (0 = all)'
         type: string
@@ -88,11 +93,19 @@ jobs:
           QT_PIT_PANEL: data/universe/v29_universe_pit.csv
           QT_FUND_START: '2015-09-01'
           QT_FUND_END: '2025-09-01'
+          # ⚠️ BASIS AND OUTPUT PATH ARE DERIVED TOGETHER AND CANNOT DIVERGE.
+          # Before this, the job pinned neither: it ran the script's default
+          # basis (annual) and wrote the script's default path — which is
+          # value_ebit_ev_v1's FROZEN panel. A TTM sweep would have silently
+          # overwritten a read specification's input.
+          QT_FUND_FLOWS: ${{ inputs.flows || 'ttm' }}
+          QT_FUND_OUT: ${{ (inputs.flows == 'annual') && 'data/fundamentals/fundamentals_pit.csv' || 'data/fundamentals/fundamentals_ttm.csv' }}
         run: |
           set -u
           if [ ! -f data/universe/v29_universe_pit.csv ]; then
             echo "::error::no V29 point-in-time universe — build it first"; exit 1
           fi
+          echo "basis=$QT_FUND_FLOWS -> $QT_FUND_OUT"
           python extract_fundamentals.py
       - name: Guard — every frozen input and S4 untouched
         run: |
@@ -100,7 +113,12 @@ jobs:
           if ! git diff --quiet -- data/predictions/ data/shadow/ 2>/dev/null; then
             echo "::error::the sweep modified S4 evidence"; exit 1
           fi
+          # fundamentals_pit.csv joins the frozen list: value_ebit_ev_v1 was
+          # READ on 2026-11-08 against it, and its registry entry records that
+          # file's sha256. Changing it would make a spent read irreproducible.
           for f in data/universe/v27_universe.csv data/universe/v27_universe_pit.csv \
+                   data/universe/v29_universe_pit.csv \
+                   data/fundamentals/fundamentals_pit.csv \
                    data/universe/delisted_roster.csv data/events/events_8k_car_1095d.csv \
                    data/events/event_study.csv data/events/event_study_v2.csv; do
             if [ -f "$f" ] && ! git diff --quiet -- "$f" 2>/dev/null; then
@@ -110,8 +128,8 @@ jobs:
           echo "OK — frozen data and S4 evidence untouched."
       - uses: actions/upload-artifact@v4
         with:
-          name: v29-fundamentals-pit
-          path: data/fundamentals/fundamentals_pit*.csv
+          name: v29-fundamentals-${{ inputs.flows || 'ttm' }}
+          path: data/fundamentals/fundamentals_*.csv
           if-no-files-found: error
 
       # A7. This job cannot commit — `permissions: contents: read`, deliberately,
@@ -122,9 +140,13 @@ jobs:
       # master's stale 111,398-row copy, and nothing anywhere said so.
       - name: NOT LANDED — say so loudly
         if: always()
+        env:
+          # Step-scoped env does not carry between steps; derived identically
+          # to the sweep step so the two can never name different files.
+          QT_FUND_OUT: ${{ (inputs.flows == 'annual') && 'data/fundamentals/fundamentals_pit.csv' || 'data/fundamentals/fundamentals_ttm.csv' }}
         run: |
           set -u
-          F=data/fundamentals/fundamentals_pit.csv
+          F="${QT_FUND_OUT:-data/fundamentals/fundamentals_ttm.csv}"
           [ -f "$F" ] || { echo "::error::no panel produced"; exit 1; }
           ROWS=$(( $(wc -l < "$F") - 1 ))
           SHA=$(sha256sum "$F" | cut -d' ' -f1)
