@@ -267,3 +267,106 @@ def drawdown_halt(equity: float, peak_equity: float, max_dd: float,
     if dd >= max_dd:
         return True, dd, f"drawdown {dd:.1%} >= limit {max_dd:.1%}"
     return False, dd, ""
+
+
+# ─────────────────────────────────────────── A7: landed-artifact / input guard
+
+# Three times a job has succeeded while its output never reached the reader:
+# the river pin, the 2026-08-25 stale base, and the 2026-09-07 fundamentals
+# panel that finished green into a CI artifact while the consumer read a stale
+# working tree. None of them failed. None of them warned.
+#
+# EXISTENCE IS NOT PROVENANCE. A file being present says nothing about WHICH
+# version it is, and the 09-07 stale panel was only 2% smaller than the correct
+# one — 111,398 rows against 114,414, inside any plausibility band a reviewer
+# would have set. A coverage or row-count threshold passes both. So the check
+# is IDENTITY: a content hash recorded by a rehearsal, asserted by the read.
+
+
+def _canonical_sha256(path: str) -> str:
+    """SHA-256 of the file with CRLF normalised to LF.
+
+    ⚠️ The normalisation is not cosmetic. `core.autocrlf=true` is the Git for
+    Windows default, so identical committed bytes hash differently on a Windows
+    checkout than on an ubuntu-latest runner. A raw hash would refuse every
+    read dispatched from a Windows clone — measured 2026-11-08, where both V29
+    inputs mismatched on raw sha256 and matched exactly once normalised. A
+    guard that fires on the platform rather than the content gets switched off,
+    and then it is not a guard.
+    """
+    import hashlib
+
+    h = hashlib.sha256()
+    tail = b""
+    with open(path, "rb") as fh:
+        while True:
+            chunk = fh.read(1 << 20)
+            if not chunk:
+                break
+            buf = (tail + chunk).replace(b"\r\n", b"\n")
+            # Hold back a trailing CR: it may be the first half of a CRLF
+            # straddling the chunk boundary.
+            if buf.endswith(b"\r"):
+                tail, buf = b"\r", buf[:-1]
+            else:
+                tail = b""
+            h.update(buf)
+    if tail:
+        h.update(tail)
+    return h.hexdigest()
+
+
+def input_receipt(path: str, date_col: "str | None" = None) -> dict:
+    """Fingerprint a declared input file. Pure; reads, never writes."""
+    import pandas as pd
+
+    df = pd.read_csv(path)
+    out = {
+        "path": path,
+        "sha256": _canonical_sha256(path),
+        "rows": int(len(df)),
+        "columns": sorted(map(str, df.columns)),
+    }
+    if date_col and date_col in df.columns:
+        col = df[date_col].astype("string").dropna()
+        out["window"] = [str(col.min()), str(col.max())] if len(col) else [None, None]
+    return out
+
+
+def verify_input(path: str, expected: "dict | None",
+                 date_col: "str | None" = None, strict: bool = True) -> tuple:
+    """Is this the file the specification names? Returns (ok, why, receipt).
+
+    `expected=None` means no fingerprint has been recorded yet. That is NOT a
+    pass under `strict`: an unrecorded input is indistinguishable from a
+    substituted one, which is the whole failure being guarded against. The
+    rehearsal — a `select` or count-only pass, which spends no K — runs with
+    `strict=False`, prints the receipt for the operator to commit, and
+    proceeds.
+    """
+    got = input_receipt(path, date_col=date_col)
+    if expected is None:
+        return (not strict,
+                f"NO FINGERPRINT RECORDED for {path} — nothing to compare against",
+                got)
+
+    for field in ("sha256", "rows"):
+        want, have = expected.get(field), got.get(field)
+        if want is not None and want != have:
+            return (False,
+                    f"{path} MISMATCH on {field}: registry says {want!r}, file "
+                    f"is {have!r}. This is the 2026-09-07 shape — the file on "
+                    f"disk is not the one the specification names.",
+                    got)
+
+    want_win = expected.get("window")
+    if want_win and got.get("window") and list(want_win) != list(got["window"]):
+        return (False,
+                f"{path} MISMATCH on window: registry says {want_win}, file "
+                f"covers {got['window']}",
+                got)
+
+    return (True,
+            f"input guard OK — {path} matched the registry; {got['rows']:,} rows"
+            + (f"; {got['window'][0]}..{got['window'][1]}" if got.get("window") else ""),
+            got)

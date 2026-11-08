@@ -113,3 +113,38 @@ jobs:
           name: v29-fundamentals-pit
           path: data/fundamentals/fundamentals_pit*.csv
           if-no-files-found: error
+
+      # A7. This job cannot commit — `permissions: contents: read`, deliberately,
+      # so a multi-hour sweep stays out of the no-touch window. That is correct
+      # and stays. What was wrong is that a SUCCESSFUL sweep said nothing about
+      # the panel not having arrived anywhere a reader looks. On 2026-09-07 this
+      # job finished green with 114,414 rows while run_value_backtest.py read
+      # master's stale 111,398-row copy, and nothing anywhere said so.
+      - name: NOT LANDED — say so loudly
+        if: always()
+        run: |
+          set -u
+          F=data/fundamentals/fundamentals_pit.csv
+          [ -f "$F" ] || { echo "::error::no panel produced"; exit 1; }
+          ROWS=$(( $(wc -l < "$F") - 1 ))
+          SHA=$(sha256sum "$F" | cut -d' ' -f1)
+          {
+            echo "### ⚠️ The panel is an ARTIFACT. It is NOT in the repository."
+            echo ""
+            echo "\`run_value_backtest.py\` reads the **working tree**, not artifacts."
+            echo "Until this file is committed, a selection or read pass consumes"
+            echo "whatever stale copy master already has — exactly what nearly"
+            echo "happened on 2026-09-07 (111,398 rows scored against a 152,006"
+            echo "name-month universe, silently)."
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| rows | \`$ROWS\` |"
+            echo "| sha256 | \`$SHA\` |"
+            echo ""
+            echo "**To land it:** download artifact \`v29-fundamentals-pit\`, copy to"
+            echo "\`$F\`, check \`sha256sum\` matches the value above, commit. Then run"
+            echo "\`run_value_backtest.yml\` in \`mode=select\` and commit the"
+            echo "\`inputs_fingerprint\` block it prints."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::warning::panel produced ($ROWS rows, sha256 $SHA) but NOT committed — the consumer reads the repo, not this artifact"
