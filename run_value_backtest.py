@@ -41,6 +41,7 @@ import numpy as np
 import pandas as pd
 
 from qt import calendar_time as ct
+from qt import guards as gu
 from qt import referee as ref
 from qt import scoring as sc
 
@@ -135,6 +136,37 @@ def main() -> None:
     for p in (PANEL, FUNDS, REGISTRY):
         if not os.path.exists(p):
             print(f"[v29] missing {p}"); sys.exit(1)
+
+    # ── A7: is this the file the specification names? ──────────────────
+    # Existence is not provenance. Checked BEFORE the Referee so a stale or
+    # substituted input can never cost a slot. On 2026-09-07 a 47-minute
+    # sweep finished green into a CI artifact while this script read a stale
+    # working tree, and would have scored 111,398 ticker-months against a
+    # 152,006 name-month universe without a murmur. The value_ebit_ev_v1 read
+    # of 2026-11-08 had to be verified BY HAND for want of this check.
+    with open(REGISTRY) as _fh:
+        _reg = json.load(_fh)
+    _fp = (_reg.get("specifications", {}).get(SPEC_ID, {})
+               .get("inputs_fingerprint") or {})
+    _strict = (MODE == "read")
+    _receipts = {}
+    for _label, _path, _dcol in (("panel", PANEL, "date"),
+                                 ("fundamentals", FUNDS, "asof")):
+        _ok, _why, _rc = gu.verify_input(_path, _fp.get(_label),
+                                         date_col=_dcol, strict=_strict)
+        _receipts[_label] = _rc
+        print(f"[v29] {_why}")
+        if not _ok:
+            print("\n[v29] REFUSING — the inputs are not provably the declared ones.")
+            print("      Identity, not plausibility: the 09-07 stale panel was")
+            print("      only 2% smaller than the correct one.")
+            sys.exit(5)
+
+    if not _fp:
+        print(f"\n[v29] ── paste into {REGISTRY}, "
+              f"specifications.{SPEC_ID}.inputs_fingerprint ──")
+        print(json.dumps(_receipts, indent=2, sort_keys=True))
+        print("[v29] ── commit it BEFORE any read. mode=read refuses without it. ──\n")
 
     # ── the gate ───────────────────────────────────────────────────────
     r = ref.Referee(registry_path=REGISTRY)

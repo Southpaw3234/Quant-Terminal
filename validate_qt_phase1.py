@@ -307,14 +307,21 @@ def test_v29_registry_budget():
     check("v29-terminal-from-file",
           r29.terminal_date == "2027-06-30",
           f"terminal {r29.terminal_date}, not v27's 2027-03-31")
-    check("v29-unread", r29.k_used() == 0 and r29.k_remaining() == 3,
-          "no V29 read has been taken")
-    check("v29-spec-declared",
-          "value_ebit_ev_v1" in r29.specs and not r29.specs["value_ebit_ev_v1"].is_read,
-          "value_ebit_ev_v1 is declared and unread")
-    check("v29-read-would-be-authorised",
-          r29.authorize_read("value_ebit_ev_v1", "2026-12-01").allowed,
-          "the Referee would allow a read — declared, unread, in budget")
+    # ⚠️ TRIPWIRES FLIPPED 2026-11-08, when value_ebit_ev_v1 was read.
+    # These three asserted V29 was unread and correctly went red the moment
+    # that stopped being true (run 42455224973). They now pin the POST-READ
+    # state, which is the stronger assertion: anti-deferral means a read
+    # specification can never be re-read, so a future green here proves the
+    # budget was not quietly rewound.
+    check("v29-one-read-spent", r29.k_used() == 1 and r29.k_remaining() == 2,
+          "K 1/3 — value_ebit_ev_v1 was read 2026-11-08 (run 42453397592)")
+    check("v29-spec-read-and-frozen",
+          "value_ebit_ev_v1" in r29.specs and r29.specs["value_ebit_ev_v1"].is_read,
+          "value_ebit_ev_v1 is READ and can never be read again")
+    check("v29-reread-is-refused",
+          not r29.authorize_read("value_ebit_ev_v1", "2026-12-01").allowed,
+          "the Referee REFUSES a second read — anti-deferral, and no bug found "
+          "afterwards reopens it")
     check("v29-refuses-past-its-own-terminal",
           not r29.authorize_read("value_ebit_ev_v1", "2027-08-01").allowed,
           "and refuses one past 2027-06-30, which under the old behaviour would "
