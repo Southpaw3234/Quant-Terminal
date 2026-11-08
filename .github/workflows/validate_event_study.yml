@@ -148,6 +148,42 @@ jobs:
             exit 5
           fi
           echo "input guard OK: $QT_EVENTS_CSV matches the registry's declared events_file"
+          # CONTENT GUARD (A7). The guard above proves we are reading the right
+          # PATH. It cannot prove we are reading the right BYTES, and that is
+          # exactly what broke on 2026-09-07: the path was correct and the file
+          # was stale. 111,398 rows against the correct 114,414 -- 2% apart,
+          # inside any plausibility band -- so a row-count sanity check passes
+          # both. Identity, not plausibility.
+          #
+          # The fingerprint is recorded by the COUNT-ONLY rehearsal, which
+          # bypasses the Referee and spends no K, and asserted here.
+          python - <<'PY'
+          import json, os, sys
+          sys.path.insert(0, ".")
+          from qt import guards as gu
+
+          spec = os.environ["QT_SPEC_ID"]
+          path = os.environ["QT_EVENTS_CSV"]
+          count_only = os.environ.get("QT_EVENT_COUNT_ONLY", "").strip() == "1"
+
+          reg = json.load(open("data/registry/specifications.json"))
+          s = reg["specifications"].get(spec, {})
+          want = (s.get("inputs_fingerprint") or {}).get("events")
+
+          ok, why, got = gu.verify_input(path, want, date_col="event_ts",
+                                         strict=not count_only)
+          print(f"[content guard] {why}")
+          if not ok:
+              print("::error::content guard REFUSED -- the declared path holds "
+                    "bytes the registry does not vouch for. This is the "
+                    "2026-09-07 shape.")
+              sys.exit(7)
+          if want is None:
+              print("\n--- paste into data/registry/specifications.json, "
+                    f"specifications.{spec}.inputs_fingerprint ---")
+              print(json.dumps({"events": got}, indent=2, sort_keys=True))
+              print("--- commit it BEFORE the read. A read refuses without it. ---\n")
+          PY
           # OUTPUT GUARD, the mirror of the input guard above. The registry names
           # each spec's declared output_ledger; this job never asked it, and the
           # only protection was the hardcoded v1 check below -- which names ONE
