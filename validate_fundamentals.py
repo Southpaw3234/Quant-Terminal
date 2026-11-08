@@ -160,6 +160,85 @@ def test_computes_no_ratio():
           "a capped run cannot write the real filename")
 
 
+# ─────────────────────────────── trailing twelve months (value_ebit_ev_v2)
+#
+# Calendar-year filer. FY2023 = 400. In FY2024 it reports year-to-date at each
+# quarter, and the prior year's YTD figures are on the tape too.
+#
+#   TTM at Q2 2024  =  FY2023 + YTD-H1-2024 - YTD-H1-2023
+#                   =  400    + 230         - 200          =  430
+TTM_FACTS = [
+    {"end": "2023-12-31", "start": "2023-01-01", "val": 400.0, "filed": "2024-03-01", "form": "10-K", "fp": "FY"},
+    {"end": "2023-06-30", "start": "2023-01-01", "val": 200.0, "filed": "2023-08-01", "form": "10-Q", "fp": "Q2"},
+    {"end": "2024-06-30", "start": "2024-01-01", "val": 230.0, "filed": "2024-08-01", "form": "10-Q", "fp": "Q2"},
+    # A DISCRETE quarter against the same period end. `fp` says Q2 for both;
+    # only the duration separates them, and using this would understate TTM.
+    {"end": "2024-06-30", "start": "2024-04-01", "val": 120.0, "filed": "2024-08-01", "form": "10-Q", "fp": "Q2"},
+]
+
+
+def test_ttm():
+    print("\n--- trailing twelve months (value_ebit_ev_v2) ---")
+    fys = f.fiscal_year_starts(TTM_FACTS)
+    check("start-not-fp-identifies-the-window",
+          f.period_bucket(TTM_FACTS[2], fys) == "Q2"
+          and f.period_bucket(TTM_FACTS[3], fys) is None,
+          "both rows say fp=Q2 against the same period end; the 181-day "
+          "year-to-date window is usable and the 90-day discrete quarter is "
+          "not. Taking the discrete figure would understate TTM by a quarter")
+    check("duration-alone-is-not-enough",
+          f.period_bucket(TTM_FACTS[3]) == "Q1",
+          "⚠️ CAUGHT BY THIS SUITE BEFORE ANY SWEEP RAN. A DISCRETE second "
+          "quarter is ~90 days and so is a Q1 YEAR-TO-DATE window, so on "
+          "duration alone the discrete figure masquerades as Q1. Only the "
+          "START separates them, and period_bucket refuses to guess without "
+          "the fiscal-year boundaries")
+
+    t = f.ttm_as_of(TTM_FACTS, "2024-09-30")
+    check("ttm-arithmetic",
+          t is not None and abs(t["val"] - 430.0) < 1e-9,
+          "FY2023 400 + H1-2024 230 - H1-2023 200 = 430, not the 400 an "
+          "annual-only basis would still be carrying in September")
+    check("ttm-basis-recorded",
+          t is not None and t["basis"] == "FY+Q2-Q2",
+          "the row says how it was built, so a reader never has to guess")
+    check("ttm-known-only-when-all-parts-filed",
+          t is not None and t["filed"] == "2024-08-01",
+          "a TTM is known on the date its LAST component was filed")
+
+    check("fresh-annual-is-itself-the-ttm",
+          (lambda r: r is not None and r["val"] == 400.0 and r["basis"] == "FY")(
+              f.ttm_as_of(TTM_FACTS, "2024-03-15")),
+          "right after the 10-K lands, the annual IS the trailing twelve "
+          "months — no arithmetic, no three restatement histories compounded")
+
+    check("point-in-time-holds",
+          (lambda r: r is not None and r["val"] == 400.0)(
+              f.ttm_as_of(TTM_FACTS, "2024-07-31")),
+          "the day before the Q2 10-Q is filed, TTM is still the FY2023 "
+          "figure — the interim is invisible")
+
+    # Prior-year comparative removed: the subtraction cannot be formed.
+    no_prior = [r for r in TTM_FACTS if r["end"] != "2023-06-30"]
+    check("refuses-rather-than-falls-back",
+          f.ttm_as_of(no_prior, "2024-09-30") is None,
+          "⚠️ THE LOAD-BEARING ONE. Without the prior-year YTD there is no "
+          "TTM, and the answer is None — NOT the annual figure. A silent "
+          "fallback would mix two bases in one series, which is the exact "
+          "failure this change exists to avoid")
+
+    no_fy = [r for r in TTM_FACTS if r["end"] != "2023-12-31"]
+    check("refuses-without-the-base-year",
+          f.ttm_as_of(no_fy, "2024-09-30") is None,
+          "and without FY(n-1) there is nothing to add the interim delta to")
+
+    check("annual-mode-is-untouched",
+          (lambda r: r is not None and r["val"] == 400.0)(
+              f.known_as_of([r for r in TTM_FACTS if r["fp"] == "FY"], "2024-09-30")),
+          "v1's annual-only basis still resolves exactly as before, so its "
+          "frozen panel stays reproducible")
+
+
 def main():
     print("=" * 70)
     print("extract_fundamentals — pure logic (no network)")
@@ -169,6 +248,7 @@ def main():
     test_edges()
     test_collect_and_fallbacks()
     test_snapshot()
+    test_ttm()
     test_computes_no_ratio()
     print("\n" + "=" * 70)
     if FAILURES:
