@@ -151,7 +151,17 @@ jobs:
                    analyze_rank_ic.py analyze_shadow_intraday.py \
                    analyze_stat_arb.py \
                    .github/workflows/quant_daily.yml \
-                   .github/workflows/preflight.yml; do
+                   .github/workflows/preflight.yml \
+                   shadow_intraday.py run_daily.py pnl_history_probe.py; do
+            # ⚠️ The last three are NOT in §⑤. They were orphaned by the
+            # 11-08 sweep — zero references once their runners went — and
+            # retired by operator decision rather than by the list. Recorded
+            # that way so a future reader does not mistake them for something
+            # CARRY_FORWARD named.
+            #
+            # NOTE shadow_intraday.py, the SCRIPT. data/shadow_intraday/ is the
+            # Frame-2 evidence series (S2, n=55) and is NOT retired — it is
+            # read by validate_protocols.py and docs/WEEKLY_REVIEW.md.
             if [ -e "$f" ]; then
               echo "::error::$f is back. docs/CARRY_FORWARD.md §⑤ retires it: the"
               echo "::error::279-name / 5-day-horizon / daily-rebalance frame is"
