@@ -1,16 +1,30 @@
 name: Weekly roster update (incremental, append-only)
 
-# ⚠️ DORMANT UNTIL 2026-09-29. The no-touch window forbids scheduled writes
-# before then, so the FIRST step is a date guard that exits cleanly. The cron
-# is defined now so the job starts itself on the right day with no further
-# intervention; until then every firing does nothing at all — no checkout of
-# data, no network, no write.
+# 🛑 SCHEDULE RETIRED 2026-11-08, BY OPERATOR DECISION. Dispatch only.
 #
-# A judgement worth stating rather than burying: a cron that fires and
-# immediately exits is still, on a strict reading, "running on a cron". It
-# writes nothing and touches nothing, which is what the rule protects. If you
-# want the stricter reading, comment out the `schedule:` block and add it back
-# on 2026-09-29 — the date guard stays either way as the belt to that braces.
+# The date guard below is INVERTED relative to the trading crons. Before
+# 2026-09-29 a firing was a no-op; on and after it, this job began committing
+# to master every Sunday with nothing in the repo to ever stop it. It ran for
+# real five times — 10-04, 10-11, 10-18, 10-25, 11-01 — and would have gone on
+# weekly, indefinitely, maintaining a roster that no surviving reader consumes.
+#
+# The alpha search closed 2026-08-09 and the v25 crons retired 2026-09-29. If a
+# future v27 or V29 specification needs a refreshed roster, dispatch this by
+# hand and commit the result deliberately, which is what a research input
+# deserves anyway.
+#
+# TO RESTORE THE CRON: uncomment the block below AND give the guard an upper
+# bound as well as a lower one. A guard with only a start date is how this
+# happened.
+#
+# The original note, kept because it is the reasoning that was overtaken:
+#   "A cron that fires and immediately exits is still, on a strict reading,
+#   running on a cron. It writes nothing and touches nothing, which is what
+#   the rule protects. If you want the stricter reading, comment out the
+#   schedule block and add it back on 2026-09-29 — the date guard stays
+#   either way as the belt to that braces."
+# That reading was correct for the pre-sunset window and wrong for the one
+# after it, because the guard opens rather than closes.
 #
 # WHY WEEKLY AND NOT HOURLY: a handful of Form 25 filings arrive per trading
 # day across the whole market, and a delisting matters to a quarterly-rebalanced
@@ -25,9 +39,9 @@ on:
         description: 'Also write a dated, immutable snapshot for a specification to name'
         type: boolean
         default: false
-  schedule:
-    # Sundays 06:00 UTC. Dormant until 2026-09-29 via the date guard below.
-    - cron: '0 6 * * 0'
+  # schedule:
+  #   # Sundays 06:00 UTC. See the retirement note at the top of this file.
+  #   - cron: '0 6 * * 0'
 
 permissions:
   contents: write
