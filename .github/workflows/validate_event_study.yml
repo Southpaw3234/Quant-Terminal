@@ -263,6 +263,46 @@ jobs:
           set -u
           echo "events file: $QT_EVENTS_CSV ($(( $(wc -l < "$QT_EVENTS_CSV") - 1 )) rows)"
           python event_study.py
+      # ⚠️ THE FINGERPRINT IS EMITTED HERE, and it was not before.
+      # The content guard lives in the e1 job, and count-only runs in THIS
+      # one, which never reaches it and carried no QT_SPEC_ID. So the
+      # rehearsal could not produce the fingerprint the read refuses without:
+      # pead_8k_car_v3 was armed in every other respect and simply could not
+      # be read. Found on the pre-flight, before a dispatch.
+      #
+      # strict=False here because QT_EVENT_COUNT_ONLY is set: this prints the
+      # block to commit and proceeds. The e1 job is strict and refuses.
+      - name: Emit the input fingerprint for the registry
+        env:
+          QT_EVENTS_CSV: ${{ inputs.events_csv || 'data/events/events_form4.csv' }}
+          QT_SPEC_ID: ${{ inputs.spec_id || '' }}
+          QT_EVENT_COUNT_ONLY: '1'
+        run: |
+          set -u
+          if [ -z "$QT_SPEC_ID" ]; then
+            echo "no spec_id given — counting only, no fingerprint emitted"; exit 0
+          fi
+          python - <<'PY'
+          import json, os, sys
+          sys.path.insert(0, ".")
+          from qt import guards as gu
+          spec = os.environ["QT_SPEC_ID"]
+          path = os.environ["QT_EVENTS_CSV"]
+          reg = json.load(open("data/registry/specifications.json"))
+          s = reg["specifications"].get(spec, {})
+          declared = (s.get("params", {}).get("events_file", "") or "").split(" ")[0]
+          if declared and declared != path:
+              print(f"::error::spec {spec} declares events_file={declared} but this "
+                    f"job counted {path} — the fingerprint would be of the wrong file")
+              sys.exit(5)
+          ok, why, got = gu.verify_input(path, (s.get("inputs_fingerprint") or {}).get("events"),
+                                         date_col="event_ts", strict=False)
+          print(f"[content guard] {why}")
+          print("\n--- paste into data/registry/specifications.json, "
+                f"specifications.{spec}.inputs_fingerprint ---")
+          print(json.dumps({"events": got}, indent=2, sort_keys=True))
+          print("--- commit it BEFORE the read. The read refuses without it. ---\n")
+          PY
       - name: Guard — nothing written anywhere
         run: |
           set -u
