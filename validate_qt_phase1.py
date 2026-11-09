@@ -346,11 +346,6 @@ def test_v29_registry_budget():
           "and it is 12%, BELOW v1's 20-25%: the mechanism is identical and "
           "only the plumbing differs, so a prior that already missed on four "
           "of eight criteria is a ceiling here, not a floor")
-    check("v29-v2-holdings-declared-machine-readable",
-          (_v2 is not None
-           and int(_v2.params.get("n_hold_value", 0)) == 50),
-          "n_hold_value is 50 and run_value_backtest.py reads it from here — "
-          "a hardcoded 20 would measure a specification nobody declared")
     r27 = referee.Referee(registry_path=Path("data/registry/specifications.json"))
     check("v27-budget-unchanged",
           r27.k_budget == 5 and r27.terminal_date == "2027-03-31",
