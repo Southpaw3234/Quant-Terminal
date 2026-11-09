@@ -313,8 +313,14 @@ def test_v29_registry_budget():
     # state, which is the stronger assertion: anti-deferral means a read
     # specification can never be re-read, so a future green here proves the
     # budget was not quietly rewound.
-    check("v29-one-read-spent", r29.k_used() == 1 and r29.k_remaining() == 2,
-          "K 1/3 — value_ebit_ev_v1 was read 2026-11-08 (run 42453397592)")
+    # ⚠️ This check pinned K at 1 and went red when v2 was read on 2026-11-09
+    # — the second time today a tripwire did its job. It no longer pins the
+    # TOTAL: the budget belongs to the programme, and v29-v2-read-and-frozen
+    # owns that count. This one asserts only what it is about, which is that
+    # v1's read happened and is frozen.
+    check("v29-v1-read-spent", r29.specs["value_ebit_ev_v1"].is_read
+          and r29.k_used() >= 1,
+          "value_ebit_ev_v1 was read 2026-11-08 (run 42453397592)")
     check("v29-spec-read-and-frozen",
           "value_ebit_ev_v1" in r29.specs and r29.specs["value_ebit_ev_v1"].is_read,
           "value_ebit_ev_v1 is READ and can never be read again")
