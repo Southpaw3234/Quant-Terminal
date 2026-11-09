@@ -326,6 +326,31 @@ def test_v29_registry_budget():
           not r29.authorize_read("value_ebit_ev_v1", "2027-08-01").allowed,
           "and refuses one past 2027-06-30, which under the old behaviour would "
           "have been checked against v27's earlier deadline instead")
+
+    # value_ebit_ev_v2 — declared 2026-11-08, UNREAD. These exist because the
+    # Referee tests none of them: authorize_read checks already-read, date
+    # order, terminal date and K budget, and nothing else. The prior and the
+    # declared holdings are enforced here or nowhere.
+    _v2 = r29.specs.get("value_ebit_ev_v2")
+    _p2 = str((_v2.result if _v2 is not None else {}).get("prior", ""))
+    check("v29-v2-declared-unread",
+          _v2 is not None and not _v2.is_read and r29.k_used() == 1,
+          "v2 is declared and unread — declaring spends no K, and v1's read "
+          "is still the only one against the budget of 3")
+    check("v29-v2-prior-signed",
+          "NOT YET RECORDED" not in _p2 and "signed Southpaw3234" in _p2
+          and "%" in _p2,
+          "the prior is RECORDED, signed and dated BEFORE any read")
+    check("v29-v2-prior-not-above-v1",
+          "12%" in _p2,
+          "and it is 12%, BELOW v1's 20-25%: the mechanism is identical and "
+          "only the plumbing differs, so a prior that already missed on four "
+          "of eight criteria is a ceiling here, not a floor")
+    check("v29-v2-holdings-declared-machine-readable",
+          (_v2 is not None
+           and int(_v2.params.get("n_hold_value", 0)) == 50),
+          "n_hold_value is 50 and run_value_backtest.py reads it from here — "
+          "a hardcoded 20 would measure a specification nobody declared")
     r27 = referee.Referee(registry_path=Path("data/registry/specifications.json"))
     check("v27-budget-unchanged",
           r27.k_budget == 5 and r27.terminal_date == "2027-03-31",
