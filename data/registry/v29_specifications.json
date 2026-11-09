@@ -139,11 +139,31 @@
         "benchmark": "UNCHANGED: IWM. ⚠️ NOT the S&P 500. Any claim about beating SPY is a DIFFERENT specification against a different and substantially harder benchmark, and nothing in this read speaks to it.",
         "delisting_return": "UNCHANGED: two-tier, actual prices where the name keeps trading, -55% charged once where no price exists",
         "measurement": "UNCHANGED: calendar-time daily return series, Newey-West lag 10",
+        "panel_path": "data/universe/v29_universe_pit.csv",
+        "funds_path": "data/fundamentals/fundamentals_ttm.csv",
+        "output_ledger_path": "data/portfolios/value_ebit_ev_v2.csv",
         "panel": "data/universe/v29_universe_pit.csv (frozen, shared with v1)",
         "funds": "data/fundamentals/fundamentals_ttm.csv -- ⚠️ DOES NOT EXIST YET. A separate file from v1's fundamentals_pit.csv, which stays frozen and untouched so v1's read remains reproducible.",
         "output_ledger": "data/portfolios/value_ebit_ev_v2.csv -- NEVER value_ebit_ev_v1.csv"
       },
       "declared_at": "2026-11-08",
+      "inputs_fingerprint": {
+        "_note": "Emitted by the mode=select rehearsal, run 42562203813, 2026-11-09. Recorded BEFORE any read. mode=read REFUSES when this is absent: an unrecorded input is indistinguishable from a substituted one. Both digests were independently confirmed three times -- by the producing sweep (run 42461866741), by hand against the staged git blob, and by this rehearsal.",
+        "fundamentals": {
+          "path": "data/fundamentals/fundamentals_ttm.csv",
+          "rows": 114302,
+          "sha256": "c5ee26150b99656e32c98ce8c5cdc2a7273a27c474faafa8007de697af2d4844",
+          "window": ["2015-09-30", "2025-08-31"],
+          "columns": ["asof","assets","assets_end","cash","cash_end","cik","debt_lt","debt_lt_end","equity","equity_end","latest_filed","liabilities","liabilities_end","net_income","net_income_basis","net_income_end","op_income","op_income_basis","op_income_end","revenue","revenue_basis","revenue_end","shares","shares_end","staleness_days","ticker"]
+        },
+        "panel": {
+          "path": "data/universe/v29_universe_pit.csv",
+          "rows": 152006,
+          "sha256": "3b48776cc092aa910f31398c0c5355bde4c3641b2959764acbf78d9fa88773f7",
+          "window": ["2015-09-30", "2025-08-31"],
+          "columns": ["adv","date","n_bars","price","ticker"]
+        }
+      },
       "read_at": "",
       "result": {
         "prior": "P(value_ebit_ev_v2 clears every pre-registered bar) = 12%, signed Southpaw3234, 2026-11-08 -- recorded BEFORE dispatch, before any portfolio was formed on the TTM panel and before any return was computed. DELIBERATELY BELOW v1's 20-25%. The mechanism is identical to v1's and only the plumbing differs, so the 22.5% that already missed on four of eight criteria is a CEILING here, not a floor. FOR: TTM measurably halves flow staleness -- mean lag from as-of date to the operating-income period end falls 9.24 months to 3.93, with 88% of rows inside 2-4 months (run 42461866741) -- and fifty names attacks criterion 6 directly, which is where v1 missed, on a 50.9% drawdown against IWM's 41.1%. AGAINST: neither change claims new predictive power. Criterion 4 (t 0.71) is untouched by either and may WORSEN, because reaching from 20 names to 50 dilutes the mean excess. Criterion 2 gets harder rather than easier: v1 selected 20 from a median 98 eligible and a minimum of 58, and TTM refuses rather than falling back, so the pool thins. The 75 bps cost figure is still 1.4-2.8x below measured spreads and is held fixed for comparability. Survivorship is still uncorrected before 2023. TWO PARAMETERS MOVE AT ONCE, so a miss will not say which was wrong and one slot would remain to isolate it. NET: two of v1's four misses are plausibly addressed, one is untouched, one gets harder -- that is not a case for a prior above the one that already failed. THE REFEREE DOES NOT CHECK THIS FIELD (qt/referee.py:161 tests already-read, date order, terminal date and K budget, and nothing else), so this record, not the code, is what makes a read of v2 legitimate.",

@@ -38,6 +38,7 @@ legitimate; resetting the counter is not.*
 """
 from __future__ import annotations
 
+import dataclasses
 import json
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -117,8 +118,22 @@ class Referee:
         ft = raw.get("terminal_date")
         if isinstance(ft, str) and ft:
             self._file_terminal = ft
+        # The registry is a SHARED document. It carries fields this class does
+        # not own -- inputs_fingerprint, for one -- and Spec(**d) splatted
+        # every key into the dataclass, so the Referee crashed the moment the
+        # registry grew a field (measured: run 42563951222, TypeError on
+        # inputs_fingerprint, during a free rehearsal rather than a read).
+        #
+        # Unknown keys are therefore IGNORED but NAMED. Silence would hide a
+        # mistyped read_at as an unread specification, which is the one
+        # mistake this class exists to make impossible.
+        _known = {f.name for f in dataclasses.fields(Spec)}
         for sid, d in (raw.get("specifications") or {}).items():
-            self.specs[sid] = Spec(**d)
+            _extra = sorted(set(d) - _known)
+            if _extra:
+                print(f"[referee] {sid}: ignoring field(s) this class does not "
+                      f"own: {', '.join(_extra)}")
+            self.specs[sid] = Spec(**{k: v for k, v in d.items() if k in _known})
 
     def save(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)

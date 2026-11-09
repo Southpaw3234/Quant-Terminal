@@ -20,6 +20,11 @@ on:
         type: choice
         options: [select, read]
         default: select
+      spec:
+        description: 'Which declared specification to run. Panel, fundamentals, ledger and holdings all come FROM ITS REGISTRY ENTRY.'
+        type: choice
+        options: [value_ebit_ev_v2, value_ebit_ev_v1]
+        default: value_ebit_ev_v2
       confirm_read:
         description: 'Second switch. Required for mode=read. Leave false unless you mean it.'
         type: boolean
@@ -51,11 +56,12 @@ jobs:
         env:
           # A push can only ever select. Spending a slot requires a deliberate
           # dispatch with both switches set.
+          QT_V29_SPEC: ${{ inputs.spec || 'value_ebit_ev_v2' }}
           QT_V29_MODE: ${{ inputs.mode || 'select' }}
           QT_V29_CONFIRM_READ: ${{ (github.event_name == 'workflow_dispatch' && inputs.confirm_read) && '1' || '0' }}
         run: |
           set -u
-          echo "mode=$QT_V29_MODE confirm=$QT_V29_CONFIRM_READ"
+          echo "spec=$QT_V29_SPEC mode=$QT_V29_MODE confirm=$QT_V29_CONFIRM_READ"
           python run_value_backtest.py
       - name: Guard — registries, frozen data and S4 untouched
         run: |
