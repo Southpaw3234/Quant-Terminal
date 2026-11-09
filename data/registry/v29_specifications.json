@@ -139,6 +139,9 @@
         "benchmark": "UNCHANGED: IWM. ⚠️ NOT the S&P 500. Any claim about beating SPY is a DIFFERENT specification against a different and substantially harder benchmark, and nothing in this read speaks to it.",
         "delisting_return": "UNCHANGED: two-tier, actual prices where the name keeps trading, -55% charged once where no price exists",
         "measurement": "UNCHANGED: calendar-time daily return series, Newey-West lag 10",
+        "panel_path": "data/universe/v29_universe_pit.csv",
+        "funds_path": "data/fundamentals/fundamentals_ttm.csv",
+        "output_ledger_path": "data/portfolios/value_ebit_ev_v2.csv",
         "panel": "data/universe/v29_universe_pit.csv (frozen, shared with v1)",
         "funds": "data/fundamentals/fundamentals_ttm.csv -- ⚠️ DOES NOT EXIST YET. A separate file from v1's fundamentals_pit.csv, which stays frozen and untouched so v1's read remains reproducible.",
         "output_ledger": "data/portfolios/value_ebit_ev_v2.csv -- NEVER value_ebit_ev_v1.csv"

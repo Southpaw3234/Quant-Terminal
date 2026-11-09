@@ -141,9 +141,8 @@ def _score_one_date(asof, members, funds_at, prices):
 def main() -> None:
     if MODE not in ("select", "read"):
         print(f"[v29] QT_V29_MODE must be 'select' or 'read', got {MODE!r}"); sys.exit(2)
-    for p in (PANEL, FUNDS, REGISTRY):
-        if not os.path.exists(p):
-            print(f"[v29] missing {p}"); sys.exit(1)
+    if not os.path.exists(REGISTRY):
+        print(f"[v29] missing {REGISTRY}"); sys.exit(1)
 
     # ── A7: is this the file the specification names? ──────────────────
     # Existence is not provenance. Checked BEFORE the Referee so a stale or
@@ -162,6 +161,24 @@ def main() -> None:
     # would carry the same defect with an extra way to get it wrong.
     # v1 declares no n_hold_value and keeps the constant, so its frozen read
     # stays reproducible.
+    # ⚠️ INPUT AND OUTPUT PATHS COME FROM THE REGISTRY TOO, for the same
+    # reason as the holdings: a spec that names fundamentals_ttm.csv must not
+    # be scored against whatever the module default happens to be. v1 names
+    # none of these and keeps its defaults, so its frozen read is reproducible.
+    global PANEL, FUNDS, OUT_PORT
+    _sp = _reg.get("specifications", {}).get(SPEC_ID, {}).get("params", {})
+    for _key, _name in (("panel_path", "PANEL"), ("funds_path", "FUNDS"),
+                        ("output_ledger_path", "OUT_PORT")):
+        _v = _sp.get(_key)
+        if _v:
+            globals()[_name] = _v
+    print(f"[v29] spec={SPEC_ID}")
+    print(f"[v29]   panel  {PANEL}")
+    print(f"[v29]   funds  {FUNDS}")
+    print(f"[v29]   ledger {OUT_PORT}")
+    for _p in (PANEL, FUNDS):
+        if not os.path.exists(_p):
+            print(f"[v29] missing {_p} — named by {SPEC_ID}"); sys.exit(1)
     global N_HOLD
     _declared_n = (_reg.get("specifications", {}).get(SPEC_ID, {})
                        .get("params", {}).get("n_hold_value"))
