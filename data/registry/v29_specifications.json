@@ -147,6 +147,23 @@
         "output_ledger": "data/portfolios/value_ebit_ev_v2.csv -- NEVER value_ebit_ev_v1.csv"
       },
       "declared_at": "2026-11-08",
+      "inputs_fingerprint": {
+        "_note": "Emitted by the mode=select rehearsal, run 42562203813, 2026-11-09. Recorded BEFORE any read. mode=read REFUSES when this is absent: an unrecorded input is indistinguishable from a substituted one. Both digests were independently confirmed three times -- by the producing sweep (run 42461866741), by hand against the staged git blob, and by this rehearsal.",
+        "fundamentals": {
+          "path": "data/fundamentals/fundamentals_ttm.csv",
+          "rows": 114302,
+          "sha256": "c5ee26150b99656e32c98ce8c5cdc2a7273a27c474faafa8007de697af2d4844",
+          "window": ["2015-09-30", "2025-08-31"],
+          "columns": ["asof","assets","assets_end","cash","cash_end","cik","debt_lt","debt_lt_end","equity","equity_end","latest_filed","liabilities","liabilities_end","net_income","net_income_basis","net_income_end","op_income","op_income_basis","op_income_end","revenue","revenue_basis","revenue_end","shares","shares_end","staleness_days","ticker"]
+        },
+        "panel": {
+          "path": "data/universe/v29_universe_pit.csv",
+          "rows": 152006,
+          "sha256": "3b48776cc092aa910f31398c0c5355bde4c3641b2959764acbf78d9fa88773f7",
+          "window": ["2015-09-30", "2025-08-31"],
+          "columns": ["adv","date","n_bars","price","ticker"]
+        }
+      },
       "read_at": "",
       "result": {
         "prior": "NOT YET RECORDED. The per-spec prior belongs to the operator and MUST be written here, signed and dated, BEFORE any read is authorised. qt/referee.py:161 authorize_read does NOT test this field -- it checks already-read, date order, terminal date and K budget, and nothing else -- so a read dispatched without a prior is a protocol breach that no code will stop. ⚠️ ANCHOR FOR WHOEVER SIGNS IT: v1 carried 20-25% and missed on four of eight. The MECHANISM here is identical to v1's; only the plumbing differs. A prior ABOVE v1's would be difficult to defend.",
