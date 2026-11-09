@@ -313,8 +313,14 @@ def test_v29_registry_budget():
     # state, which is the stronger assertion: anti-deferral means a read
     # specification can never be re-read, so a future green here proves the
     # budget was not quietly rewound.
-    check("v29-one-read-spent", r29.k_used() == 1 and r29.k_remaining() == 2,
-          "K 1/3 — value_ebit_ev_v1 was read 2026-11-08 (run 42453397592)")
+    # ⚠️ This check pinned K at 1 and went red when v2 was read on 2026-11-09
+    # — the second time today a tripwire did its job. It no longer pins the
+    # TOTAL: the budget belongs to the programme, and v29-v2-read-and-frozen
+    # owns that count. This one asserts only what it is about, which is that
+    # v1's read happened and is frozen.
+    check("v29-v1-read-spent", r29.specs["value_ebit_ev_v1"].is_read
+          and r29.k_used() >= 1,
+          "value_ebit_ev_v1 was read 2026-11-08 (run 42453397592)")
     check("v29-spec-read-and-frozen",
           "value_ebit_ev_v1" in r29.specs and r29.specs["value_ebit_ev_v1"].is_read,
           "value_ebit_ev_v1 is READ and can never be read again")
@@ -333,10 +339,22 @@ def test_v29_registry_budget():
     # declared holdings are enforced here or nowhere.
     _v2 = r29.specs.get("value_ebit_ev_v2")
     _p2 = str((_v2.result if _v2 is not None else {}).get("prior", ""))
-    check("v29-v2-declared-unread",
-          _v2 is not None and not _v2.is_read and r29.k_used() == 1,
-          "v2 is declared and unread — declaring spends no K, and v1's read "
-          "is still the only one against the budget of 3")
+    # ⚠️ TRIPWIRE FLIPPED 2026-11-09, when v2 was read. It asserted v2 was
+    # unread and went red the moment that stopped being true, which is the
+    # tripwire working. It now pins the post-read state, the stronger claim:
+    # both V29 slots spent are accounted for, and a re-read is refused.
+    check("v29-v2-read-and-frozen",
+          _v2 is not None and _v2.is_read and r29.k_used() == 2
+          and r29.k_remaining() == 1,
+          "v2 was read 2026-11-09; K 2/3 with one slot left")
+    check("v29-v2-reread-is-refused",
+          not r29.authorize_read("value_ebit_ev_v2", "2026-12-01").allowed,
+          "and a second read is REFUSED — anti-deferral, and no bug found "
+          "afterwards reopens it")
+    check("v29-v2-verdict-recorded",
+          str((_v2.result if _v2 is not None else {})
+              .get("read", {}).get("verdict", "")) == "NOT MET",
+          "the verdict is in the registry, not only in a run log that ages out")
     check("v29-v2-prior-signed",
           "NOT YET RECORDED" not in _p2 and "signed Southpaw3234" in _p2
           and "%" in _p2,
