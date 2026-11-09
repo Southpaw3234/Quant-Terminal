@@ -1,7 +1,7 @@
 # Quant Terminal — Session Handoff
-**Date:** 2026-09-08 (🟢 **THE V29 DATA LAYER IS WHOLE AND ON MASTER — the re-swept panel had been sitting in a CI ARTIFACT, not the repo, and the selection pass reads the repo.** ✅ **PRs #68/#69/#70 all landed; post-merge validate on master ALL PASS, 287 checks, 0 fail.** 🔑 **The Referee does NOT check the prior — `authorize_read` tests four things and the prior is not one of them, so the guard rail on v27 spec #3 is the operator, not the code.** ⚠️ **Spec #3 must also choose between the frozen 1,869-row event file its declaration NAMES and the new 1,294-row point-in-time one — before the read, in writing.** 🟢 **HON COVER FIRED AND CONFIRMED AT THE BROKER — `BUY-to-cover HON x13` submitted 02:35Z, pending, fills at the 09-08 open; a second read-only dry-run proves the broker has it.** ✅ **The V29 selection re-ran green against the landed panel — criterion 2 clears at median 98, K still 0/3.** v27 K **2/5**, V29 K **0/3**, nothing read. Live pipeline untouched.)
-**Branch:** `master` (live/cron) — v29 and v27 work is now MERGED to master; `v29/fundamentals` and `v27/events-pit` are landed and no longer the place to look
-**Last commit:** `ff93ca1` (2026-09-08 — docs(handoff) #70). *Structural commits this session:* `67efca9` (#68 v27 PIT events), `61f4599` (#69 V29 declaration + data layer), and `460a545` on the branch (the re-swept 114,414-row fundamentals panel). The live crons keep writing daily on top. `predictions.csv` = **53752** rows.
+**Date:** 2026-11-08 (🏁 **ALL THREE PROGRAMMES HAVE RETURNED A NULL — v25 0/4, v27 2 reads both NOT MET, V29 read 2026-11-08 and NOT MET.** 🗑️ **THE v25 PIPELINE IS DELETED: 36 files, 13,524 lines, `quant_runner.py` and `quant_daily.yml` among them. Nothing trades. Nothing on a schedule writes to this repository.** 🟢 **The account is FLAT and confirmed live 11-08 07:19Z by two independent broker reads — the first real broker read since 09-29.** ✅ **Nine PRs merged; master green on every validate suite, each dispatched BY HAND because `validate_qt.yml` still has no `master` trigger.** 🔑 **Four failure modes became CI-enforced invariants: a green run is not a delivered artifact; an empty broker read is not a flat book; a guard with only a start date opens rather than closes; a deletion nothing enforces gets reverted.** ⏳ **A TTM fundamentals sweep for `value_ebit_ev_v2` is IN FLIGHT (run `42461866741`, dispatched 08:11Z) — it costs no K and is not a trade.** K: v27 **2/5**, V29 **1/3**. ⚠️ Everything below the pickup block predates the shutdown and is historical record.)
+**Branch:** `master` — the only branch that matters. All v25 code is deleted; `qt/`, the point-in-time data layer and the v27/V29 registries are what remain.
+**Last commit:** see `git log`. This session: #75 #77 #78 #79 #80 #81 #82 #83 #84 #86 #87 plus `c5b6366` (the V29 read record).
 **Most recent dated MODEL change (unchanged):** `65be103` (8/11 — `WYFI` added to `WATCHLIST`: **9th dated MODEL-BEHAVIOUR change**, effective from the first morning retrain on/after 8/12, equity cross-section **279 → 280**; attribute any `n` shift to this, not to alpha). Also 8/11: `29c92da` — the rank-IC series is now **append-only** (measurement change; first write wins, so the S4 read due ~9/24 is an accumulated ledger rather than a recompute — `rank_ic_v2.csv` is frozen from its very first row). Previous: `c61d371` (8/11 — close_long survives the intraday `SystemExit`: the body is now a callable in `_CELL_13_CLOSE_LONG`, called from both the intraday branch (before the exit, via `_SRC_REPLACE`) and the postpatch, with `_QT_CLOSE_LONG_DONE` guarding against a double close; validate §17 → 39 checks, suite 235/235, run `31493417167`). Previous: `cd432a7` (8/10 — merge of `fix/close-long-held-book`: `close_long` driven by the held book with every outcome named instead of `except: pass`, plus `QT_WIND_DOWN='1'` to actually take the book to flat; validate §17, suite 223/223, run `31418261502`). Previous: `ed175b6` (8/09 — watchdog no-session guard: it was paging on days the market was SHUT, because it compares the marker against TODAY while the marker is correctly still on the last SESSION. The weekend case is only reachable by manual dispatch, but the **market-holiday case fires on the real weekday cron** — Labor Day Mon 2026-09-07, the only one before sunset, was a guaranteed false page. Verified live on the exact failing case.) — before it `f919412` (**self-executing cron sunset**: `QT_SUNSET_DATE='2026-09-25'` in **both** `quant_daily.yml` and `morning_watchdog.yml`, **must stay matched**; wiring proven `sunset: success → trade: in_progress`, then cancelled so it could not perturb Monday's proofs) and `8ee81a4` (🏁 **the stop-the-search decision**). Substantive code tip before the wind-down: `a0dd471`. ⚠️ Everything after `8ee81a4` is wind-down plumbing, not model work. Previously `feb472b` (docs only — 8/07 EOD). ✅ **Master was green: post-merge validate `31228196857` at `feb472b`, ALL PASS, 197 checks, 0 fail** — the three risk-control fixes below compose, §5/§15/§16 at 24/21/18 and every earlier section unchanged. **Substantive tip:** `a0dd471` (merge of `fix/drawdown-fail-closed`, 8/07: the `[KILL SWITCH · Alpaca]` drawdown brake now blocks **entries only, for one run**, when both Alpaca and the `pnl_history` fallback are unreadable and broker keys are set — deliberately **no** persistent `_KILL_FLAG` (it would latch whenever the data source itself is broken) and deliberately **no** `SKIP_CELLS` (it would stall all three evidence clocks), wired via the run-scoped namespace entry `_QT_DD_BLIND_HALT`. No keys = local paper mode = benign. `QT_KILL_DD_FAILOPEN=1` is the one-run escape hatch. 🔑 **`check_kill_switch`'s "check 4" is DEAD CODE** — every call site passes `None`, so it has never executed and is NOT the drawdown brake; validate 16 pins it dead. Validate `31222957900` ALL PASS, 197 checks.) — before that `dc04017` (merge of `fix/kill-switch-fail-closed`, 8/07; commit `8f70ecb`: the consecutive-loss block no longer sits in a bare `except Exception: pass` — it halts **fail-closed** with the exception type in the reason and a traceback printed, matching the gross-cap gate's fail-closed account read. Safe because a trip is per-run and non-persistent: `activate_kill_switch()` is never called on this path, so no `KILL_FLAG_FILE` is written and a transient error costs one session, not a permanent halt. Missing / zero-byte logs stay benign; `QT_KILL_STREAK_FAILOPEN=1` is a one-run escape hatch. Anchor carries the trailing `# 4. Daily P&L from Alpaca` comment because `except Exception:` alone appears **119x**. Validate `31221494555` ALL PASS, 179 checks, new section 15 replaying the whole function end to end.) — before that `77a7beb` (merge of `fix/kill-switch-temporal`, 8/07; commit `8b7f03f`: the kill switch's consecutive-loss window now aggregates the era/crypto/action-gated rows by pred DATE and counts consecutive losing DAYS in DATE order, emitting one synthetic row per day so the downstream `len(scored)==KILL_CONSECUTIVE_LOSSES and no wins` contract is untouched. Thin days below `QT_KILL_MIN_DAY_TRADES` carry no verdict; `QT_KILL_DAY_HIT` sets the day threshold. A second `_SRC_REPLACE` pair rewords the message to "consecutive losing days" via an **ASCII-only substring anchor** — that notebook line ends in a mojibake em dash that must not be retyped. Validate `31208495091` ALL PASS, 158 checks. Branch deleted in the 8/07 sweep — the work is in the merge commit.) — previously `e27d04c` (8/05 EOD) — **`rank_score` / Frame-1 v2 merge `deae90e`** (branch `feat/rank-score-v2-series`, commit `b088207`: `quant_runner.py` stashes `signals[tk]["rank_score"]` in its own pass **before** the flatten loop — `_orig_signals_13` is a shallow copy sharing inner dicts, so ordering is load-bearing — carrying calibrated P(bull) with the conformal shrink but **not** the execution gate; a new `_SRC_REPLACE` anchor logs it, placed **above** the gross-cap trio because validate section 2 asserts uniqueness on `_SRC_REPLACE[-3:]` and appending would have silently evicted anchor (a); `analyze_rank_ic.py` gains `QT_RANK_SCORE_COL`/`QT_RANK_IC_OUT`/`QT_RANK_LS_OUT` with defaults that reproduce the legacy series byte-for-byte; a **ranking-variable health block** now prints on BOTH series with a loud warning banner when the column cannot support a cross-section; `quant_daily.yml` runs the analyzer a second time into `rank_ic_v2.csv`/`cross_sectional_ls_v2.csv`. **Adds a field only — no execution path reads `rank_score`. MEASUREMENT ONLY, NOT a dated model change.** `validate ALL PASS 31050474120` incl. section 13's 31 checks; preflight `31050472195`; **verified live 8/06 on run `31106607760`**) + **`pnl_history` ET re-dating fix `c225537`** (**9th dated change — MEASUREMENT, not model behaviour**: every session had been mislabelled by one calendar day since `db25860` (5/29); verified out-of-sample on run `31043628348` against a prediction written into the ledger *before* the run fired, regression gate armed via `QT_PNLDATE_FIX_FROM: '2026-05-28'`, `validate ALL PASS 31044780117`; self-heals from Alpaca each run, no backfill needed). **⚠️ NO MODEL-PATH CODE CHANGE SINCE `fafd4d6` (7/31)** — it remains the **8th and most recent dated model-behaviour change**, effective the 8/03 morning run and proven live there. Both 8/05 changes are measurement-only. **Other 8/05 commits:** `e27d04c` merge docs/rank-score-breadcrumb · `8d77910` breadcrumb checkpoint row · `da3685d` merge chore/pnl-gate-arm · `fd035e2` arm section 12's live `pnl_history` gate · `39073e9` merge docs/ledger-0805 · `97cf541` the 8/05 ledger. Prior tip `fafd4d6` (7/31 EOD) — **sector-cap merge `fafd4d6`** (branch `fix/sector-concentration-cap`, commits `e45b699` + `11af1c4`: hard per-sector concentration cap on new BUYs, live positions + live equity, fail-CLOSED, `QT_MAX_SECTOR` default 0.25, sector gate ordered BEFORE the gross cap with `_sector_cap_release()` on the gross-refusal path, `[patch] Sector cap:` observability line; validate ALL PASS `30669131843` incl. 13 new section-9 scenarios on the measured book, preflight success `30664501424`; **⚠️ 8th DATED MODEL-BEHAVIOUR CHANGE, effective the Mon 8/3 morning run** — it changes which orders are submitted; first live proof in the 8/3 checkpoint row). **The 7th dated model change remains `c653ad4` (7/16, effective 7/17); this is the first model-path change since.** **Most recent substantive commits:** `227139f` (7/29 17:32) track archival notebooks v22→v23.4 · `803bcc5` (7/29 15:33) docs(handoff): correct the 7/17+7/20 trade quantities (the `BUY X xN` log line prints PRE-conformal qty; orders/ledger are post-discount) **and retract the 7/23 "positive hedged reads" claim** (`beta_roll` was empty until 7/21, so `ls_hedged` was copying raw `long_short`) · `8888cb0` (7/28 20:25) **Merge fix/gpr-repoint (PR #22)** — Gain-to-Pain repointed at `pnl_history` on a monthly-equity-change basis, live and stable from 7/29 · `6aa14df` (7/28 20:06) fix(trigger): serialize wake catch-up dispatches + make trigger.log truthful. **No model-path code change since `c653ad4` (7/16)** — it remains the 7th and most recent dated model change, effective 7/17. Prior tip `c1d18f1` (7/24 late EOD) — **kill-switch-fallback merge `c1d18f1`** (branch `fix/killswitch-pnl-fallback`, commit `e83d0dd`: the CSV drawdown fallback was DEAD CODE 6/30→7/24 — needed a `portfolio_value` column that never existed, so Alpaca outages ran with zero P&L drawdown check (7/24 midnight blind spot); now: `portfolio_value` at all three writers, pure `_ks_pnl_fallback` on the daily basis contract with daily/weekly/**peak** checks + 7-day staleness refusal; validate section 7 = 10 scenarios incl. the 6/30 phantom-trip regression pinned; validate ALL PASS `30139183724`, preflight 11/11 `30139184335`; **arms on the 2nd post-merge run; NOT a dated model change**) + prior **WRC/P&L-basis merge `7197c25`** (branch `fix/pnl-daily-basis`, commit `66312ae`: Stage-1 White Reality Check gate repointed at `pnl_history.csv` with a fail-loud reader — it had NEVER run (source file permanently header-only) and would have scored an all-zero series silently; `total_pnl` declared a **DAILY** P&L series at all three writers (was three different bases — the +$13,471 cumulative 7/24 tail-row poisoned every diff/Sharpe consumer); 2M→1A window; ET date stamps; poisoned row blanked; 3 new preflight step-8 contract tests; preflight ALL PASS 11/11 `30138642910`; **measurement plumbing only, NOT a dated model change** — first real WRC read expected on the Mon 7/27 morning run) + prior **ET-marker merge `8d3e9df`** (branch `fix/marker-et-dates`, commit `49092f1`: the morning marker becomes an **ET** date at both reader and writer, writer reuses the gate's own `today_et` step output so the two cannot drift across the 2–3 h between them; `HOUR`/`MIN`/`DAY` stay UTC; fail-safe loud fallback if tzdata is missing; writer refuses to write an empty/malformed marker; **preflight check 11** proves the runner resolves EDT/EST; resolver suite 24/24, preflight ALL PASS 11/11 `30137372395`; **workflow/preflight only, NOT a dated model change**) + prior **market-hours guard merge `f71a1e9`** (branch `fix/morning-market-hours-guard`: `e7b1d5f` morning retrain refuses to resolve outside 13–20Z, resolver suite 21/21; `fb87925` preflight check 10 actually parses every workflow YAML + anchors the run-type resolver; preflight ALL PASS 10/10 `30136884504`; **workflow/preflight only, NOT a dated model change**) + the 7/24 docs commit. **No model-path code change since `c653ad4` (7/16)** — the 7th and most recent dated model change remains `c653ad4`, effective 7/17. Prior tip `8370038` (7/23 EOD) — **rclone timeout merge `8370038`** (branch `fix/rclone-timeout-300s`, branch commit `c5b2bee`: `_rclone()` `timeout=120`→`300`, shared by both sync directions; `--ignore-existing` untouched; preflight ALL PASS `30045954822` 9/9; **infra only, NOT a dated model change**) + the 7/23 docs commits. **No model-path code change since `c653ad4` (7/16)** — the 7th and most recent dated model change remains `c653ad4`, effective 7/17. Key 7/16 commits: **stale-era consumer gates `c653ad4`** (⚠️ 7th dated MODEL CHANGE effective 7/17: era-gates on the Cell-15 rule engine [45 stale-learned ticker dampeners were steering live composite scores via Cell 11], the staleness detector, and the Cell-13 `_WL_RATIO` Kelly W/L cache; one-time rules/weights reset + archive to `data/shadow/stale_era_final/`; validate ALL PASS `29531130698` incl. 9 new section-6 checks, preflight PASS `29531132320`; full audit table in the 7/16 session ledger) · **kill-switch era gate `4087374`+`49a5884`** (streak window now drops pred-days < `QT_STAGE1_START` 2026-07-14 + requires a real ISO-date pred_ts; fixes the 7/16 stale-era-echo halt that blocked the first 8-slot morning; validate ALL PASS `29527649496` incl. 6 kill-switch scenarios, preflight PASS `29527651315`; both proofs due Fri 7/17) · cover-verify docs `d28a134` (22 covers filled, 0 shorts, gross 0.15×). Key 7/15 commits: **oversell-guard merge `d3e55fd`** (branch commit `d5311d8`; `_oversell_cap` SELL gate + close_long abs() removal; validate ALL PASS `29446910527` incl. 7 oversell scenarios, preflight PASS `29446908214`) · TRIM_SLEEVE selector `5409f27` + short-cover mode (delever_account.py/position_trim.yml) · fill_audit per-order detail (unrecorded-fill attribution) · prior tip `0e0ef56` (attn_vol20 recency-windowed revival, dated Frame-2 change effective 7/15 — verified live) · panel baseline `3f570b1` · Stage-1 restart `b2a15f5` · stale-row fix `5e96366`. **Broker-side actions 7/15: 4th micro-trim EXECUTED + FILLED intraday (`29445436980`, 37 SELLs ~$29.7k, gross 1.11×→0.85×) · SHORT-COVER EXECUTED (`29447931911`, 22 BUY-to-cover ~$81.6k, DAY orders → fill at the 7/16 open; verify task armed 9:31 AM ET).**  
 **Repo:** https://github.com/Southpaw3234/Quant-Terminal
 
@@ -64,76 +64,81 @@ alpha question as answered.
 
 ## 🔔 SESSION PICKUP — fresh-session checklist (READ FIRST)
 
-> ### 🟡 THE HON COVER IS FIRED AND PENDING — RAISED 2026-08-12, ORDER SUBMITTED 2026-09-08 02:35Z, NOT YET FILLED. One verification is owed at the 09-08 open.
+> ### 🏁 ALL THREE PROGRAMMES HAVE NOW RETURNED A NULL. THE v25 PIPELINE IS DELETED. NOTHING TRADES.
 >
-> **Master's crons are failing on EVERY trading run and paging Discord each time.**
-> The flat-invariant gate is red on a **`HON` short** that no scheduled run can
-> clear: `close_long` skips shorts by design, and covering one is a BUY that
-> `QT_MAX_GROSS='0'` blocks. **77 failures / 33 cancelled since 8/12, zero
-> successes** on `quant_daily.yml` (latest `32997555725`, 8/26 18:03Z).
-> ⚠️ **That permanent red is what hid BOTH silent failures** — the 8/21 broken
-> retrain (8/22 ledger ④) and the stale-base evidence wipe (8/25 ledger ⑥).
-> 🔑 **Both are now fixed AND proven, and the lesson is structural: any new alarm
-> must be placed where HON's red cannot swallow it.** The `Predictions ledger
-> guard` is the working example — it sits *after* the flat gate and reported ✓
-> from underneath a ✗ on 8/26. **One open item — do it before anything else:**
+> **v25** — 0 of 4 pre-registered criteria, terminal date passed 2026-09-30.
+> **v27** — K **2/5**, two reads, both NOT MET.
+> **V29** — K **1/3**, one read, NOT MET.
 >
-> ⚠️ **REFRESHED 2026-09-08 02:40Z.** ✅ **HON COVER EXECUTED — run `34180554409`, `BUY-to-cover HON x13 submitted (id d10e67b9…)`, DAY order, fills at the 09-08 open.** Preceded by a fresh dry-run (`34180133352`) that cleared all three hazards: names HON, qty exactly 13, `openBUY=0`. ✅ **CONFIRMED LIVE AT THE BROKER by a second read-only dry-run (`34180598445`): the plan now reads `0 market BUY-to-cover` and HON has dropped out of the table**, because the tool nets `openBUY` against the short — `cover = 13 - 13 = 0`. That is the proof the order reached Alpaca rather than merely being reported as sent, and it also means a stray second `execute` cannot double-cover. ✅ The V29 selection re-run is DONE (`34180162057`, K still 0/3, criterion 2 clears at median 98). ⏳ **THE ONE THING OWED: after the 09-08 open, confirm zero shorts and a GREEN flat-invariant gate** — the position is still on the book until the fill, so the trading runs stay red until then and that is expected, not a new fault. If the fill does not appear, the order is a DAY order and expires; re-check before assuming it worked. One research item is also owed, and it costs no K and is not a trade: write the operator's signed prior into `pead_8k_car_v3` — 🔑 **the Referee does NOT check it** (`qt/referee.py:161` tests already-read, date order, terminal date and K, and nothing else), so a read dispatched without it is a real protocol breach that no code will stop. Spec #3 must ALSO choose, in the registry and before dispatch, between the frozen 1,869-row `events_8k_car_1095d.csv` its declaration names and the new 1,294-row `events_8k_car_pit_1095d.csv`. See the 09-07/08 ledger ⑤ ⑥ ⑨.
+> The book is **flat and confirmed live** (2026-11-08 07:19Z, two independent
+> broker reads). No trading cron exists any more. Nothing on a schedule writes
+> to this repository.
 >
-> 1. 🔴 **COVER HON — NOT DONE.** `gh workflow run position_trim.yml --repo Southpaw3234/Quant-Terminal -f mode=execute -f sleeve=short-cover`
->    — DAY orders, fills at the next open, ~$2,838 (latest 8/20 21:16Z dry-run `32418542070`), takes gross to $0.00× / zero
->    shorts. ⚠️ **Confirm the dry-run plan actually NAMES HON first** — the broker
->    read has been caught wrong in BOTH directions (omitting HON on five 8/10
->    reads, inventing it on 8/11), and the tool no-ops on an empty read.
->    ✅ **DRY-RUN RE-CONFIRMED 2026-08-26 03:49Z (`32927896291`, nothing submitted) — the plan NAMES HON.**
->    `HON short=-13 openBUY=0 price=216.00 cover=13 cost=$2,808 P&L -1,174` → *"1 market
->    BUY-to-cover (DAY, fill at next open) … Projected after covers: gross ~$0
->    (0.00x equity), zero shorts."* Account `equity=$113,781.55 cash=$116,589.55`,
->    **1 position — HON is now the ENTIRE book** (gross $2,808, 0.02×). This clears all three hazards: it is **not
->    an empty read** (the no-op case), qty is **exactly 13** (matches the fill
->    audit's naked short), and `openBUY=0` means **no pending buy to double-cover**.
->    ⚠️ The printed `P&L −1,174` is the **distorted-basis artifact — do NOT book it.**
->    It is also independent corroboration — `delever_account.py` is a *different
->    code path* from the gate's `close_long`, and it sees the same HON.
->    ⚠️ **Cost moved: ~$2,864, not the $3,059 quoted on 8/12** — HON fell 235.34 →
->    220.29 (−$195 on 13sh), so the cover got cheaper. ⚠️ The printed `P&L -$1,230`
->    is still the **distorted-basis artifact — do NOT book it** (8/12 ledger caveat).
->    ✅ **The cover is known-safe:** the fill audit (8/12 ledger ⑦) proves this is a
->    clean naked short with no hidden long behind it, so buying exactly 13 lands
->    the account flat. **This is a trade: the user fires it, not Claude.**
-> 2. ✅ **CLOSED — THE RETRAIN CAME BACK** (verified 8/25, holding since). Pin
->    `01b2897` (`river>=0.21,<0.26`) proven over three mornings: 8/24 trained
->    `306` models, 8/25 `307`, 8/26 `307` (`1 skipped`), and
->    `dsr_scores.json` is repopulated (**5821 bytes at `data/predictions/`** —
->    note the path, it is *not* directly under `data/` and mis-grepping it reads
->    as still-gutted). **Full diagnosis: 8/22 ledger ①-⑤.**
-> 3. ✅ **CLOSED — THE STALE-BASE EVIDENCE WIPE IS FIXED AND PROVEN** (`86947a6`,
->    PR #25; proof landed 8/26). The ledger guard reported `OK — ledger did not
->    shrink (51008 -> 51313)` and held flat across four later runs, and the exact
->    8/24 race recurred without biting: `32982441632`, **created 14:47Z inside the
->    morning cycle**, read the live tip. **Full diagnosis: 8/25 ledger ②-⑥; proof:
->    8/26 ledger ①.** ⏭️ Nothing to do here — just don't re-open it on a grep hit.
-> 4. ✅ **DONE — the invariant fix is MERGED** (`f46eef9`, PR #23; post-merge
->    `validate ALL PASS 31654463834` on master). ⚠️ **It does NOT turn master
->    green** — HON still breaches, now as a distinct `SHORT BOOK` page naming the
->    cover instead of a generic breach. Only (1) clears the red.
+> **The one thing in flight:** a TTM fundamentals sweep for `value_ebit_ev_v2`,
+> dispatched 2026-11-08 08:11Z (run `42461866741`, ~47 min). See ⑨ of the
+> 11-08 ledger for the three steps that follow it. **It costs no K and is not
+> a trade.**
 >
-> **🔑 PR #23 IS CONFIRMED WORKING — the red is now INFORMATIVE, not a deadlock.**
-> The gate signature is byte-identical on every run sampled 8/17–8/21:
-> `armed=True breach=False short_breach=True last_seen_book=1 longs=0 shorts=1 last_closed=0 errors=0`.
-> `breach=False`/`longs=0` means the **long-side re-entry detector reads clean and
-> independently** — which is the one thing the 8/12 deadlock had cost us. Coast to
-> flat is holding; a new long entry would still show up here. Only the short is left.
+> ---
 >
-> **🔑 HON IS REAL — the 8/10–8/11 phantom doubt is SETTLED.** The broker read
-> flip-flopped then, but **37 consecutive reads over 8 days all return `shorts=1, HON`**.
-> Do not re-litigate provenance; the position exists and needs covering.
+> ### ⚠️ WHAT CHANGED THAT INVALIDATES OLDER INSTRUCTIONS IN THIS FILE
 >
-> **Verification that the blocker cleared:** the first run *after* the fill prints
-> `[close_long] flat-invariant state: ... breach=False` with `longs=0 shorts=0`, and
-> the `Flat-invariant gate` step goes green on `OK — armed and flat`. `closed N` is
-> NOT proof — see 8/11 ledger ②.
-> ⚠️ Also read 8/12 ledger ④ before quoting 8/11's "the book is flat": it does not hold.
+> Everything below this block was written while a trading pipeline existed.
+> Most of it is now historical record. Specifically:
+>
+> | Older text says | Now |
+> |---|---|
+> | cover HON / the book may not be flat | 🟢 **covered 2026-09-08, verified live 11-08.** `short_breach false`, two endpoints agree |
+> | `quant_daily` red is expected | 🛑 **`quant_daily.yml` is DELETED.** So are `quant_runner.py`, 7 notebooks, 6 analysers, 6 probes and 12 other workflows (#81, #82) |
+> | the crons self-retire 2026-09-29 | ✅ **they did**, and the workflows have since been removed outright |
+> | run the Monday weekly review | ⚠️ `docs/WEEKLY_REVIEW.md` instructs reading series that no longer update. The evidence files are preserved; nothing appends to them |
+> | `gh run list` for the morning run | there is no morning run |
+>
+> 🔑 **A red run now means something again.** For 27 days `quant_daily` failed
+> on every tick and that red hid two real faults (the 8/21 retrain, the 8/25
+> evidence wipe). There is no permanent red left anywhere.
+>
+> ---
+>
+> ### 📋 WHAT IS ACTUALLY OPEN
+>
+> 1. **`pead_8k_car_v3` (v27 spec #3)** — prior **signed**, event file **amended
+>    to the point-in-time set** (#79). Declared, unread, 3 slots left, terminal
+>    2027-03-31. ⚠️ A dispatch must set **three** inputs explicitly or a guard
+>    fires: `spec_id`, `e1_events_csv=data/events/events_8k_car_pit_1095d.csv`,
+>    `out_csv=data/events/event_study_v3.csv`. The workflow defaults point at
+>    spec #2's file and spec #2's frozen ledger.
+> 2. **`value_ebit_ev_v2`** — declared 11-08 (#84). TTM flows + 50 names.
+>    **Prior NOT YET RECORDED.** The Referee does not test that field.
+> 3. **The account** — flat, funded, monitored by `check_held_positions.yml`
+>    (weekdays 21:30Z, read-only). It is a **paper** account: `paper-api.alpaca.markets`.
+>
+> **Nothing has a deadline. Nothing is owed today.**
+>
+> ---
+>
+> ### 🔑 THE FOUR INVARIANTS THAT NOW HAVE TEETH
+>
+> Each exists because something failed exactly this way. All are enforced by CI
+> rather than by prose, which is the whole lesson of `docs/CARRY_FORWARD.md` §⑧.
+>
+> * **A green run is not a delivered artifact** (#75). Inputs are identity-checked
+>   against a registry fingerprint *before* the Referee, so a stale file cannot
+>   cost a slot. The hash normalises CRLF — a raw hash refuses every read
+>   dispatched from a Windows clone.
+> * **An empty broker read is not a flat book** — unless a second, independent
+>   endpoint agrees (#77). `/v2/positions` returning `[]` is corroborated against
+>   `/v2/account`'s market values. On 2026-09-01 those two disagreed and nothing
+>   looked.
+> * **A guard with only a start date opens, it does not close** (#78). The roster
+>   cron's date guard was inverted relative to the trading crons; it ran for real
+>   five times before anyone noticed.
+> * **A deletion nothing enforces gets quietly reverted** (#81). `validate_qt.yml`'s
+>   Phase-0 guard was inverted rather than removed: it now asserts the retired
+>   pipeline stays absent.
+>
+> ⚠️ **`validate_qt.yml` still has no `master` trigger.** Post-merge validation
+> must be dispatched by hand. Every merge today was verified that way.
 
 > ### ⚠️ CADENCE CHANGED 2026-08-06 — THIS IS NO LONGER A DAILY RITUAL.
 >
@@ -244,6 +249,68 @@ and the ONE highest-priority action for today. Then wait for direction.
 
 ---
 
+## 🗓️ SESSION LEDGER — 2026-11-08 (Saturday): 🏁 **V29 READ AND MISSED — three programmes, three nulls.** 🗑️ **The v25 pipeline is DELETED: 36 files, 13,524 lines, `quant_runner.py` and `quant_daily.yml` among them.** ✅ **Nine PRs merged, master green on every validate suite, all dispatched by hand because `validate_qt.yml` still has no `master` trigger.** 🔑 **Four failure modes turned into CI-enforced invariants.** 🟢 **The account is flat, confirmed live for the first time since 09-29.** ⏳ A TTM sweep for `value_ebit_ev_v2` is in flight. K: v27 **2/5**, V29 **1/3**.
+
+**① THE V29 READ. `value_ebit_ev_v1` — NOT MET.** Run `42453397592`, 3m46s, dispatched 06:06Z after a hand-run input check. Three of eight criteria cleared.
+
+```
+n_days            2792     >= 1000     CLEAR
+eligible names    median 98 >= 60      CLEAR
+ann excess       +2.71%    > 0         CLEAR
+t_excess          0.71     >= 2.0      MISS
+information ratio 0.205    >= 0.5      MISS
+max drawdown     50.9%     <= 41.1%    MISS   (benchmark IWM)
+stability        undefined  first third <= 0  MISS
+WRC / SPA        NOT COMPUTED                 GAP
+ann_return 12.74%   ann_bench 10.03%   210 distinct names over 40 rebalances
+```
+
+🔑 **It made money and that is not the same as an edge.** 12.74% against IWM's 10.03% is a real +2.71% excess, and at t 0.71 over 2,792 days it is indistinguishable from luck. **The decisive number is criterion 6:** a 50.9% maximum drawdown against the benchmark's 41.1%. More risk than holding the index, and no dependable payment for it. Stability failed the same way `form4_cluster_buy_v2` did — first third ≤ 0, so the excess is concentrated rather than persistent. Two programmes, two mechanisms, one failure signature.
+
+⚠️ **CRITERION 8 WAS NEVER COMPUTED, AND IS RECORDED AS A GAP RATHER THAN A PASS.** `run_value_backtest.py` contained no WRC, SPA or bootstrap code at all. It changes nothing — four criteria miss independently and these tests only ever make a result harder to pass — but the record says seven of eight, not three of seven. Implemented the same day (#83).
+
+**② THE READ WAS SPENT BUT THE REGISTRY DID NOT KNOW.** The workflow is `permissions: contents: read` and its own guard fails the run if `data/registry/` changes, so the script physically could not record itself. `read_at` stayed empty for an hour. 🔑 **Live hazard, not bookkeeping: the Referee would have authorised the same spec again as "read 1/3" and double-spent the budget on an answered question.** Fixed in `c5b6366` with the full result block, the raw floats at full precision, and the criterion-8 gap stated.
+
+**③ THE INPUT GUARD WAS RUN BY HAND, BECAUSE IT DID NOT EXIST.** Before dispatch both declared inputs were fingerprinted and matched byte for byte: `fundamentals_pit.csv` 114,414 rows `6c9ee571…`, `v29_universe_pit.csv` 152,006 rows `3b48776c…`. ⚠️ **Both raw hashes MISMATCHED at first.** `core.autocrlf=true` is the Git for Windows default, so the working tree carried CRLF while GitHub served LF. Normalised, they matched exactly. That discovery changed the A7 patch: **a raw sha256 guard would have refused every read dispatched from a Windows clone.**
+
+**④ A7 IS CLOSED IN BOTH PROGRAMMES (#75, #80).** `qt.guards.input_receipt` / `verify_input`: a fingerprint recorded by a rehearsal, asserted by the read, checked **before the Referee** so a stale input cannot cost a slot.
+
+🔑 **Why identity and not plausibility.** The coverage guard I started writing would not have caught 09-07: the stale panel was 111,398 rows against the correct 114,414, **2% apart**, inside any floor a reviewer would set. The stale panel was not obviously wrong. That is what makes the class dangerous.
+
+An unrecorded fingerprint is a **refusal** under strict, not a pass — unrecorded and substituted are indistinguishable. For v27 the existing path guard (`validate_event_study.yml:134-150`, which I wrongly reported as missing) was **kept** and a content guard added after it: the path was right on 09-07 and the bytes were stale, which a path check cannot catch. `event_study.py:127` also stopped exiting **0** on a missing events file — a dispatched read reporting success having measured nothing is the literal A7 signature sitting inside the consumer.
+
+**⑤ THE MONITOR HAD FAILED 30 TIMES RUNNING AND THE GUARD WAS WORKING.** `check_held_positions` failed every weekday from 09-29 to 11-07. Not a crash: the account is flat, so `/v2/positions` returns `[]`, so line 68 declared the read untrustworthy and exited 2. Forever.
+
+🔑 **The cost is not the red X, it is that the red X is uninformative** — an outage, revoked keys and a correct flat read all look identical. The HON red streak inverted, on the only post-sunset position monitor there was.
+
+The v28 invariant was never a blanket refusal: *an empty read is self-evidencing when something independent explains it*. The code implemented the refusal and never the exemption. `/v2/account` is a different endpoint with its own computation of the book, and **this is strictly better than what it replaced on the case it was written for**: on 2026-09-01 HON was short ≈$2,714, so a truthful account object carried `short_market_value ≈ -2714` against an empty position list. **The disagreement is the alarm, and the old code never looked.** Verified live (#77 merged, run at 07:19Z): `✅ FLAT — no open positions … CORROBORATED by two independent reads`.
+
+**⑥ 🟢 FIRST REAL BROKER READ SINCE 2026-09-29.** `wind_down_state.json` froze when the trade job started skipping; "flat" was a 40-day-old assertion until ⑤ landed. ⚠️ Also settles the dashboard: the **17 positions** on the Netlify page are the modelled paper-trade tracker, not the account. Same cycle wrote `open_positions.json = []`. The page is frozen at `2026-09-29T01:15 UTC`; only its Yahoo quote overlay is live. ⚠️ It is a **paper** account — `paper-api.alpaca.markets`.
+
+**⑦ THE v25 PIPELINE IS GONE (#81, #82).** 36 files, 13,524 lines: `quant_runner.py` (404KB / 7,538 lines), 7 notebooks, 6 retired-frame analysers, 6 probes, 13 workflows including `quant_daily.yml`, and three orphans the sweep left behind. Verified before deleting: **no surviving `.py` imports a deleted module and no surviving workflow runs a deleted script.** `qt/` was never wired into the live pipeline — the Phase-0 decision of `docs/CARRY_FORWARD.md` §① — and that is precisely why it came through untouched.
+
+⚠️ **`data/shadow_intraday/` is the S2 evidence series and was NOT deleted.** Only `shadow_intraday.py`, the script, went. Every reference in the scan pointed at the directory.
+
+🔑 **`validate_qt.yml`'s Phase-0 guard was INVERTED, not removed.** It asserted the monolith was *unchanged*; its own error text carried the expiry, *"it must not before 2026-09-29"*. It now asserts the retired pipeline **stays absent**, and catches any `probe_*.py` reappearing. A deletion nothing enforces is one a merge quietly reverts.
+
+**⑧ THE ROSTER CRON HAD BEEN COMMITTING WEEKLY SINCE THE SUNSET (#78).** 10-04, 10-11, 10-18, 10-25, 11-01 — five real commits to master. 🔑 **Its date guard is INVERTED relative to the trading crons: it OPENS on 2026-09-29 rather than closing.** Disabled in the UI, then removed from the file so repo and UI agree. The header now records what restoring it would require: **an upper bound as well as a lower one.**
+
+**⑨ `value_ebit_ev_v2` DECLARED, AND A SWEEP IS IN FLIGHT (#84, #86).** Two changes to v1, **declared before the data they need exists** so the extractor could not be tuned toward a nicer answer.
+
+* **TTM flows** — `FY(n-1) + YTD(current) − YTD(same period, prior year)`. Needs only year-to-date figures, never a derived discrete quarter. Where TTM cannot be formed the metric is **NULL and the name drops out** — it never falls back to annual, because a mixed-basis series is the failure the change exists to avoid.
+* **50 names, not 20** — v1 missed criterion 6 on drawdown, not return. Portfolio construction, not alpha. Expected to cut idiosyncratic risk **and dilute the mean excess**, so it may fix criteria 5 and 6 while making criterion 4 harder.
+
+⚠️ **Two parameters move at once, against the registry's own ONE PARAMETER FAMILY, ONE TEST rule.** A miss will not say which change was wrong and one slot would remain to isolate it. Operator chose both with that stated; it is in the caveats.
+
+🔑 **THE SUITE CAUGHT A REAL BUG BEFORE ANY SWEEP RAN.** My first implementation bucketed periods by duration. **A discrete second quarter is ~90 days and so is a Q1 year-to-date window** — on duration alone the discrete figure masquerades as Q1 and understates a year of flows by three quarters, silently, only on filers who tag both. `fp` says `Q2` for both. The **start date** separates them. `period_bucket` now takes the fiscal-year boundaries and refuses to classify a sub-annual window without them. Two tests: one that the right window is picked, one that duration alone still mislabels it, so the argument cannot be refactored away.
+
+**⑩ THE SWEEP WOULD HAVE OVERWRITTEN A SPENT READ'S INPUT (#87).** Caught while preparing the dispatch, before running it. `extract_fundamentals.yml` pinned the panel and the window but **neither `QT_FUND_FLOWS` nor `QT_FUND_OUT`** — so it would have run the script defaults: **annual basis, writing `fundamentals_pit.csv`**, which is v1's input, whose sha256 the registry records. The frozen-file guard did not list it. **The run would have gone green.** Basis and output path are now derived from one input and cannot diverge; `fundamentals_pit.csv` and `v29_universe_pit.csv` joined the guard.
+
+**⑪ TWO PROCESS FAILURES, BOTH MINE, BOTH RECORDED.** `--delete-branch` on a merged parent **auto-closed** its stacked child (#76) and a closed PR cannot be reopened once its base is gone; recovered by rebasing and reopening as #80. Then I advised merging the parent first for a second stacked pair, and #85 merged **into an already-merged branch** 15 seconds later, stranding the TTM code off master. 🔑 **For a stacked pair the child goes in FIRST, or is retargeted to master before the parent merges.** The stranded branch was **not** merged directly — it predated #83 and would have reverted criterion 8 — so only the TTM commit was cherry-picked (#86).
+
+**⑫ WHAT IS OWED, AND IT IS SHORT.** `value_ebit_ev_v2`'s **signed prior** (the Referee does not test that field). Then, after the sweep: land `fundamentals_ttm.csv`, run `select` to emit the `inputs_fingerprint` and measure eligible names at 50, and only then consider a read. ⚠️ **Watch criterion 2 at the select pass:** v1 had median 98 / min 58 eligible on the *looser* annual basis, and TTM refuses rather than falling back. Picking 50 from a thinner pool may miss criterion 2 before a slot is ever at risk — which is the free rehearsal doing its job.
+
+---
 ## 🗓️ SESSION LEDGER — 2026-09-07/08 (Labor Day evening): 🟢 **THE V29 DATA LAYER IS WHOLE AND ON MASTER — the re-swept panel had been sitting in an ARTIFACT, not the repo, and the selection pass reads the repo.** ✅ **Three PRs landed (#68, #69, #70); post-merge validate on master ALL PASS, 287 checks.** 🔑 **The Referee does NOT check the prior — I read the code; `authorize_read` tests four things and the prior is not one of them.** 🔴 **HON still uncovered. Still the one blocker, still a trade only the operator can fire.** K unchanged: v27 **2/5**, V29 **0/3**. Nothing read.
 
 **① THE PANEL WAS BUILT AND THEN LEFT WHERE NOTHING READS IT.** The 09-05/06 ledger ⑩ listed the fundamentals re-sweep as "running". It finished — run `34076366506`, 47 min, extract ✓, `wrote data/fundamentals/fundamentals_pit.csv (114,414 rows)`. But it never reached the repo, and that is **by design**: `extract_fundamentals.yml`'s own header says *"uploads the panel as an ARTIFACT. Does not commit."*
