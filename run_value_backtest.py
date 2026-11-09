@@ -154,6 +154,22 @@ def main() -> None:
     # of 2026-11-08 had to be verified BY HAND for want of this check.
     with open(REGISTRY) as _fh:
         _reg = json.load(_fh)
+
+    # ⚠️ HOLDINGS COME FROM THE REGISTRY, NOT FROM A CONSTANT OR AN ENV VAR.
+    # The A7 lesson applied to a PARAMETER rather than a file: value_ebit_ev_v2
+    # declares fifty names, and a read that silently used the module default of
+    # twenty would be measuring a specification nobody declared. An env var
+    # would carry the same defect with an extra way to get it wrong.
+    # v1 declares no n_hold_value and keeps the constant, so its frozen read
+    # stays reproducible.
+    global N_HOLD
+    _declared_n = (_reg.get("specifications", {}).get(SPEC_ID, {})
+                       .get("params", {}).get("n_hold_value"))
+    if _declared_n is not None:
+        N_HOLD = int(_declared_n)
+    print(f"[v29] holdings per rebalance: {N_HOLD}"
+          + ("" if _declared_n is not None
+             else "  (module default -- this spec declares no n_hold_value)"))
     _fp = (_reg.get("specifications", {}).get(SPEC_ID, {})
                .get("inputs_fingerprint") or {})
     _strict = (MODE == "read")
