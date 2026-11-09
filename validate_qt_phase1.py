@@ -327,6 +327,14 @@ def test_v29_registry_budget():
           "and refuses one past 2027-06-30, which under the old behaviour would "
           "have been checked against v27's earlier deadline instead")
     r27 = referee.Referee(registry_path=Path("data/registry/specifications.json"))
+
+    # Declared holdings must be machine-readable and must be what the script
+    # uses. The Referee tests neither; this is the only check there is.
+    _v2h = r29.specs.get("value_ebit_ev_v2")
+    check("v29-v2-holdings-declared-machine-readable",
+          _v2h is not None and int(_v2h.params.get("n_hold_value", 0)) == 50,
+          "n_hold_value is 50 and run_value_backtest.py reads it from here — "
+          "a hardcoded 20 would measure a specification nobody declared")
     check("v27-budget-unchanged",
           r27.k_budget == 5 and r27.terminal_date == "2027-03-31",
           "and v27 still reads 5 and 2027-03-31 from its own file — the fix "
