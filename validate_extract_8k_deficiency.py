@@ -271,19 +271,23 @@ def test_tickers_helper_both_layers():
           "NA" in list(safe["ticker"]),
           "qt.tickers.read_csv keeps it")
 
+    # Layer 2 is a GUARD, not a fix for an observed loss. DataFrame
+    # construction currently keeps "NA"; this records that it does, on the
+    # live version, so the day pandas changes its dtype inference the log
+    # says so instead of a company quietly going missing again.
     rows = [{"ticker": "NA", "ok": True}, {"ticker": "AAPL", "ok": False}]
     naive2 = pd.DataFrame(rows)
-    lost2 = not (list(naive2["ticker"])[0] == "NA")
-    check("layer-2-plain-DataFrame-may-lose-NA", True,
-          f"plain DataFrame construction "
-          f"{'LOSES' if lost2 else 'keeps'} it on pandas {pd.__version__} — "
-          f"this is the layer that printed a blank ticker in the CIK "
-          f"diagnostic, AFTER layer one had been fixed")
+    check("layer-2-plain-DataFrame-behaviour-recorded",
+          list(naive2["ticker"])[0] == "NA",
+          f"plain DataFrame construction KEEPS 'NA' on pandas "
+          f"{pd.__version__}. Recorded, not assumed: pandas 3 changed string "
+          f"dtype rules once already, and layer 1 proves this family of "
+          f"default is willing to eat a company")
     safe2 = qtk.frame(rows)
     check("layer-2-qt-frame-keeps-NA",
           list(safe2["ticker"])[0] == "NA",
-          "qt.tickers.frame rebuilds label columns as object dtype, so the "
-          "company survives construction too")
+          "and qt.tickers.frame forces label columns to object dtype, so it "
+          "keeps it whichever way that inference goes")
 
     check("normalise-keeps-NA",
           list(qtk.normalise(pd.Series(["na", " NA ", "aapl"]))) == ["NA", "NA", "AAPL"],
