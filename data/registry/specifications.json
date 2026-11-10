@@ -196,6 +196,31 @@
         "why_this_is_not_a_variation_of_spec_1_or_2": "Specs #1 and #2 bet on WHICH small company recovers, and produced a median-negative, tail-dominated distribution twice (see form4_cluster_buy_v2.result.read.tail_analysis). This bets instead on SLOW DIFFUSION OF PUBLIC INFORMATION: a mechanism whose claimed median is positive, whose event is a SCHEDULED PUBLIC DISCLOSURE rather than a discretionary private act, and whose event count is roughly thirteen times larger. Different event class, different mechanism, different failure mode."
       },
       "declared_at": "2026-09-05",
+      "inputs_fingerprint": {
+        "_note": "Emitted by the COUNT-ONLY rehearsal, run 42737537160, 2026-11-10. Recorded BEFORE any read; the read refuses without it, because an unrecorded input is indistinguishable from a substituted one. The rehearsal also refuses outright if the file counted is not the one params.events_file names, so this cannot be a fingerprint of the wrong file.",
+        "events": {
+          "path": "data/events/events_8k_car_pit_1095d.csv",
+          "rows": 1294,
+          "sha256": "aa478d882d230ceba7c983c32fc6ae31ce101cdef5edfb18b33137bb72fa3b2a",
+          "window": ["2023-10-06", "2026-09-04"],
+          "columns": ["acceptance_utc","car","day_A","event_id","event_ts","event_type","filing_date","ticker"]
+        }
+      },
+      "availability_rehearsal": {
+        "_note": "COUNT-ONLY, run 42737537160, 2026-11-10. No returns computed, nothing written, Referee not consulted, K untouched at 2/5. Recorded because N is a declared criterion and this is when it was known.",
+        "events_in_file": 1294,
+        "tickers": 517,
+        "horizon_bars": 63,
+        "dropped_overlapping": 179,
+        "ok": 1020,
+        "unmatured": 91,
+        "delisted": 4,
+        "no_price": 0,
+        "no_entry": 0,
+        "settled_N": 1024,
+        "floor": 40,
+        "reading": "N 1,024 against a floor of 40 -- clears by 984, and roughly 25x the bar. The declaration's pessimistic projection was ~180 after dedup; the actual set is five times that, which is the 8-K Item 2.02 event class being as dense as expected. The N>=40 floor is not in question for this specification and could not have been the reason it failed, whatever it finds."
+      },
       "read_at": "",
       "result": {
         "prior": "P(pead_8k_car_v3 clears every pre-registered bar) = 15%, signed Southpaw3234, 2026-11-08 -- recorded BEFORE dispatch, and before any CAR distribution has been computed. AT the 15% project prior, not above it. FOR: this is the first v27 specification whose mechanism claims a positive MEDIAN rather than a positive mean. Specs #1 and #2 were bets on which small company recovers and produced a median-negative, tail-dominated distribution twice -- spec #2 median -4.49%, 40% positive, the mean carried entirely by a 10% right tail. Slow diffusion of a SCHEDULED PUBLIC disclosure is a different mechanism with a different failure mode, and the event count is roughly thirteen times larger. AGAINST: PEAD is the most-published anomaly in the literature and fifty years of publication is fifty years of arbitrage; short-term reversal is a headwind built into the selection by using the price reaction as the surprise proxy; survivorship and the universe screen both bias UPWARD, so any pass is a ceiling with an unknown floor. Two of two v27 reads have already failed, and V29's first read failed on 2026-11-08 at a higher prior than this one. NET: the mechanism is better-founded than #1 or #2, which is why this does not sit below spec #2's 10%; the age of the literature is why it does not sit above the project prior. THE REFEREE DOES NOT CHECK THIS FIELD -- qt/referee.py:161 authorize_read tests already-read, date order, terminal date and K budget, and nothing else -- so this record, not the code, is what makes the read legitimate.",
