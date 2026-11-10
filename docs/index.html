@@ -86,6 +86,27 @@ section{padding-top:56px}
   letter-spacing:.09em;color:var(--muted)}
 .m .mv{font-family:"IBM Plex Mono",monospace;font-size:1.05rem;color:var(--ink);font-variant-numeric:tabular-nums}
 .m.bad .mv{color:var(--miss)}
+.funnel{margin-top:12px;border:1px solid var(--rule);border-radius:4px;
+  background:var(--sunk);padding:13px 15px}
+.funnel h4{font-family:"IBM Plex Mono",monospace;font-size:.63rem;font-weight:500;
+  text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:0 0 10px}
+.fr{display:grid;grid-template-columns:142px 1fr 104px;align-items:center;
+  gap:10px;margin-bottom:5px}
+.fr .fl{color:var(--body);font-size:.78rem}
+.fr .ft{height:9px;border-radius:2px;background:var(--rule-soft);overflow:hidden}
+.fr .ft i{display:block;height:100%;border-radius:2px;background:var(--miss)}
+.fr.keep .ft i{background:var(--accent)}
+.fr .fn{font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--muted);
+  text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.fr.keep .fl,.fr.keep .fn{color:var(--ink)}
+.fsum{margin-top:11px;padding-top:9px;border-top:1px solid var(--rule-soft);
+  font-family:"IBM Plex Mono",monospace;font-size:.7rem;color:var(--muted);
+  display:flex;flex-wrap:wrap;gap:5px 18px}
+.fsum b{color:var(--ink);font-weight:500}
+@media(max-width:560px){
+  .fr{grid-template-columns:1fr auto}
+  .fr .ft{display:none}
+}
 .note{font-size:.86rem;color:var(--muted);line-height:1.55;font-style:italic}
 .pull{background:var(--surface);border:1px solid var(--rule);border-left:3px solid var(--miss);
   border-radius:0 4px 4px 0;padding:20px 24px;margin-top:24px}
@@ -193,8 +214,27 @@ function metricsBlock(rd){
   if (rd.information_ratio != null) add("info ratio", num(rd.information_ratio, 3), rd.information_ratio < 0.5);
   if (rd.max_dd != null)            add("max drawdown", pct(rd.max_dd), rd.max_dd > (rd.max_dd_bench == null ? 1 : rd.max_dd_bench));
   if (rd.max_dd_bench != null)      add("benchmark dd", pct(rd.max_dd_bench), false);
-  if (rd.wrc_p != null)             add("WRC p", num(rd.wrc_p, 4), rd.wrc_p > (rd.wrc_bar == null ? 1 : rd.wrc_bar));
-  if (rd.spa_p != null)             add("SPA p", num(rd.spa_p, 4), rd.spa_p > (rd.wrc_bar == null ? 1 : rd.wrc_bar));
+  // A reality-check p is meaningless without the bar it had to beat: 1.0000
+  // against 0.0200 is a different sentence from 1.0000 alone. Both are shown
+  // in one cell, and the cell goes red when p misses the bar.
+  function addP(label, p, bar){
+    if (p == null) return;
+    var b = (bar == null ? null : Number(bar));
+    add(label, num(p, 4) + (b == null ? "" : " / bar " + num(b, 4)),
+        b != null && Number(p) > b);
+  }
+  addP("WRC p", rd.wrc_p, rd.wrc_bar);
+  addP("SPA p", rd.spa_p, rd.wrc_bar);
+  // v27's event-study reads store the same quantity under its own name. Before
+  // this, every v27 read rendered with NO reality-check line at all — the one
+  // number that decides whether a point estimate counts was simply absent.
+  addP("WRC-Bonf p", rd.wrc_bonf_raw_p, rd.wrc_bonf_bar);
+  // Two of the four reads have NO reality check recorded: both were taken
+  // before it was implemented, and the V29 registry says so in its own words
+  // ("declared and never implemented"). An absent row reads as an absent
+  // concern, so the absence is stated instead of omitted.
+  if (rd.wrc_p == null && rd.spa_p == null && rd.wrc_bonf_raw_p == null)
+    add("reality check", "not computed", true);
   if (rd.n_days != null)            add("trading days", rd.n_days, false);
   else if (rd.n != null)            add("events", rd.n, false);
   if (!rows.length) return "";
@@ -202,6 +242,57 @@ function metricsBlock(rd){
     return '<div class="m' + (r[2] ? " bad" : "") + '"><span class="ml">' + esc(r[0]) +
            '</span><span class="mv">' + esc(r[1]) + "</span></div>";
   }).join("") + "</div>";
+}
+
+// The V29 reads record the quality gate they applied BEFORE scoring anything,
+// as counts of candidate name-quarters by disposition. It is the most
+// informative thing either read produced: it says how much of the market the
+// specification threw away and on what grounds, which is the part a reader
+// has to judge before judging a return.
+var GATE_LABELS = {
+  ok:              "passed the gate",
+  unprofitable:    "unprofitable",
+  no_op_income:    "no operating income",
+  over_levered:    "over-levered",
+  negative_equity: "negative equity",
+  no_equity:       "no equity figure"
+};
+function selectionBlock(rd){
+  var sel = rd.selection;
+  if (!sel) return "";
+  var h = '<div class="funnel"><h4>quality gate · candidate name-quarters</h4>';
+  var gate = sel.quality_gate_candidate_name_quarters;
+  if (gate){
+    var keys = Object.keys(gate);
+    var total = keys.reduce(function(a, k){ return a + Number(gate[k] || 0); }, 0);
+    keys.sort(function(a, b){ return Number(gate[b]) - Number(gate[a]); });
+    var i = keys.indexOf("ok");           // what survives goes first, not by size
+    if (i > 0) keys.unshift(keys.splice(i, 1)[0]);
+    h += keys.map(function(k){
+      var n = Number(gate[k] || 0), w = total ? (n / total * 100) : 0;
+      return '<div class="fr' + (k === "ok" ? " keep" : "") + '">' +
+             '<span class="fl">' + esc(GATE_LABELS[k] || k.replace(/_/g, " ")) + "</span>" +
+             '<span class="ft"><i style="width:' + w.toFixed(1) + '%"></i></span>' +
+             '<span class="fn">' + n.toLocaleString() + " · " + w.toFixed(1) +
+             "%</span></div>";
+    }).join("");
+    h += '<div class="fsum"><span>candidates examined <b>' +
+         total.toLocaleString() + "</b></span>";
+  } else {
+    h += '<div class="fsum">';
+  }
+  var el = sel.eligible_moderate_tier_per_rebalance;
+  if (el) h += "<span>eligible per rebalance <b>" + esc(el.min) + " / " +
+               esc(el.median) + " / " + esc(el.max) + "</b> min / median / max</span>";
+  if (sel.portfolios_formed != null)
+    h += "<span>rebalances <b>" + esc(sel.portfolios_formed) + "</b></span>";
+  if (sel.distinct_names != null)
+    h += "<span>distinct names held <b>" + esc(sel.distinct_names) + "</b></span>";
+  h += "</div>";
+  if (sel.thinnest_rebalance)
+    h += '<p class="note" style="margin-top:10px;font-size:.8rem">' +
+         esc(sel.thinnest_rebalance) + "</p>";
+  return h + "</div>";
 }
 
 function criteriaBlock(rd){
@@ -265,7 +356,7 @@ function render(data){
         '<div class="k">read ' + esc(s.read_at) +
         (rd.run_id ? " · run " + esc(rd.run_id) : "") +
         (pr ? " · prior was " + esc(pr) : "") + "</div>" +
-        metricsBlock(rd) + criteriaBlock(rd) +
+        metricsBlock(rd) + selectionBlock(rd) + criteriaBlock(rd) +
         (rd.reading ? '<p class="note" style="margin-top:12px">' + esc(rd.reading) + "</p>" : "") +
         "</div>");
     });
