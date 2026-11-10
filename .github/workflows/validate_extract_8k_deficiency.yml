@@ -56,6 +56,8 @@ on:
       - 'v29/**'
     paths:
       - 'diagnose_unresolved_ciks.py'
+      - 'qt/tickers.py'
+      - 'rehearse_deficiency_availability.py'
       - 'extract_8k_deficiency.py'
       - 'validate_extract_8k_deficiency.py'
       - '.github/workflows/validate_extract_8k_deficiency.yml'

@@ -66,6 +66,8 @@ import urllib.request
 import numpy as np
 import pandas as pd
 
+from qt import tickers as qtk
+
 # ── declared parameters. Changing any of these is a NEW specification. ──
 WINDOW_START = "2015-09-30"      # the frozen V29 panel's first month-end
 WINDOW_END = "2025-08-31"        # the frozen V29 panel's last month-end
@@ -324,15 +326,16 @@ def load_panel(path: str):
     would swallow, so nothing is treated as missing and emptiness is tested
     explicitly instead.
     """
-    df = pd.read_csv(path, usecols=["date", "ticker"], dtype={"ticker": str},
-                     keep_default_na=False, na_values=[])
+    df = qtk.read_csv(path, usecols=["date", "ticker"], dtype={"ticker": str})
     df["date"] = pd.to_datetime(df["date"]).dt.normalize()
-    df["ticker"] = df["ticker"].astype(str).str.strip().str.upper()
-    blank = df["ticker"] == ""
-    if int(blank.sum()):
-        print(f"[3.01] {int(blank.sum())} panel rows have a genuinely EMPTY "
-              f"ticker and are dropped (not the 'NA' case)")
-        df = df.loc[~blank].copy()
+    # normalise/drop_blank go through qt.tickers for the same reason the read
+    # does: .str accessors on pandas 3's string dtype can turn "NA" back into
+    # a missing value after the read has carefully preserved it.
+    df["ticker"] = qtk.normalise(df["ticker"])
+    df, n_blank = qtk.drop_blank(df, "ticker")
+    if n_blank:
+        print(f"[3.01] {n_blank} panel rows have a genuinely EMPTY ticker and "
+              f"are dropped — which is NOT the 'NA' case")
     by_month = {d: frozenset(g) for d, g in df.groupby("date")["ticker"]}
     month_ends = pd.DatetimeIndex(sorted(by_month)).sort_values()
     return by_month, month_ends, sorted(df["ticker"].unique())

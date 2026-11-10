@@ -52,6 +52,7 @@ import sys
 import pandas as pd
 
 import extract_8k_deficiency as ex
+from qt import tickers as qtk
 
 PANEL = os.environ.get("QT_DEF_PANEL", "data/universe/v29_universe_pit.csv")
 SAMPLE = int(os.environ.get("QT_DIAG_SAMPLE", "400"))
@@ -95,7 +96,10 @@ def main() -> None:
             got = sum(r["resolved"] for r in rows)
             print(f"  {i}/{len(sample)} · {got} resolved · {i - got} not")
 
-    df = pd.DataFrame(rows)
+    # Ticker-safe construction: pandas 3 turns the string "NA" into a missing
+    # value during DataFrame construction too, which is how this very script
+    # printed a BLANK ticker on its first run. See qt/tickers.py.
+    df = qtk.frame(rows)
     n = len(df)
     unres = df.loc[~df.resolved]
 
