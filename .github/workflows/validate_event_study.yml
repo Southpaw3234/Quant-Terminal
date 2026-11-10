@@ -52,6 +52,13 @@ on:
       - 'master'
       - 'v27/**'
       - 'v28/**'
+      # v29/** added 2026-11-10. These four listed only v27/** and v28/**, so a
+      # change to the engine or the extractor on a v29/ branch triggered NOTHING
+      # -- the same lag validate_qt.yml documents three times over, and the same
+      # one that left master untested until the commit before this.
+      # Side-effecting jobs stay gated on workflow_dispatch AND their input, so
+      # a push can only ever reach the read-only validate job.
+      - 'v29/**'
     paths:
       - 'event_study.py'
       - 'validate_event_study.py'
