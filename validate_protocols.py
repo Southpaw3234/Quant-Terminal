@@ -102,6 +102,11 @@ LEDGERS = {
 # this asserts the rule was written down, never that it was followed.
 REQUIRED_PROTOCOL_RULES = [
     "state the prior",
+    # Added 2026-11-10 with the pre-read bundle. The steps now land in ONE PR,
+    # so commit order is the only thing still separating them -- and a
+    # squash-merge erases it. The discipline file has to say so where it is
+    # read at decision time, not in a PR description nobody opens later.
+    "one commit per step",
     "fail closed",
     "append-only",
     "alarm",

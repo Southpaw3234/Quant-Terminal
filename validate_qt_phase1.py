@@ -17,6 +17,8 @@ scenery.
 """
 from __future__ import annotations
 
+import json
+import re
 import sys
 import tempfile
 from pathlib import Path
@@ -479,6 +481,93 @@ def test_spec3_declared():
     print(f"\n{r.status()}")
 
 
+# ═══════════════════════════════ the pre-read bundle keeps its own order
+#
+# The pre-read steps (sign the prior, land the input guard, record the
+# fingerprint and the availability rehearsal) are now bundled into ONE pull
+# request instead of one each. The bundling is a convenience; the ORDER is
+# not. Everything the pre-registration claims rests on the prior having been
+# fixed before anyone saw how the data would behave.
+#
+# Until now that order was proved by git: separate PRs squash-merged to
+# separate commits with separate timestamps, and spec #2's prior literally
+# cites "see git timestamps" as its evidence. Bundle four steps into one
+# squash-merged PR and that evidence is DESTROYED -- squash collapses the
+# intermediate commits, and a reviewer sees one commit that could have been
+# written in any order, including after the numbers were known.
+#
+# So the bundle carries its own order, in the registry, as data:
+#
+#     prior_signed_at  <=  inputs_recorded_at  <=  read_at
+#
+# This is the stronger arrangement, not merely a replacement. Dates in the
+# registry are reviewable in the diff, survive any merge strategy, and do not
+# depend on a reader reconstructing history from commit metadata.
+#
+# FORWARD-ONLY. The four specs read before 2026-11-10 state their dates in
+# prose _note fields and are recorded as such; this does not retrofit them,
+# because editing a read specification is exactly what the protocol forbids.
+PRE_READ_DATES_REQUIRED_FROM = "2026-11-11"
+_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
+
+
+def _first_date(blob) -> str | None:
+    """The first ISO date appearing anywhere in a value, or None."""
+    m = _DATE.search(json.dumps(blob) if not isinstance(blob, str) else blob)
+    return m.group(0) if m else None
+
+
+def test_pre_read_ordering():
+    print("\n--- the pre-read bundle: prior <= inputs <= read ---")
+    for path in ("data/registry/specifications.json",
+                 "data/registry/v29_specifications.json"):
+        p = Path(path)
+        if not p.exists():
+            continue
+        reg = json.loads(p.read_text(encoding="utf-8"))
+        for sid, spec in (reg.get("specifications") or {}).items():
+            declared = spec.get("declared_at") or ""
+            res = spec.get("result") or {}
+            legacy = declared < PRE_READ_DATES_REQUIRED_FROM
+
+            signed = res.get("prior_signed_at") or _first_date(res.get("prior"))
+            fp = spec.get("inputs_fingerprint") or {}
+            recorded = fp.get("recorded_at") or _first_date(fp) if fp else None
+            read_at = spec.get("read_at") or ""
+
+            if legacy:
+                # Stated, not asserted: these predate the rule and their dates
+                # live in prose. Naming them keeps the exemption visible rather
+                # than letting it look like coverage.
+                check(f"prereg-legacy-{sid}", True,
+                      f"declared {declared or '?'} — predates "
+                      f"{PRE_READ_DATES_REQUIRED_FROM}, dates in prose "
+                      f"(prior {signed or 'n/a'}, inputs {recorded or 'n/a'}, "
+                      f"read {read_at or 'unread'}). Not retrofitted: editing a "
+                      f"read specification is what the protocol forbids")
+                continue
+
+            check(f"prereg-prior-dated-{sid}", bool(signed),
+                  f"prior_signed_at is RECORDED ({signed}) — a bundled PR "
+                  f"squashes to one commit, so git no longer proves the prior "
+                  f"came first; the registry has to"
+                  if signed else
+                  "no prior_signed_at: the prior's date must be data in the "
+                  "registry, because a squash-merged bundle destroys the commit "
+                  "order that used to prove it")
+            if signed and recorded:
+                check(f"prereg-prior-before-inputs-{sid}", signed <= recorded,
+                      f"prior {signed} <= inputs {recorded} — the prior was "
+                      f"fixed before the input fingerprint existed")
+            if signed and read_at:
+                check(f"prereg-prior-before-read-{sid}", signed <= read_at,
+                      f"prior {signed} <= read {read_at}")
+            if recorded and read_at:
+                check(f"prereg-inputs-before-read-{sid}", recorded <= read_at,
+                      f"inputs {recorded} <= read {read_at} — the read refuses "
+                      f"without a fingerprint recorded first")
+
+
 def main():
     print("=" * 70)
     print("qt Phase 1 — Measurement + Referee (no network)")
@@ -492,6 +581,7 @@ def main():
     test_spec2_declared()
     test_v29_registry_budget()
     test_spec3_declared()
+    test_pre_read_ordering()
     print("\n" + "=" * 70)
     if FAILURES:
         print(f"RESULT: {len(FAILURES)} FAILED -> {', '.join(FAILURES)}")

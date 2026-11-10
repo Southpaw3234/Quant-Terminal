@@ -82,11 +82,26 @@ model has failed."* Crons self-retire **2026-09-29**. The book is flat.
    tests four things and that is not one) — until patched, the prior is on the operator.
 3. **Anti-deferral.** A read is spent when taken. A bug found afterwards does not reopen
    it and does not reset the clock.
-4. **Do not renegotiate a threshold after seeing the result.** S1, S2, S3 and E1 all
+4. 🔑 **Bundle the pre-read steps into one PR — but one commit per step, in order.**
+   Signing the prior, landing the input guard, and recording the fingerprint and the
+   availability rehearsal used to be one PR each; spec #3 and `value_ebit_ev_v2` cost
+   five apiece. They land together now. **The order is not a convenience and does not
+   bundle with them**: everything pre-registration claims rests on the prior having
+   been fixed before anyone saw how the data would behave. That order used to be proved
+   by git — separate PRs, separate squash commits, separate timestamps — and spec #2's
+   prior cites "see git timestamps" as its evidence. **A squash-merged bundle destroys
+   that proof**, collapsing the steps into one commit that could have been written in
+   any order, including after the numbers were known. So record `prior_signed_at` and
+   `inputs_fingerprint.recorded_at` as **data in the registry**, where
+   `prior_signed_at <= inputs_recorded_at <= read_at` is enforced by
+   `validate_qt_phase1.test_pre_read_ordering` and visible in the diff. **Merge the
+   bundle with rebase, not squash**, so the per-step commits survive too. The record
+   must not depend on a reader reconstructing history from commit metadata.
+5. **Do not renegotiate a threshold after seeing the result.** S1, S2, S3 and E1 all
    failed and not one was moved. That record is worth more than any model in this repo.
-5. **When a measurement and a narrative disagree, report the measurement.** Including
+6. **When a measurement and a narrative disagree, report the measurement.** Including
    when the narrative is one you wrote earlier in the same session.
-6. **Never quote a series the code itself calls invalid.** The legacy `confidence`
+7. **Never quote a series the code itself calls invalid.** The legacy `confidence`
    rank-IC prints a loud warning banner and must not be used as evidence.
 
 ## 4. Working in this repository
