@@ -389,17 +389,26 @@ def test_spec3_declared():
     r = referee.Referee(registry_path=p)
     s3 = r.specs.get("pead_8k_car_v3")
     check("spec3-present", s3 is not None, "pead_8k_car_v3 is in the live registry")
-    check("spec3-declared-unread",
-          s3 is not None and s3.declared_at == "2026-09-05" and not s3.is_read,
-          f"declared {s3.declared_at if s3 else 'n/a'}, read_at empty — "
-          f"declaration precedes any read, which is the whole point")
-    check("spec3-costs-no-k", r.k_used() == 2 and r.k_remaining() == 3,
-          f"K is still {r.k_used()}/{r.k_budget} — DECLARING SPENDS NOTHING; "
-          f"only a read does. {r.k_remaining()} slots remain")
-    check("spec3-read-would-be-authorised",
-          r.authorize_read("pead_8k_car_v3", "2026-12-15").allowed,
-          "the Referee WOULD authorise a read — declared, unread, in budget, "
-          "before terminal")
+    # ⚠️ TRIPWIRES FLIPPED 2026-11-10, when pead_8k_car_v3 was read. These
+    # three asserted it was declared-and-unread and went red the moment that
+    # stopped being true. They now pin the post-read state, which is the
+    # stronger claim: v27 has spent three of five, and a re-read is refused.
+    check("spec3-read-and-frozen",
+          s3 is not None and s3.declared_at == "2026-09-05" and s3.is_read
+          and s3.read_at == "2026-11-10",
+          "declared 2026-09-05, read 2026-11-10 — the declaration preceded "
+          "the read, which is the whole point")
+    check("spec3-k-three-of-five", r.k_used() == 3 and r.k_remaining() == 2,
+          f"K {r.k_used()}/{r.k_budget} — declaring spent nothing; three reads "
+          f"did. {r.k_remaining()} slots remain")
+    check("spec3-reread-is-refused",
+          not r.authorize_read("pead_8k_car_v3", "2026-12-15").allowed,
+          "the Referee REFUSES a second read — anti-deferral, and no bug found "
+          "afterwards reopens it")
+    check("spec3-verdict-recorded",
+          str((s3.result if s3 is not None else {})
+              .get("read", {}).get("verdict", "")) == "NOT MET",
+          "the verdict is in the registry, not only in a run log that ages out")
     _p3 = s3.params if s3 is not None else {}
     check("spec3-threshold-fixed-before-data",
           "+5.0%" in str(_p3.get("selection_threshold", ""))
