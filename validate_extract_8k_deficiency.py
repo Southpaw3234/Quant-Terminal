@@ -253,6 +253,47 @@ def test_panel_keeps_ticker_na():
           f"string, so sorting them cannot raise on a stray float")
 
 
+def test_tickers_helper_both_layers():
+    print("\n--- qt.tickers: 'NA' survives BOTH layers pandas loses it at ---")
+    import io as _io
+
+    from qt import tickers as qtk
+
+    csv_text = "date,ticker\n2025-08-31,NA\n2025-08-31,AAPL\n2025-08-31,\n"
+
+    naive = pd.read_csv(_io.StringIO(csv_text))
+    check("layer-1-plain-read_csv-loses-NA",
+          bool(naive["ticker"].isna().any()),
+          "a plain read_csv turns the string 'NA' into a missing value — "
+          "layer one, and the one that cost the V29 panel 16 rows")
+    safe = qtk.read_csv(_io.StringIO(csv_text))
+    check("layer-1-qt-read_csv-keeps-NA",
+          "NA" in list(safe["ticker"]),
+          "qt.tickers.read_csv keeps it")
+
+    rows = [{"ticker": "NA", "ok": True}, {"ticker": "AAPL", "ok": False}]
+    naive2 = pd.DataFrame(rows)
+    lost2 = not (list(naive2["ticker"])[0] == "NA")
+    check("layer-2-plain-DataFrame-may-lose-NA", True,
+          f"plain DataFrame construction "
+          f"{'LOSES' if lost2 else 'keeps'} it on pandas {pd.__version__} — "
+          f"this is the layer that printed a blank ticker in the CIK "
+          f"diagnostic, AFTER layer one had been fixed")
+    safe2 = qtk.frame(rows)
+    check("layer-2-qt-frame-keeps-NA",
+          list(safe2["ticker"])[0] == "NA",
+          "qt.tickers.frame rebuilds label columns as object dtype, so the "
+          "company survives construction too")
+
+    check("normalise-keeps-NA",
+          list(qtk.normalise(pd.Series(["na", " NA ", "aapl"]))) == ["NA", "NA", "AAPL"],
+          "and normalising case/whitespace does not lose it either")
+    kept, n = qtk.drop_blank(safe, "ticker")
+    check("drop_blank-drops-empty-not-NA",
+          n == 1 and "NA" in list(kept["ticker"]),
+          "'' is blank and is dropped; 'NA' is a company and is not")
+
+
 def test_window_and_registry():
     print("\n--- the window matches the frozen panel, and K is untouched ---")
     panel = Path("data/universe/v29_universe_pit.csv")
@@ -294,6 +335,7 @@ def main():
     test_selection_is_not_price_conditioned()
     test_build_rows()
     test_panel_keeps_ticker_na()
+    test_tickers_helper_both_layers()
     test_window_and_registry()
     print("\n" + "=" * 70)
     if FAILURES:

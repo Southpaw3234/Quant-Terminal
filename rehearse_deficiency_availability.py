@@ -33,6 +33,8 @@ import sys
 import numpy as np
 import pandas as pd
 
+from qt import tickers as qtk
+
 EVENTS = os.environ.get("QT_DEF_EVENTS", "data/events/events_8k_item301.csv")
 BENCHMARK = "IWM"
 HORIZON_BARS = 63          # one quarter, unchanged from the v27 programme
@@ -67,7 +69,11 @@ def main() -> None:
     if not os.path.exists(EVENTS):
         print(f"[rehearse] no event file at {EVENTS}")
         sys.exit(1)
-    ev = pd.read_csv(EVENTS)
+    # Ticker-safe: a plain read_csv turns the real ticker "NA" into a missing
+    # value, and this event class selects disproportionately for exactly that
+    # kind of name. See qt/tickers.py.
+    ev = qtk.read_csv(EVENTS)
+    ev["ticker"] = qtk.normalise(ev["ticker"])
     ev["event_ts"] = pd.to_datetime(ev["event_ts"]).dt.normalize()
     print(f"[rehearse] {EVENTS}: {len(ev)} events, "
           f"{ev.ticker.nunique()} distinct tickers, "
