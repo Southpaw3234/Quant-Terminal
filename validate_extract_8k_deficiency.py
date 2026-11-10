@@ -226,6 +226,33 @@ def test_build_rows():
 
 # ═════════════════════════════════════════ 6. the window and the tripwire
 
+def test_panel_keeps_ticker_na():
+    print("\n--- 🔑 the ticker 'NA' is a company, not a missing value ---")
+    panel = Path("data/universe/v29_universe_pit.csv")
+    if not panel.exists():
+        check("panel-present", False, f"{panel} missing")
+        return
+
+    # What the ORDINARY read does, so the bug is demonstrated rather than
+    # asserted: pandas turns the string "NA" into NaN by default.
+    naive = pd.read_csv(panel, usecols=["date", "ticker"])
+    lost = int(naive["ticker"].isna().sum())
+    kept = ex.load_panel(str(panel))[2]
+    check("ordinary-read-loses-NA", lost > 0,
+          f"a default read_csv drops {lost} rows to NaN — this is the "
+          f"'16 panel rows dropped on an unusable ticker' the V29 registry "
+          f"recorded. The ticker was never unusable")
+    check("loader-keeps-ticker-NA", "NA" in kept,
+          "load_panel keeps NA (Nano Labs) as a string. A listing-deficiency "
+          "study selects disproportionately for exactly this kind of name, so "
+          "a microcap deleted by a parsing default is a biased sample, not a "
+          "rounding error")
+    check("loader-keeps-no-blank-ticker",
+          all(isinstance(t, str) and t.strip() for t in kept),
+          f"and every one of the {len(kept)} tickers it returns is a non-empty "
+          f"string, so sorting them cannot raise on a stray float")
+
+
 def test_window_and_registry():
     print("\n--- the window matches the frozen panel, and K is untouched ---")
     panel = Path("data/universe/v29_universe_pit.csv")
@@ -266,6 +293,7 @@ def main():
     test_pit_membership()
     test_selection_is_not_price_conditioned()
     test_build_rows()
+    test_panel_keeps_ticker_na()
     test_window_and_registry()
     print("\n" + "=" * 70)
     if FAILURES:

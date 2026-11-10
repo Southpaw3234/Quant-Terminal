@@ -307,10 +307,32 @@ def fetch_benchmark_sessions():
 # ══════════════════════════════════════════════════════════════════════ main
 
 def load_panel(path: str):
-    """The frozen PIT panel -> {month_end: frozenset(tickers)} and the index."""
-    df = pd.read_csv(path, usecols=["date", "ticker"])
+    """The frozen PIT panel -> {month_end: frozenset(tickers)} and the index.
+
+    ⚠️ keep_default_na=False IS LITERAL, NOT DEFENSIVE.
+
+    `NA` is a real listed company (Nano Labs), and pandas.read_csv converts
+    the string "NA" to NaN by default. Reading this panel the ordinary way
+    silently deletes 16 of its name-months -- which is precisely the
+    "16 panel rows dropped on an unusable ticker" the V29 registry records.
+    The ticker was never unusable. A parsing default ate it.
+
+    That mattered little for a value screen. It matters more here: a listing
+    deficiency study is disproportionately likely to select exactly this kind
+    of name, so a microcap that vanishes at read time is a biased sample, not
+    a rounding error. "NAN", "NULL", "NONE" and "N/A" are also tickers pandas
+    would swallow, so nothing is treated as missing and emptiness is tested
+    explicitly instead.
+    """
+    df = pd.read_csv(path, usecols=["date", "ticker"], dtype={"ticker": str},
+                     keep_default_na=False, na_values=[])
     df["date"] = pd.to_datetime(df["date"]).dt.normalize()
-    df["ticker"] = df["ticker"].astype(str).str.upper()
+    df["ticker"] = df["ticker"].astype(str).str.strip().str.upper()
+    blank = df["ticker"] == ""
+    if int(blank.sum()):
+        print(f"[3.01] {int(blank.sum())} panel rows have a genuinely EMPTY "
+              f"ticker and are dropped (not the 'NA' case)")
+        df = df.loc[~blank].copy()
     by_month = {d: frozenset(g) for d, g in df.groupby("date")["ticker"]}
     month_ends = pd.DatetimeIndex(sorted(by_month)).sort_values()
     return by_month, month_ends, sorted(df["ticker"].unique())
