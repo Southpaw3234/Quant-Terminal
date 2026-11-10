@@ -1,0 +1,184 @@
+name: Validate 8-K listing-deficiency extractor (v27 spec #4, read-only)
+
+# Three jobs, and only the first runs on a push:
+#
+#   validate  -- hermetic. No network, no secrets, no yfinance installed, so
+#                the pure-logic suite CANNOT reach a price even by accident.
+#                Runs on every push. This is the gate.
+#   extract   -- dispatch-only. Builds the Item 3.01 event set and uploads it
+#                as an ARTIFACT. It does not commit: an emitted event set is
+#                specification-adjacent and enters the repo through a
+#                reviewed commit carrying its fingerprint.
+#   rehearse  -- dispatch-only. COUNTS what the event file would yield at the
+#                declared horizon. No return, no Referee, no K.
+#
+# 🔑 WHAT NONE OF THESE DOES: compute a forward return against the benchmark.
+# That is the READ, it spends one of K=5, and it does not live in this file.
+#
+# SPEC #4 IS NOT DECLARED. Everything here is designed to be finishable,
+# reviewable and rehearsable BEFORE a slot is committed — which is the whole
+# point of separating declaration from measurement. validate asserts the
+# registry still has no listing_deficiency spec, and that check is MEANT to
+# go red on the day it is declared.
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_extract:
+        description: 'Build the Item 3.01 event file (SELECTION only, no returns, no K)'
+        type: boolean
+        default: false
+      limit:
+        description: 'Cap the universe for a smoke test (0 = all 3,259 tickers)'
+        type: string
+        default: '0'
+      run_rehearsal:
+        description: 'COUNT-ONLY availability rehearsal over an uploaded event file'
+        type: boolean
+        default: false
+      events_csv:
+        description: 'Event file to count'
+        type: string
+        default: 'data/events/events_8k_item301.csv'
+  push:
+    branches:
+      - 'master'
+      - 'v27/**'
+      - 'v28/**'
+      - 'v29/**'
+    paths:
+      - 'extract_8k_deficiency.py'
+      - 'validate_extract_8k_deficiency.py'
+      - '.github/workflows/validate_extract_8k_deficiency.yml'
+      - 'data/registry/specifications.json'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        # No requests, no yfinance. extract_8k_deficiency.py imports yfinance
+        # lazily inside the network shell precisely so this stays possible.
+        run: pip install "numpy<2.4" pandas
+      - name: Compile check
+        run: |
+          python -m py_compile extract_8k_deficiency.py
+          python -m py_compile validate_extract_8k_deficiency.py
+      - name: Run pure-logic validation
+        run: python validate_extract_8k_deficiency.py
+      - name: Assert nothing under data/ changed
+        run: |
+          set -u
+          if ! git diff --quiet -- data/ 2>/dev/null; then
+            echo "::error::validation modified data/ — it must be read-only"
+            git --no-pager diff --stat -- data/
+            exit 1
+          fi
+          echo "OK — data/ untouched."
+
+  extract:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_extract
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas "yfinance>=0.2.40,<2"
+      - name: Refuse if the event file already exists
+        # Once this file is named by a declaration it is a FROZEN input.
+        # Rebuilding it is how a frozen input quietly stops being frozen.
+        run: |
+          set -u
+          if [ -f data/events/events_8k_item301.csv ]; then
+            echo "::error::data/events/events_8k_item301.csv already exists — refusing to rebuild"
+            exit 3
+          fi
+          echo "OK — no existing event file to clobber."
+      - name: Build the Item 3.01 event set
+        env:
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+          QT_DEF_PANEL: data/universe/v29_universe_pit.csv
+          QT_DEF_LIMIT: ${{ inputs.limit }}
+        run: |
+          set -u
+          if [ ! -f data/universe/v29_universe_pit.csv ]; then
+            echo "::error::no frozen V29 panel on this ref"; exit 1
+          fi
+          python extract_8k_deficiency.py
+      - name: Emit the fingerprint this file must carry into a declaration
+        # Recorded HERE, before any read exists, so the declaration can name
+        # the exact bytes it was written against. A7: a green run is not a
+        # delivered artifact, and an input nobody fingerprinted is an input
+        # that can change between the rehearsal and the read.
+        run: |
+          set -u
+          python - <<'PY'
+          import hashlib, pandas as pd
+          p = "data/events/events_8k_item301.csv"
+          b = open(p, "rb").read().replace(b"\r\n", b"\n")
+          d = pd.read_csv(p)
+          print("INPUTS_FINGERPRINT")
+          print(f"  path   {p}")
+          print(f"  rows   {len(d)}")
+          print(f"  sha256 {hashlib.sha256(b).hexdigest()}")
+          if len(d):
+              print(f"  window {d.event_ts.min()}..{d.event_ts.max()}")
+              print(f"  tickers {d.ticker.nunique()}")
+          print(f"  columns {sorted(d.columns)}")
+          PY
+      - name: Guard — frozen ledgers and S4 evidence untouched
+        run: |
+          set -u
+          if ! git diff --quiet -- data/predictions/ data/shadow/ 2>/dev/null; then
+            echo "::error::the extractor modified S4 evidence — it must not"; exit 1
+          fi
+          for f in data/events/event_study.csv data/events/event_study_v2.csv data/events/event_study_v3.csv; do
+            if [ -f "$f" ] && ! git diff --quiet -- "$f" 2>/dev/null; then
+              echo "::error::$f is a FROZEN ledger and was modified"; exit 1
+            fi
+          done
+          echo "OK — frozen ledgers and S4 evidence untouched."
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v27-spec4-item301-events
+          path: data/events/events_8k_item301*.csv
+          if-no-files-found: error
+
+  rehearse:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_rehearsal
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas "yfinance>=0.2.40,<2"
+      - name: COUNT ONLY — how many events settle, and how big is the book
+        # Answers the only question that cannot be answered from a desk:
+        # does this event class produce enough events, spread across enough
+        # days, to be measurable at all? If N comes back thin, nothing has
+        # been spent and the fallback is still available.
+        env:
+          QT_DEF_EVENTS: ${{ inputs.events_csv }}
+        run: python rehearse_deficiency_availability.py
+      - name: Assert nothing under data/ changed
+        run: |
+          set -u
+          if ! git diff --quiet -- data/ 2>/dev/null; then
+            echo "::error::the rehearsal modified data/ — it must be read-only"
+            exit 1
+          fi
+          echo "OK — data/ untouched. No return computed, K unchanged."
