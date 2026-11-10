@@ -360,11 +360,16 @@ def main() -> None:
           f"{sessions[0].date()}..{sessions[-1].date()}")
 
     op = _session()
-    filings, n_nocik, n_nosubs, n_withfilings = [], 0, 0, 0
+    # ⚠️ The unresolved are NAMED, not merely counted. A ticker that cannot be
+    # resolved never reaches the Item 3.01 filter, and the tickers that fail
+    # are disproportionately companies that delisted or renamed -- exactly the
+    # population this specification is about. A count alone cannot be checked
+    # for that bias afterwards; a list can.
+    filings, unresolved, n_nosubs, n_withfilings = [], [], 0, 0
     for i, tk in enumerate(tickers, 1):
         cik = resolve_cik(op, tk)
         if cik is None:
-            n_nocik += 1
+            unresolved.append(tk)
         else:
             got = fetch_deficiency_filings(op, tk, cik)
             if got is None:
@@ -374,7 +379,8 @@ def main() -> None:
                 filings.extend(got)
         if i % 100 == 0 or i == len(tickers):
             print(f"  {i}/{len(tickers)} tickers · {len(filings)} filings · "
-                  f"{n_nocik} unresolved · {n_nosubs} submissions-failed")
+                  f"{len(unresolved)} unresolved · {n_nosubs} submissions-failed")
+    n_nocik = len(unresolved)
 
     rows, c = build_rows(filings, sessions, by_month, month_ends)
 
@@ -397,6 +403,18 @@ def main() -> None:
         w = csv.DictWriter(fh, fieldnames=cols)
         w.writeheader()
         w.writerows(rows)
+    if unresolved:
+        side = os.path.splitext(OUT_CSV)[0] + "_unresolved_tickers.csv"
+        with open(side, "w", newline="", encoding="utf-8") as fh:
+            w = csv.writer(fh)
+            w.writerow(["ticker"])
+            w.writerows([[t] for t in unresolved])
+        print(f"\n[3.01] {len(unresolved)} unresolved tickers written to "
+              f"{side} — {100.0 * len(unresolved) / max(1, len(tickers)):.1f}% "
+              f"of the universe never reached the Item {ITEM} filter. "
+              f"diagnose_unresolved_ciks.py measures whether these are "
+              f"disproportionately the names that went under.")
+
     print(f"\n[3.01] wrote {OUT_CSV}: {len(rows)} rows")
     if rows:
         print(f"[3.01] window of kept events "
