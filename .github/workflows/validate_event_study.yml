@@ -45,6 +45,11 @@ on:
         default: false
   push:
     branches:
+      # master added 2026-11-10: the validators ran on every branch and never
+      # on the trunk, so a squash-merge produced a commit no run had tested.
+      # The side-effecting jobs below are gated on workflow_dispatch AND their
+      # input, so a push can only ever reach the validate job.
+      - 'master'
       - 'v27/**'
       - 'v28/**'
     paths:

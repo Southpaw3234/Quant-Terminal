@@ -13,6 +13,13 @@ on:
   workflow_dispatch:
   push:
     branches:
+      # master added 2026-11-10. Fourth instance of the class this file
+      # already documents: a trigger that lags the tests it guards. Here the
+      # lag was the TRUNK -- every branch validated pre-merge, nothing
+      # post-merge, so a squash-merge produced a commit no run had tested.
+      # Side-effecting jobs are gated on github.event_name == 'workflow_dispatch'
+      # AND their input, so a push can only ever reach the validate job.
+      - 'master'
       - 'v27/**'
       - 'v28/**'
       # v29 added when the value programme opened. The commit that ADDED
