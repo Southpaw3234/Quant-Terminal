@@ -48,6 +48,10 @@ on:
         description: 'Event file to count'
         type: string
         default: 'data/events/events_8k_item301.csv'
+      events_run_id:
+        description: 'Run id holding the v27-spec4-item301-events artifact (blank = expect the file in the repo)'
+        type: string
+        default: ''
   push:
     branches:
       - 'master'
@@ -202,6 +206,11 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && inputs.run_rehearsal
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    # actions: read is for downloading the event artifact from the extract
+    # run. contents stays read -- the rehearsal writes nothing, ever.
+    permissions:
+      contents: read
+      actions: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -209,6 +218,42 @@ jobs:
           python-version: '3.11'
       - name: Install deps
         run: pip install "numpy<2.4" pandas "yfinance>=0.2.40,<2"
+      - name: Fetch the event set from the extract run's artifact
+        # The event file is deliberately NOT in the repo yet. An emitted event
+        # set is specification-adjacent and enters through a reviewed commit
+        # at DECLARATION time, carrying its fingerprint. Rehearsing must not
+        # force that commit early, so the count runs against the artifact.
+        if: inputs.events_run_id != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: v27-spec4-item301-events
+          path: data/events
+          run-id: ${{ inputs.events_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Fingerprint what was fetched, BEFORE counting anything
+        # The rehearsal's numbers go into the declaration. They are only
+        # meaningful if the file they were computed on is identified, so the
+        # sha256 is printed here and must match the one the declaration names.
+        run: |
+          set -u
+          f="${{ inputs.events_csv }}"
+          if [ ! -f "$f" ]; then
+            echo "::error::no event file at $f — pass events_run_id to fetch it from an extract run"
+            exit 4
+          fi
+          python - "$f" <<'PY'
+          import hashlib, sys
+          import pandas as pd
+          p = sys.argv[1]
+          b = open(p, "rb").read().replace(b"\r\n", b"\n")
+          d = pd.read_csv(p, keep_default_na=False, na_values=[])
+          print("REHEARSAL INPUT")
+          print(f"  path   {p}")
+          print(f"  rows   {len(d)}")
+          print(f"  sha256 {hashlib.sha256(b).hexdigest()}")
+          print(f"  window {d.event_ts.min()}..{d.event_ts.max()}")
+          print(f"  tickers {d.ticker.nunique()}")
+          PY
       - name: COUNT ONLY — how many events settle, and how big is the book
         # Answers the only question that cannot be answered from a desk:
         # does this event class produce enough events, spread across enough
