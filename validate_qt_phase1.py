@@ -206,9 +206,17 @@ def test_live_registry():
         check("live-registry-present", False, f"{p} missing")
         return
     r = referee.Referee(registry_path=p)
-    check("live-k-used", r.k_used() == 2,
-          f"K {r.k_used()}/{r.k_budget} spent, {r.k_remaining()} remaining "
-          f"(v1 read 2026-09-02, v2 read 2026-09-05)")
+    _read = sorted(sid for sid, s in r.specs.items() if s.is_read)
+    check("live-k-within-budget", 0 <= r.k_used() <= r.k_budget,
+          f"K {r.k_used()}/{r.k_budget} spent, {r.k_remaining()} remaining. "
+          f"The budget belongs to the PROGRAMME, so this asserts the ceiling "
+          f"and lets the count grow: read so far -> {', '.join(_read)}")
+    check("live-every-read-has-a-verdict",
+          all(r.specs[sid].result.get("verdict")
+              or (r.specs[sid].result.get("read") or {}).get("verdict")
+              for sid in _read),
+          "every spec with a read_at carries a recorded verdict — a spent slot "
+          "with no verdict is a read that never reached the reader")
     check("live-e1-locked",
           not r.authorize_read("form4_cluster_buy_v1", "2026-12-15").allowed,
           "form4_cluster_buy_v1 is READ and cannot be read again")
@@ -232,9 +240,11 @@ def test_spec2_declared():
     check("spec2-read", s2 is not None and s2.is_read and s2.read_at == "2026-09-05",
           f"read_at={s2.read_at if s2 else 'n/a'} — declared 09-04, read 09-05, "
           f"in that order")
-    check("spec2-k-spent", r.k_used() == 2 and r.k_remaining() == 3,
-          f"K {r.k_used()}/{r.k_budget} spent — the read consumed one; "
-          f"{r.k_remaining()} remain")
+    check("spec2-k-spent",
+          s2 is not None and s2.is_read and 2 <= r.k_used() <= r.k_budget,
+          f"v2's read is counted in K {r.k_used()}/{r.k_budget}. A LOWER bound, "
+          f"not an equality: ref-k-counts already proves a read spends a slot, "
+          f"and a later spec's read must not turn this check red")
     v = r.authorize_read("form4_cluster_buy_v2", "2026-12-15")
     check("spec2-anti-deferral", not v.allowed and "already read" in v.reason,
           f"a second read of v2 is REFUSED — no bug found afterwards reopens it: "
@@ -344,9 +354,11 @@ def test_v29_registry_budget():
     # tripwire working. It now pins the post-read state, the stronger claim:
     # both V29 slots spent are accounted for, and a re-read is refused.
     check("v29-v2-read-and-frozen",
-          _v2 is not None and _v2.is_read and r29.k_used() == 2
-          and r29.k_remaining() == 1,
-          "v2 was read 2026-11-09; K 2/3 with one slot left")
+          _v2 is not None and _v2.is_read and _v2.read_at == "2026-11-09"
+          and 2 <= r29.k_used() <= r29.k_budget,
+          f"v2 was read 2026-11-09 and is counted in K {r29.k_used()}/"
+          f"{r29.k_budget}. Lower bound on K, not an equality: a third V29 "
+          f"read must not turn a check about v2 red")
     check("v29-v2-reread-is-refused",
           not r29.authorize_read("value_ebit_ev_v2", "2026-12-01").allowed,
           "and a second read is REFUSED — anti-deferral, and no bug found "
@@ -389,17 +401,27 @@ def test_spec3_declared():
     r = referee.Referee(registry_path=p)
     s3 = r.specs.get("pead_8k_car_v3")
     check("spec3-present", s3 is not None, "pead_8k_car_v3 is in the live registry")
-    check("spec3-declared-unread",
-          s3 is not None and s3.declared_at == "2026-09-05" and not s3.is_read,
-          f"declared {s3.declared_at if s3 else 'n/a'}, read_at empty — "
-          f"declaration precedes any read, which is the whole point")
-    check("spec3-costs-no-k", r.k_used() == 2 and r.k_remaining() == 3,
-          f"K is still {r.k_used()}/{r.k_budget} — DECLARING SPENDS NOTHING; "
-          f"only a read does. {r.k_remaining()} slots remain")
-    check("spec3-read-would-be-authorised",
-          r.authorize_read("pead_8k_car_v3", "2026-12-15").allowed,
-          "the Referee WOULD authorise a read — declared, unread, in budget, "
-          "before terminal")
+    # ⚠️ TRIPWIRES FLIPPED 2026-11-10, when pead_8k_car_v3 was read. These
+    # three asserted it was declared-and-unread and went red the moment that
+    # stopped being true. They now pin the post-read state, which is the
+    # stronger claim: v27 has spent three of five, and a re-read is refused.
+    check("spec3-read-and-frozen",
+          s3 is not None and s3.declared_at == "2026-09-05" and s3.is_read
+          and s3.read_at == "2026-11-10",
+          "declared 2026-09-05, read 2026-11-10 — the declaration preceded "
+          "the read, which is the whole point")
+    check("spec3-k-counted", 3 <= r.k_used() <= r.k_budget,
+          f"K {r.k_used()}/{r.k_budget} — declaring spent nothing; the reads "
+          f"did, and spec #3's is the third. Lower bound, not an equality: a "
+          f"fourth read must not turn a check about spec #3 red")
+    check("spec3-reread-is-refused",
+          not r.authorize_read("pead_8k_car_v3", "2026-12-15").allowed,
+          "the Referee REFUSES a second read — anti-deferral, and no bug found "
+          "afterwards reopens it")
+    check("spec3-verdict-recorded",
+          str((s3.result if s3 is not None else {})
+              .get("read", {}).get("verdict", "")) == "NOT MET",
+          "the verdict is in the registry, not only in a run log that ages out")
     _p3 = s3.params if s3 is not None else {}
     check("spec3-threshold-fixed-before-data",
           "+5.0%" in str(_p3.get("selection_threshold", ""))

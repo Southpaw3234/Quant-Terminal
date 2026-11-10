@@ -128,9 +128,19 @@ def test_threshold():
           ex.CAR_THRESHOLD == 0.05 and "+5.0%" in declared,
           "the constant in the extractor still equals the threshold DECLARED "
           "2026-09-05 — tuning it toward a nicer N fails here")
-    check("registry-still-unread",
-          spec["read_at"] == "",
-          "and spec #3 is still unread: this extractor computes SELECTION only")
+    # ⚠️ TRIPWIRE FLIPPED 2026-11-10, when spec #3 was read. It asserted
+    # read_at was empty and went red the instant that stopped being true,
+    # which is the tripwire working rather than breaking. The post-read claim
+    # is the stronger one: the specification is FROZEN, so the selection
+    # constants above can never be retuned toward a nicer N — a re-read is
+    # refused, so a number bought by editing CAR_THRESHOLD could not be
+    # measured even if someone edited it.
+    check("registry-read-and-frozen",
+          spec["read_at"] == "2026-11-10"
+          and (spec.get("result", {}).get("read") or {}).get("verdict")
+          == "NOT MET",
+          "spec #3 was READ 2026-11-10, verdict NOT MET. This extractor "
+          "computes SELECTION only; the read it fed is closed")
     check("window-matches-registry",
           ex.WINDOW_START == "2023-09-01" and ex.WINDOW_END == "2026-09-05"
           and "1095" in str(spec["params"]["lookback_days"]),
