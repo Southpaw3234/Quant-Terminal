@@ -36,6 +36,14 @@ on:
         description: 'COUNT-ONLY availability rehearsal over an uploaded event file'
         type: boolean
         default: false
+      run_diagnostic:
+        description: 'Measure whether unresolvable tickers are the DELISTED ones (no events, no K)'
+        type: boolean
+        default: false
+      diag_sample:
+        description: 'Random sample size for the CIK diagnostic'
+        type: string
+        default: '400'
       events_csv:
         description: 'Event file to count'
         type: string
@@ -47,6 +55,7 @@ on:
       - 'v28/**'
       - 'v29/**'
     paths:
+      - 'diagnose_unresolved_ciks.py'
       - 'extract_8k_deficiency.py'
       - 'validate_extract_8k_deficiency.py'
       - '.github/workflows/validate_extract_8k_deficiency.yml'
@@ -154,6 +163,38 @@ jobs:
           name: v27-spec4-item301-events
           path: data/events/events_8k_item301*.csv
           if-no-files-found: error
+
+  diagnose:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_diagnostic
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas
+      - name: Are the unresolvable tickers the DELISTED ones?
+        # The smoke test could not resolve 26% of tickers to a CIK. A count
+        # does not say whether that is coverage noise or survivorship: if the
+        # names full-text search cannot find are the names that went under,
+        # the sample is missing its worst outcomes and any effect measured on
+        # what remains is a CEILING. This measures which it is, BEFORE a prior
+        # is signed rather than after a read.
+        env:
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+          QT_DEF_PANEL: data/universe/v29_universe_pit.csv
+          QT_DIAG_SAMPLE: ${{ inputs.diag_sample }}
+        run: python diagnose_unresolved_ciks.py
+      - name: Assert nothing under data/ changed
+        run: |
+          set -u
+          if ! git diff --quiet -- data/ 2>/dev/null; then
+            echo "::error::the diagnostic modified data/ — it must be read-only"
+            exit 1
+          fi
+          echo "OK — data/ untouched. No events, no return, K unchanged."
 
   rehearse:
     if: github.event_name == 'workflow_dispatch' && inputs.run_rehearsal
