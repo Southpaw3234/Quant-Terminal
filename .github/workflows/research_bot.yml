@@ -54,6 +54,7 @@ on:
       - 'v27/**'
       - 'v28/**'
       - 'v29/**'
+      - 'agent/**'
     paths:
       - 'extract_tax_loss_book.py'
       - 'validate_extract_tax_loss.py'
