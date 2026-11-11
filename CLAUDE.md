@@ -115,6 +115,28 @@ model has failed."* Crons self-retire **2026-09-29**. The book is flat.
   Read `rank_score` as `$NF`, never a fixed index.
 * **Never put `/` inside a `gh --jq` expression** — it gets path-mangled and fails
   silently. Query fields separately.
-* No usable local Python (Windows Store stub). All `.py` verification runs on CI.
+* **Local Python works** (3.12, with `numpy`/`pandas` installed as of 2026-11-11).
+  Run the hermetic suites locally before pushing — a CI round-trip per typo is
+  the slowest way to find one. Network-dependent scripts still run on CI, where
+  the secrets live. *This line previously said there was no usable local Python;
+  that was true of a Windows Store stub and is no longer true.*
 * `quant_runner.py` cannot be `ast`-parsed — `SECTOR_MAP` lives inside a string literal.
 * Trades are fired by the operator, never by Claude.
+
+## 5. Agent scaffolding
+
+`.claude/` carries the house patterns so they do not have to be rediscovered:
+
+| | |
+|---|---|
+| `skills/hermetic-validator/` | how a `validate_*.py` suite is written here — structural guards, tripwires, the impossible-zero rule |
+| `skills/gated-workflow/` | the validate/side-effect job split, double gating, artifact-not-commit, fingerprint-before-counting |
+| `agents/integrity-reviewer` | reviews a diff for measurement-integrity defects only. Use it before merging anything that counts something |
+| `agents/validator-author` | writes a suite against the skill, and inverts it to prove the checks are wired |
+| `agents/module-builder` | builds one module of `docs/COLLECTIVE_AGENT_BRIEF.md` |
+
+🔑 **Parallel agents suit construction, not measurement.** Building a module
+against a written spec parallelises well. Deciding whether a number means
+anything does not, and this repository's failures have been measurement
+failures, not throughput failures. Keep the orchestrator on anything that
+interprets a result.
