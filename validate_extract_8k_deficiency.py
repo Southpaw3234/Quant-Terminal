@@ -319,14 +319,22 @@ def test_window_and_registry():
 
     reg = Path("data/registry/specifications.json")
     specs = json.loads(reg.read_text(encoding="utf-8")).get("specifications", {})
-    # ⚠️ TRIPWIRE. This is MEANT to go red the day spec #4 is declared. Until
-    # then it asserts that building the extractor cost nothing: the design can
-    # be finished, reviewed and rehearsed without committing a slot.
-    check("spec4-not-declared",
+    # This STARTED as a tripwire meant to go red the day spec #4 was declared.
+    # Spec #4 was ABANDONED on 2026-11-11 before declaration: the rehearsal
+    # showed the event file holds 838/838 tickers with full price history --
+    # survivors, not the deficiency population the specification is about
+    # (docs/V27_SPEC4_LISTING_DEFICIENCY.md §⓿). So it is no longer a tripwire
+    # awaiting an event. It is now an INVARIANT: this specification must never
+    # acquire a registry entry, because the sample it would measure has been
+    # shown not to contain its own subject.
+    check("spec4-abandoned-never-declared",
           not any(s.startswith("listing_deficiency") for s in specs),
-          f"no listing_deficiency specification in the registry — the "
-          f"extractor exists, the slot does not. {len(specs)} specs declared, "
-          f"and a declaration is what spends K, not this file")
+          f"no listing_deficiency specification in the registry, and there "
+          f"must never be one — abandoned 2026-11-11 before declaration on a "
+          f"survivorship finding, not on a result. {len(specs)} specs "
+          f"declared, slot 4 of 5 still available, and no return was ever "
+          f"computed for this event class so it does not enter the "
+          f"Bonferroni count")
 
 
 def main():

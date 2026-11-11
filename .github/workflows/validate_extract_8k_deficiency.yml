@@ -15,11 +15,23 @@ name: Validate 8-K listing-deficiency extractor (v27 spec #4, read-only)
 # 🔑 WHAT NONE OF THESE DOES: compute a forward return against the benchmark.
 # That is the READ, it spends one of K=5, and it does not live in this file.
 #
-# SPEC #4 IS NOT DECLARED. Everything here is designed to be finishable,
-# reviewable and rehearsable BEFORE a slot is committed — which is the whole
-# point of separating declaration from measurement. validate asserts the
-# registry still has no listing_deficiency spec, and that check is MEANT to
-# go red on the day it is declared.
+# ⛔ SPEC #4 WAS ABANDONED ON 2026-11-11, BEFORE DECLARATION.
+#
+# The availability rehearsal found 838/838 tickers with complete price
+# history and 0 of 2,507 events delisting inside their window. The price
+# source does not serve delisted companies, so complete coverage means the
+# sample is SURVIVORS -- the $2.00 PIT floor excluded the sub-$1 bid-price
+# population that triggers most Item 3.01 notices. The file does not contain
+# the companies the specification is about.
+# See docs/V27_SPEC4_LISTING_DEFICIENCY.md §⓿.
+#
+# 🔑 THIS IS WHAT THE SEPARATION OF DECLARATION FROM MEASUREMENT BOUGHT.
+# The design was finished, reviewed and rehearsed, the defect was found, and
+# K is still 3/5. No return was ever computed, so this event class does not
+# enter the Bonferroni count either. Slot 4 of 5 remains available.
+#
+# `extract` now REFUSES. `validate` and `rehearse` are kept because they are
+# the evidence for the decision.
 
 on:
   workflow_dispatch:
@@ -115,6 +127,24 @@ jobs:
           python-version: '3.11'
       - name: Install deps
         run: pip install "numpy<2.4" pandas "yfinance>=0.2.40,<2"
+      - name: Refuse — spec #4 is ABANDONED
+        # Abandoned 2026-11-11 before declaration: the rehearsal showed the
+        # event file holds 838/838 tickers with full price history, i.e.
+        # survivors rather than the deficiency population the specification
+        # is about. See docs/V27_SPEC4_LISTING_DEFICIENCY.md §⓿.
+        #
+        # The extractor is KEPT as the evidence for that decision, but a
+        # 5-hour EDGAR sweep rebuilding a sample already shown not to contain
+        # its own subject is pure waste. Re-enable only by deleting this step
+        # in a reviewed commit that says what changed about the universe.
+        run: |
+          echo "::error::spec #4 (8-K Item 3.01) was ABANDONED on 2026-11-11 before declaration."
+          echo "The emitted sample is survivors: 838/838 tickers had full price history and"
+          echo "0 of 2,507 events delisted inside their window. The \$2.00 PIT price floor"
+          echo "excludes the sub-\$1 bid-price population that triggers most Item 3.01 notices."
+          echo "See docs/V27_SPEC4_LISTING_DEFICIENCY.md section 0 for the finding and the"
+          echo "two repairs that were considered and rejected."
+          exit 6
       - name: Refuse if the event file already exists
         # Once this file is named by a declaration it is a FROZEN input.
         # Rebuilding it is how a frozen input quietly stops being frozen.
