@@ -1,0 +1,172 @@
+name: Thesis ledger (collective agent, module 2)
+
+# Module 2 of docs/COLLECTIVE_AGENT_BRIEF.md: pre-registration applied to the
+# operator's own judgment.
+#
+# Two jobs.
+#
+#   validate  -- hermetic. 52 checks on the ledger's properties, plus an
+#                integrity check on the COMMITTED ledger itself: the hash
+#                chain must verify on every push. An append-only file nobody
+#                verifies is a file somebody edits.
+#   remind    -- scheduled. Reviews due, and theses DRIFTING -- a falsifier
+#                fired, the position is open, and no reasoning was written
+#                down. Posts to Discord. Reads only.
+#
+# 🔑 NEITHER JOB EVER WRITES THE LEDGER. Entries are appended by the operator
+# running the CLI and land through a reviewed commit, exactly as a read lands
+# in the registry. A bot that could append to this record would be a bot that
+# could put words in the operator's mouth about what they believed and when.
+
+on:
+  schedule:
+    # 13:00 UTC Mon — the weekly review slot. CLAUDE.md §4: "Monday is the
+    # review, inline"; this makes the ledger part of it rather than a thing
+    # remembered separately.
+    - cron: '0 13 * * 1'
+  workflow_dispatch:
+    inputs:
+      post:
+        description: 'Post the reminder to Discord (off = dry run)'
+        type: boolean
+        default: true
+      on_date:
+        description: 'Treat this as today (YYYY-MM-DD, blank = actual today)'
+        type: string
+        default: ''
+  push:
+    branches: ['master', 'v27/**', 'v28/**', 'v29/**', 'agent/**']
+    paths:
+      - 'qt/thesis.py'
+      - 'thesis_ledger.py'
+      - 'validate_thesis_ledger.py'
+      - 'data/theses/ledger.jsonl'
+      - '.github/workflows/thesis_ledger.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      # qt/thesis.py is stdlib only — no pandas, no network. The suite
+      # therefore cannot reach anything, which is what makes "this module
+      # cannot decide" a demonstrated property.
+      - name: Compile check
+        run: |
+          python -m py_compile qt/thesis.py
+          python -m py_compile thesis_ledger.py
+          python -m py_compile validate_thesis_ledger.py
+      - name: Run pure-logic validation
+        run: python validate_thesis_ledger.py
+
+      - name: Verify the COMMITTED ledger's hash chain
+        # The suite proves the chain CAN detect an edit. This proves the real
+        # ledger has not had one. Both are needed: a verifier nobody points
+        # at the file is a verifier that never fires.
+        run: |
+          set -u
+          if [ ! -f data/theses/ledger.jsonl ]; then
+            echo "No ledger yet — nothing to verify. The first thesis creates it."
+            exit 0
+          fi
+          python thesis_ledger.py verify
+
+      - name: Assert the ledger was not modified by validation
+        run: |
+          set -u
+          if ! git diff --quiet -- data/ 2>/dev/null; then
+            echo "::error::validation modified data/ — the ledger is read-only here"
+            git --no-pager diff --stat -- data/
+            exit 1
+          fi
+          echo "OK — ledger untouched."
+
+  remind:
+    needs: validate
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: What is due, and what is drifting
+        env:
+          QT_ON: ${{ inputs.on_date }}
+        run: |
+          set -u
+          if [ ! -f data/theses/ledger.jsonl ]; then
+            echo "No ledger yet — nothing due."; exit 0
+          fi
+          python - <<'PY'
+          import datetime as dt, json, os
+          from qt import thesis as th
+          entries = th.load("data/theses/ledger.jsonl")
+          today = os.environ.get("QT_ON") or dt.date.today().isoformat()
+          s = th.summary(entries, today)
+          lines = [f"**Thesis ledger — {today}**",
+                   f"{s['open']} open · {s['closed']} closed · "
+                   f"{s['overrides']} override(s) · chain {s['chain']['why']}"]
+          d = th.due(entries, today)
+          if d:
+              lines.append("")
+              lines.append(f"__Reviews due ({len(d)})__")
+              for t in d:
+                  lines.append(f"· `{t['ticker']}` **{t['thesis_id']}** "
+                               f"— due {t['review_date']} — {t['claim'][:70]}")
+          drift = th.unreviewed_fired(entries)
+          if drift:
+              lines.append("")
+              lines.append(f"__⚠️ Drifting ({len(drift)})__ — a falsifier "
+                           f"fired, the position is open, and no reasoning "
+                           f"was recorded. Override it or close it.")
+              for t in drift:
+                  for f in t["fired"]:
+                      lines.append(f"· `{t['ticker']}` **{t['thesis_id']}** "
+                                   f"— fired: {f[:70]}")
+          if not d and not drift:
+              lines.append("")
+              lines.append("Nothing due, nothing drifting.")
+          body = "\n".join(lines)
+          open("reminder.md", "w", encoding="utf-8").write(body + "\n")
+          print(body)
+          PY
+
+      - name: Post to Discord
+        if: github.event_name == 'schedule' || inputs.post
+        env:
+          HOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          set -u
+          [ -f reminder.md ] || { echo "nothing to post"; exit 0; }
+          if [ -z "${HOOK:-}" ]; then
+            echo "DISCORD_WEBHOOK_URL not set — reminder is in the log."; exit 0
+          fi
+          python - <<'PY'
+          import json, os, urllib.request
+          body = open("reminder.md", encoding="utf-8").read()
+          if len(body) > 1900:
+              body = body[:1900] + "\n… truncated"
+          req = urllib.request.Request(
+              os.environ["HOOK"],
+              data=json.dumps({"content": body}).encode("utf-8"),
+              headers={"Content-Type": "application/json"})
+          with urllib.request.urlopen(req, timeout=30) as r:
+              print("Discord:", r.status)
+          PY
+
+      - name: Assert nothing was written
+        run: |
+          set -u
+          if ! git diff --quiet -- data/ 2>/dev/null; then
+            echo "::error::the reminder modified the ledger — it must not"; exit 1
+          fi
+          echo "OK — the ledger is appended by the operator, never by a job."
