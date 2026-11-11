@@ -425,6 +425,17 @@ function darkBlock(title, lines){
     lines.map(function(l){ return "<p>" + l + "</p>"; }).join("") + "</div>";
 }
 
+/* null means the form carries NO TICKER, so the universe intersection is
+   unknown rather than none. Form 4 display_names list the insider and the
+   issuer as bare "(CIK 0001234567)" with no symbol anywhere, so rendering
+   that as 0 would publish "no insider filings among the names we watch" as
+   a finding, every day, forever. A zero that cannot be non-zero is not a
+   measurement.                                                            */
+function inUniv(f){
+  if (!f) return "—";
+  return f.in_universe === null || f.in_universe === undefined
+    ? "n/a" : f.in_universe;
+}
 function metric(label, value, bad){
   return '<div class="m' + (bad ? " bad" : "") + '"><span class="ml">' +
     esc(label) + '</span><span class="mv">' + esc(value) + "</span></div>";
@@ -488,8 +499,8 @@ function renderDaily(d){
     metric("candidate pool", u.candidate_pool) +
     metric("entered", u.entered ? "+" + u.entered.length : "—") +
     metric("exited", u.exited ? "−" + u.exited.length : "—") +
-    metric("8-K in universe", (forms["8-K"] || {}).in_universe) +
-    metric("form 4 in universe", (forms["4"] || {}).in_universe) +
+    metric("8-K in universe", inUniv(forms["8-K"])) +
+    metric("form 4 in universe", inUniv(forms["4"])) +
     metric("capital deployed", "$" + (d.capital_deployed || 0)) +
     metric("criteria met", (d.research_record || {}).any_criteria_met
       ? "yes" : "0 of 5", !(d.research_record || {}).any_criteria_met) +
@@ -529,6 +540,17 @@ function renderDaily(d){
   }
   if (ev.note){
     html += '<div class="warn">Evidence feed: ' + esc(ev.note) + "</div>";
+  }
+  // Say WHY a form reads n/a, rather than leaving a bare dash.
+  var unres = Object.keys(forms).filter(function(k){
+    return forms[k] && forms[k].in_universe === null;
+  });
+  if (unres.length){
+    html += '<div class="warn">Form ' + unres.map(esc).join(", ") +
+      " filings are counted market-wide but <b>cannot be matched to the " +
+      "universe</b>: EDGAR lists only CIKs for them, no ticker. Shown as " +
+      "<code>n/a</code> rather than 0, because a zero that cannot be " +
+      "non-zero is not a measurement.</div>";
   }
 
   // The sentence that has to survive every future edit to this page.

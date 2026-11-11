@@ -180,19 +180,41 @@ def summarise_hits(hits, eligible: set, max_names: int = 40) -> dict:
     would report roughly triple the filings that actually happened, and the
     number would look plausible enough never to be questioned.
     """
-    filings, in_univ, names = set(), set(), []
+    filings, in_univ, names, any_ticker = set(), set(), [], False
     for h in hits or []:
         acc = str(h.get("_id") or "").split(":")[0]
         if not acc:
             continue
         filings.add(acc)
         src = h.get("_source") or {}
-        for t in tickers_from_display_names(src.get("display_names")):
+        found = tickers_from_display_names(src.get("display_names"))
+        if found:
+            any_ticker = True
+        for t in found:
             if t in eligible and t not in in_univ:
                 in_univ.add(t)
                 if len(names) < max_names:
                     names.append(t)
-    return {"filings": len(filings), "in_universe": len(in_univ),
+
+    # 🔑 A ZERO THAT CANNOT BE NON-ZERO IS NOT A MEASUREMENT.
+    #
+    # Form 4 display_names carry no ticker at all -- the reporting person and
+    # the issuer both appear as a bare "(CIK 0001234567)":
+    #
+    #   ['Mittal Ajay V.  (CIK 0002163322)', 'Groupon, Inc.  (CIK 0001490281)']
+    #
+    # so the universe intersection for that form is structurally zero. Left
+    # as 0 it renders on the dashboard as a real finding -- "no insider
+    # filings among the names we watch" -- every day, forever.
+    #
+    # If not ONE filing out of hundreds yielded a ticker, the ticker layer
+    # cannot see this form, and the honest value is UNKNOWN, not none. This
+    # is the same reasoning that retired spec #4's delisting cell, applied
+    # generically so the next form with no ticker is caught by the rule
+    # rather than by somebody noticing.
+    return {"filings": len(filings),
+            "in_universe": len(in_univ) if any_ticker else None,
+            "tickers_resolvable": any_ticker,
             "names": sorted(names)}
 
 
@@ -477,9 +499,11 @@ def main() -> None:
     print(f"  as of        {snap['asof_session']}")
     print(f"  eligible     {len(eligible)} of {len(pool)} candidates")
     for form, d in (ev.get("forms") or {}).items():
-        print(f"  form {form:<4}   {d['in_universe']} in universe of "
-              f"{d['filings']} filings ({d['documents']} docs) on "
-              f"{ev.get('index_date')}"
+        where = ("NOT RESOLVABLE (this form carries no ticker)"
+                 if d.get("in_universe") is None
+                 else f"{d['in_universe']} in universe")
+        print(f"  form {form:<4}   {where} of {d['filings']} filings "
+              f"({d['documents']} docs) on {ev.get('index_date')}"
               f"{'  [TRUNCATED]' if d.get('truncated') else ''}")
     if ev.get("note"):
         # Printed, not swallowed. The first run lost the evidence feed to a

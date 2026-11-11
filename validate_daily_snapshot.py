@@ -232,7 +232,29 @@ def test_summarise_hits():
     none = ds.summarise_hits(HITS, set())
     check("no-match-still-counts-filings",
           none["filings"] == 3 and none["in_universe"] == 0,
-          "'quiet day' and 'broken universe join' stay distinguishable")
+          "tickers WERE resolvable here and none matched - a real zero")
+
+    # The Form 4 case, and the general rule behind it. display_names for
+    # form 4 carries no symbol at all -- the insider and the issuer are both
+    # a bare "(CIK ...)" -- so the intersection is structurally unreachable.
+    f4 = [
+        {"_id": "0000009-26-000009:w.htm", "_source": {"display_names": [
+            "Mittal Ajay V.  (CIK 0002163322)",
+            "Groupon, Inc.  (CIK 0001490281)"]}},
+        {"_id": "0000010-26-000010:w.htm", "_source": {"display_names": [
+            "Dibbo James  (CIK 0002162291)",
+            "PINTEREST, INC.  (CIK 0001506293)"]}},
+    ]
+    g = ds.summarise_hits(f4, {"EXMP", "NA"})
+    check("no-tickers-anywhere-is-unknown-not-zero",
+          g["in_universe"] is None and g["tickers_resolvable"] is False,
+          "not one filing yielded a ticker, so the intersection is UNKNOWN. "
+          "Reported as 0 it would read 'no insider filings among the names "
+          "we watch' every day forever - the defect that retired spec #4")
+    check("unresolvable-still-counts-filings", g["filings"] == 2,
+          "the market-wide filing count is still a real number")
+    check("resolvable-flag-true-when-tickers-present",
+          ds.summarise_hits(HITS, {"EXMP"})["tickers_resolvable"] is True)
 
     check("empty-is-zero-not-crash",
           ds.summarise_hits([], eligible)["filings"] == 0
