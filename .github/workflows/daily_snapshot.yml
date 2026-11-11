@@ -41,6 +41,24 @@ on:
         description: 'Push the snapshot to the data branch (off = dry run)'
         type: boolean
         default: true
+  # The hermetic `validate` job gates every push, as every other validator in
+  # this repo does. `snapshot` stays unreachable from a push: it needs
+  # `schedule` or an explicit dispatch, so a commit can never publish a feed
+  # or reach the network.
+  push:
+    branches:
+      - 'master'
+      - 'v27/**'
+      - 'v28/**'
+      - 'v29/**'
+    paths:
+      - 'daily_snapshot.py'
+      - 'validate_daily_snapshot.py'
+      - '.github/workflows/daily_snapshot.yml'
+      - 'build_universe_v29.py'
+      - 'qt/tickers.py'
+      - 'data/registry/specifications.json'
+      - 'data/registry/v29_specifications.json'
 
 permissions:
   contents: read
@@ -81,6 +99,11 @@ jobs:
 
   snapshot:
     needs: validate
+    # UNREACHABLE FROM A PUSH. Only the cron or an explicit dispatch gathers,
+    # so no commit can reach the network, write the data branch, or trigger a
+    # site rebuild. The double gate is the same shape the side-effecting jobs
+    # in the extractor workflows use.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 90
     permissions:
