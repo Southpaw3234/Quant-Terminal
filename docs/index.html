@@ -517,10 +517,14 @@ function renderDaily(d){
       tagList(u.exited, "out");
   }
 
-  var names = (forms["8-K"] || {}).names || [];
+  var k8 = forms["8-K"] || {}, names = k8.names || [];
   if (names.length){
     html += '<div class="note" style="margin-top:16px">Filed an 8-K on ' +
-      esc(ev.index_date || "the last filing day") + "</div>" +
+      esc(ev.index_date || "the last filing day") +
+      (k8.filings ? " — " + names.length + " of " + k8.filings +
+        " filings market-wide" : "") +
+      (k8.truncated ? " (sampled, not a full census of the day)" : "") +
+      "</div>" +
       tagList(names.map(function(n){ return n.ticker || n; }), "");
   }
   if (ev.note){
