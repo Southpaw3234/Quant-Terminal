@@ -51,6 +51,7 @@ on:
       - 'v27/**'
       - 'v28/**'
       - 'v29/**'
+      - 'agent/**'
     paths:
       - 'daily_snapshot.py'
       - 'validate_daily_snapshot.py'
