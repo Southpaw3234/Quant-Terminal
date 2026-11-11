@@ -107,6 +107,26 @@ section{padding-top:56px}
   .fr{grid-template-columns:1fr auto}
   .fr .ft{display:none}
 }
+/* The daily feed. `dark` is the state this page must PREFER over rendering a
+   stale number as current — the quant_runner.py lesson, expressed in CSS. */
+.dark{background:var(--miss-soft);border:1px solid var(--miss);border-radius:4px;
+  padding:18px 20px;margin-top:22px}
+.dark h3{color:var(--miss);font-family:"IBM Plex Mono",monospace;font-size:.76rem;
+  font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin:0 0 9px}
+.dark p{font-size:.88rem;color:var(--body);line-height:1.55;margin:0 0 7px}
+.warn{background:var(--open-soft);border:1px solid var(--open);border-radius:4px;
+  padding:11px 14px;margin-top:14px;font-size:.84rem;color:var(--body);line-height:1.5}
+.notbuy{margin-top:14px;padding:11px 14px;border:1px dashed var(--rule);
+  border-radius:4px;font-size:.84rem;color:var(--muted);line-height:1.5}
+.notbuy b{color:var(--ink);font-weight:500}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.tag{font-family:"IBM Plex Mono",monospace;font-size:.7rem;background:var(--sunk);
+  border:1px solid var(--rule-soft);border-radius:3px;padding:3px 7px;color:var(--body)}
+.tag.in{border-color:var(--accent);color:var(--accent)}
+.tag.out{border-color:var(--miss);color:var(--miss)}
+.bench{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:15px;
+  font-family:"IBM Plex Mono",monospace;font-size:.78rem;color:var(--muted)}
+.bench b{color:var(--ink);font-weight:500}
 .note{font-size:.86rem;color:var(--muted);line-height:1.55;font-style:italic}
 .pull{background:var(--surface);border:1px solid var(--rule);border-left:3px solid var(--miss);
   border-radius:0 4px 4px 0;padding:20px 24px;margin-top:24px}
@@ -125,12 +145,20 @@ section{padding-top:56px}
   <div class="col">
     <div class="eyebrow">Quant Terminal · research record</div>
     <h1>A trading system that was measured, and stopped</h1>
-    <p class="deck">Three programmes, pre-registered, with every threshold fixed before the data was touched. This page is the record of what they found — read live from the registries on <code>master</code>, so it cannot quietly go stale the way its predecessor did.</p>
+    <p class="deck">Three programmes, pre-registered, with every threshold fixed before the data was touched. This page is the record of what they found — read live from the registries on <code>master</code>, so it cannot quietly go stale the way its predecessor did — and, above that record, what the system is looking at today.</p>
     <div class="stamp" id="stamp"><span>loading the registries…</span></div>
   </div>
 </header>
 
 <div id="err" hidden></div>
+
+<section>
+  <div class="col stack">
+    <h2>Today</h2>
+    <p>What the system can see right now: which names pass the declared eligibility screen, which 8-K and Form&nbsp;4 filings landed for them on the last filing day, and where the benchmarks closed. Gathered after each US close by a scheduled job that <em>cannot</em> reach the Referee, evaluate a criterion or spend a read — gathering is free under the protocol, measuring is not.</p>
+  </div>
+  <div id="daily"></div>
+</section>
 
 <section>
   <div class="col stack">
@@ -372,6 +400,171 @@ function render(data){
     "<span>Live trading <b>none</b></span>" +
     "<span>Loaded <b>" + new Date().toISOString().slice(0, 16).replace("T", " ") + "Z</b></span>";
 }
+
+/* ─── the daily feed ──────────────────────────────────────────────────────
+   Published by .github/workflows/daily_snapshot.yml to the orphan `data`
+   branch after each US close.
+
+   🔑 THE DEFAULT STATE IS DARK. The page that preceded this one was fed by a
+   build step inside quant_runner.py; when that file was deleted the feed
+   froze and the page kept rendering a seventeen-position book the account had
+   not held for a month. So staleness is not a footnote here — it is the first
+   thing computed, and every exit from this function that is not provably
+   fresh renders the dark block instead of the numbers.                     */
+var DAILY = "https://raw.githubusercontent.com/Southpaw3234/Quant-Terminal/data/docs/daily.json";
+var FEED_DARK_DAYS = 4;    // Friday's snapshot read on Monday is 3 days old
+var DATA_DARK_DAYS = 6;    // a long weekend plus a holiday
+
+function ageDays(iso){
+  var t = Date.parse(iso || "");
+  return isFinite(t) ? (Date.now() - t) / 86400000 : null;
+}
+
+function darkBlock(title, lines){
+  return '<div class="dark"><h3>' + esc(title) + "</h3>" +
+    lines.map(function(l){ return "<p>" + l + "</p>"; }).join("") + "</div>";
+}
+
+function metric(label, value, bad){
+  return '<div class="m' + (bad ? " bad" : "") + '"><span class="ml">' +
+    esc(label) + '</span><span class="mv">' + esc(value) + "</span></div>";
+}
+
+function tagList(arr, cls, cap){
+  if (!arr || !arr.length) return "";
+  var shown = arr.slice(0, cap || 30);
+  return '<div class="tags">' + shown.map(function(t){
+    return '<span class="tag ' + cls + '">' + esc(t) + "</span>";
+  }).join("") + (arr.length > shown.length
+    ? '<span class="tag">+' + (arr.length - shown.length) + " more</span>" : "") +
+    "</div>";
+}
+
+function renderDaily(d){
+  var el = document.getElementById("daily");
+  var feedAge = ageDays(d.generated_at);
+  var dataAge = d.asof_session === undefined ? null
+    : ageDays(d.asof_session + "T21:00:00Z");
+
+  // Unknown age is treated as stale, never as fresh. A snapshot whose
+  // timestamp cannot be parsed is a snapshot that cannot be trusted to be
+  // current, and that is the same situation as an old one.
+  if (feedAge === null || dataAge === null){
+    el.innerHTML = darkBlock("Feed dark — snapshot not dated", [
+      "The snapshot carries no readable <code>generated_at</code> or " +
+      "<code>asof_session</code>, so its age cannot be established.",
+      "Nothing from it is shown. An undated record is treated exactly like " +
+      "a stale one."
+    ]);
+    return;
+  }
+  if (feedAge > FEED_DARK_DAYS || dataAge > DATA_DARK_DAYS){
+    el.innerHTML = darkBlock("Feed dark — snapshot is stale", [
+      "Last gathered <b>" + feedAge.toFixed(1) + " days</b> ago (" +
+      esc(d.generated_at) + "), describing session <b>" +
+      esc(d.asof_session) + "</b>, now <b>" + dataAge.toFixed(0) +
+      " days</b> old.",
+      "The daily job has stopped, or its price source has. <b>The numbers " +
+      "are deliberately not rendered.</b> A record that can quietly stop " +
+      "being true is worse than no record — this page showed a " +
+      "seventeen-position book for a month once, and will not do it again.",
+      "The research record below reads live from <code>master</code> and is " +
+      "unaffected."
+    ]);
+    return;
+  }
+
+  var u = d.universe || {}, ev = d.evidence || {}, forms = ev.forms || {};
+  var html = "";
+
+  if (feedAge > 1.5){
+    html += '<div class="warn">Snapshot is <b>' + feedAge.toFixed(1) +
+      " days</b> old — fresh enough to show, older than a daily cadence. " +
+      "Check the scheduled run.</div>";
+  }
+
+  html += '<div class="metrics">' +
+    metric("eligible today", u.eligible) +
+    metric("candidate pool", u.candidate_pool) +
+    metric("entered", u.entered ? "+" + u.entered.length : "—") +
+    metric("exited", u.exited ? "−" + u.exited.length : "—") +
+    metric("8-K in universe", (forms["8-K"] || {}).in_universe) +
+    metric("form 4 in universe", (forms["4"] || {}).in_universe) +
+    metric("capital deployed", "$" + (d.capital_deployed || 0)) +
+    metric("criteria met", (d.research_record || {}).any_criteria_met
+      ? "yes" : "0 of 5", !(d.research_record || {}).any_criteria_met) +
+    "</div>";
+
+  var b = d.benchmarks || {}, bk = Object.keys(b);
+  if (bk.length){
+    html += '<div class="bench">' + bk.map(function(k){
+      var x = b[k];
+      return "<span>" + esc(k) + " <b>" + num(x.close, 2) + "</b>" +
+        (x.ret_1d === null || x.ret_1d === undefined ? ""
+          : " 1d " + pct(x.ret_1d)) +
+        (x.ret_ytd === null || x.ret_ytd === undefined ? ""
+          : " · ytd " + pct(x.ret_ytd)) + "</span>";
+    }).join("") + "</div>";
+  }
+
+  if (u.entered && u.entered.length){
+    html += '<div class="note" style="margin-top:16px">Entered the screen ' +
+      "since " + esc(u.compared_to || "the previous snapshot") + "</div>" +
+      tagList(u.entered, "in");
+  }
+  if (u.exited && u.exited.length){
+    html += '<div class="note" style="margin-top:14px">Left the screen</div>' +
+      tagList(u.exited, "out");
+  }
+
+  var names = (forms["8-K"] || {}).names || [];
+  if (names.length){
+    html += '<div class="note" style="margin-top:16px">Filed an 8-K on ' +
+      esc(ev.index_date || "the last filing day") + "</div>" +
+      tagList(names.map(function(n){ return n.ticker || n; }), "");
+  }
+  if (ev.note){
+    html += '<div class="warn">Evidence feed: ' + esc(ev.note) + "</div>";
+  }
+
+  // The sentence that has to survive every future edit to this page.
+  html += '<div class="notbuy"><b>The eligible list is not a buy list.</b> ' +
+    "It is the set of names that pass the declared liquidity and price " +
+    "filters — the pool a specification is permitted to look at. No " +
+    "position is held, no capital is deployed, and every read taken so far " +
+    "returned <b>NOT MET</b>. Nothing here is a recommendation to buy or " +
+    "sell anything.</div>";
+
+  html += '<div class="note" style="margin-top:14px">Screened ' +
+    esc(u.pool_source === "finnhub_live" ? "against the live symbol list"
+      : "against the frozen panel (live symbol list unavailable)") +
+    " for session <b>" + esc(d.asof_session) + "</b>, gathered " +
+    esc(d.generated_at) + ". Rules: price ≥ " +
+    esc((u.rules || {}).price_min) + ", ADV " +
+    esc((u.rules || {}).adv_min) + "–" + esc((u.rules || {}).adv_max) +
+    ", ≥ " + esc((u.rules || {}).min_history) + " bars — imported from " +
+    "<code>build_universe_v29.py</code>, not restated.</div>";
+
+  el.innerHTML = html;
+}
+
+(function(){
+  fetch(DAILY + "?cb=" + Date.now(), {cache: "no-store"}).then(function(r){
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r.json();
+  }).then(renderDaily).catch(function(err){
+    document.getElementById("daily").innerHTML = darkBlock(
+      "Feed dark — no snapshot published", [
+        "Could not load <code>daily.json</code> from the <code>data</code> " +
+        "branch (" + esc(err.message) + ").",
+        "This is the expected state before the first scheduled run, and the " +
+        "correct state if the job has stopped. Nothing is shown rather than " +
+        "something stale.",
+        "The research record below reads live from <code>master</code> and " +
+        "is unaffected."
+      ]);
+  });
+})();
 
 (function(){
   var out = {};

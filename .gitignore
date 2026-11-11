@@ -28,3 +28,8 @@ scripts/.gh_token.dpapi
 
 # local trigger/watch logs from the workstation scheduled tasks
 run_logs/
+
+# The daily terminal snapshot is published to the orphan `data` branch,
+# never to master. A stray copy committed here would be served as a file
+# that can never update -- exactly the stale-feed failure this replaced.
+docs/daily.json
