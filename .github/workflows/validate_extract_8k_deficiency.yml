@@ -87,6 +87,11 @@ jobs:
         run: |
           python -m py_compile extract_8k_deficiency.py
           python -m py_compile validate_extract_8k_deficiency.py
+          # The dispatch-only scripts too. A syntax error in these would
+          # otherwise surface only when a job is dispatched, which is the
+          # least convenient moment to find one.
+          python -m py_compile rehearse_deficiency_availability.py
+          python -m py_compile diagnose_unresolved_ciks.py
       - name: Run pure-logic validation
         run: python validate_extract_8k_deficiency.py
       - name: Assert nothing under data/ changed
