@@ -57,7 +57,9 @@ import datetime as dt
 import hashlib
 import json
 import os
+import re
 import sys
+import time
 
 import pandas as pd
 
@@ -84,9 +86,16 @@ REGISTRIES = (
     ("v29", "data/registry/v29_specifications.json", "V29 — systematic value"),
 )
 
-SEC_TICKERS = "https://www.sec.gov/files/company_tickers.json"
-SEC_DAILY_INDEX = ("https://www.sec.gov/Archives/edgar/daily-index/"
-                   "{yr}/QTR{q}/form.{ymd}.idx")
+# ⚠️ NOT www.sec.gov. That host answers 403 from CI and from the operator's
+# machine alike, which rules out both company_tickers.json and the daily
+# form index -- extract_8k_deficiency.resolve_cik carries the same note and
+# routes around it the same way. EDGAR full-text search answers from both,
+# and it carries the ticker in `display_names`, so no separate ticker->CIK
+# map is needed at all.
+EFTS_URL = "https://efts.sec.gov/LATEST/search-index"
+EFTS_PAGE = 100                                  # the API's maximum
+EVIDENCE_PAGES = int(os.environ.get("QT_DAILY_EVIDENCE_PAGES", "12"))
+EFTS_SLEEP = 0.15
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
@@ -129,42 +138,62 @@ def staleness(generated_at: str, asof_session: str, now=None) -> dict:
     return out
 
 
-def parse_form_index(text: str, want: dict, forms=EVIDENCE_FORMS,
-                     max_names: int = 40) -> dict:
-    """Parse an EDGAR daily form index. Pure: no network, no clock.
+_PAREN = re.compile(r"\(([^)]*)\)")
 
-    The index is space-aligned columns:
 
-        Form Type  Company Name            CIK      Date Filed  File Name
-        8-K        EXAMPLE CORP            1234567  2026-11-10  edgar/...
+def tickers_from_display_names(names) -> set:
+    """Pull the ticker symbols out of an EFTS `display_names` entry. Pure.
 
-    The CIK is taken from the `edgar/data/<cik>/` path segment rather than by
-    hunting for a numeric column. A company name can contain digits, and a
-    name like "1-800-FLOWERS" would otherwise be read as the CIK.
+    The field looks like:
 
-    `want` maps CIK -> ticker for the names currently in the universe.
+        'BIOVIE INC.  (BIVI, BIVIW)  (CIK 0001580149)'
+
+    so there are two traps and both are live:
+
+      1. the LAST parenthetical is the CIK, not a ticker. Taking "the thing
+         in brackets" would file every company under a ticker of "CIK".
+      2. one company can list SEVERAL tickers in one parenthetical -- share
+         classes and warrants -- and they are comma-separated.
+
+    A company with no listed ticker yields nothing rather than a placeholder,
+    because an empty set is a true statement and "" is a ticker that would
+    later match a blank field somewhere.
     """
-    out = {f: {"total": 0, "in_universe": 0, "names": []} for f in forms}
-    seen = {f: set() for f in forms}
-    for line in text.splitlines():
-        parts = [p for p in line.split("  ") if p.strip()]
-        if len(parts) < 2:
-            continue
-        form = parts[0].strip()
-        if form not in out:
-            continue
-        out[form]["total"] += 1
-        cik = None
-        if "edgar/data/" in line:
-            seg = line.split("edgar/data/", 1)[1].split("/", 1)[0]
-            if seg.isdigit():
-                cik = int(seg)
-        if cik is not None and cik in want and want[cik] not in seen[form]:
-            seen[form].add(want[cik])
-            out[form]["in_universe"] += 1
-            if len(out[form]["names"]) < max_names:
-                out[form]["names"].append(want[cik])
+    out = set()
+    for n in names or []:
+        for grp in _PAREN.findall(str(n)):
+            g = grp.strip()
+            if g.upper().startswith("CIK"):
+                continue
+            for part in g.split(","):
+                t = part.strip().upper()
+                if t and len(t) <= 6 and t.replace(".", "").replace("-", "").isalnum():
+                    out.add(t)
     return out
+
+
+def summarise_hits(hits, eligible: set, max_names: int = 40) -> dict:
+    """Fold EFTS hits into one form's counts. Pure: no network, no clock.
+
+    🔑 DEDUPED BY ACCESSION NUMBER. EFTS indexes DOCUMENTS, not filings: one
+    8-K with an exhibit and a press release is three hits. Counting hits
+    would report roughly triple the filings that actually happened, and the
+    number would look plausible enough never to be questioned.
+    """
+    filings, in_univ, names = set(), set(), []
+    for h in hits or []:
+        acc = str(h.get("_id") or "").split(":")[0]
+        if not acc:
+            continue
+        filings.add(acc)
+        src = h.get("_source") or {}
+        for t in tickers_from_display_names(src.get("display_names")):
+            if t in eligible and t not in in_univ:
+                in_univ.add(t)
+                if len(names) < max_names:
+                    names.append(t)
+    return {"filings": len(filings), "in_universe": len(in_univ),
+            "names": sorted(names)}
 
 
 def _session():
@@ -264,47 +293,69 @@ def benchmark_block() -> tuple:
 
 # ── the evidence feed ────────────────────────────────────────────────────────
 
+def _efts(op, form: str, day, frm: int) -> dict:
+    """One page of EDGAR full-text search for a form on a date.
+
+    The query term is EMPTY on purpose. EFTS accepts forms + dates with no
+    `q`, and that matters: any keyword would silently select the subset of
+    filings containing that word, turning a census of the day into a biased
+    sample that still looks like a census.
+    """
+    r = op.get(EFTS_URL, timeout=60, params={
+        "q": "", "forms": form,
+        "startdt": str(day), "enddt": str(day),
+        "from": frm, "size": EFTS_PAGE})
+    r.raise_for_status()
+    body = r.json() or {}
+    time.sleep(EFTS_SLEEP)
+    hits = (body.get("hits") or {})
+    return {"_total": ((hits.get("total") or {}).get("value") or 0),
+            "_hits": hits.get("hits") or []}
+
+
 def evidence_block(eligible: set) -> dict:
     """What NEW filings landed for names in today's universe.
 
-    Two requests, not three thousand: EDGAR publishes a full form index per
-    filing day, and a ticker->CIK map once. Per-ticker full-text queries were
-    rejected -- the spec #4 diagnostic measured 23.8% of tickers unresolvable
-    that way, so a per-ticker feed would silently under-report by a quarter.
+    A handful of requests, not three thousand. Per-ticker full-text queries
+    were rejected because the spec #4 diagnostic measured 23.8% of tickers
+    unresolvable that way -- that feed would under-report by a quarter and
+    never say so.
     """
     out = {"index_date": None, "forms": {}, "note": None}
     try:
         op = _session()
-        m = op.get(SEC_TICKERS, timeout=60)
-        m.raise_for_status()
-        cik_of, name_of = {}, {}
-        for d in (m.json() or {}).values():
-            tk = str(d.get("ticker") or "").strip().upper()
-            if tk:
-                cik_of[tk] = int(d.get("cik_str") or 0)
-                name_of[int(d.get("cik_str") or 0)] = d.get("title") or ""
-        want = {cik_of[t]: t for t in eligible if t in cik_of}
 
-        # Walk back to the most recent published index. Weekends, holidays and
-        # the lag between a session closing and its index appearing all look
-        # the same from here: a 404.
-        day, idx_text = dt.date.today(), None
+        # Walk back to the most recent day that has filings. A weekend, a
+        # holiday and "the index has not been published yet" are all the same
+        # observation from here: zero hits.
+        day = dt.date.today()
         for _ in range(7):
-            url = SEC_DAILY_INDEX.format(yr=day.year, q=(day.month - 1) // 3 + 1,
-                                         ymd=day.strftime("%Y%m%d"))
-            r = op.get(url, timeout=60)
-            if r.status_code == 200 and r.text:
-                idx_text, out["index_date"] = r.text, str(day)
+            probe = _efts(op, EVIDENCE_FORMS[0], day, 0)
+            if probe.get("_total", 0) > 0:
+                out["index_date"] = str(day)
                 break
             day -= dt.timedelta(days=1)
-        if idx_text is None:
-            out["note"] = "no EDGAR daily index found in the last 7 days"
+        if out["index_date"] is None:
+            out["note"] = "no EDGAR filings found in the last 7 days"
             return out
 
-        out["forms"] = parse_form_index(idx_text, want)
-        for form, d in out["forms"].items():
-            d["names"] = [{"ticker": t, "name": name_of.get(cik_of.get(t, 0), "")}
-                          for t in d["names"]]
+        for form in EVIDENCE_FORMS:
+            hits, total, pages = [], None, 0
+            while pages < EVIDENCE_PAGES:
+                page = _efts(op, form, day, pages * EFTS_PAGE)
+                total = page.get("_total", 0) if total is None else total
+                got = page.get("_hits") or []
+                hits.extend(got)
+                pages += 1
+                if len(got) < EFTS_PAGE or pages * EFTS_PAGE >= (total or 0):
+                    break
+            d = summarise_hits(hits, eligible)
+            # `documents` is what EFTS counts, `filings` is what happened.
+            # Both are reported because a reader comparing this page to
+            # EDGAR's own hit count deserves to see the same number.
+            d["documents"] = total or 0
+            d["truncated"] = (total or 0) > pages * EFTS_PAGE
+            out["forms"][form] = d
     except Exception as e:                     # noqa: BLE001 - reported, not raised
         out["note"] = f"evidence feed unavailable: {e.__class__.__name__}"
     return out
@@ -426,8 +477,14 @@ def main() -> None:
     print(f"  as of        {snap['asof_session']}")
     print(f"  eligible     {len(eligible)} of {len(pool)} candidates")
     for form, d in (ev.get("forms") or {}).items():
-        print(f"  form {form:<4}   {d['in_universe']} in universe "
-              f"of {d['total']} filed {ev.get('index_date')}")
+        print(f"  form {form:<4}   {d['in_universe']} in universe of "
+              f"{d['filings']} filings ({d['documents']} docs) on "
+              f"{ev.get('index_date')}"
+              f"{'  [TRUNCATED]' if d.get('truncated') else ''}")
+    if ev.get("note"):
+        # Printed, not swallowed. The first run lost the evidence feed to a
+        # 403 and the log said nothing, because only the forms loop reported.
+        print(f"  evidence   ⚠️  {ev['note']}")
     for pr in rec["programmes"]:
         print(f"  {pr['id']}          K {pr['k_used']}/{pr['k_budget']}, "
               f"{len(pr['reads'])} read")

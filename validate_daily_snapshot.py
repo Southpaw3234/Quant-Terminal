@@ -168,60 +168,94 @@ def test_staleness():
 
 # ── the EDGAR index parser ───────────────────────────────────────────────────
 
-FIXTURE = """\
-Form Type  Company Name                      CIK  Date Filed  File Name
----------  --------------------------------  ---  ----------  ---------
-4          EXAMPLE CORP                 1000001  2026-11-10  edgar/data/1000001/x.txt
-8-K        EXAMPLE CORP                 1000001  2026-11-10  edgar/data/1000001/y.txt
-8-K        1-800-NUMBERS INC            1000002  2026-11-10  edgar/data/1000002/z.txt
-8-K        NOT IN UNIVERSE LTD          9999999  2026-11-10  edgar/data/9999999/q.txt
-10-K       EXAMPLE CORP                 1000001  2026-11-10  edgar/data/1000001/k.txt
-4          EXAMPLE CORP                 1000001  2026-11-10  edgar/data/1000001/x2.txt
-"""
+def test_display_name_tickers():
+    print("\nticker extraction from EFTS display_names")
+    f = ds.tickers_from_display_names
+
+    # The live shape, from EDGAR on 2026-11-10.
+    check("real-shape",
+          f(["BIOVIE INC.  (BIVI, BIVIW)  (CIK 0001580149)"]) == {"BIVI", "BIVIW"},
+          "share class and warrant, comma-separated in ONE parenthetical")
+
+    # 🔑 The trap. The last bracket is the CIK, and taking "the thing in
+    # brackets" would file every company in the market under ticker 'CIK'.
+    check("cik-parenthetical-not-a-ticker",
+          "CIK" not in f(["SOMECO  (SOME)  (CIK 0001234567)"]))
+    check("no-ticker-yields-nothing",
+          f(["PRIVATE HOLDINGS LLC  (CIK 0001234567)"]) == set(),
+          "an empty set is true; a placeholder '' would later match a blank "
+          "field somewhere")
+
+    check("ticker-NA-survives",
+          f(["NANO LABS LTD  (NA)  (CIK 0001872302)"]) == {"NA"},
+          "'NA' is a real listed company and has already been lost twice in "
+          "this repo — see qt/tickers.py")
+    check("handles-dot-and-dash", f(["X CORP  (BRK.B, RDS-A)"]) == {"BRK.B", "RDS-A"})
+    check("rejects-overlong-token",
+          f(["LONG  (ABCDEFGHIJK)"]) == set(), "not a ticker")
+    check("empty-input", f(None) == set() and f([]) == set())
 
 
-def test_form_index_parser():
-    print("\nEDGAR daily form index parsing")
-    want = {1000001: "EXMP", 1000002: "NUMB"}
-    got = ds.parse_form_index(FIXTURE, want)
+HITS = [
+    # One 8-K: three documents, one accession. EFTS indexes DOCUMENTS.
+    {"_id": "0000001-26-000001:a.htm",
+     "_source": {"display_names": ["EXAMPLE CORP  (EXMP)  (CIK 0000001)"]}},
+    {"_id": "0000001-26-000001:ex1.htm",
+     "_source": {"display_names": ["EXAMPLE CORP  (EXMP)  (CIK 0000001)"]}},
+    {"_id": "0000001-26-000001:ex2.htm",
+     "_source": {"display_names": ["EXAMPLE CORP  (EXMP)  (CIK 0000001)"]}},
+    # A second filer, in the universe.
+    {"_id": "0000002-26-000002:b.htm",
+     "_source": {"display_names": ["NANO LABS LTD  (NA)  (CIK 0000002)"]}},
+    # A third, NOT in the universe.
+    {"_id": "0000003-26-000003:c.htm",
+     "_source": {"display_names": ["OUTSIDE INC  (ZZZZ)  (CIK 0000003)"]}},
+]
 
-    check("counts-all-8k", got["8-K"]["total"] == 3,
-          f"{got['8-K']['total']} 8-K lines including the one outside the "
-          f"universe")
-    check("counts-all-4", got["4"]["total"] == 2, f"{got['4']['total']}")
-    check("ignores-other-forms", "10-K" not in got,
-          "only the declared evidence forms are counted")
-    check("universe-intersection-8k", got["8-K"]["in_universe"] == 2,
-          f"{got['8-K']['in_universe']} of 3 — 9999999 is not in the universe")
 
-    # 🔑 "1-800-NUMBERS INC" is the reason the CIK comes from the path. A
-    # scan for the first numeric field would read 1 or 800 as the CIK.
-    check("company-name-digits-not-read-as-cik",
-          "NUMB" in got["8-K"]["names"],
-          "the CIK is taken from edgar/data/<cik>/, so a company name "
-          "containing digits cannot be mistaken for one")
+def test_summarise_hits():
+    print("\nfolding EFTS hits into counts")
+    eligible = {"EXMP", "NA"}
+    got = ds.summarise_hits(HITS, eligible)
 
-    check("dedupes-repeat-filers", got["4"]["in_universe"] == 1,
-          f"EXMP filed two Form 4s; it is ONE name in the book, not two")
+    # 🔑 The one that matters. Counting hits instead of accessions reports
+    # roughly triple the filings that happened, and looks plausible.
+    check("deduped-by-accession", got["filings"] == 3,
+          f"{got['filings']} filings from {len(HITS)} documents — one 8-K "
+          f"with two exhibits is ONE filing")
+    check("universe-intersection", got["in_universe"] == 2,
+          f"{got['in_universe']} — ZZZZ is outside the universe")
+    check("ticker-NA-counted", "NA" in got["names"],
+          "the ticker that pandas keeps eating is in the universe here")
+    check("names-sorted", got["names"] == sorted(got["names"]))
 
-    check("header-rows-ignored", got["8-K"]["total"] == 3,
-          "the column header and rule line are not filings")
+    none = ds.summarise_hits(HITS, set())
+    check("no-match-still-counts-filings",
+          none["filings"] == 3 and none["in_universe"] == 0,
+          "'quiet day' and 'broken universe join' stay distinguishable")
 
-    empty = ds.parse_form_index("", want)
-    check("empty-index-is-zero-not-crash",
-          empty["8-K"]["total"] == 0 and empty["4"]["total"] == 0)
-
-    none_wanted = ds.parse_form_index(FIXTURE, {})
-    check("no-universe-match-is-zero",
-          none_wanted["8-K"]["total"] == 3
-          and none_wanted["8-K"]["in_universe"] == 0,
-          "totals still counted when nothing matches, so 'quiet day' and "
-          "'broken universe join' are distinguishable")
-
-    cap = ds.parse_form_index(FIXTURE, want, max_names=1)
-    check("name-list-is-capped", len(cap["8-K"]["names"]) == 1,
+    check("empty-is-zero-not-crash",
+          ds.summarise_hits([], eligible)["filings"] == 0
+          and ds.summarise_hits(None, eligible)["filings"] == 0)
+    check("missing-id-skipped",
+          ds.summarise_hits([{"_source": {}}], eligible)["filings"] == 0)
+    check("name-list-is-capped",
+          len(ds.summarise_hits(HITS, eligible, max_names=1)["names"]) == 1,
           "the snapshot is served to a browser; the list is capped while the "
           "count is not")
+
+
+def test_evidence_query_is_unbiased():
+    print("\nthe evidence query is a census, not a sample")
+    src = inspect.getsource(ds._efts)
+    check("empty-q", '"q": ""' in src,
+          "EFTS accepts forms+dates with no keyword; any keyword would "
+          "select the filings containing that word and still look like a "
+          "census of the day")
+    check("not-www-sec-gov", "www.sec.gov" not in inspect.getsource(ds),
+          "that host answers 403 from CI — the first run lost the whole "
+          "evidence feed to it")
+    check("efts-host", "efts.sec.gov" in ds.EFTS_URL)
 
 
 # ── the registry view must not invent anything ───────────────────────────────
@@ -261,7 +295,9 @@ def main():
     test_honesty_fields_are_data()
     test_no_measurement()
     test_staleness()
-    test_form_index_parser()
+    test_display_name_tickers()
+    test_summarise_hits()
+    test_evidence_query_is_unbiased()
     test_research_record_matches_registries()
 
     print("\n" + "=" * 70)
