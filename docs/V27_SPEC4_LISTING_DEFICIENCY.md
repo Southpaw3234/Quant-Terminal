@@ -71,7 +71,10 @@ deleted. They are the evidence for this decision, and the `qt/tickers.py`
 module and the rehearsal's price-coverage block came out of this work and
 remain in use.
 
-**Slot 4 of 5 remains available.**
+**Slot 4 of 5 remains available.** It is now proposed for
+`docs/V27_SPEC4_TAX_LOSS_REVERSAL.md`, which is chosen against the
+failure recorded here: that specification needs no new data at all, so
+it cannot fail the way this one did.
 
 ---
 
