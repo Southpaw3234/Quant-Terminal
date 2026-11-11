@@ -1,12 +1,77 @@
 # Specification #4 — listing deficiency (8-K Item 3.01)
 
-**Status:** ⚪ **DRAFT. Nothing is declared. K is 3/5 and untouched.**
+**Status:** ⛔ **ABANDONED 2026-11-11, BEFORE DECLARATION. Never declared.
+K is 3/5 and untouched. No return was ever computed for this event class.**
+
+Abandoned on the availability rehearsal, not on a result. The sample this
+specification would have measured does not contain the companies the
+specification is about. Everything below is preserved as written — the
+reasoning is not edited after the fact — and the finding that killed it is
+recorded in §⓿ immediately following.
+
 Supersedes the event-class section of `docs/V27_SPEC4_SKETCH.md`, which was
 written before the spec #3 read and before `qt/calendar_time.py` existed.
 
-This document exists so the design is settled, argued with, and rehearsed
-*before* anyone decides whether it is worth one of the two remaining slots.
-Declaring is what spends K. Everything described here costs nothing.
+---
+
+## ⓿ Why this was abandoned
+
+The count-only availability rehearsal
+([run 42954385237](https://github.com/Southpaw3234/Quant-Terminal/actions/runs/42954385237))
+over the emitted event file — 2,507 Item 3.01 filings, 838 distinct tickers,
+2015-10-02..2025-09-02, sha256 `7f60b23c…c6b622` — returned:
+
+```
+price coverage — can this layer SEE a delisting?
+  tickers in event file   838
+  with usable history     838
+  no history delivered    0
+```
+
+**838 of 838 tickers have complete price history.** The price source does not
+serve history for companies that stopped trading; a ten-year sample of
+small-caps formally in breach of a listing rule should be missing a
+substantial share of its names. This one is missing none, and `delisted
+inside window` came back 0 of 2,507.
+
+🔑 **THE SAMPLE IS SURVIVORS.** The V29 panel requires price ≥ $2.00
+(`build_universe_v29.py`, `PRICE_MIN`), while the Nasdaq minimum-bid-price
+rule — the single most common Item 3.01 trigger — fires below $1.00. The PIT
+eligibility filter therefore removed the deficiency population upstream:
+2,685 of 5,194 filings (52%) were dropped as not PIT-eligible, and what
+survived is notices sent to companies trading above $2 that went on to
+survive. §② argues a hypothesis about *constrained* companies. The file
+contains companies that were never seriously constrained.
+
+### Why not repair it
+
+Two repairs were considered and both measure something other than the
+specification:
+
+- **Keep the $2 floor, narrow the hypothesis to non-bid-price deficiencies.**
+  Legal, but it abandons the economic claim in §② while keeping its
+  machinery. The remaining triggers are a heterogeneous residual, not a
+  thesis.
+- **Drop the floor to capture sub-$1 names.** This makes the 50 bp
+  round-trip cost assumption in §⑦ fiction. At sub-$1 prices in the
+  $50k–$5M ADV band, spread alone exceeds the entire expected effect, so the
+  criterion set could not be met by any real implementation.
+
+### What this costs
+
+**Nothing, and that is the point worth recording.** No slot was spent, and
+because no return was ever computed for this event class, it does **not**
+enter the multiple-comparison count: the WRC/SPA Bonferroni correction is
+over K *declared*, and this was never declared. Had the same fact been found
+*after* declaring — or worse, after a read — it would have cost a slot and
+inflated the bar for the remaining ones.
+
+The extractor, validator, rehearsal and diagnostic are kept rather than
+deleted. They are the evidence for this decision, and the `qt/tickers.py`
+module and the rehearsal's price-coverage block came out of this work and
+remain in use.
+
+**Slot 4 of 5 remains available.**
 
 ---
 
