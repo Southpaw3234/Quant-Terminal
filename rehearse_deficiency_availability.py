@@ -42,8 +42,15 @@ MIN_BOOK = 5               # below this the day is FLAT, not dropped
 PRICE_START = "2015-06-01"
 
 
-def fetch_prices(tickers) -> dict:
-    """Back-adjusted daily closes. Used to COUNT, never to compute a return."""
+def fetch_prices(tickers):
+    """Back-adjusted daily closes. Used to COUNT, never to compute a return.
+
+    Returns (series_by_ticker, missing). The MISSING list is returned rather
+    than discarded because a ticker the price layer never delivered and a
+    ticker that stopped trading are indistinguishable once both are merely
+    absent from the dict -- and telling those two apart is the whole job of
+    this rehearsal.
+    """
     import yfinance as yf
     need = sorted(set(tickers) | {BENCHMARK})
     out = {}
@@ -62,7 +69,7 @@ def fetch_prices(tickers) -> dict:
                 s.index = pd.DatetimeIndex(s.index).tz_localize(None).normalize()
                 out[str(c)] = s
         print(f"  prices {min(k + 100, len(need))}/{len(need)}")
-    return out
+    return out, [t for t in need if t not in out]
 
 
 def main() -> None:
@@ -83,7 +90,7 @@ def main() -> None:
     print("[rehearse] COUNT ONLY — no return computed, Referee not consulted, "
           "K untouched.\n")
 
-    prices = fetch_prices(ev.ticker.unique().tolist())
+    prices, missing = fetch_prices(ev.ticker.unique().tolist())
     if BENCHMARK not in prices:
         print(f"[rehearse] no {BENCHMARK} history — cannot build a calendar")
         sys.exit(2)
@@ -136,6 +143,32 @@ def main() -> None:
     print(f"  fully priced            {c['ok']}")
     print(f"  SETTLED (countable)     {settled}")
 
+    # ── CAN THIS PRICE LAYER SEE A DELISTING AT ALL? ──────────────────────
+    # The funnel above decides "delisted" by asking whether a name's own
+    # series ends before its window does. That test is only meaningful if the
+    # series actually END at different dates. A batch download that aligns
+    # every ticker onto one common index, or silently pads the tail, makes
+    # `delisted` structurally UNREACHABLE -- and the funnel then prints a
+    # clean sample whether or not the sample is clean.
+    #
+    # 🔑 A ZERO THAT CANNOT BE NON-ZERO IS NOT A MEASUREMENT.
+    # So the capability is measured here, separately, and the rehearsal
+    # refuses to report a funnel it cannot substantiate.
+    in_file = set(ev.ticker.unique())
+    missing_ev = sorted(in_file - set(prices))
+    ends = {t: s.index[-1] for t, s in prices.items()
+            if t != BENCHMARK and t in in_file}
+    stopped = sorted(t for t, e in ends.items() if e < last)
+
+    print("\n[rehearse] price coverage — can this layer SEE a delisting?")
+    print(f"  tickers in event file   {len(in_file)}")
+    print(f"  with usable history     {len(ends)}")
+    print(f"  no history delivered    {len(missing_ev)}")
+    print(f"  series ending before {last.date()}  {len(stopped)}")
+    if ends:
+        uniq = len({e for e in ends.values()})
+        print(f"  distinct series end dates {uniq}")
+
     print("\n[rehearse] the book, which is what a calendar-time read measures")
     print(f"  sessions in history     {len(sessions)} "
           f"{sessions[0].date()}..{last.date()}")
@@ -145,6 +178,23 @@ def main() -> None:
         print(f"  book size min/median/max {int(nz.min())} / "
               f"{int(np.median(nz))} / {int(nz.max())}")
         print(f"  mean book size          {nz.mean():.1f}")
+
+    # The refusal. Not a warning: these numbers go into `availability_rehearsal`
+    # in the declaration, and a prior gets signed against them. Reporting a
+    # funnel whose delisting cell could not have been non-zero would put an
+    # unfalsifiable figure on the record, which is the A7 defect exactly --
+    # a green run is not a delivered artifact.
+    if ends and not stopped:
+        print("\n[rehearse] REFUSING TO REPORT THIS FUNNEL")
+        print(f"::error::not one of {len(ends)} tickers has a series ending "
+              f"before {last.date()}, so the delisting test could not have "
+              f"fired. The {c['delisted']} delistings above is an artefact of "
+              f"the price layer, not a property of the sample.")
+        print("  Fix the price layer (per-ticker history, not a batch aligned "
+              "on one index) and re-run before anything here is quoted in a "
+              "declaration.")
+        print("\n[rehearse] no return computed. K unchanged. Nothing declared.")
+        sys.exit(5)
 
     print("\n[rehearse] reading")
     if settled == 0:
