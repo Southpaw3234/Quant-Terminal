@@ -178,7 +178,11 @@ jobs:
                 f"({u['pool_source']}); +{len(u['entered'])}/-{len(u['exited'])} "
                 f"vs {u['compared_to']}")
           for f, x in (d.get("evidence", {}).get("forms") or {}).items():
-              print(f"form {f:<4} {x['in_universe']} in universe of {x['total']}")
+              seen = ("not resolvable" if x.get("in_universe") is None
+                      else f"{x['in_universe']} in universe")
+              print(f"form {f:<4} {seen} of {x.get('filings')} filings")
+          if (d.get("evidence") or {}).get("note"):
+              print(f"evidence  WARNING {d['evidence']['note']}")
           for pr in r["programmes"]:
               print(f"{pr['id']}       K {pr['k_used']}/{pr['k_budget']}")
           print(f"any criteria met: {r['any_criteria_met']}")
