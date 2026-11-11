@@ -1,0 +1,271 @@
+name: Research bot (v27 spec #4 — tax-loss reversal)
+
+# THE RESEARCH BOT.
+#
+# It advances a specification through its pre-read checklist on its own, and
+# stops at the one gate it must never pass.
+#
+#   docs/V27_SPEC4_TAX_LOSS_REVERSAL.md §⑨ lists four things that must happen
+#   before a slot is spent:
+#
+#     1. extractor + hermetic validator merged      <- `validate`, every push
+#     2. availability rehearsal run and recorded    <- `rehearse`, dispatch
+#     3. event file fingerprinted                   <- `build`, dispatch
+#     4. the prior is signed                        <- A HUMAN. NOT THIS FILE.
+#
+# 🔑 WHY A BOT IS ALLOWED TO DO THIS AT ALL
+#
+# Under the protocol, GATHERING IS FREE AND MEASURING IS SCARCE. Steps 1-3
+# produce no return, evaluate no criterion and consult no Referee, so they
+# can run unattended as often as they like. Step 4 is a judgement that costs
+# one of five irreversible slots, and an autonomous agent must not make it.
+#
+# That boundary is ENFORCED, not promised. validate_extract_tax_loss.py
+# parses the extractor's imports and fails if qt.referee, qt.wrc or
+# qt.calendar_time ever appears, and pins select_cycle's signature so the
+# selection cannot acquire sight of an outcome. The bot cannot spend a read
+# because the code it runs cannot compute one.
+#
+# WHAT THE BOT IS NOT: a trader. It holds nothing, places nothing, and has
+# no broker credential in scope.
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_build:
+        description: 'Build the book schedule (SELECTION only, no returns, no K)'
+        type: boolean
+        default: false
+      limit:
+        description: 'Cap names per cycle for a smoke test (0 = all)'
+        type: string
+        default: '0'
+      run_rehearsal:
+        description: 'COUNT-ONLY availability rehearsal over a built schedule'
+        type: boolean
+        default: false
+      book_run_id:
+        description: 'Run id holding the v27-spec4-tax-loss-book artifact'
+        type: string
+        default: ''
+  push:
+    branches:
+      - 'master'
+      - 'v27/**'
+      - 'v28/**'
+      - 'v29/**'
+    paths:
+      - 'extract_tax_loss_book.py'
+      - 'validate_extract_tax_loss.py'
+      - 'qt/panel.py'
+      - 'rehearse_tax_loss_availability.py'
+      - 'qt/tickers.py'
+      - '.github/workflows/research_bot.yml'
+      - 'data/registry/specifications.json'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      # No yfinance, no requests. The pure-logic suite cannot reach a price
+      # even by accident, which is what makes "selection is blind" testable
+      # rather than merely asserted.
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas
+      - name: Compile check
+        run: |
+          python -m py_compile extract_tax_loss_book.py
+          python -m py_compile validate_extract_tax_loss.py
+          python -m py_compile qt/panel.py
+          python -m py_compile rehearse_tax_loss_availability.py
+      - name: Run pure-logic validation
+        run: python validate_extract_tax_loss.py
+      - name: Assert nothing under data/ changed
+        run: |
+          set -u
+          if ! git diff --quiet -- data/ 2>/dev/null; then
+            echo "::error::validation modified data/ — it must be read-only"
+            git --no-pager diff --stat -- data/
+            exit 1
+          fi
+          echo "OK — data/ untouched."
+
+  build:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_build
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas "yfinance>=0.2.40,<2"
+      - name: Refuse if the schedule already exists
+        # Once named by a declaration this file is a FROZEN input, and
+        # rebuilding it is how a frozen input quietly stops being frozen.
+        run: |
+          set -u
+          if [ -f data/events/tax_loss_book.csv ]; then
+            echo "::error::data/events/tax_loss_book.csv already exists — refusing to rebuild"
+            exit 3
+          fi
+          echo "OK — nothing to clobber."
+      - name: Build the book schedule
+        env:
+          QT_TL_PANEL: data/universe/v29_universe_pit.csv
+          QT_TL_LIMIT: ${{ inputs.limit }}
+        run: |
+          set -u
+          if [ ! -f data/universe/v29_universe_pit.csv ]; then
+            echo "::error::no frozen V29 panel on this ref"; exit 1
+          fi
+          python extract_tax_loss_book.py
+      - name: Fingerprint — step 3 of the pre-read checklist
+        # Recorded BEFORE any read exists, so the declaration can name the
+        # exact bytes it was written against. An input nobody fingerprinted
+        # is an input that can move between the rehearsal and the read.
+        run: |
+          set -u
+          python - <<'PY'
+          import hashlib
+          import pandas as pd
+          p = "data/events/tax_loss_book.csv"
+          b = open(p, "rb").read().replace(b"\r\n", b"\n")
+          d = pd.read_csv(p, keep_default_na=False, na_values=[])
+          print("INPUTS_FINGERPRINT")
+          print(f"  path    {p}")
+          print(f"  rows    {len(d)}")
+          print(f"  sha256  {hashlib.sha256(b).hexdigest()}")
+          if len(d):
+              print(f"  cycles  {sorted(d.cycle.unique().tolist())}")
+              print(f"  tickers {d.ticker.nunique()}")
+              print(f"  book    min {d.groupby('cycle').size().min()} / "
+                    f"median {int(d.groupby('cycle').size().median())} / "
+                    f"max {d.groupby('cycle').size().max()}")
+          print(f"  columns {sorted(d.columns)}")
+          PY
+      - name: Guard — frozen ledgers and S4 evidence untouched
+        run: |
+          set -u
+          if ! git diff --quiet -- data/predictions/ data/shadow/ 2>/dev/null; then
+            echo "::error::the extractor modified S4 evidence — it must not"; exit 1
+          fi
+          for f in data/events/event_study.csv data/events/event_study_v2.csv data/events/event_study_v3.csv; do
+            if [ -f "$f" ] && ! git diff --quiet -- "$f" 2>/dev/null; then
+              echo "::error::$f is a FROZEN ledger and was modified"; exit 1
+            fi
+          done
+          echo "OK — frozen ledgers and S4 evidence untouched."
+      - uses: actions/upload-artifact@v4
+        # NOT committed. An emitted schedule is specification-adjacent and
+        # enters the repo through a reviewed commit at DECLARATION time,
+        # carrying its fingerprint.
+        with:
+          name: v27-spec4-tax-loss-book
+          path: data/events/tax_loss_book.csv
+          if-no-files-found: error
+
+  rehearse:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_rehearsal
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      actions: read       # to download the build run's artifact
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas "yfinance>=0.2.40,<2"
+      - name: Fetch the schedule from the build run
+        if: inputs.book_run_id != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: v27-spec4-tax-loss-book
+          path: data/events
+          run-id: ${{ inputs.book_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Fingerprint what was fetched, BEFORE counting anything
+        run: |
+          set -u
+          f=data/events/tax_loss_book.csv
+          if [ ! -f "$f" ]; then
+            echo "::error::no schedule at $f — pass book_run_id to fetch it from a build run"
+            exit 4
+          fi
+          python - "$f" <<'PY'
+          import hashlib, sys
+          import pandas as pd
+          p = sys.argv[1]
+          b = open(p, "rb").read().replace(b"\r\n", b"\n")
+          d = pd.read_csv(p, keep_default_na=False, na_values=[])
+          print("REHEARSAL INPUT")
+          print(f"  path    {p}")
+          print(f"  rows    {len(d)}")
+          print(f"  sha256  {hashlib.sha256(b).hexdigest()}")
+          print(f"  cycles  {sorted(d.cycle.unique().tolist())}")
+          PY
+      - name: COUNT ONLY — does the book settle, and can a delisting be seen
+        # The question spec #4 could not answer from a desk, and the one its
+        # rehearsal eventually answered the hard way: is there a measurable
+        # book here at all, and can the price layer SEE the names that die?
+        env:
+          QT_TL_BOOK: data/events/tax_loss_book.csv
+        run: python rehearse_tax_loss_availability.py
+      - name: Assert nothing under data/ changed
+        run: |
+          set -u
+          if ! git diff --quiet -- data/ 2>/dev/null; then
+            echo "::error::the rehearsal modified data/ — it must be read-only"
+            exit 1
+          fi
+          echo "OK — data/ untouched. No return computed, K unchanged."
+
+  checklist:
+    # The bot's report: where this specification stands on §⑨, every run.
+    # Deliberately the LAST job and deliberately read-only -- its purpose is
+    # to make "what is still missing before a slot can be spent" a thing the
+    # pipeline states rather than a thing somebody remembers.
+    needs: validate
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pre-read checklist (§⑨)
+        run: |
+          set -u
+          echo "v27 specification #4 — tax-loss reversal"
+          echo "----------------------------------------"
+          echo "1. extractor + hermetic validator merged   ${{ needs.validate.result }}"
+          echo "2. availability rehearsal run              dispatch run_rehearsal"
+          echo "3. schedule fingerprinted                  dispatch run_build"
+          echo "4. prior signed by the operator            HUMAN ONLY — the bot"
+          echo "                                           must never do this"
+          echo
+          echo "Declaring is what spends K. Steps 1-3 are free and repeatable;"
+          echo "step 4 is irreversible and is not automatable by design."
+          python - <<'PY'
+          import json
+          d = json.load(open("data/registry/specifications.json", encoding="utf-8"))
+          s = d.get("specifications", {})
+          read = [k for k, v in s.items() if v.get("read_at")]
+          print(f"\nK {len(read)}/{d.get('k_budget')} used, "
+                f"terminal {d.get('terminal_date')}")
+          print("declared:", ", ".join(sorted(s)) or "(none)")
+          print("tax_loss declared:",
+                any(k.startswith("tax_loss") for k in s))
+          PY
