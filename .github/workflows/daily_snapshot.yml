@@ -1,0 +1,208 @@
+name: Daily terminal snapshot
+
+# WHAT THIS DOES: gathers what the system can see today -- which names pass
+# the declared eligibility screen, which 8-K and Form 4 filings landed for
+# them, where the benchmarks closed, and what the standing verdicts are --
+# and publishes it as docs/daily.json for the dashboard.
+#
+# 🔑 WHAT IT DOES NOT DO: measure a return against a criterion, consult the
+# Referee, spend K, write a verdict, or place an order. Gathering is free
+# under the protocol; measuring is scarce. That asymmetry is the only reason
+# a daily terminal can exist while the programme is still unproven.
+# validate_daily_snapshot.py parses daily_snapshot.py's imports and fails if
+# qt.referee, qt.wrc, qt.calendar_time or a broker SDK ever appears.
+#
+# WHERE IT WRITES: the orphan `data` branch, force-pushed each cycle. NOT
+# master. Daily data commits must never accumulate in the history that holds
+# the registry -- a registry whose diff is buried under 250 snapshot commits
+# is a registry nobody audits. netlify.toml already fetches from that branch.
+#
+# THE FAILURE MODE THIS IS BUILT AGAINST: a previous dashboard was fed by a
+# build step inside quant_runner.py. That file was deleted, the feed froze,
+# and the page kept showing a seventeen-position book the account had not
+# held for a month. A record that can quietly stop being true is worse than
+# no record -- so every snapshot carries generated_at and asof_session, and
+# the page goes dark rather than render a stale one as current.
+
+on:
+  schedule:
+    # 22:05 UTC Mon-Fri — after the US close (21:00 UTC) with margin for
+    # the consolidated tape to settle. Cron is UTC and does not shift with
+    # daylight saving, so in US summer this is 18:05 ET and in winter 17:05
+    # ET; both are after the close, which is all this needs.
+    - cron: '5 22 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Cap the candidate pool for a smoke test (0 = all)'
+        type: string
+        default: '0'
+      publish:
+        description: 'Push the snapshot to the data branch (off = dry run)'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  # A slow run must not be overtaken by the next day's, or the data branch
+  # could end up force-pushed backwards to an older snapshot.
+  group: daily-snapshot
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      # No yfinance, no requests. The pure-logic suite cannot reach a
+      # network even by accident.
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas
+      - name: Compile check
+        run: |
+          python -m py_compile daily_snapshot.py
+          python -m py_compile validate_daily_snapshot.py
+      - name: Run pure-logic validation
+        run: python validate_daily_snapshot.py
+      - name: Assert nothing under data/ changed
+        run: |
+          set -u
+          if ! git diff --quiet -- data/ 2>/dev/null; then
+            echo "::error::validation modified data/ — it must be read-only"
+            exit 1
+          fi
+          echo "OK — data/ untouched."
+
+  snapshot:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: write        # only ever to the orphan data branch, below
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas requests "yfinance>=0.2.40,<2"
+
+      - name: Fetch yesterday's snapshot, to diff against
+        # Entries and exits are the only part of the feed that needs memory.
+        # A missing previous snapshot is NOT an error: the first run has
+        # nothing to diff and reports empty lists rather than inventing
+        # 3,000 entries on day one.
+        run: |
+          set -u
+          mkdir -p prev
+          if curl -fsSL -o prev/daily.json \
+             "https://raw.githubusercontent.com/${{ github.repository }}/data/docs/daily.json"; then
+            python - <<'PY'
+          import json
+          d = json.load(open("prev/daily.json", encoding="utf-8"))
+          print(f"previous snapshot: as of {d.get('asof_session')}, "
+                f"generated {d.get('generated_at')}, "
+                f"{(d.get('universe') or {}).get('eligible')} eligible")
+          PY
+          else
+            echo "no previous snapshot on the data branch — first run, "
+            echo "entries/exits will be empty rather than fabricated."
+            rm -f prev/daily.json
+          fi
+
+      - name: Gather
+        env:
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+          QT_DAILY_PREV: prev/daily.json
+          QT_DAILY_OUT: docs/daily.json
+          QT_DAILY_LIMIT: ${{ inputs.limit || '0' }}
+        run: python daily_snapshot.py
+
+      - name: Guard — the registry and all frozen evidence are untouched
+        # The snapshot is a VIEW of the registry. If gathering ever modifies
+        # the thing it is reporting on, the report is worthless.
+        run: |
+          set -u
+          if ! git diff --quiet -- data/ 2>/dev/null; then
+            echo "::error::the snapshot modified data/ — it is a read-only view"
+            git --no-pager diff --stat -- data/
+            exit 1
+          fi
+          echo "OK — registry, panel and frozen ledgers untouched."
+
+      - name: Show what will be published
+        run: |
+          set -u
+          python - <<'PY'
+          import hashlib, json
+          p = "docs/daily.json"
+          b = open(p, "rb").read().replace(b"\r\n", b"\n")
+          d = json.loads(b.decode("utf-8"))
+          u, r = d["universe"], d["research_record"]
+          print(f"sha256    {hashlib.sha256(b).hexdigest()}")
+          print(f"bytes     {len(b):,}")
+          print(f"as of     {d['asof_session']}  (generated {d['generated_at']})")
+          print(f"status    {d['status']}  live_trading={d['live_trading']}  "
+                f"capital={d['capital_deployed']}")
+          print(f"universe  {u['eligible']} eligible of {u['candidate_pool']} "
+                f"({u['pool_source']}); +{len(u['entered'])}/-{len(u['exited'])} "
+                f"vs {u['compared_to']}")
+          for f, x in (d.get("evidence", {}).get("forms") or {}).items():
+              print(f"form {f:<4} {x['in_universe']} in universe of {x['total']}")
+          for pr in r["programmes"]:
+              print(f"{pr['id']}       K {pr['k_used']}/{pr['k_budget']}")
+          print(f"any criteria met: {r['any_criteria_met']}")
+          PY
+
+      - name: Publish to the orphan data branch
+        if: github.event_name == 'schedule' || inputs.publish
+        # An ORPHAN branch, recreated from nothing each cycle. It carries no
+        # master history, so a force-push here can never rewrite a commit
+        # that holds a registry or a read.
+        run: |
+          set -u
+          test -f docs/daily.json || { echo "::error::no snapshot to publish"; exit 1; }
+          cp docs/daily.json /tmp/daily.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan data-tmp
+          git rm -rq --cached . || true
+          rm -rf docs || true
+          mkdir -p docs
+          cp /tmp/daily.json docs/daily.json
+          git add -f docs/daily.json
+          git commit -qm "daily snapshot $(python -c 'import json;print(json.load(open("docs/daily.json"))["asof_session"])')"
+          git push -f origin data-tmp:data
+          echo "Published to the data branch."
+
+      - name: Ask Netlify to rebuild
+        if: github.event_name == 'schedule' || inputs.publish
+        # A step cannot test its own `env` in `if:`, and a secret cannot be
+        # read in an `if:` at all, so the presence check lives in the script.
+        # A missing hook is not a failure: the snapshot is already published
+        # and Netlify will pick it up on its next build.
+        env:
+          HOOK: ${{ secrets.NETLIFY_BUILD_HOOK }}
+        run: |
+          set -u
+          if [ -z "${HOOK:-}" ]; then
+            echo "NETLIFY_BUILD_HOOK not set — snapshot is published, "
+            echo "the site will pick it up on its next build."
+            exit 0
+          fi
+          curl -fsSL -X POST -d '{}' "$HOOK" >/dev/null && echo "Rebuild requested."
+
+      - uses: actions/upload-artifact@v4
+        # Kept regardless of publishing, so a dry run is still inspectable
+        # and a published snapshot has a second copy that is not a branch tip.
+        with:
+          name: daily-snapshot
+          path: docs/daily.json
+          if-no-files-found: error
