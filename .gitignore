@@ -10,8 +10,15 @@ __pycache__/
 # Large model cache (can be hundreds of MB)
 data/models_cache.pkl
 
-# Claude working files
-.claude/
+# Claude working files. Local session state is ignored; SHARED scaffolding is
+# tracked, because skills and agent definitions only do their job if every
+# session and every machine gets them. `.claude/` as a blanket rule would have
+# kept the house validator and workflow patterns on one laptop.
+.claude/*
+!.claude/skills/
+!.claude/agents/
+.claude/settings.local.json
+.claude/*.local.json
 _fix_nb.py
 upgrade_notebook.py
 
