@@ -127,6 +127,29 @@ section{padding-top:56px}
 .bench{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:15px;
   font-family:"IBM Plex Mono",monospace;font-size:.78rem;color:var(--muted)}
 .bench b{color:var(--ink);font-weight:500}
+/* The operator channel. Deliberately plain: this is a form, not a chat —
+   nothing is listening in real time and the page must not imply otherwise. */
+.chan{background:var(--surface);border:1px solid var(--rule);border-radius:4px;
+  padding:18px 20px;margin-top:22px}
+.chan h3{font-family:"IBM Plex Mono",monospace;font-size:.76rem;font-weight:600;
+  letter-spacing:.04em;text-transform:uppercase;color:var(--ink);margin:0 0 4px}
+.chan .st{font-size:.82rem;color:var(--muted);line-height:1.5;margin:0 0 14px}
+.stance{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:13px}
+.stance button{font-family:"IBM Plex Mono",monospace;font-size:.72rem;
+  background:var(--sunk);border:1px solid var(--rule);color:var(--body);
+  border-radius:3px;padding:7px 13px;cursor:pointer}
+.stance button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);
+  background:var(--accent-soft)}
+.chan textarea{width:100%;box-sizing:border-box;min-height:84px;resize:vertical;
+  background:var(--sunk);border:1px solid var(--rule);border-radius:3px;
+  color:var(--ink);font-family:inherit;font-size:.88rem;line-height:1.5;padding:10px 12px}
+.chan textarea:focus{outline:none;border-color:var(--accent)}
+.chan .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:11px}
+.chan .send{font-family:"IBM Plex Mono",monospace;font-size:.74rem;font-weight:600;
+  background:var(--accent);border:1px solid var(--accent);color:var(--bg);
+  border-radius:3px;padding:8px 16px;cursor:pointer;text-decoration:none}
+.chan .send[aria-disabled="true"]{opacity:.45;cursor:not-allowed}
+.chan .hint{font-size:.78rem;color:var(--muted);line-height:1.5}
 .note{font-size:.86rem;color:var(--muted);line-height:1.55;font-style:italic}
 .pull{background:var(--surface);border:1px solid var(--rule);border-left:3px solid var(--miss);
   border-radius:0 4px 4px 0;padding:20px 24px;margin-top:24px}
@@ -158,6 +181,14 @@ section{padding-top:56px}
     <p>What the system can see right now: which names pass the declared eligibility screen, which 8-K and Form&nbsp;4 filings landed for them on the last filing day, and where the benchmarks closed. Gathered after each US close by a scheduled job that <em>cannot</em> reach the Referee, evaluate a criterion or spend a read — gathering is free under the protocol, measuring is not.</p>
   </div>
   <div id="daily"></div>
+</section>
+
+<section>
+  <div class="col stack">
+    <h2>Talk to the Chief of Staff</h2>
+    <p>Set how conservative or aggressive you want to be, and send a question or an instruction. The stance is remembered in this browser and travels with every message you send.</p>
+  </div>
+  <div id="channel"></div>
 </section>
 
 <section>
@@ -458,6 +489,7 @@ function tagList(arr, cls, cap, total){
 
 function renderDaily(d){
   var el = document.getElementById("daily");
+  window.__dailyAsOf = d && d.asof_session ? ("session " + d.asof_session) : null;
   var feedAge = ageDays(d.generated_at);
   var dataAge = d.asof_session === undefined ? null
     : ageDays(d.asof_session + "T21:00:00Z");
@@ -580,6 +612,104 @@ function renderDaily(d){
 
   el.innerHTML = html;
 }
+
+/* ─── the operator channel ────────────────────────────────────────────────
+   Messages go to GitHub Issues, not to a backend.
+
+   🔑 WHY ISSUES AND NOT A FORM ENDPOINT. A public page with a function that
+   can trigger this repository would let anyone who finds the URL do it, and
+   it would need a secret on the page to stop them. GitHub already solves
+   this: the operator is authenticated, the repo controls who may write, and
+   the issue thread IS the audit log — append-only, timestamped, and exactly
+   the shape every other record in this project takes.
+
+   🔑 AND NOTHING IS LISTENING YET. CHIEF OF STAFF is module 5 of 7 and does
+   not exist. The panel says so. A chat box that implies an agent is reading
+   when none is would be the same class of lie as a frozen feed rendering as
+   current.                                                                */
+var REPO = "https://github.com/Southpaw3234/Quant-Terminal";
+var STANCES = [
+  ["conservative", "capital preservation first; show me what could go wrong"],
+  ["balanced",     "weigh both sides evenly"],
+  ["aggressive",   "surface opportunity first; I accept wider outcomes"]
+];
+var CHIEF_EXISTS = false;   // flip when module 5 ships and answers here
+
+function getStance(){
+  try { return localStorage.getItem("qt_stance") || "balanced"; }
+  catch (e) { return "balanced"; }
+}
+function setStance(v){
+  try { localStorage.setItem("qt_stance", v); } catch (e) {}
+  renderChannel();
+}
+
+function issueUrl(stance, msg){
+  var body =
+    "**Stance:** `" + stance + "`\n" +
+    "**Sent from:** the Quant Terminal dashboard\n" +
+    "**Page state:** " + (window.__dailyAsOf || "no snapshot loaded") + "\n\n" +
+    "---\n\n" + (msg || "");
+  return REPO + "/issues/new" +
+    "?labels=" + encodeURIComponent("chief-of-staff") +
+    "&title=" + encodeURIComponent("[" + stance + "] " +
+        (msg || "").trim().split("\n")[0].slice(0, 60) || "operator message") +
+    "&body=" + encodeURIComponent(body);
+}
+
+function renderChannel(){
+  var el = document.getElementById("channel");
+  if (!el) return;
+  var cur = getStance();
+
+  var status = CHIEF_EXISTS
+    ? "The Chief of Staff reads this thread and replies there."
+    : "<b>Nothing is listening yet.</b> The Chief of Staff is module 5 of 7 " +
+      "and has not been built. Messages are filed as GitHub issues and will " +
+      "be read — by a person today, by the agent when it exists. The channel " +
+      "is here first so the record starts now rather than being backfilled.";
+
+  var html = '<div class="chan">' +
+    "<h3>Operator channel</h3>" +
+    '<p class="st">' + status + "</p>" +
+    '<div class="stance" role="group" aria-label="Risk stance">';
+  for (var i = 0; i < STANCES.length; i++){
+    var k = STANCES[i][0];
+    html += '<button type="button" data-stance="' + k + '" title="' +
+      esc(STANCES[i][1]) + '" aria-pressed="' + (k === cur) + '">' +
+      esc(k) + "</button>";
+  }
+  html += "</div>" +
+    '<textarea id="chanmsg" placeholder="A question, an instruction, or a ' +
+    'thesis you want recorded with its falsifiers…"></textarea>' +
+    '<div class="row">' +
+      '<a class="send" id="chansend" href="#" target="_blank" rel="noopener" ' +
+      'aria-disabled="true">Send to Chief of Staff</a>' +
+      '<span class="hint">Opens a GitHub issue — you are the author, and ' +
+      'the thread is the record.</span>' +
+    "</div></div>";
+  el.innerHTML = html;
+
+  var btns = el.querySelectorAll(".stance button");
+  for (var j = 0; j < btns.length; j++){
+    btns[j].addEventListener("click", function(){
+      setStance(this.getAttribute("data-stance"));
+    });
+  }
+  var ta = document.getElementById("chanmsg");
+  var send = document.getElementById("chansend");
+  function sync(){
+    var v = ta.value.trim();
+    send.setAttribute("aria-disabled", v ? "false" : "true");
+    send.href = v ? issueUrl(getStance(), ta.value) : "#";
+  }
+  ta.addEventListener("input", sync);
+  send.addEventListener("click", function(e){
+    if (send.getAttribute("aria-disabled") === "true") e.preventDefault();
+  });
+  sync();
+}
+renderChannel();
 
 (function(){
   fetch(DAILY + "?cb=" + Date.now(), {cache: "no-store"}).then(function(r){

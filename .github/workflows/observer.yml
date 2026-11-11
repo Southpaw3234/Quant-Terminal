@@ -1,0 +1,191 @@
+name: OBSERVER — filings (collective agent, module 1)
+
+# Module 1 of docs/COLLECTIVE_AGENT_BRIEF.md. It COLLECTS: 8-K items and
+# Form 4 filings for names in the watched universe, each linked to the
+# filing. It does not score, rank, recommend, or place an order.
+#
+# 🔑 WHAT IT CANNOT SEE: the direction of a Form 4. Transaction codes live
+# in the filing body, served from www.sec.gov, which answers 403 to this
+# client. Direction is reported as null with a reason -- never guessed.
+# Insider sales outnumber purchases, so undirected filings presented as
+# buying would be wrong in the most flattering direction every day.
+#
+# validate_observer_filings.py asserts, with `ast`, that this agent cannot
+# import qt.referee, qt.wrc, qt.calendar_time or a broker SDK, and that no
+# identifier here binds a score, rank, forecast or recommendation.
+
+on:
+  schedule:
+    # 23:10 UTC Mon-Fri — after the daily snapshot (22:05) so the eligible
+    # list it watches is the current one.
+    - cron: '10 23 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      post:
+        description: 'Post the digest to Discord (off = dry run)'
+        type: boolean
+        default: true
+      pages:
+        description: 'Max EFTS pages per form (12 = ~1200 filings/day)'
+        type: string
+        default: '12'
+  push:
+    branches: ['master', 'v27/**', 'v28/**', 'v29/**']
+    paths:
+      - 'observer_filings.py'
+      - 'validate_observer_filings.py'
+      - 'qt/edgar.py'
+      - 'qt/tickers.py'
+      - '.github/workflows/observer.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: observer
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      # No requests, no yfinance. qt/edgar.py imports them lazily inside the
+      # functions that need them, precisely so this stays possible and the
+      # suite cannot reach EDGAR even by accident.
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas
+      - name: Compile check
+        run: |
+          python -m py_compile observer_filings.py
+          python -m py_compile validate_observer_filings.py
+          python -m py_compile qt/edgar.py
+      - name: Run pure-logic validation
+        run: python validate_observer_filings.py
+      - name: Assert nothing under data/ changed
+        run: |
+          set -u
+          if ! git diff --quiet -- data/ 2>/dev/null; then
+            echo "::error::validation modified data/ — it must be read-only"
+            git --no-pager diff --stat -- data/
+            exit 1
+          fi
+          echo "OK — data/ untouched."
+
+  observe:
+    needs: validate
+    # Unreachable from a push: only the cron or an explicit dispatch collects.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write        # only ever to the orphan observations branch
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas requests
+
+      - name: Fetch today's eligible universe and the CIK cache
+        # The universe comes from the daily snapshot so OBSERVER watches the
+        # names that currently pass the declared screen. A missing snapshot
+        # is NOT fatal: observer_filings falls back to the frozen panel,
+        # which is WIDER. Watching too many names is a nuisance; silently
+        # watching fewer than claimed is a lie.
+        run: |
+          set -u
+          mkdir -p observations
+          curl -fsSL -o daily.json \
+            "https://raw.githubusercontent.com/${{ github.repository }}/data/docs/daily.json" \
+            && echo "universe: today's eligible list" \
+            || { rm -f daily.json; echo "no snapshot — falling back to the frozen panel (wider)"; }
+          curl -fsSL -o observations/cik_cache.json \
+            "https://raw.githubusercontent.com/${{ github.repository }}/observations/observations/cik_cache.json" \
+            && echo "cik cache: warm" \
+            || echo "cik cache: cold (first run resolves ~500 CIKs)"
+
+      - name: Collect
+        env:
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+          QT_OBS_UNIVERSE: daily.json
+          QT_OBS_PANEL: data/universe/v29_universe_pit.csv
+          QT_OBS_PAGES: ${{ inputs.pages || '12' }}
+        run: python observer_filings.py
+
+      - name: Guard — the registry and all frozen evidence are untouched
+        run: |
+          set -u
+          if ! git diff --quiet -- data/ 2>/dev/null; then
+            echo "::error::OBSERVER modified data/ — it is a read-only view"
+            git --no-pager diff --stat -- data/
+            exit 1
+          fi
+          echo "OK — registry, panel and frozen ledgers untouched."
+
+      - name: Publish observations to the orphan branch
+        # Orphan, recreated each run. Observations are append-only WITHIN a
+        # day's file and the branch carries no master history, so a force
+        # push here can never rewrite a commit holding a registry or a read.
+        run: |
+          set -u
+          ls observations/*.jsonl >/dev/null 2>&1 || { echo "::error::nothing collected"; exit 1; }
+          cp -r observations /tmp/obs
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin observations:observations 2>/dev/null || true
+          if git rev-parse --verify observations >/dev/null 2>&1; then
+            git checkout observations
+          else
+            git checkout --orphan observations
+            git rm -rq --cached . || true
+          fi
+          find . -maxdepth 1 ! -name . ! -name .git ! -name observations -exec rm -rf {} + 2>/dev/null || true
+          mkdir -p observations
+          cp -r /tmp/obs/. observations/
+          git add -f observations
+          git commit -qm "observations $(date -u +%F)" || echo "nothing new to commit"
+          git push -f origin observations:observations
+          echo "Published."
+
+      - name: Post the digest to Discord
+        if: github.event_name == 'schedule' || inputs.post
+        # A missing webhook is not a failure — the observations are already
+        # published and the digest is in the artifact.
+        env:
+          HOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          set -u
+          if [ -z "${HOOK:-}" ]; then
+            echo "DISCORD_WEBHOOK_URL not set — digest is in the artifact."
+            exit 0
+          fi
+          f=$(ls -1 /tmp/obs/*.md 2>/dev/null | tail -1 || true)
+          [ -n "$f" ] || { echo "no digest to post"; exit 0; }
+          python - "$f" <<'PY'
+          import json, os, sys, urllib.request
+          body = open(sys.argv[1], encoding="utf-8").read()
+          # Discord caps a message at 2000 characters. Truncate loudly rather
+          # than letting the POST fail silently and lose the whole digest.
+          if len(body) > 1900:
+              body = body[:1900] + "\n… truncated — full digest in the run artifact"
+          req = urllib.request.Request(
+              os.environ["HOOK"],
+              data=json.dumps({"content": body}).encode("utf-8"),
+              headers={"Content-Type": "application/json"})
+          with urllib.request.urlopen(req, timeout=30) as r:
+              print("Discord:", r.status)
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: observer-filings
+          path: |
+            observations/*.jsonl
+            observations/*.md
+          if-no-files-found: error
