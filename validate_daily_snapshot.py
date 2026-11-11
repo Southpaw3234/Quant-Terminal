@@ -252,9 +252,15 @@ def test_evidence_query_is_unbiased():
           "EFTS accepts forms+dates with no keyword; any keyword would "
           "select the filings containing that word and still look like a "
           "census of the day")
-    check("not-www-sec-gov", "www.sec.gov" not in inspect.getsource(ds),
-          "that host answers 403 from CI — the first run lost the whole "
-          "evidence feed to it")
+    # Scanned over STRING LITERALS, not raw source: the module's own comment
+    # names the host in order to warn against it, and a substring search
+    # cannot tell a warning from a URL. Same distinction as the import check.
+    literals = [n.value for n in ast.walk(ast.parse(inspect.getsource(ds)))
+                if isinstance(n, ast.Constant) and isinstance(n.value, str)]
+    check("not-www-sec-gov",
+          not any("www.sec.gov" in s for s in literals),
+          "that host answers 403 from CI — the first snapshot lost its whole "
+          "evidence feed to it, so no URL here may point at it")
     check("efts-host", "efts.sec.gov" in ds.EFTS_URL)
 
 
