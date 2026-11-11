@@ -441,13 +441,18 @@ function metric(label, value, bad){
     esc(label) + '</span><span class="mv">' + esc(value) + "</span></div>";
 }
 
-function tagList(arr, cls, cap){
+/* `total` is the TRUE count when the snapshot carries only a sample of the
+   names. The JSON caps its name list at 40 to stay small, so counting the
+   array would under-report -- the 8-K caption read "40 of 380" on the first
+   published snapshot when the real figure was 79.                        */
+function tagList(arr, cls, cap, total){
   if (!arr || !arr.length) return "";
   var shown = arr.slice(0, cap || 30);
+  var n = (total === null || total === undefined) ? arr.length : total;
   return '<div class="tags">' + shown.map(function(t){
     return '<span class="tag ' + cls + '">' + esc(t) + "</span>";
-  }).join("") + (arr.length > shown.length
-    ? '<span class="tag">+' + (arr.length - shown.length) + " more</span>" : "") +
+  }).join("") + (n > shown.length
+    ? '<span class="tag">+' + (n - shown.length) + " more</span>" : "") +
     "</div>";
 }
 
@@ -532,11 +537,13 @@ function renderDaily(d){
   if (names.length){
     html += '<div class="note" style="margin-top:16px">Filed an 8-K on ' +
       esc(ev.index_date || "the last filing day") +
-      (k8.filings ? " — " + names.length + " of " + k8.filings +
-        " filings market-wide" : "") +
+      (k8.filings ? " — " + (k8.in_universe === null ||
+        k8.in_universe === undefined ? names.length : k8.in_universe) +
+        " of " + k8.filings + " filings market-wide" : "") +
       (k8.truncated ? " (sampled, not a full census of the day)" : "") +
       "</div>" +
-      tagList(names.map(function(n){ return n.ticker || n; }), "");
+      tagList(names.map(function(n){ return n.ticker || n; }), "", 30,
+              k8.in_universe);
   }
   if (ev.note){
     html += '<div class="warn">Evidence feed: ' + esc(ev.note) + "</div>";
