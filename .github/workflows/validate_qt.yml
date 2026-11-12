@@ -28,6 +28,18 @@ on:
       # filter documented below: a trigger that lags the tests it guards
       # reports on a snapshot of something it is not watching.
       - 'v29/**'
+      # agent/** and ci/** added 2026-11-11. SIXTH instance of the class
+      # this file has now documented five times, and the two newest were
+      # mine. The branch carrying the collective-agent modules produced ZERO
+      # runs, and so did the branch carrying THIS FIX -- a PR whose whole
+      # subject is guards that fail silently, failing silently.
+      #
+      # A branch allowlist does not report a miss. It reports nothing, which
+      # reads exactly like a pass. Every prefix anyone invents next is
+      # another silent zero, so the allowlist itself is the defect and
+      # listing one more prefix is a patch, not a fix.
+      - 'agent/**'
+      - 'ci/**'
       # docs/** added 2026-09-21 for the same reason v29/** was: the commit
       # that ADDED validate_protocols.py landed on docs/carry-forward and
       # triggered nothing. Third instance of this exact class in one file.

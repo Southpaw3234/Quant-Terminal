@@ -30,7 +30,9 @@ on:
         type: string
         default: '12'
   push:
-    branches: ['master', 'v27/**', 'v28/**', 'v29/**', 'agent/**']
+    branches: ['master', 'v27/**', 'v28/**', 'v29/**', 'agent/**',
+               'ci/**']   # ci/** added after a PR about silent
+               # guards produced zero runs because of this list.
     paths:
       - 'observer_filings.py'
       - 'validate_observer_filings.py'

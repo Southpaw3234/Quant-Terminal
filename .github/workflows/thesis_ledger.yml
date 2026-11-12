@@ -35,7 +35,9 @@ on:
         type: string
         default: ''
   push:
-    branches: ['master', 'v27/**', 'v28/**', 'v29/**', 'agent/**']
+    branches: ['master', 'v27/**', 'v28/**', 'v29/**', 'agent/**',
+               'ci/**']   # ci/** added after a PR about silent
+               # guards produced zero runs because of this list.
     paths:
       - 'qt/thesis.py'
       - 'thesis_ledger.py'
