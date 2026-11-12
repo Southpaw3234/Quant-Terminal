@@ -1,0 +1,267 @@
+name: LIBRARIAN — filing language (collective agent, module 3)
+
+# Module 3 of docs/COLLECTIVE_AGENT_BRIEF.md §3.2.
+#
+#   validate   -- hermetic. 80 checks, no network, no clock.
+#   librarian  -- scheduled. Reads recent 10-Q/10-K filings in the watched
+#                 universe, tests PRE-DECLARED phrases against the previous
+#                 filing of the same form, and publishes briefs/ to the
+#                 orphan `briefs` branch. Reads data/; never writes it.
+#
+# 🔑 THE PHRASE LIST IS THE PRE-REGISTRATION, AND CI ENFORCES IT.
+# `data/librarian/phrases.json` is on master and every brief records its
+# SHA-256. The validate job re-derives that digest, so editing the list is
+# visible against briefs already published. A phrase may only be tested
+# against filings published AFTER it was declared; librarian_diff.py counts
+# the refusals instead of skipping them, and the digest says so out loud
+# when nothing was testable. "We could not look" must never print as
+# "nothing changed".
+#
+# 🔑 WHAT THIS MODULE CANNOT DO. The brief asks for a risk-factor and MD&A
+# diff. That needs the filing body, served from www.sec.gov, which answers
+# 403 to this client ("Request Rate Threshold Exceeded", returned on the
+# FIRST request of a cold session, so backing off does not clear it). What
+# is reachable is EDGAR full-text search, which answers one narrow question
+# exactly: does this phrase appear in this filing's primary document. So
+# section attribution is reported as NOT OBSERVED rather than guessed.
+
+on:
+  schedule:
+    # 23:40 UTC on weekdays — after OBSERVER (23:10) so the observation
+    # files it links claims to already exist for the day.
+    - cron: '40 23 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      post:
+        description: 'Post the brief to Discord (off = dry run)'
+        type: boolean
+        default: true
+      lookback:
+        description: 'Days of filings to scan (5 = a trading week)'
+        type: string
+        default: '5'
+      max_names:
+        description: 'Issuer cap per run (open-thesis names are never dropped)'
+        type: string
+        default: '25'
+  push:
+    branches: ['master', 'v27/**', 'v28/**', 'v29/**', 'agent/**']
+    paths:
+      - 'qt/librarian.py'
+      - 'qt/edgar.py'
+      - 'librarian_diff.py'
+      - 'validate_librarian_diff.py'
+      - 'data/librarian/phrases.json'
+      - '.github/workflows/librarian.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: librarian
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      # No requests. qt/edgar.py imports it lazily inside the functions that
+      # need it, so this suite cannot reach EDGAR even by accident — which
+      # is what makes "no network" a demonstrated property, not a promise.
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas
+      - name: Compile check
+        run: |
+          python -m py_compile qt/librarian.py
+          python -m py_compile qt/edgar.py
+          python -m py_compile librarian_diff.py
+          python -m py_compile validate_librarian_diff.py
+      - name: Run pure-logic validation
+        run: python validate_librarian_diff.py
+
+      - name: The declared phrase list parses, and record its digest
+        # 🔑 Printed into the log on every run. A brief carries this digest,
+        # so a later edit to the list is visible against briefs already
+        # published rather than quietly replacing the pre-registration.
+        run: |
+          set -u
+          python - <<'PY'
+          from qt import librarian as lib
+          raw = open("data/librarian/phrases.json", "rb").read()
+          p = lib.parse_phrases(raw)
+          print(f"{len(p['phrases'])} phrase(s) declared")
+          print(f"digest {p['digest']}")
+          for ph in p["phrases"]:
+              assert ph["why"], f"{ph['text']!r} has no stated reason"
+              print(f"  {ph['declared_at']}  {ph['text']}")
+          PY
+
+      - name: Assert nothing under data/ changed
+        run: |
+          set -u
+          if ! git diff --quiet -- data/ 2>/dev/null; then
+            echo "::error::validation modified data/ — it must be read-only"
+            git --no-pager diff --stat -- data/
+            exit 1
+          fi
+          echo "OK — data/ untouched."
+
+  librarian:
+    needs: validate
+    # Unreachable from a push: only the cron or an explicit dispatch reads.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write        # only ever to the orphan briefs branch
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas requests
+
+      - name: Fetch today's universe and OBSERVER's observations
+        # The universe comes from the daily snapshot so LIBRARIAN reads the
+        # names that currently pass the declared screen. A missing snapshot
+        # is NOT fatal: librarian_diff falls back to the frozen panel, which
+        # is WIDER, and open-thesis names are added on top either way.
+        run: |
+          set -u
+          mkdir -p observations briefs
+          curl -fsSL -o daily.json \
+            "https://raw.githubusercontent.com/${{ github.repository }}/data/docs/daily.json" \
+            && echo "universe: today's eligible list" \
+            || { rm -f daily.json; echo "no snapshot — falling back to the frozen panel (wider)"; }
+          git fetch origin observations:observations 2>/dev/null \
+            && git --work-tree=. checkout observations -- observations 2>/dev/null \
+            && echo "observations: $(ls -1 observations/*.jsonl 2>/dev/null | wc -l) day file(s)" \
+            || echo "no observations branch yet — claims will carry no observation ids, and say so"
+
+      - name: Read the filings
+        env:
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+          QT_LIB_UNIVERSE: daily.json
+          QT_LIB_PANEL: data/universe/v29_universe_pit.csv
+          QT_LIB_LOOKBACK: ${{ inputs.lookback || '5' }}
+          QT_LIB_MAX_NAMES: ${{ inputs.max_names || '25' }}
+        # Exit 5 is the deliberate refusal: every filing lost its baseline to
+        # a FAILED LOOKUP rather than to an absence of filing history, so an
+        # empty brief would read as "no language changed" when the truth is
+        # "we could not look". Let it fail the job.
+        run: python librarian_diff.py
+
+      - name: Guard — the registry and all frozen evidence are untouched
+        run: |
+          set -u
+          if ! git diff --quiet -- data/ 2>/dev/null; then
+            echo "::error::LIBRARIAN modified data/ — it is a read-only view"
+            git --no-pager diff --stat -- data/
+            exit 1
+          fi
+          echo "OK — registry, panel, phrase list and frozen ledgers untouched."
+
+      - name: Summarise the funnel
+        # Every stage printed, including the ones that ended in zero. A zero
+        # with no denominator beside it is the shape that hid three of them
+        # in specification 4's rehearsal.
+        run: |
+          set -u
+          python - <<'PY' | tee -a "$GITHUB_STEP_SUMMARY"
+          import glob, json
+          f = sorted(glob.glob("briefs/*.json"))[-1]
+          b = json.load(open(f, encoding="utf-8"))
+          s = b["summary"]
+          print(f"### LIBRARIAN — {b['day']}")
+          print(f"| stage | n |")
+          print(f"| --- | --- |")
+          for k, v in (("watched tickers", b["watched"]),
+                       ("issuers with a recent 10-Q/10-K", b["issuers_eligible"]),
+                       ("issuers read", b["issuers_read"]),
+                       ("with an open thesis", b["with_open_thesis"]),
+                       ("filing pairs compared", b["pairs_compared"]),
+                       ("claims", s["claims"]),
+                       ("REMOVED", s["removed"]),
+                       ("added", s["added"]),
+                       ("retained", s["retained"]),
+                       ("indeterminate (not in index)", s["indeterminate"]),
+                       ("refused: phrase too young", len(b["refused_lookahead"])),
+                       ("no baseline (genuine)", len(b["no_baseline"])),
+                       ("baseline lookup FAILED", len(b["baseline_unavailable"]))):
+              print(f"| {k} | {v} |")
+          print(f"\nphrase list `{b['phrases']['digest'][:16]}…` "
+                f"({b['phrases']['count']} declared)")
+          if b["names_truncated"]:
+              print(f"\n⚠️ capped at {b['max_names']} issuers — "
+                    f"{b['selection_rule']}")
+          PY
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import glob, json
+          f = sorted(glob.glob("briefs/*.json"))[-1]
+          b = json.load(open(f, encoding="utf-8"))
+          print(open(f"briefs/{b['day']}.md", encoding="utf-8").read())
+          PY
+
+      - name: Publish briefs to the orphan branch
+        # Orphan, recreated each run. The branch carries no master history,
+        # so a force push here can never rewrite a commit holding a registry
+        # or a read.
+        run: |
+          set -u
+          ls briefs/*.json >/dev/null 2>&1 || { echo "::error::nothing built"; exit 1; }
+          cp -r briefs /tmp/briefs
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin briefs:briefs 2>/dev/null || true
+          if git rev-parse --verify briefs >/dev/null 2>&1; then
+            git checkout briefs
+          else
+            git checkout --orphan briefs
+            git rm -rq --cached . || true
+          fi
+          find . -maxdepth 1 ! -name . ! -name .git ! -name briefs -exec rm -rf {} + 2>/dev/null || true
+          mkdir -p briefs
+          cp -r /tmp/briefs/. briefs/
+          git add -f briefs
+          git commit -qm "briefs $(date -u +%F)" || echo "nothing new to commit"
+          git push -f origin briefs:briefs
+          echo "Published."
+
+      - name: Post the brief to Discord
+        if: github.event_name == 'schedule' || inputs.post
+        env:
+          HOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          set -u
+          if [ -z "${HOOK:-}" ]; then
+            echo "DISCORD_WEBHOOK_URL not set — brief is in the artifact."
+            exit 0
+          fi
+          f=$(ls -1 /tmp/briefs/*.md 2>/dev/null | tail -1 || true)
+          [ -n "$f" ] || { echo "no brief to post"; exit 0; }
+          python - "$f" <<'PY'
+          import json, os, sys, urllib.request
+          body = open(sys.argv[1], encoding="utf-8").read()
+          if len(body) > 1900:
+              body = body[:1900] + "\n… truncated — full brief in the run artifact"
+          req = urllib.request.Request(
+              os.environ["HOOK"],
+              data=json.dumps({"content": body}).encode("utf-8"),
+              headers={"Content-Type": "application/json"})
+          with urllib.request.urlopen(req, timeout=30) as r:
+              print("Discord:", r.status)
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: librarian-briefs
+          path: |
+            briefs/*.json
+            briefs/*.md
+          if-no-files-found: error
