@@ -35,7 +35,9 @@ on:
         type: string
         default: ''
   push:
-    branches: ['master', 'v27/**', 'v28/**', 'v29/**', 'agent/**']
+    branches: ['master', 'v27/**', 'v28/**', 'v29/**', 'agent/**',
+               'ci/**']   # ci/** added after a PR about silent
+               # guards produced zero runs because of this list.
     paths:
       - 'qt/thesis.py'
       - 'thesis_ledger.py'
@@ -55,9 +57,21 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      # qt/thesis.py is stdlib only — no pandas, no network. The suite
-      # therefore cannot reach anything, which is what makes "this module
-      # cannot decide" a demonstrated property.
+      # 🔑 pandas IS installed here, and the earlier comment claiming
+      # otherwise was wrong in a way that only CI could show. qt/thesis.py is
+      # genuinely stdlib-only, but `from qt import thesis` runs
+      # qt/__init__.py, which eagerly imports qt/ledger.py, which imports
+      # pandas. So the suite failed on master with ModuleNotFoundError while
+      # passing locally, where pandas happens to be installed — a green run
+      # is not a delivered artifact.
+      #
+      # What is still true, and is the half that matters: `requests` is NOT
+      # installed, so this suite cannot reach the network. And the property
+      # "this module cannot decide" is asserted by validate_thesis_ledger.py
+      # over the AST import list, which is where it belongs — not inferred
+      # from what a runner happens to have on it.
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas
       - name: Compile check
         run: |
           python -m py_compile qt/thesis.py
@@ -98,6 +112,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      # Same reason as the validate job: this step does `from qt import
+      # thesis`, and importing the qt package pulls qt/ledger.py -> pandas.
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas
       - name: What is due, and what is drifting
         env:
           QT_ON: ${{ inputs.on_date }}
