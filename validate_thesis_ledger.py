@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Pure-logic validation for the thesis ledger. No network, no clock, no files.
+"""Pure-logic validation for the thesis ledger. No network, no clock.
+
+(One test writes a throwaway file in a temp directory to prove a malformed
+ledger is refused with its line number. Nothing under the repository is
+touched.)
 
 The class of wrongness this file exists to prevent: **the record of what you
 claimed quietly becoming the record of what turned out to be true.**
@@ -331,7 +335,7 @@ def test_cli_cannot_decide():
 
 def main():
     print("=" * 70)
-    print("thesis ledger — pure logic (no network, no clock, no files)")
+    print("thesis ledger — pure logic (no network, no clock)")
     print("=" * 70)
     test_open_requires_falsifiers_and_review()
     test_no_mutation_exists()
