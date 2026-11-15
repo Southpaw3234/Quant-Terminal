@@ -1,17 +1,17 @@
 {
- "added_this_run": 244,
+ "added_this_run": 0,
  "cik_cache": 1861,
  "direction": {
   "capped": false,
-  "clusters": 6,
+  "clusters": 0,
   "failed": 0,
-  "filled": 181,
-  "first_purchases": 3,
+  "filled": 0,
+  "first_purchases": 0,
   "key": true,
   "note": "Form 4 bodies are on www.sec.gov, which answers 403 to this client; direction comes from Finnhub by accession, which lags EDGAR — 4 still pending and re-checked on later runs",
   "pending": 4,
-  "tickers_checked": 81,
-  "tickers_needed": 81
+  "tickers_checked": 4,
+  "tickers_needed": 4
  },
  "filing_day": "2026-11-13",
  "forms": [
@@ -21,7 +21,7 @@
   "10-K",
   "424B5"
  ],
- "generated_at": "2026-11-15T03:36:14+00:00",
+ "generated_at": "2026-11-15T18:07:59+00:00",
  "records": 248,
  "thesis_added": 0,
  "totals": {
