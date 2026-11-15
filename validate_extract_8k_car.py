@@ -20,6 +20,12 @@ from __future__ import annotations
 
 import json
 import sys
+
+# A Windows console is cp1252 and raises on the symbols these checks print;
+# CI is UTF-8 and never sees it. Passing in CI and crashing locally is how a
+# red check gets ignored.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 from pathlib import Path
 
 import pandas as pd
@@ -121,7 +127,7 @@ def test_threshold():
           not ex.qualifies(None) and not ex.qualifies(float("nan")),
           "a missing CAR never qualifies")
 
-    reg = json.loads(Path("data/registry/specifications.json").read_text())
+    reg = json.loads(Path("data/registry/specifications.json").read_text(encoding="utf-8"))
     spec = reg["specifications"]["pead_8k_car_v3"]
     declared = str(spec["params"]["selection_threshold"])
     check("threshold-matches-registry",
@@ -182,7 +188,7 @@ def test_entry_bar():
     check("entry-none-at-history-end",
           ex.entry_ts(SESSIONS[-1], SESSIONS) is None,
           "an A with no following session yields no event")
-    src = Path("event_study.py").read_text()
+    src = Path("event_study.py").read_text(encoding="utf-8")
     check("engine-contract-unchanged",
           'side="right"' in src and '"event_id", "ticker", "event_ts", "event_type"' in src,
           "event_study.py still enters with side='right' and still requires "

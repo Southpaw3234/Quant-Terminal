@@ -17,6 +17,12 @@ import inspect
 import json
 import re
 import sys
+
+# A Windows console is cp1252 and raises on the symbols these checks print;
+# CI is UTF-8 and never sees it. Passing in CI and crashing locally is how a
+# red check gets ignored.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 from pathlib import Path
 
 import daily_snapshot as ds

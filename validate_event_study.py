@@ -33,6 +33,12 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+
+# A Windows console is cp1252 and raises on the symbols these checks print;
+# CI is UTF-8 and never sees it. Passing in CI and crashing locally is how a
+# red check gets ignored.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 import tempfile
 from pathlib import Path
 
@@ -74,7 +80,8 @@ def _run(events: Path, prices: Path, out: Path, **env_extra) -> str:
     })
     env.update({k: str(v) for k, v in env_extra.items()})
     r = subprocess.run([sys.executable, "event_study.py"], env=env,
-                       capture_output=True, text=True)
+                       capture_output=True, text=True, encoding="utf-8",
+                       errors="replace")
     if r.returncode != 0:
         print(r.stdout)
         print(r.stderr, file=sys.stderr)

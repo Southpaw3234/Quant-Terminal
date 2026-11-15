@@ -71,6 +71,12 @@ from __future__ import annotations
 
 import os
 import sys
+
+# A Windows console is cp1252 and raises on the symbols this prints; CI is
+# UTF-8 and never sees it. validate_event_study.py runs this file as a
+# subprocess, so the crash surfaced there as a failed validation.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 from pathlib import Path
 
 import numpy as np
