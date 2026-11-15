@@ -138,6 +138,24 @@ def observation(form: str, hit: dict, ticker: str, cik, observed_at: str,
     }
 
 
+def upgrade(record: dict) -> dict:
+    """Give a record written by the first version of this file the keys the
+    current one relies on. Adds; never changes a value already present.
+
+    The night-one records carry no `id`, `kind` or `root_form`. Without an
+    id the LIBRARIAN cannot link a claim to them, and a re-collected day
+    would append every one of them a second time. `observed_at` and every
+    other original field are left exactly as written.
+    """
+    if not record.get("kind"):
+        record["kind"] = "filing"
+    if not record.get("root_form") and record.get("form"):
+        record["root_form"] = str(record["form"]).split("/")[0]
+    if not record.get("id") and record.get("accession"):
+        record["id"] = f"edgar:{record['accession']}"
+    return record
+
+
 def merge_day(existing: list, new: list) -> tuple:
     """Append-only merge of one day's records. -> (merged, n_added)
 
@@ -145,6 +163,7 @@ def merge_day(existing: list, new: list) -> tuple:
     its original `observed_at`. New ids are appended. A re-run can therefore
     add to a day and can never shrink or restamp it.
     """
+    existing = [upgrade(r) for r in existing]
     seen = {r.get("id") for r in existing}
     added = []
     for r in new:
@@ -447,7 +466,7 @@ def collect_filings(sess, day: str, univ: set, cache: dict, now: str) -> tuple:
 def direction_pass(sess, day: str, now: str) -> dict:
     """Fill Form 4 directions for the last few day files, and derive events."""
     files = io.day_files(OUT_DIR, ".jsonl")[-F4_RECHECK_FILES:]
-    loaded = {d: io.read_jsonl(p) for d, p in files}
+    loaded = {d: [upgrade(r) for r in io.read_jsonl(p)] for d, p in files}
     need = []                                   # newest day first
     for d in sorted(loaded, reverse=True):
         for r in loaded[d]:

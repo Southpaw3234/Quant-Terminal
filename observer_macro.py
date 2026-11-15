@@ -35,6 +35,7 @@ import csv
 import datetime as dt
 import io as _stdio
 import os
+import re
 import sys
 import time
 
@@ -48,7 +49,9 @@ from qt import agentio as io
 
 OUT_DIR = os.environ.get("QT_MACRO_DIR", "macro")
 LEDGER = os.environ.get("QT_THESIS_LEDGER", "data/theses/ledger.jsonl")
-FRED_KEY = os.environ.get("FRED_API_KEY", "").strip()
+# Quotes and whitespace are stripped: a key pasted into a secret as "abc…"
+# is a common way to end up with a 34-character 32-character key.
+FRED_KEY = os.environ.get("FRED_API_KEY", "").strip().strip("\"'").strip()
 FINNHUB_KEY = os.environ.get("FINNHUB_API_KEY", "").strip()
 FRED_API = "https://api.stlouisfed.org/fred/series/observations"
 FRED_CSV = "https://fred.stlouisfed.org/graph/fredgraph.csv"
@@ -242,12 +245,29 @@ def fred_error(resp) -> str:
     return f" — FRED says: {msg[:160]}" if msg else ""
 
 
+def fred_key_problem(key: str) -> "str | None":
+    """Why this key cannot work, or None. Reports its LENGTH, never its value.
+
+    A FRED key is 32 lower-case alphanumerics. The first live runs spent a
+    request per series being told the configured one is not; that is
+    knowable without asking, and the length usually says what went wrong.
+    """
+    if not key or re.fullmatch(r"[a-z0-9]{32}", key):
+        return None
+    return (f"FRED_API_KEY is {len(key)} character(s) and is not 32 "
+            f"lower-case alphanumerics, so FRED will refuse it — the secret "
+            f"is malformed (its value is not shown)")
+
+
 def fetch_fred(sess, series_id: str, key: str) -> dict:
     """-> {"ok", "obs", "source", "reason"}. Keyed API first, keyless CSV as
     the fallback; a failure of both is a failure, never an empty series."""
     start = (dt.datetime.now(dt.timezone.utc).date()
              - dt.timedelta(days=800)).isoformat()
-    if key:
+    bad_key = fred_key_problem(key)
+    if bad_key:
+        why = bad_key
+    elif key:
         try:
             r = sess.get(FRED_API, timeout=40, params={
                 "series_id": series_id, "api_key": key, "file_type": "json",
@@ -263,7 +283,7 @@ def fetch_fred(sess, series_id: str, key: str) -> dict:
     else:
         why = "FRED_API_KEY not configured"
     try:
-        r = sess.get(FRED_CSV, timeout=45,
+        r = sess.get(FRED_CSV, timeout=25,
                      params={"id": series_id, "cosd": start})
         if r.status_code == 200:
             obs = parse_fred_csv(r.text)

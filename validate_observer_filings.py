@@ -334,6 +334,20 @@ def test_append_only():
     check("new-filings-are-appended", len(merged2) == 2 and added2 == 1)
     check("duplicate-ids-in-one-batch-collapse",
           ob.merge_day([], [a, a2])[1] == 1)
+    # A record from the first version of this file: no id, kind or root_form.
+    old = {"accession": "0000001-26-000001", "form": "4/A", "ticker": "ABCD",
+           "observed_at": "night-one", "direction": None}
+    up = ob.upgrade(dict(old))
+    check("old-records-gain-an-id-kind-and-root-form",
+          up["id"] == "edgar:0000001-26-000001" and up["kind"] == "filing"
+          and up["root_form"] == "4")
+    check("upgrading-changes-nothing-already-written",
+          all(up[k] == v for k, v in old.items()))
+    check("an-old-record-is-not-appended-a-second-time",
+          ob.merge_day([dict(old)], [a2])[1] == 0,
+          "without an id, re-collecting a day would duplicate every "
+          "night-one record")
+    check("upgrade-is-idempotent", ob.upgrade(dict(up)) == up)
     check("record-has-an-id-and-raw",
           a["id"] == "edgar:0000001-26-000001" and "raw" in a)
 

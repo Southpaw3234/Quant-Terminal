@@ -201,6 +201,16 @@ def test_digest_and_refusal():
     check("FREDs-own-reason-is-surfaced",
           "not registered" in e and "https://" not in e, e)
     check("a-non-json-refusal-adds-nothing", om.fred_error(_R(None)) == "")
+    good = "0123456789abcdef0123456789abcdef"
+    check("a-well-formed-key-has-no-problem",
+          om.fred_key_problem(good) is None and om.fred_key_problem("") is None)
+    for label, k in (("too-long", good + "x"), ("upper-case", good.upper()),
+                     ("quoted", f'"{good}"'), ("with-a-dash", good[:-1] + "-")):
+        prob = om.fred_key_problem(k)
+        check(f"a-{label}-key-is-caught-locally", bool(prob))
+        check(f"and-the-{label}-key-is-never-printed",
+              k not in (prob or "") and str(len(k)) in (prob or ""),
+              "the length says what went wrong; the value stays out of logs")
     check("no-message-adds-nothing", om.fred_error(_R({})) == "")
 
 
