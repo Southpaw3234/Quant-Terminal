@@ -1,0 +1,15 @@
+{
+  "note": "Frozen outcome ledgers ACTUARY may compute base rates from. Every ledger listed here has ALREADY been consumed by a pre-registered read, so describing it spends nothing from the K budget. Adding a ledger that has NOT been read would let a nightly job look at outcomes the registry has not paid for — do not list one until its read is taken and recorded.",
+  "sources": [
+    {
+      "ledger": "data/events/event_study.csv",
+      "registry": "data/registry/specifications.json",
+      "spec_id": "form4_cluster_buy_v1"
+    },
+    {
+      "ledger": "data/events/event_study_v2.csv",
+      "registry": "data/registry/specifications.json",
+      "spec_id": "form4_cluster_buy_v2"
+    }
+  ]
+}

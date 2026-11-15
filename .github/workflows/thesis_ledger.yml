@@ -35,7 +35,9 @@ on:
         type: string
         default: ''
   push:
-    branches: ['master', 'v27/**', 'v28/**', 'v29/**', 'agent/**']
+    branches: ['master', 'v27/**', 'v28/**', 'v29/**', 'agent/**',
+               'ci/**']   # ci/** added after a PR about silent
+               # guards produced zero runs because of this list.
     paths:
       - 'qt/thesis.py'
       - 'thesis_ledger.py'
@@ -52,12 +54,26 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2      # the previous commit, for the shrink check
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      # qt/thesis.py is stdlib only — no pandas, no network. The suite
-      # therefore cannot reach anything, which is what makes "this module
-      # cannot decide" a demonstrated property.
+      # 🔑 pandas IS installed here, and the earlier comment claiming
+      # otherwise was wrong in a way that only CI could show. qt/thesis.py is
+      # genuinely stdlib-only, but `from qt import thesis` runs
+      # qt/__init__.py, which eagerly imports qt/ledger.py, which imports
+      # pandas. So the suite failed on master with ModuleNotFoundError while
+      # passing locally, where pandas happens to be installed — a green run
+      # is not a delivered artifact.
+      #
+      # What is still true, and is the half that matters: `requests` is NOT
+      # installed, so this suite cannot reach the network. And the property
+      # "this module cannot decide" is asserted by validate_thesis_ledger.py
+      # over the AST import list, which is where it belongs — not inferred
+      # from what a runner happens to have on it.
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas
       - name: Compile check
         run: |
           python -m py_compile qt/thesis.py
@@ -73,10 +89,32 @@ jobs:
         run: |
           set -u
           if [ ! -f data/theses/ledger.jsonl ]; then
+            # A ledger that EXISTED on the previous commit and is gone now
+            # is the largest possible shrink, not "no ledger yet".
+            if git cat-file -e HEAD^:data/theses/ledger.jsonl 2>/dev/null; then
+              echo "::error::data/theses/ledger.jsonl was DELETED — it existed on the previous commit"
+              exit 1
+            fi
             echo "No ledger yet — nothing to verify. The first thesis creates it."
             exit 0
           fi
           python thesis_ledger.py verify
+
+      - name: The ledger only ever grows
+        # 🔑 The hash chain CANNOT see this. Deleting the last entries leaves
+        # a perfectly valid chain, so an inconvenient close or a recorded
+        # override could be dropped off the end and `verify` would still say
+        # "chain intact". This compares against the previous commit: every
+        # entry that was there must still be there, unchanged, in order.
+        run: |
+          set -u
+          [ -f data/theses/ledger.jsonl ] || { echo "No ledger — nothing to compare."; exit 0; }
+          if git cat-file -e HEAD^:data/theses/ledger.jsonl 2>/dev/null; then
+            git show HEAD^:data/theses/ledger.jsonl > /tmp/ledger_prev.jsonl
+            python thesis_ledger.py verify --against /tmp/ledger_prev.jsonl
+          else
+            echo "The ledger is new on this commit — nothing earlier to compare against."
+          fi
 
       - name: Assert the ledger was not modified by validation
         run: |
@@ -98,6 +136,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      # Same reason as the validate job: this step does `from qt import
+      # thesis`, and importing the qt package pulls qt/ledger.py -> pandas.
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas
       - name: What is due, and what is drifting
         env:
           QT_ON: ${{ inputs.on_date }}
@@ -114,7 +156,7 @@ jobs:
           s = th.summary(entries, today)
           lines = [f"**Thesis ledger — {today}**",
                    f"{s['open']} open · {s['closed']} closed · "
-                   f"{s['overrides']} override(s) · chain {s['chain']['why']}"]
+                   f"{s['overrides']} override(s) · {s['chain']['why']}"]
           d = th.due(entries, today)
           if d:
               lines.append("")
@@ -129,7 +171,10 @@ jobs:
                            f"fired, the position is open, and no reasoning "
                            f"was recorded. Override it or close it.")
               for t in drift:
-                  for f in t["fired"]:
+                  # Only the ones with nothing recorded against them. An
+                  # overridden falsifier has been answered in writing and
+                  # is not drift.
+                  for f in t["unaddressed"]:
                       lines.append(f"· `{t['ticker']}` **{t['thesis_id']}** "
                                    f"— fired: {f[:70]}")
           if not d and not drift:
@@ -150,17 +195,18 @@ jobs:
           if [ -z "${HOOK:-}" ]; then
             echo "DISCORD_WEBHOOK_URL not set — reminder is in the log."; exit 0
           fi
+          # qt.notify, not an inline urllib call. The inline version sent
+          # Python's default User-Agent, which Discord refuses with 403 —
+          # it had been copied into three workflows before it was run once.
           python - <<'PY'
-          import json, os, urllib.request
-          body = open("reminder.md", encoding="utf-8").read()
-          if len(body) > 1900:
-              body = body[:1900] + "\n… truncated"
-          req = urllib.request.Request(
-              os.environ["HOOK"],
-              data=json.dumps({"content": body}).encode("utf-8"),
-              headers={"Content-Type": "application/json"})
-          with urllib.request.urlopen(req, timeout=30) as r:
-              print("Discord:", r.status)
+          import os
+          from qt import notify
+          res = notify.post(os.environ["HOOK"],
+                            open("reminder.md", encoding="utf-8").read())
+          print(f"Discord: {'sent' if res['ok'] else 'NOT SENT'} "
+                f"{res['sent']}/{res['of']} — {res['reason']}")
+          if not res["ok"]:
+              print(f"::warning::the reminder was not delivered — {res['reason']}")
           PY
 
       - name: Assert nothing was written

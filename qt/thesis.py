@@ -54,6 +54,7 @@ thing with a decision they have thought about.
 
 from __future__ import annotations
 
+import datetime as _dt
 import hashlib
 import json
 
@@ -112,6 +113,49 @@ def tip(entries: list) -> str:
     return entries[-1]["hash"] if entries else GENESIS
 
 
+# ── validation shared by every append ────────────────────────────────────────
+
+def _iso_date(value: str, what: str) -> str:
+    """A real calendar date, YYYY-MM-DD, or a refusal.
+
+    🔑 `due()` compares review dates as strings. That is only correct for
+    ISO dates: "soon" sorts after every date in this century, so a thesis
+    reviewed "soon" would simply never come due -- an open position with a
+    review date that can never arrive, recorded as if it had one.
+    """
+    v = str(value or "").strip()
+    try:
+        if len(v) != 10:
+            raise ValueError
+        _dt.date.fromisoformat(v)
+    except ValueError:
+        raise ValueError(
+            f"{what} must be a real date written YYYY-MM-DD, got {v!r}. "
+            f"Dates are compared as text, so anything else would sort wrong "
+            f"and the review would never come due.") from None
+    return v
+
+
+def _require_declared(entries: list, thesis_id: str, falsifier: str) -> str:
+    """The falsifier must be one this thesis DECLARED, verbatim.
+
+    🔑 Without this, a review could 'fire' a falsifier nobody wrote down and
+    an override could reason about a sentence that was never a condition.
+    The whole value of the ledger is that the conditions were fixed in
+    advance; accepting a new one at review time is renegotiation through
+    the side door. A typo is refused for the same reason -- it would count
+    as fired while matching nothing the status view can show.
+    """
+    f = str(falsifier or "").strip()
+    declared = (state(entries).get(thesis_id) or {}).get("falsifiers") or []
+    if f not in declared:
+        raise ValueError(
+            f"{f!r} is not a falsifier this thesis declared. It must match "
+            f"one of them exactly: {declared}. A condition added at review "
+            f"time is not a pre-registered falsifier.")
+    return f
+
+
 # ── appending ────────────────────────────────────────────────────────────────
 
 def open_thesis(entries: list, thesis_id: str, ticker: str, claim: str,
@@ -137,6 +181,7 @@ def open_thesis(entries: list, thesis_id: str, ticker: str, claim: str,
         raise ValueError(
             "a thesis needs a REVIEW DATE. An open position with no review "
             "date is one that gets reviewed when it hurts.")
+    review_date = _iso_date(review_date, "the review date")
     if any(e.get("kind") == "open" and e.get("thesis_id") == thesis_id
            for e in entries or []):
         raise ValueError(f"thesis '{thesis_id}' is already open — a second "
@@ -155,10 +200,15 @@ def review(entries: list, thesis_id: str, at: str, note: str,
     """Record a review. Naming a fired falsifier does NOT close the thesis —
     that is a separate, deliberate act (`close` or `override`)."""
     _require_open(entries, thesis_id)
+    fired = [_require_declared(entries, thesis_id, f)
+             for f in (falsifiers_fired or [])]
+    nxt = str(next_review or "").strip()
+    if nxt:
+        nxt = _iso_date(nxt, "the next review date")
     return seal({"kind": "review", "thesis_id": thesis_id, "at": at,
                  "note": str(note or "").strip(),
-                 "falsifiers_fired": [str(f) for f in (falsifiers_fired or [])],
-                 "next_review": str(next_review or "").strip()},
+                 "falsifiers_fired": fired,
+                 "next_review": nxt},
                 tip(entries))
 
 
@@ -176,6 +226,7 @@ def override(entries: list, thesis_id: str, at: str, falsifier: str,
         raise ValueError(
             "an override must say WHY the thesis survives a falsifier it "
             "declared in advance. This is the sentence future-you needs.")
+    falsifier = _require_declared(entries, thesis_id, falsifier)
     return seal({"kind": "override", "thesis_id": thesis_id, "at": at,
                  "falsifier": str(falsifier).strip(),
                  "reasoning": str(reasoning).strip()}, tip(entries))
@@ -189,6 +240,8 @@ def close(entries: list, thesis_id: str, at: str, reason: str,
         raise ValueError(f"reason must be one of {CLOSE_REASONS}")
     if reason == "falsifier_fired" and not str(falsifier).strip():
         raise ValueError("closing on a falsifier must name which one")
+    if str(falsifier or "").strip():
+        falsifier = _require_declared(entries, thesis_id, falsifier)
     return seal({"kind": "close", "thesis_id": thesis_id, "at": at,
                  "reason": reason, "falsifier": str(falsifier or "").strip(),
                  "note": str(note or "").strip()}, tip(entries))
@@ -229,7 +282,8 @@ def state(entries: list) -> dict:
                         "review_date": e.get("review_date", ""),
                         "stance": e.get("stance", ""),
                         "opened_at": e.get("at", ""), "status": "open",
-                        "fired": [], "overrides": 0, "reviews": 0,
+                        "fired": [], "overridden": [],
+                        "overrides": 0, "reviews": 0,
                         "closed_at": "", "close_reason": ""}
         elif tid in out:
             s = out[tid]
@@ -245,6 +299,9 @@ def state(entries: list) -> dict:
                 s["overrides"] += 1
                 if e.get("falsifier") and e["falsifier"] not in s["fired"]:
                     s["fired"].append(e["falsifier"])
+                if e.get("falsifier") and \
+                        e["falsifier"] not in s["overridden"]:
+                    s["overridden"].append(e["falsifier"])
             elif k == "close":
                 s["status"] = "closed"
                 s["closed_at"] = e.get("at", "")
@@ -271,8 +328,16 @@ def unreviewed_fired(entries: list) -> list:
     override -- an override is a decision. This is drift, and it is exactly
     what the ledger exists to surface.
     """
-    return [s for s in state(entries).values()
-            if s["status"] == "open" and s["fired"] and s["overrides"] == 0]
+    out = []
+    for s in state(entries).values():
+        # 🔑 PER FALSIFIER. The first version asked only whether ANY override
+        # existed, so overriding one fired falsifier silently cleared every
+        # other one that had fired. Two conditions failed, one sentence of
+        # reasoning written, and the ledger reported nothing drifting.
+        unaddressed = [f for f in s["fired"] if f not in s["overridden"]]
+        if s["status"] == "open" and unaddressed:
+            out.append(dict(s, unaddressed=unaddressed))
+    return out
 
 
 def summary(entries: list, today: str = "") -> dict:
@@ -296,16 +361,60 @@ def summary(entries: list, today: str = "") -> dict:
 # ── file i/o ─────────────────────────────────────────────────────────────────
 
 def load(path: str) -> list:
+    """Read the ledger. A missing file is an empty ledger; a MALFORMED one
+    is refused, with the line number.
+
+    A half-written or hand-edited line used to surface as a bare
+    JSONDecodeError traceback. It is the same situation as a broken chain --
+    the record cannot be trusted -- and gets the same treatment: a located
+    refusal, not a crash and not a silent skip.
+    """
     out = []
     try:
         with open(path, encoding="utf-8") as f:
-            for line in f:
+            for i, line in enumerate(f, 1):
                 line = line.strip()
-                if line:
-                    out.append(json.loads(line))
+                if not line:
+                    continue
+                try:
+                    row = json.loads(line)
+                except ValueError:
+                    raise ValueError(
+                        f"{path} line {i} is not valid JSON — the ledger was "
+                        f"edited by hand or a write was interrupted. Restore "
+                        f"it from git history.") from None
+                if not isinstance(row, dict):
+                    raise ValueError(f"{path} line {i} is not an entry")
+                out.append(row)
     except FileNotFoundError:
         return []
     return out
+
+
+def extends(previous: list, current: list) -> dict:
+    """Is `current` the `previous` ledger with entries only ADDED?
+
+    -> {"ok": bool, "why": str}
+
+    🔑 The hash chain cannot see this. Deleting the LAST entries leaves a
+    perfectly valid chain -- every remaining link still verifies -- so an
+    inconvenient close or a recorded override could be dropped off the end
+    and `verify` would report "chain intact". A ledger that got shorter is
+    an incident, not a diff; CI calls this against the previous commit.
+    """
+    if len(current) < len(previous):
+        return {"ok": False,
+                "why": f"the ledger SHRANK from {len(previous)} to "
+                       f"{len(current)} entries — entries were removed"}
+    for i, old in enumerate(previous):
+        if current[i].get("hash") != old.get("hash"):
+            return {"ok": False,
+                    "why": f"entry {i} differs from the previously committed "
+                           f"ledger — history was rewritten, not appended to"}
+    return {"ok": True,
+            "why": f"append-only: {len(current) - len(previous)} new "
+                   f"entr{'y' if len(current) - len(previous) == 1 else 'ies'}"
+                   f" on top of {len(previous)}"}
 
 
 def append(path: str, entry: dict) -> None:

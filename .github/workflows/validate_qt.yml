@@ -28,6 +28,18 @@ on:
       # filter documented below: a trigger that lags the tests it guards
       # reports on a snapshot of something it is not watching.
       - 'v29/**'
+      # agent/** and ci/** added 2026-11-11. SIXTH instance of the class
+      # this file has now documented five times, and the two newest were
+      # mine. The branch carrying the collective-agent modules produced ZERO
+      # runs, and so did the branch carrying THIS FIX -- a PR whose whole
+      # subject is guards that fail silently, failing silently.
+      #
+      # A branch allowlist does not report a miss. It reports nothing, which
+      # reads exactly like a pass. Every prefix anyone invents next is
+      # another silent zero, so the allowlist itself is the defect and
+      # listing one more prefix is a patch, not a fix.
+      - 'agent/**'
+      - 'ci/**'
       # docs/** added 2026-09-21 for the same reason v29/** was: the commit
       # that ADDED validate_protocols.py landed on docs/carry-forward and
       # triggered nothing. Third instance of this exact class in one file.
@@ -192,10 +204,70 @@ jobs:
       - name: Assert qt imports nothing it should not
         # A guard module that can import the broker SDK is one refactor away
         # from a guard that places an order.
+        #
+        # 🔑 AST, NOT GREP. The previous form was
+        #     grep -rnE '^\s*(import|from)\s+(alpaca|yfinance|requests)' qt/
+        # and `\s*` made an INDENTED import count as a module-level one. It
+        # therefore failed on qt/edgar.py, where `import requests` sits inside
+        # session() precisely SO THAT the hermetic suites cannot reach the
+        # network: a module-level import is executed by `import qt`, a lazy
+        # one only when somebody deliberately opens a session.
+        #
+        # That is the fifth time in this repository a textual guard has fired
+        # on correct code, or passed on the comment explaining the ban. A
+        # guard that reads source as text keeps finding the words instead of
+        # the behaviour. This one walks the module body: it still catches the
+        # thing that matters -- a network or broker library imported at import
+        # time -- and stops catching the thing that does not.
         run: |
           set -u
-          if grep -rnE '^\s*(import|from)\s+(alpaca|yfinance|requests)' qt/; then
-            echo "::error::qt/ imports a network or broker library"
-            exit 1
-          fi
-          echo "OK — qt/ has no network or broker imports."
+          python - <<'PY'
+          import ast, pathlib, sys
+          BANNED = {"alpaca", "alpaca_trade_api", "yfinance", "requests",
+                    "urllib", "urllib3", "httpx", "socket"}
+
+          def named(n):
+              if isinstance(n, ast.Import):
+                  return [a.name for a in n.names]
+              if isinstance(n, ast.ImportFrom):
+                  return [n.module or ""]
+              return []
+
+          def banned(n):
+              return [(n.lineno, nm) for nm in named(n)
+                      if nm.split(".")[0] in BANNED]
+
+          def module_level(tree):
+              """Imports `import qt` would EXECUTE.
+
+              Descends through if/try/with and class bodies, which do run at
+              import time, but NOT into a function body, which does not.
+              """
+              out, stack = set(), list(tree.body)
+              while stack:
+                  n = stack.pop()
+                  if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                      continue
+                  out.update(banned(n))
+                  stack.extend(ast.iter_child_nodes(n))
+              return out
+
+          bad, lazy = [], []
+          for p in sorted(pathlib.Path("qt").rglob("*.py")):
+              tree = ast.parse(p.read_text(encoding="utf-8"))
+              top = module_level(tree)
+              every = {h for n in ast.walk(tree) for h in banned(n)}
+              bad += [f"{p}:{ln}  {nm}" for ln, nm in sorted(top)]
+              lazy += [f"{p}:{ln}  {nm}" for ln, nm in sorted(every - top)]
+
+          for line in lazy:
+              print(f"  lazy, not run by `import qt`: {line}")
+          if bad:
+              print("::error::qt/ imports a network or broker library AT "
+                    "MODULE LEVEL — `import qt` would execute it")
+              for line in bad:
+                  print(f"  {line}")
+              sys.exit(1)
+          print(f"OK — no module-level network or broker import "
+                f"({len(lazy)} deliberate lazy import(s)).")
+          PY

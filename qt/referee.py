@@ -105,7 +105,11 @@ class Referee:
         if not self.path.exists():
             return
         try:
-            raw = json.loads(self.path.read_text() or "{}")
+            # Explicit: the registry holds non-ASCII text, and the platform
+            # default on Windows is cp1252, which cannot decode it. The
+            # Referee then failed closed on a file that was perfectly
+            # readable -- the right refusal for the wrong reason.
+            raw = json.loads(self.path.read_text(encoding="utf-8") or "{}")
         except Exception as exc:
             # FAIL CLOSED. An unreadable registry means the budget is unknown,
             # and an unknown budget must not be treated as an empty one.
@@ -142,7 +146,8 @@ class Referee:
             "terminal_date": self.terminal_date,
             "specifications": {s: asdict(v) for s, v in self.specs.items()},
         }
-        self.path.write_text(json.dumps(payload, indent=2, sort_keys=True))
+        self.path.write_text(json.dumps(payload, indent=2, sort_keys=True),
+                             encoding="utf-8")
 
     # ─────────────────────────────────────────────────────────── accounting
 

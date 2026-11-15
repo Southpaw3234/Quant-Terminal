@@ -58,7 +58,12 @@ def _today() -> str:
 
 
 def _load():
-    entries = th.load(LEDGER)
+    try:
+        entries = th.load(LEDGER)
+    except ValueError as e:
+        # Same treatment as a broken chain: the record cannot be trusted.
+        print(f"[thesis] ⚠️  LEDGER UNREADABLE — {e}")
+        sys.exit(4)
     chain = th.verify(entries)
     if not chain["ok"]:
         # Fail CLOSED. A ledger whose history has been altered is not a
@@ -125,9 +130,12 @@ def cmd_status(a):
         for f in t["falsifiers"]:
             hit = "🔴 FIRED" if f in t["fired"] else "      "
             print(f"      {hit}  {f[:76]}")
-        if t["status"] == "open" and t["fired"] and not t["overrides"]:
-            print("      ⚠️  a falsifier fired and nothing was recorded. "
-                  "Override it or close it.")
+        open_fired = [f for f in t["fired"] if f not in t["overridden"]]
+        for f in t["overridden"]:
+            print(f"      ↪ overridden: {f[:70]}")
+        if t["status"] == "open" and open_fired:
+            print(f"      ⚠️  {len(open_fired)} fired falsifier(s) with "
+                  f"nothing recorded. Override each or close the thesis.")
 
     drift = th.unreviewed_fired(entries)
     if drift:
@@ -149,12 +157,27 @@ def cmd_due(a):
 
 
 def cmd_verify(a):
-    entries = th.load(LEDGER)
+    try:
+        entries = th.load(LEDGER)
+    except ValueError as e:
+        print(f"[thesis] ⚠️  LEDGER UNREADABLE — {e}")
+        sys.exit(1)
     v = th.verify(entries)
     print(f"[thesis] {LEDGER}: {v['n']} entries — {v['why']}")
     if not v["ok"]:
         print(f"[thesis] broken at entry {v['broken_at']}")
         sys.exit(1)
+    if a.against:
+        # 🔑 The chain cannot see entries removed from the END. This can.
+        try:
+            prev = th.load(a.against)
+        except ValueError as e:
+            print(f"[thesis] previous ledger unreadable — {e}")
+            sys.exit(1)
+        x = th.extends(prev, entries)
+        print(f"[thesis] against {a.against}: {x['why']}")
+        if not x["ok"]:
+            sys.exit(1)
 
 
 def main():
@@ -206,6 +229,9 @@ def main():
     d.set_defaults(fn=cmd_due)
 
     v = sub.add_parser("verify", help="check the hash chain")
+    v.add_argument("--against", default="",
+                   help="a PREVIOUS copy of the ledger; fails if this one is "
+                        "not that one with entries only added")
     v.set_defaults(fn=cmd_verify)
 
     a = p.parse_args()

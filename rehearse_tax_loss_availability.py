@@ -44,6 +44,47 @@ BOOK = os.environ.get("QT_TL_BOOK", "data/events/tax_loss_book.csv")
 BENCHMARK = "IWM"
 MIN_BOOK = 5
 PRICE_START = "2014-06-01"
+# Below this many priced positions, zero deaths proves nothing either way.
+MIN_POSITIONS_FOR_A_DEATH = 500
+
+
+def survivorship_refusal(n_priced: int, n_dead: int, n_missing: int,
+                         n_stopped: int) -> "str | None":
+    """Why this book must not be reported, or None if it may be.
+
+    Two ways a price layer can be blind to delistings, and the first version
+    of this rehearsal only checked for one of them.
+
+    1. NO SERIES ENDS EARLY. Every ticker trades through the last session,
+       so the death test could not have fired for anyone.
+
+    2. 🔑 NOTHING DIED AND NOTHING IS MISSING. The live run of 2026-11-15
+       is what this branch exists for: 1,359 of 1,359 tickers priced, 0
+       missing, and 0 of 2,453 positions stopped trading inside a holding
+       window -- in the WORST-performing quintile of a microcap universe,
+       across ten Decembers. Three series did end before the last session,
+       so check 1 passed and the run printed `status ok` on every cycle.
+
+       The question was never whether the layer can see some series end
+       somewhere. It is whether a position that died while it was HELD
+       shows up, either as a death or as a ticker with no history. When a
+       large book shows neither, the universe was assembled from names that
+       still trade: the losers that went to zero are not mispriced, they
+       are absent. A January rebound measured on what is left is measured
+       on the survivors of the thing being tested.
+    """
+    if n_priced and n_stopped == 0:
+        return (f"not one of the priced tickers has a series ending before "
+                f"the last session, so the delisting test could not have "
+                f"fired for any of them")
+    if n_priced >= MIN_POSITIONS_FOR_A_DEATH and n_dead == 0 \
+            and n_missing == 0:
+        return (f"0 of {n_priced} positions stopped trading inside a "
+                f"holding window AND 0 tickers are missing a price history. "
+                f"In the worst quintile of a microcap universe that is not a "
+                f"measurement of the strategy — it is a universe containing "
+                f"no delistings at all, i.e. a sample of survivors")
+    return None
 
 
 def fetch_closes(tickers):
@@ -157,16 +198,17 @@ def main() -> None:
     # These numbers go into `availability_rehearsal` in the declaration and a
     # prior gets signed against them. An unfalsifiable figure must not reach
     # the record. A7: a green run is not a delivered artifact.
-    if ends and not stopped:
+    why = survivorship_refusal(tot_priced, tot_dead, len(missing_bk),
+                               len(stopped))
+    if why:
         print("\n[rehearse] REFUSING TO REPORT THIS BOOK")
-        print(f"::error::not one of {len(ends)} tickers has a series ending "
-              f"before {last.date()}, so the delisting test could not have "
-              f"fired. This book is the WORST quintile of a microcap "
-              f"universe; if none of them died, the price layer cannot see "
-              f"the ones that did, and {tot_dead} is an artefact.")
+        print(f"::error::{why}. The figure {tot_dead} dead is an artefact of "
+              f"the universe, not a property of the book.")
         print("  This is exactly how specification #4's previous occupant "
-              "was found to be a sample of survivors. Fix the price layer "
-              "and re-run before anything here is quoted in a declaration.")
+              "was found to be a sample of survivors. The universe needs "
+              "the names that delisted — data/universe/delisted_roster*.csv "
+              "is the start of that — before anything here is quoted in a "
+              "declaration.")
         print("\n[rehearse] no return computed. K unchanged. Nothing declared.")
         sys.exit(5)
 

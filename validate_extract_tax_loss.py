@@ -277,6 +277,40 @@ def test_spec4_tax_loss_not_declared():
           f"is what spends K, not this file")
 
 
+def test_rehearsal_refuses_a_survivor_universe():
+    print("\nthe rehearsal refuses a universe with no delistings in it")
+    import rehearse_tax_loss_availability as rh
+    f = rh.survivorship_refusal
+
+    # 🔑 The live run of 2026-11-15, exactly. The first guard passed it.
+    live = f(n_priced=2453, n_dead=0, n_missing=0, n_stopped=3)
+    check("the-2026-11-15-live-result-is-REFUSED", bool(live),
+          "0 of 2,453 worst-quintile microcap positions dead in ten "
+          "Decembers, 1,359 of 1,359 priced, printed as `status ok`")
+    check("the-refusal-names-survivorship", "survivors" in (live or ""))
+
+    check("no-series-ending-early-is-still-refused",
+          bool(f(n_priced=2453, n_dead=0, n_missing=0, n_stopped=0)))
+    check("a-book-with-deaths-is-allowed",
+          f(n_priced=2453, n_dead=41, n_missing=0, n_stopped=60) is None)
+    check("missing-tickers-are-not-proof-of-survivorship",
+          f(n_priced=2000, n_dead=0, n_missing=120, n_stopped=3) is None,
+          "an unpriced ticker may BE the delisting; that is reported in the "
+          "coverage block, not refused here")
+    check("a-small-book-with-no-deaths-is-not-refused",
+          f(n_priced=120, n_dead=0, n_missing=0, n_stopped=2) is None,
+          "below the floor, zero deaths proves nothing either way")
+    check("exactly-the-floor-is-refused",
+          bool(f(n_priced=rh.MIN_POSITIONS_FOR_A_DEATH, n_dead=0,
+                 n_missing=0, n_stopped=1)))
+    check("an-empty-book-is-not-a-survivorship-finding",
+          f(n_priced=0, n_dead=0, n_missing=0, n_stopped=0) is None)
+    import inspect
+    src = inspect.getsource(rh.main)
+    check("the-refusal-is-wired-into-the-run",
+          "survivorship_refusal(" in src and "sys.exit(5)" in src)
+
+
 def main():
     print("=" * 70)
     print("extract_tax_loss_book — pure logic (no network)")
@@ -288,6 +322,7 @@ def main():
     test_build_keeps_thin_cycles_visible()
     test_declared_parameters()
     test_spec4_tax_loss_not_declared()
+    test_rehearsal_refuses_a_survivor_universe()
 
     print("\n" + "=" * 70)
     print(f"{len(PASS)} passed, {len(FAIL)} failed")
