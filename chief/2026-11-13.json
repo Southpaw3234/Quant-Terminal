@@ -1,0 +1,1429 @@
+{
+ "attention": [
+  {
+   "text": "⚫ FRED is DARK — 0 of 10 macro series could be fetched: fred api answered 400 — FRED says: Bad Request. The value for variable api_key is not a 32 character alpha-numeric lower-case string.; keyless csv: ReadTimeout",
+   "url": null
+  }
+ ],
+ "day": "2026-11-13",
+ "describes": "filings published 2026-11-13",
+ "facts": {
+  "attention": [
+   {
+    "text": "⚫ FRED is DARK — 0 of 10 macro series could be fetched: fred api answered 400 — FRED says: Bad Request. The value for variable api_key is not a 32 character alpha-numeric lower-case string.; keyless csv: ReadTimeout",
+    "url": null
+   }
+  ],
+  "sections": {
+   "base_rates": {
+    "dark": false,
+    "id": "base_rates",
+    "lines": [
+     {
+      "text": "form4_cluster_buy over 21 bars vs SPY, n=160: median -0.2%, middle half -7.1% to +6.8%, worst -56.5%, best +118.2%, 49% positive — registry verdict NOT MET",
+      "url": null
+     },
+     {
+      "text": "form4_cluster_buy over 63 bars vs SPY, n=406: median -4.5%, middle half -20.5% to +9.8%, worst -77.2%, best +268.6%, 40% positive — registry verdict NOT MET",
+      "url": null
+     },
+     {
+      "text": "18 event type(s) observed; 17 have insufficient history for a base rate (no frozen outcome ledger)",
+      "url": null
+     }
+    ],
+    "note": "What followed past events of a type — a description, not a forecast. Computed only from reads already spent.",
+    "source": {
+     "age_days": 0.0,
+     "name": "ACTUARY analysis",
+     "stamp": "2026-11-15T03:47:38+00:00",
+     "status": "fresh",
+     "usable": true,
+     "why": "ok"
+    },
+    "title": "Base rates"
+   },
+   "exposure": {
+    "dark": false,
+    "id": "exposure",
+    "lines": [
+     {
+      "text": "Not measured — no positions are declared in data/operator/positions.csv, so there is nothing to measure concentration of.",
+      "url": null
+     }
+    ],
+    "note": "Lines are flagged against the balanced limits (single name 20%); the figures are the same under every stance.",
+    "source": {
+     "age_days": 0.0,
+     "name": "ACTUARY analysis",
+     "stamp": "2026-11-15T03:47:38+00:00",
+     "status": "fresh",
+     "usable": true,
+     "why": "ok"
+    },
+    "title": "Exposure"
+   },
+   "filings": {
+    "dark": false,
+    "id": "filings",
+    "lines": [
+     {
+      "text": "10-K: 0 in the watched universe of 6 market-wide",
+      "url": null
+     },
+     {
+      "text": "10-Q: 73 in the watched universe of 487 market-wide",
+      "url": null
+     },
+     {
+      "text": "4: 105 in the watched universe of 675 market-wide",
+      "url": null
+     },
+     {
+      "text": "424B5: 3 in the watched universe of 9 market-wide",
+      "url": null
+     },
+     {
+      "text": "8-K: 63 in the watched universe of 313 market-wide",
+      "url": null
+     },
+     {
+      "text": "8-K items: 1.01 × 5, 2.02 × 27, 2.03 × 1, 3.02 × 3, 3.03 × 2, 4.01 × 1, 5.02 × 8, 5.03 × 2, 5.07 × 1, 7.01 × 13, 8.01 × 13, 9.01 × 52",
+      "url": null
+     },
+     {
+      "text": "ACET — 8-K item 5.02",
+      "url": "https://www.sec.gov/Archives/edgar/data/1720580/000172058026000069/"
+     },
+     {
+      "text": "ACFN — 8-K item 4.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/880984/000149315226051707/"
+     },
+     {
+      "text": "AGPU — 8-K item 5.02, 7.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1446159/000117184326007416/"
+     },
+     {
+      "text": "AIRO — 8-K item 1.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1927958/000149315226051518/"
+     },
+     {
+      "text": "AIRT — 8-K item 2.02, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/353184/000035318426000107/"
+     },
+     {
+      "text": "AIRT — 8-K item 7.01, 8.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/353184/000035318426000108/"
+     },
+     {
+      "text": "ARAY — 8-K item 3.02, 3.03, 5.03, 7.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1138723/000143774926036943/"
+     },
+     {
+      "text": "ASTC — 8-K item 2.02, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1001907/000143774926036885/"
+     },
+     {
+      "text": "ATYR — 8-K item 8.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1339970/000133997026000088/"
+     },
+     {
+      "text": "BACC — 8-K item 8.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/2059654/000118518526005351/"
+     },
+     {
+      "text": "BBGI — 8-K item 2.02, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1099160/000119312526460951/"
+     },
+     {
+      "text": "BCIC — 8-K item 2.02, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1372807/000119312526461047/"
+     },
+     {
+      "text": "BJDX — 8-K item 2.02, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1704287/000121390026119686/"
+     },
+     {
+      "text": "BKYI — 8-K item 2.02, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1019034/000143774926036667/"
+     },
+     {
+      "text": "BNTC — 8-K item 2.02, 5.03, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1808898/000119312526459339/"
+     },
+     {
+      "text": "BOC — 8-K item 2.02, 8.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1494582/000143774926036897/"
+     },
+     {
+      "text": "CING — 8-K item 1.01, 2.02, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1862150/000149315226051841/"
+     },
+     {
+      "text": "CPSS — 8-K item 7.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/889609/000168316826008688/"
+     },
+     {
+      "text": "DHX — 8-K item 1.01, 3.03, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1393883/000110465926127131/"
+     },
+     {
+      "text": "EP — 8-K item 1.01, 2.03, 3.02, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/887396/000107261326000891/"
+     },
+     {
+      "text": "FGC — 8-K item 7.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1591890/000149315226051561/"
+     },
+     {
+      "text": "FTW — 8-K item 2.02, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/2083125/000121390026119139/"
+     },
+     {
+      "text": "FXNC — 8-K item 8.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/719402/000143774926036686/"
+     },
+     {
+      "text": "FXNC — 8-K item 5.02",
+      "url": "https://www.sec.gov/Archives/edgar/data/719402/000143774926036861/"
+     },
+     {
+      "text": "GBLI — 8-K item 5.02, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1494904/000119312526460855/"
+     },
+     {
+      "text": "HCAC — 8-K item 7.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/2079013/000182912626012409/"
+     },
+     {
+      "text": "HSCS — 8-K/A item 8.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1468492/000121390026119242/"
+     },
+     {
+      "text": "ICCC — 8-K item 2.02, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/811641/000143774926036629/"
+     },
+     {
+      "text": "IMUX — 8-K item 2.02, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1280776/000149315226051543/"
+     },
+     {
+      "text": "INDP — 8-K item 2.02, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1857044/000149315226051749/"
+     },
+     {
+      "text": "IRLA — 8-K item 2.02, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1662774/000119312526460775/"
+     },
+     {
+      "text": "JSPR — 8-K item 8.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1788028/000121390026119785/"
+     },
+     {
+      "text": "LINK — 424B5",
+      "url": "https://www.sec.gov/Archives/edgar/data/828146/000110465926127052/"
+     },
+     {
+      "text": "LINK — 8-K item 1.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/828146/000110465926127061/"
+     },
+     {
+      "text": "MGNX — 8-K item 7.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1125345/000112534526000077/"
+     },
+     {
+      "text": "NAKA — 8-K item 2.02, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1946573/000149315226051510/"
+     },
+     {
+      "text": "NAKA — 424B5",
+      "url": "https://www.sec.gov/Archives/edgar/data/1946573/000149315226051869/"
+     },
+     {
+      "text": "NDLS — 8-K item 2.02, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1275158/000127515826000058/"
+     },
+     {
+      "text": "NKSH — 8-K/A item 8.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/796534/000119312526459783/"
+     },
+     {
+      "text": "NTHI — 8-K item 7.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1979414/000182912626012414/"
+     },
+     {
+      "text": "NTWK — 8-K item 2.02",
+      "url": "https://www.sec.gov/Archives/edgar/data/1039280/000149315226051655/"
+     },
+     {
+      "text": "NVA — 8-K item 7.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1852551/000149315226051534/"
+     },
+     {
+      "text": "NXPL — 8-K item 2.02, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1058307/000143774926036924/"
+     },
+     {
+      "text": "ONIT — 8-K item 5.02, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/873860/000149315226051735/"
+     },
+     {
+      "text": "OPRX — 8-K item 2.02, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1448431/000144843126000022/"
+     },
+     {
+      "text": "ORRF — 8-K item 8.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/826154/000162828026073816/"
+     },
+     {
+      "text": "OWLT — 8-K item 2.02, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1816708/000181670826000099/"
+     },
+     {
+      "text": "PARK — 8-K/A item 2.02, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/2069604/000110465926126935/"
+     },
+     {
+      "text": "PED — 8-K item 2.02, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1141197/000165495426009781/"
+     },
+     {
+      "text": "RCEL — 8-K item 7.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1762303/000119312526460809/"
+     },
+     {
+      "text": "RGS — 8-K item 5.02",
+      "url": "https://www.sec.gov/Archives/edgar/data/716643/000071664326000044/"
+     },
+     {
+      "text": "RILY — 8-K item 5.02",
+      "url": "https://www.sec.gov/Archives/edgar/data/1464790/000121390026119839/"
+     },
+     {
+      "text": "ROLR — 8-K item 2.02, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1947210/000175392626002133/"
+     },
+     {
+      "text": "RSVR — 8-K item 7.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1824403/000110465926127060/"
+     },
+     {
+      "text": "SBC — 8-K item 2.02, 7.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1930313/000119312526459242/"
+     },
+     {
+      "text": "TCI — 8-K item 5.07",
+      "url": "https://www.sec.gov/Archives/edgar/data/733590/000162828026073744/"
+     },
+     {
+      "text": "TUSK — 8-K item 5.02",
+      "url": "https://www.sec.gov/Archives/edgar/data/1679268/000162828026073569/"
+     },
+     {
+      "text": "TWI — 8-K item 8.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/899751/000089975126000088/"
+     },
+     {
+      "text": "VAI — 8-K item 3.02",
+      "url": "https://www.sec.gov/Archives/edgar/data/1711012/000121390026119727/"
+     },
+     {
+      "text": "VATE — 8-K item 8.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1006837/000100683726000135/"
+     },
+     {
+      "text": "VATE — 424B5",
+      "url": "https://www.sec.gov/Archives/edgar/data/1006837/000100683726000139/"
+     },
+     {
+      "text": "WCCB — 8-K item 8.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/2105965/000210596526000046/"
+     },
+     {
+      "text": "WFCF — 8-K item 2.02, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1360565/000149315226051832/"
+     },
+     {
+      "text": "WHF — 8-K item 8.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1552198/000110465926127122/"
+     },
+     {
+      "text": "WSBF — 8-K item 2.02, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1569994/000143774926036859/"
+     },
+     {
+      "text": "XAIR — 8-K item 2.02, 7.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1641631/000149315226051810/"
+     }
+    ],
+    "note": "Filing day 2026-11-13. Listed alphabetically — nothing here is ordered by importance.",
+    "source": {
+     "age_days": 0.01,
+     "name": "OBSERVER filings",
+     "stamp": "2026-11-15T03:36:14+00:00",
+     "status": "fresh",
+     "usable": true,
+     "why": "ok"
+    },
+    "title": "Filings in the watched universe"
+   },
+   "insiders": {
+    "dark": false,
+    "id": "insiders",
+    "lines": [
+     {
+      "text": "105 Form 4 filing(s) in the watched universe: 67 other, 20 purchase, 18 sale",
+      "url": null
+     },
+     {
+      "text": "◆ CLUSTER CTEV — 2 insiders, $6,021,185 (frozen definition)",
+      "url": null
+     },
+     {
+      "text": "◆ CLUSTER FF — 4 insiders, $307,781 (frozen definition)",
+      "url": null
+     },
+     {
+      "text": "◆ CLUSTER NTHI — 2 insiders, $734,112 (frozen definition)",
+      "url": null
+     },
+     {
+      "text": "◆ CLUSTER NXGL — 2 insiders, $757,691 (frozen definition)",
+      "url": null
+     },
+     {
+      "text": "AEBI — open-market purchase $12,138 by Schroeder Henning",
+      "url": "https://www.sec.gov/Archives/edgar/data/2048519/000143774926036915/"
+     },
+     {
+      "text": "BOTJ — open-market purchase $3,600 by SYREK MICHAEL A",
+      "url": "https://www.sec.gov/Archives/edgar/data/1275101/000143774926036710/"
+     },
+     {
+      "text": "CCNE — open-market purchase $19,970 by POWELL JEFFREY S",
+      "url": "https://www.sec.gov/Archives/edgar/data/736772/000119525226000006/"
+     },
+     {
+      "text": "CCNE — open-market purchase $17,817 by Peduzzi Michael D",
+      "url": "https://www.sec.gov/Archives/edgar/data/736772/000140972226000015/"
+     },
+     {
+      "text": "CTEV — open-market purchase $149,927 by Dalton Travis",
+      "url": "https://www.sec.gov/Archives/edgar/data/1793229/000162828026073944/"
+     },
+     {
+      "text": "FF — open-market purchase $30,315 by SPARKS ROSE",
+      "url": "https://www.sec.gov/Archives/edgar/data/1337298/000143774926036876/"
+     },
+     {
+      "text": "FF — open-market purchase $136,066 by Polet Roeland",
+      "url": "https://www.sec.gov/Archives/edgar/data/1337298/000143774926036877/"
+     },
+     {
+      "text": "FF — open-market purchase $28,200 by Butcher Pamela R — first open-market purchase by Butcher Pamela R in the history available (since 2024-03-20)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1337298/000143774926036878/"
+     },
+     {
+      "text": "FF — open-market purchase $113,200 by Bedell Donald C.",
+      "url": "https://www.sec.gov/Archives/edgar/data/1337298/000143774926036880/"
+     },
+     {
+      "text": "FRPH — open-market purchase $930 by Baker John D. III",
+      "url": "https://www.sec.gov/Archives/edgar/data/844059/000089706926001928/"
+     },
+     {
+      "text": "JYNT — open-market purchase $18,786 by JOBSON CHARLES E",
+      "url": "https://www.sec.gov/Archives/edgar/data/1612630/000121465926014168/"
+     },
+     {
+      "text": "MRBK — open-market purchase $16,185 by Warriner Kenneth Thomas",
+      "url": "https://www.sec.gov/Archives/edgar/data/1750735/000213188026000008/"
+     },
+     {
+      "text": "NGS — open-market purchase $57,790 by JACKSON JOHN EARL — first open-market purchase by JACKSON JOHN EARL in the history available (since 2024-01-31)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1084991/000123684926000015/"
+     },
+     {
+      "text": "NTHI — open-market purchase $150,501 by Heshmatpour Amir F",
+      "url": "https://www.sec.gov/Archives/edgar/data/1979414/000121390026119920/"
+     },
+     {
+      "text": "NXGL — open-market purchase $25,003 by glassman steven mark",
+      "url": "https://www.sec.gov/Archives/edgar/data/1468929/000149315226051917/"
+     },
+     {
+      "text": "NXGL — open-market purchase $732,688 by Kieser Brian Joseph — first open-market purchase by Kieser Brian Joseph in the history available (since 2023-12-26)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1468929/000149315226051920/"
+     },
+     {
+      "text": "NXTC — open-market purchase $62,897 by ADAR1 Capital Management, LLC",
+      "url": "https://www.sec.gov/Archives/edgar/data/1661059/000194027226000032/"
+     },
+     {
+      "text": "OVBC — open-market purchase $1,484 by BARNITZ ANNA P",
+      "url": "https://www.sec.gov/Archives/edgar/data/894671/000089467126000067/"
+     },
+     {
+      "text": "OVBC — open-market purchase $3,017 by Michael Seth Isaac",
+      "url": "https://www.sec.gov/Archives/edgar/data/894671/000089467126000069/"
+     },
+     {
+      "text": "OWLS — open-market purchase $13,403 by WANG CHUN KAI",
+      "url": "https://www.sec.gov/Archives/edgar/data/2025416/000210933726000016/"
+     }
+    ],
+    "note": "A purchase is a code-P open-market transaction read from Finnhub by accession. Past cluster buys over 21 bars (n=160): median -0.2% vs SPY, middle half -7.1% to +6.8%; registry verdict NOT MET. Past cluster buys over 63 bars (n=406): median -4.5% vs SPY, middle half -20.5% to +9.8%; registry verdict NOT MET.",
+    "source": {
+     "age_days": 0.01,
+     "name": "OBSERVER filings",
+     "stamp": "2026-11-15T03:36:14+00:00",
+     "status": "fresh",
+     "usable": true,
+     "why": "ok"
+    },
+    "title": "Insider activity"
+   },
+   "language": {
+    "dark": false,
+    "id": "language",
+    "lines": [
+     {
+      "text": "57 filing pair(s) compared across 60 issuer(s): 18 removed, 13 added, 151 retained, 0 indeterminate",
+      "url": null
+     },
+     {
+      "text": "🔻 REMOVED CPIX 10-Q — \"covenant\" (2026-08-07 → 2026-11-13)",
+      "url": null
+     },
+     {
+      "text": "🔻 REMOVED FLYE 10-Q — \"delisting\" (2026-09-01 → 2026-11-13)",
+      "url": null
+     },
+     {
+      "text": "🔻 REMOVED GNPX 10-Q — \"delisting\" (2026-08-14 → 2026-11-13)",
+      "url": null
+     },
+     {
+      "text": "🔻 REMOVED HYPD 10-Q — \"material weakness\" (2026-08-13 → 2026-11-13)",
+      "url": null
+     },
+     {
+      "text": "🔻 REMOVED INVE 10-Q — \"waiver\" (2026-08-13 → 2026-11-13)",
+      "url": null
+     },
+     {
+      "text": "🔻 REMOVED IRLA 10-Q — \"going concern\" (2026-08-14 → 2026-11-13)",
+      "url": null
+     },
+     {
+      "text": "🔻 REMOVED IRLA 10-Q — \"substantial doubt\" (2026-08-14 → 2026-11-13)",
+      "url": null
+     },
+     {
+      "text": "🔻 REMOVED IRLA 10-Q — \"waiver\" (2026-08-14 → 2026-11-13)",
+      "url": null
+     },
+     {
+      "text": "🔻 REMOVED KPLT 10-Q — \"going concern\" (2026-08-04 → 2026-11-13)",
+      "url": null
+     },
+     {
+      "text": "🔻 REMOVED KPLT 10-Q — \"substantial doubt\" (2026-08-04 → 2026-11-13)",
+      "url": null
+     },
+     {
+      "text": "🔻 REMOVED LSF 10-Q — \"covenant\" (2026-08-13 → 2026-11-13)",
+      "url": null
+     },
+     {
+      "text": "🔻 REMOVED SGA 10-Q — \"covenant\" (2026-08-14 → 2026-11-13)",
+      "url": null
+     },
+     {
+      "text": "🔻 REMOVED SVIA 10-Q — \"delisting\" (2026-08-13 → 2026-11-13)",
+      "url": null
+     },
+     {
+      "text": "🔻 REMOVED TONX 10-Q — \"delisting\" (2026-08-11 → 2026-11-13)",
+      "url": null
+     },
+     {
+      "text": "🔻 REMOVED YARW 10-Q — \"discontinued operations\" (2026-08-13 → 2026-11-13)",
+      "url": null
+     },
+     {
+      "text": "🔻 REMOVED YARW 10-Q — \"going concern\" (2026-08-13 → 2026-11-13)",
+      "url": null
+     },
+     {
+      "text": "🔻 REMOVED YARW 10-Q — \"impairment\" (2026-08-13 → 2026-11-13)",
+      "url": null
+     },
+     {
+      "text": "🔻 REMOVED YARW 10-Q — \"substantial doubt\" (2026-08-13 → 2026-11-13)",
+      "url": null
+     },
+     {
+      "text": "🔹 added DFLI 10-Q — \"delisting\" (2026-08-14 → 2026-11-13)",
+      "url": null
+     },
+     {
+      "text": "🔹 added DFLI 10-Q — \"waiver\" (2026-08-14 → 2026-11-13)",
+      "url": null
+     },
+     {
+      "text": "🔹 added FNWD 10-Q — \"waiver\" (2026-08-13 → 2026-11-13)",
+      "url": null
+     },
+     {
+      "text": "🔹 added FRMM 10-Q — \"reverse stock split\" (2026-08-14 → 2026-11-13)",
+      "url": null
+     },
+     {
+      "text": "🔹 added FTW 10-Q — \"waiver\" (2026-08-13 → 2026-11-13)",
+      "url": null
+     },
+     {
+      "text": "🔹 added HCTI 10-Q — \"delisting\" (2026-08-13 → 2026-11-13)",
+      "url": null
+     },
+     {
+      "text": "🔹 added HHS 10-Q — \"waiver\" (2026-08-14 → 2026-11-13)",
+      "url": null
+     },
+     {
+      "text": "🔹 added INVE 10-Q — \"discontinued operations\" (2026-08-13 → 2026-11-13)",
+      "url": null
+     },
+     {
+      "text": "🔹 added KPLT 10-Q — \"material weakness\" (2026-08-04 → 2026-11-13)",
+      "url": null
+     },
+     {
+      "text": "🔹 added NDLS 10-Q — \"waiver\" (2026-07-24 → 2026-11-13)",
+      "url": null
+     },
+     {
+      "text": "🔹 added ROLR 10-Q — \"restatement\" (2026-08-11 → 2026-11-13)",
+      "url": null
+     },
+     {
+      "text": "🔹 added VAI 10-Q — \"waiver\" (2026-08-14 → 2026-11-13)",
+      "url": null
+     },
+     {
+      "text": "🔹 added WSBF 10-Q — \"material weakness\" (2026-08-06 → 2026-11-13)",
+      "url": null
+     },
+     {
+      "text": "⚠️ capped at 60 issuers of 73 — deduped on (CIK, form) so share classes count once; open-thesis names first, then most recently filed. Not alphabetical.",
+      "url": null
+     }
+    ],
+    "note": "A phrase-presence diff over pre-declared phrases, not a section diff: language nobody declared is invisible here, and Item 1A vs Item 7 is not observed.",
+    "source": {
+     "age_days": 0.0,
+     "name": "LIBRARIAN brief",
+     "stamp": "2026-11-15T03:43:19+00:00",
+     "status": "fresh",
+     "usable": true,
+     "why": "ok"
+    },
+    "title": "Filing language"
+   },
+   "macro": {
+    "dark": false,
+    "id": "macro",
+    "lines": [
+     {
+      "text": "⚫ 10-year Treasury yield: missing — fred api answered 400 — FRED says: Bad Request. The value for variable api_key is not a 32 character alpha-numeric lower-case string.; keyless csv: ReadTimeout",
+      "url": "https://fred.stlouisfed.org/series/DGS10"
+     },
+     {
+      "text": "⚫ 2-year Treasury yield: missing — fred api answered 400 — FRED says: Bad Request. The value for variable api_key is not a 32 character alpha-numeric lower-case string.; keyless csv: ReadTimeout",
+      "url": "https://fred.stlouisfed.org/series/DGS2"
+     },
+     {
+      "text": "⚫ 10y minus 2y spread: missing — not attempted: FRED failed 2 series in a row, so the source is treated as down",
+      "url": "https://fred.stlouisfed.org/series/T10Y2Y"
+     },
+     {
+      "text": "⚫ Effective fed funds rate: missing — not attempted: FRED failed 2 series in a row, so the source is treated as down",
+      "url": "https://fred.stlouisfed.org/series/DFF"
+     },
+     {
+      "text": "⚫ High-yield credit spread (OAS): missing — not attempted: FRED failed 2 series in a row, so the source is treated as down",
+      "url": "https://fred.stlouisfed.org/series/BAMLH0A0HYM2"
+     },
+     {
+      "text": "⚫ VIX: missing — not attempted: FRED failed 2 series in a row, so the source is treated as down",
+      "url": "https://fred.stlouisfed.org/series/VIXCLS"
+     },
+     {
+      "text": "⚫ Broad dollar index: missing — not attempted: FRED failed 2 series in a row, so the source is treated as down",
+      "url": "https://fred.stlouisfed.org/series/DTWEXBGS"
+     },
+     {
+      "text": "⚫ Initial jobless claims: missing — not attempted: FRED failed 2 series in a row, so the source is treated as down",
+      "url": "https://fred.stlouisfed.org/series/ICSA"
+     },
+     {
+      "text": "⚫ Unemployment rate: missing — not attempted: FRED failed 2 series in a row, so the source is treated as down",
+      "url": "https://fred.stlouisfed.org/series/UNRATE"
+     },
+     {
+      "text": "⚫ CPI (all urban, SA): missing — not attempted: FRED failed 2 series in a row, so the source is treated as down",
+      "url": "https://fred.stlouisfed.org/series/CPIAUCSL"
+     },
+     {
+      "text": "Iran's navy says three tankers on fire after hitting mines in Hormuz - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMisAFBVV95cUxPZWt1cHFualJEVktnTTVvd21uVnljc0FqR2dRaWpaRnYwZ3luZ2t1dUlJNVUtLTVlWHJFOS1ocDBlaVZsTFNZdjRMeldFVFE1Q0Jqem9FbU9fMmp1YTBUTUhqTmYzR3FJN1Z1Y1dHY2d0Yjlzb2lBR0JvNllyT3pScjI2SEpkbkhiYzZSWW9Tb3dwemdWaVVmMjBPbXZqd0hOZzdpRDVSZlVlbzBnV1BjMQ?oc=5"
+     },
+     {
+      "text": "Hamas says senior armed commander killed in Israeli strike - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMivwFBVV95cUxPYUhZd1pxN2d0N3pmR2RCbjhCQk9teURKLThfYzR0bC1rVWJpVGUwNkpJelBNeVNLY3hxS1B0c0p2bTk5VmhCeFVGUWpHSFVNdHFKZjcydUdYNDEyMThuQ3hTRmFNSTQ0Z05ZSWRSd1A3QnM3eTRjWkNJbkN2Z2E5M1FQaUdrdUtaYzVNcWtVMC1LOU1yUkpoUk82d0ZQejM5cDR3YXVqcE5xMlJkTVU2dGduMDdsUWp2UG5ERFZUZw?oc=5"
+     },
+     {
+      "text": "SpaceX, in a historic first, catches upper stage of its Starship rocket",
+      "url": "https://www.cnbc.com/2026/11/14/spacex-plans-to-try-first-ever-catch-of-starship-rocket-from-orbit.html"
+     },
+     {
+      "text": "Nvidia's leadership crisis rattles the AI trade. Here's how we're adjusting our portfolio",
+      "url": "https://www.cnbc.com/investingclub/2026/11/14/nvidias-leadership-crisis-rattles-wall-street-how-were-adjusting.html"
+     },
+     {
+      "text": "Rising rents draw Wall Street money to industrial outdoor storage lot investments across the U.S.",
+      "url": "https://www.cnbc.com/2026/11/14/real-estate-rental-income-industrial-storage-market.html"
+     },
+     {
+      "text": "Juice your growth and save on taxes in this workplace investment account",
+      "url": "https://www.cnbc.com/2026/11/14/hsa-investing-tax-benefits.html"
+     },
+     {
+      "text": "Retailers are turning to entertainment to win shoppers’ attention",
+      "url": "https://www.cnbc.com/2026/11/14/retailers-invest-entertainment.html"
+     },
+     {
+      "text": "Eric Trump-backed robot soldier startup can't pay staff after founder borrowed $4.6 million from company to buy home",
+      "url": "https://www.cnbc.com/2026/11/14/foundation-payroll-ceo-loan.html"
+     },
+     {
+      "text": "Meet the seven co-founders of Anthropic",
+      "url": "https://www.cnbc.com/2026/11/14/meet-the-seven-co-founders-of-anthropic.html"
+     },
+     {
+      "text": "Trump tells advisers he may hold off on Iran attacks barring new provocations, sources say - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMixwFBVV95cUxPR2NiU2RGMHprbUFIMnNuTGJheHdpTzhuZFRCSWVGcl9HZF9raUd2VXQxNHE1WldRVzNaZWx6YnlRZFpueGZlb05DMElhZ3FEOVdLakpQWkNLaGktQWh6THRxT3V0aGVPaXI0dW9LVm9DeTJRekF1enJaamZ5bEd2SFZtSVNtTFd5VEp0WFl6U2VWX3BCRkYzbnB1c25QRnU2M3FBbDJBMHRTVWU5T0hyZG5sWFRPWUFIYVhuT1BMWTBkUVdNbDlF?oc=5"
+     },
+     {
+      "text": "Rubio assails international court in speech to conservative legal group - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMirwFBVV95cUxNblc1UEZaUHNzR0QzV051c0Nid3k2WWI3Y1RFNm00LW4wTm83X0Y5MlFRU29fZ0RvYnJFVURiMV96VS1HWmZnV1BkUW16MHJYdXdRbjJSOTJERzh5NXhiRGxjNUkwRDVwNjUxdHF3cXRKN21GNUVELWx2VHpMeHpUYjdjZWY3SFZ6QWs0MWh4cXFnUk1aMFMtT1NIMEl0VTJfcGFOalFvUG41ck5wczB3?oc=5"
+     },
+     {
+      "text": "Trump to raise nuclear-arms cuts with Putin, Xi on Thursday, White House says - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMilAFBVV95cUxPX1dzUndCOE42aUFUazd4SFcxMFVWUTl6VmRVOE5QR0ZjNWRXY19qWTVuRUthUXhDS3UybmZnQmFHSHVRV20wdXJwTUlKUTlGVU42N1B4bkVwSjI4bkdJeG94aFpxX01NUTdyWUJOUVZHSHlXZkxGZXlsTWhjSmUwRXoyRklMekIycXlEUk1pM1NpNjJp?oc=5"
+     },
+     {
+      "text": "Oil prices set for second straight weekly drop on signs of growing supply surplus - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMiugFBVV95cUxOa0ZTUUtQbXVySmRXLWtEc2xtZDk5RWkwa29OWlEyQjN3UXVzMkZTYzF3ajVoNkVXZnBnODVRTkN0b1ZwaVk4VE5KOXFqZktYbG1PN1RwdEtwS1ZEb3BBUEkxM2JtUl91NkxCMWpjbmxWV3RScndxMjJUcjh4dEpZM256Nl8tY19iWmp4OExndnRRaXQwdFRpMGRYRDFnNGQ1eEFhNEVrZjZwaW0tamJkLXFYa1I3V1EzbVE?oc=5"
+     },
+     {
+      "text": "US Air Force responds to suspected drone activity over UK airbase - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMivwFBVV95cUxPTkFnODI2ZmFiRTJzS3N4eXI5TzJqbXpFV3lUM29neFFnSFJJOVlQcDNZR3B3MmczQWlTNDA4ZE13bXpQcm9yQXdROXIzWjBCRnZHNzhwQkxldWtuREJ2Q1BvOFEzcTZRN2tpQkxwb3dCLUtvdzZiUEsxbGNvXzVmWTUzMTVvdHl5cjZBX2Y1VTJzZlFjUnZrMjFrVWZXTWltM1hoSkxDMThmdDdEckQ1NVJMbTE0dXFQYXJMM3NEVQ?oc=5"
+     },
+     {
+      "text": "Hackers stole $6.3 billion from Binance—2 habits that take 'a few seconds' can help you avoid similar traps",
+      "url": "https://www.cnbc.com/make-it/2026/11/13/binance-hack-2-online-habits-that-can-help-you-avoid-scams-.html"
+     },
+     {
+      "text": "US extends shipping law waiver 90 days, to allow freer movement of oil, commodities - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMivAFBVV95cUxQQ2lneWN6TzV1ZXctMUFVUlJSbVVDUG1vOWNYM1d2Z25QV1ZlSHdjSFVmblhtX1UzNEQySEYwdjZNZGw3VnZPc00yOTEtSWFsY25CRTRhaGZJM2tFamQ3cDl6YTEwbmJLQ1VmdHo2Y2hjVThnNjdiQTNfai1xTDhFcmFITF9WblV6Rlk1M0FnbDRFWXJjdXA5R19ERUZ2WjdyZmg4bUxPQ2RZcmhaUzZxRjIwQk5jTWw1cUwxVw?oc=5"
+     },
+     {
+      "text": "US to resume flights after air traffic network failure sparks chaos - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMivwFBVV95cUxPTTdvYllmb0pHUXVJVGNLUmFZb2I0WXpjZENubU52NW1nQlFJa1E4c3ZNTGhseUdiUzl0ZXJWa0pOSnR1ZDlRQk9FTHZlaWkyT0hLM1J3OW5tVUhIb0o4OWN5bDVVakF5T3lIanR1SVVMSkctSDlpb2loMWI2MENuWEIxTmhTcy1kZXdqSlRrdi1NMHlFSGtPRWEzdUFrMWR1c2wwNk9rRUUwOGpzajM0N1h2MndWVU9MYngyMVdudw?oc=5"
+     },
+     {
+      "text": "US Congress Democrats plot 'must-have' victories in 2027 - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMipwFBVV95cUxQbGhnekxYN2VBbGp2T1R2em5qV2ZVQ0FHa0tYWGRGNWZqUkoySzVhdU9yRUN0TzRWSXBsaHVla0dPT0U5RTAxMUlIcUloZzhFUnJ3MTNMQWMwWGt5QVNOTWxhTloweWpOb2JXcnd6cy1oblAxenl4WmtNNXJTaHc5QU1uUDE3cU1PbUJPUGUyLVpnaUxJRUxMeTE1SGRCWjNJeUU3NFM3WQ?oc=5"
+     },
+     {
+      "text": "Iran's IRGC says two tankers hit sea mines in Hormuz - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMipAFBVV95cUxOWVUydG1mRVVtRzVScWR6N19NejF5VXVuUDlqaGxSSHdJN1hmYlBtZHRJMDNWbUJVSUMyRTBRM252dzFjSmtZOHlLYmg4Y2pqLXVrSndiS3dVLWVBa0tESWJtZW05MUprVkpXTE5sQXV0aXJRR1dQQ3FmWHk0SHpoSmQzRUZmRFZCaXdjLURicWxtRk1tSnZ1dEM2UTI1b1RmTzdwRw?oc=5"
+     },
+     {
+      "text": "They train people to avoid 'honeypot' scams—here are the common red flags they spot: 'It feels so good to be wanted'",
+      "url": "https://www.cnbc.com/make-it/2026/11/13/honeypot-scam-red-flags.html"
+     },
+     {
+      "text": "Yemen's Houthis say they fired missiles at Saudi forces in Jazan - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMinwFBVV95cUxPM1hhZ2pySkp3SHdfNllHQ2VsLUFteHIxRlFGVVR3QXFIbXJZX01HQkZ5Ml96SjBMSkJkOHh6TjNIakZkR3k5ME1WY0RyYTNBQkxvaF9qYTVtNm5GVEFqckVEalRReVdXUFJKZVhlSXEzcnotRFMyVVBMZllhdmJxUFBwRjByVExHbGhnR3luTDVqTlRxOG5TTjFVbmdBRmM?oc=5"
+     },
+     {
+      "text": "Hassett denies report he's leaving White House: 'Not true'",
+      "url": "https://www.cnbc.com/2026/11/13/kevin-hassett-white-house-nec.html"
+     },
+     {
+      "text": "Many people ignore these ‘early red flags’ in romance scams, says Harvard-trained psychologist",
+      "url": "https://www.cnbc.com/make-it/2026/11/13/psychologist-many-people-ignore-5-early-red-flags-in-romance-scams.html"
+     },
+     {
+      "text": "Trump says US does not need Iran deal, directs Vance to focus on domestic corruption - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMivwFBVV95cUxNTkdBWnZVWXZqcEFwdWFkTmw5XzVHVndjNzBhdW1GZVFfT2d2OFBzVDlLbC1pdmNvZTY5X01iRE01eGktRlh0b0s2bXJSTm9ZS19CZkdnVzR6bmEzOFJlQjNET2NvTl9yVGZjeHg5SkxVcmZ5UHFkLXcxQ1M3N1dRU3R5R05raV9VOVRsUDRFZE9sT1B6NmZ0ZTA4SFB0TlNYTUNhUHdMWVNKV0tDSmd4d19IRERyblE2QkgxSlpzSQ?oc=5"
+     },
+     {
+      "text": "Nvidia hasn’t selected search firm for permanent Huang replacement, board tells CNBC",
+      "url": "https://www.cnbc.com/2026/11/13/nvidia-huang-ceo-replacement-search.html"
+     }
+    ],
+    "note": "Collected, not curated: series state their own age and headlines are newest-first, not most-important-first.",
+    "source": {
+     "age_days": 0.0,
+     "name": "OBSERVER macro",
+     "stamp": "2026-11-15T03:41:46+00:00",
+     "status": "fresh",
+     "usable": true,
+     "why": "ok"
+    },
+    "title": "Macro and headlines"
+   },
+   "theses": {
+    "dark": false,
+    "id": "theses",
+    "lines": [
+     {
+      "text": "No thesis is open. Record one with `python thesis_ledger.py open` — it needs a falsifier and a review date.",
+      "url": null
+     }
+    ],
+    "note": "",
+    "source": {
+     "age_days": 0.0,
+     "name": "ACTUARY analysis",
+     "stamp": "2026-11-15T03:47:38+00:00",
+     "status": "fresh",
+     "usable": true,
+     "why": "ok"
+    },
+    "title": "Your theses"
+   },
+   "universe": {
+    "dark": false,
+    "id": "universe",
+    "lines": [
+     {
+      "text": "1067 names pass the declared screen for session 2026-11-13 (+11 entered, −21 left)",
+      "url": null
+     },
+     {
+      "text": "IWM 277.54 · 1d -0.32% · ytd +12.3%",
+      "url": null
+     },
+     {
+      "text": "SPY 754.37 · 1d -0.36% · ytd +11.3%",
+      "url": null
+     },
+     {
+      "text": "The eligible list is not a buy list. Capital deployed: $0.",
+      "url": null
+     }
+    ],
+    "note": "",
+    "source": {
+     "age_days": 1.06,
+     "name": "daily snapshot",
+     "stamp": "2026-11-14T02:15:14Z",
+     "status": "fresh",
+     "usable": true,
+     "why": "ok"
+    },
+    "title": "Universe and benchmarks"
+   }
+  }
+ },
+ "facts_sha256": "98cbb1b68776fc204b6939bb0ccc57cc8cd8a729a5c1dd3ee756a39afc88dbde",
+ "generated_at": "2026-11-15T03:47:38+00:00",
+ "inputs": {
+  "analysis": {
+   "age_days": 0.0,
+   "name": "ACTUARY analysis",
+   "stamp": "2026-11-15T03:47:38+00:00",
+   "status": "fresh",
+   "usable": true,
+   "why": "ok"
+  },
+  "daily snapshot": {
+   "age_days": 1.06,
+   "name": "daily snapshot",
+   "stamp": "2026-11-14T02:15:14Z",
+   "status": "fresh",
+   "usable": true,
+   "why": "ok"
+  },
+  "librarian": {
+   "age_days": 0.0,
+   "name": "LIBRARIAN brief",
+   "stamp": "2026-11-15T03:43:19+00:00",
+   "status": "fresh",
+   "usable": true,
+   "why": "ok"
+  },
+  "macro": {
+   "age_days": 0.0,
+   "name": "OBSERVER macro",
+   "stamp": "2026-11-15T03:41:46+00:00",
+   "status": "fresh",
+   "usable": true,
+   "why": "ok"
+  },
+  "observations": {
+   "age_days": 0.01,
+   "name": "OBSERVER filings",
+   "stamp": "2026-11-15T03:36:14+00:00",
+   "status": "fresh",
+   "usable": true,
+   "why": "ok"
+  }
+ },
+ "is_not_a_recommendation": "This brief relays what was collected, structured and described. It contains no buy, sell or hold, and the stance changes only the order and length of sections.",
+ "layouts": {
+  "aggressive": {
+   "caps": {
+    "base_rates": 6,
+    "exposure": 20,
+    "filings": 30,
+    "insiders": 30,
+    "language": 10,
+    "macro": 14,
+    "theses": 40,
+    "universe": 6
+   },
+   "order": [
+    "insiders",
+    "base_rates",
+    "filings",
+    "language",
+    "theses",
+    "exposure",
+    "macro",
+    "universe"
+   ]
+  },
+  "balanced": {
+   "caps": {
+    "base_rates": 6,
+    "exposure": 30,
+    "filings": 20,
+    "insiders": 14,
+    "language": 15,
+    "macro": 18,
+    "theses": 60,
+    "universe": 6
+   },
+   "order": [
+    "theses",
+    "filings",
+    "language",
+    "insiders",
+    "base_rates",
+    "exposure",
+    "macro",
+    "universe"
+   ]
+  },
+  "conservative": {
+   "caps": {
+    "base_rates": 6,
+    "exposure": 40,
+    "filings": 14,
+    "insiders": 8,
+    "language": 25,
+    "macro": 22,
+    "theses": 60,
+    "universe": 6
+   },
+   "order": [
+    "theses",
+    "exposure",
+    "language",
+    "macro",
+    "filings",
+    "insiders",
+    "base_rates",
+    "universe"
+   ]
+  }
+ },
+ "operator_messages": {
+  "open": [],
+  "reason": "ok",
+  "status": "ok"
+ },
+ "order": [
+  "theses",
+  "filings",
+  "language",
+  "insiders",
+  "base_rates",
+  "exposure",
+  "macro",
+  "universe"
+ ],
+ "sections": [
+  {
+   "dark": false,
+   "id": "theses",
+   "lines": [
+    {
+     "text": "No thesis is open. Record one with `python thesis_ledger.py open` — it needs a falsifier and a review date.",
+     "url": null
+    }
+   ],
+   "note": "",
+   "shown": 1,
+   "source": {
+    "age_days": 0.0,
+    "name": "ACTUARY analysis",
+    "stamp": "2026-11-15T03:47:38+00:00",
+    "status": "fresh",
+    "usable": true,
+    "why": "ok"
+   },
+   "title": "Your theses",
+   "total": 1
+  },
+  {
+   "dark": false,
+   "id": "filings",
+   "lines": [
+    {
+     "text": "10-K: 0 in the watched universe of 6 market-wide",
+     "url": null
+    },
+    {
+     "text": "10-Q: 73 in the watched universe of 487 market-wide",
+     "url": null
+    },
+    {
+     "text": "4: 105 in the watched universe of 675 market-wide",
+     "url": null
+    },
+    {
+     "text": "424B5: 3 in the watched universe of 9 market-wide",
+     "url": null
+    },
+    {
+     "text": "8-K: 63 in the watched universe of 313 market-wide",
+     "url": null
+    },
+    {
+     "text": "8-K items: 1.01 × 5, 2.02 × 27, 2.03 × 1, 3.02 × 3, 3.03 × 2, 4.01 × 1, 5.02 × 8, 5.03 × 2, 5.07 × 1, 7.01 × 13, 8.01 × 13, 9.01 × 52",
+     "url": null
+    },
+    {
+     "text": "ACET — 8-K item 5.02",
+     "url": "https://www.sec.gov/Archives/edgar/data/1720580/000172058026000069/"
+    },
+    {
+     "text": "ACFN — 8-K item 4.01, 9.01",
+     "url": "https://www.sec.gov/Archives/edgar/data/880984/000149315226051707/"
+    },
+    {
+     "text": "AGPU — 8-K item 5.02, 7.01, 9.01",
+     "url": "https://www.sec.gov/Archives/edgar/data/1446159/000117184326007416/"
+    },
+    {
+     "text": "AIRO — 8-K item 1.01, 9.01",
+     "url": "https://www.sec.gov/Archives/edgar/data/1927958/000149315226051518/"
+    },
+    {
+     "text": "AIRT — 8-K item 2.02, 9.01",
+     "url": "https://www.sec.gov/Archives/edgar/data/353184/000035318426000107/"
+    },
+    {
+     "text": "AIRT — 8-K item 7.01, 8.01, 9.01",
+     "url": "https://www.sec.gov/Archives/edgar/data/353184/000035318426000108/"
+    },
+    {
+     "text": "ARAY — 8-K item 3.02, 3.03, 5.03, 7.01",
+     "url": "https://www.sec.gov/Archives/edgar/data/1138723/000143774926036943/"
+    },
+    {
+     "text": "ASTC — 8-K item 2.02, 9.01",
+     "url": "https://www.sec.gov/Archives/edgar/data/1001907/000143774926036885/"
+    },
+    {
+     "text": "ATYR — 8-K item 8.01",
+     "url": "https://www.sec.gov/Archives/edgar/data/1339970/000133997026000088/"
+    },
+    {
+     "text": "BACC — 8-K item 8.01, 9.01",
+     "url": "https://www.sec.gov/Archives/edgar/data/2059654/000118518526005351/"
+    },
+    {
+     "text": "BBGI — 8-K item 2.02, 9.01",
+     "url": "https://www.sec.gov/Archives/edgar/data/1099160/000119312526460951/"
+    },
+    {
+     "text": "BCIC — 8-K item 2.02, 9.01",
+     "url": "https://www.sec.gov/Archives/edgar/data/1372807/000119312526461047/"
+    },
+    {
+     "text": "BJDX — 8-K item 2.02, 9.01",
+     "url": "https://www.sec.gov/Archives/edgar/data/1704287/000121390026119686/"
+    },
+    {
+     "text": "BKYI — 8-K item 2.02, 9.01",
+     "url": "https://www.sec.gov/Archives/edgar/data/1019034/000143774926036667/"
+    }
+   ],
+   "note": "Filing day 2026-11-13. Listed alphabetically — nothing here is ordered by importance.",
+   "shown": 20,
+   "source": {
+    "age_days": 0.01,
+    "name": "OBSERVER filings",
+    "stamp": "2026-11-15T03:36:14+00:00",
+    "status": "fresh",
+    "usable": true,
+    "why": "ok"
+   },
+   "title": "Filings in the watched universe",
+   "total": 72
+  },
+  {
+   "dark": false,
+   "id": "language",
+   "lines": [
+    {
+     "text": "57 filing pair(s) compared across 60 issuer(s): 18 removed, 13 added, 151 retained, 0 indeterminate",
+     "url": null
+    },
+    {
+     "text": "🔻 REMOVED CPIX 10-Q — \"covenant\" (2026-08-07 → 2026-11-13)",
+     "url": null
+    },
+    {
+     "text": "🔻 REMOVED FLYE 10-Q — \"delisting\" (2026-09-01 → 2026-11-13)",
+     "url": null
+    },
+    {
+     "text": "🔻 REMOVED GNPX 10-Q — \"delisting\" (2026-08-14 → 2026-11-13)",
+     "url": null
+    },
+    {
+     "text": "🔻 REMOVED HYPD 10-Q — \"material weakness\" (2026-08-13 → 2026-11-13)",
+     "url": null
+    },
+    {
+     "text": "🔻 REMOVED INVE 10-Q — \"waiver\" (2026-08-13 → 2026-11-13)",
+     "url": null
+    },
+    {
+     "text": "🔻 REMOVED IRLA 10-Q — \"going concern\" (2026-08-14 → 2026-11-13)",
+     "url": null
+    },
+    {
+     "text": "🔻 REMOVED IRLA 10-Q — \"substantial doubt\" (2026-08-14 → 2026-11-13)",
+     "url": null
+    },
+    {
+     "text": "🔻 REMOVED IRLA 10-Q — \"waiver\" (2026-08-14 → 2026-11-13)",
+     "url": null
+    },
+    {
+     "text": "🔻 REMOVED KPLT 10-Q — \"going concern\" (2026-08-04 → 2026-11-13)",
+     "url": null
+    },
+    {
+     "text": "🔻 REMOVED KPLT 10-Q — \"substantial doubt\" (2026-08-04 → 2026-11-13)",
+     "url": null
+    },
+    {
+     "text": "🔻 REMOVED LSF 10-Q — \"covenant\" (2026-08-13 → 2026-11-13)",
+     "url": null
+    },
+    {
+     "text": "🔻 REMOVED SGA 10-Q — \"covenant\" (2026-08-14 → 2026-11-13)",
+     "url": null
+    },
+    {
+     "text": "🔻 REMOVED SVIA 10-Q — \"delisting\" (2026-08-13 → 2026-11-13)",
+     "url": null
+    },
+    {
+     "text": "🔻 REMOVED TONX 10-Q — \"delisting\" (2026-08-11 → 2026-11-13)",
+     "url": null
+    }
+   ],
+   "note": "A phrase-presence diff over pre-declared phrases, not a section diff: language nobody declared is invisible here, and Item 1A vs Item 7 is not observed.",
+   "shown": 15,
+   "source": {
+    "age_days": 0.0,
+    "name": "LIBRARIAN brief",
+    "stamp": "2026-11-15T03:43:19+00:00",
+    "status": "fresh",
+    "usable": true,
+    "why": "ok"
+   },
+   "title": "Filing language",
+   "total": 33
+  },
+  {
+   "dark": false,
+   "id": "insiders",
+   "lines": [
+    {
+     "text": "105 Form 4 filing(s) in the watched universe: 67 other, 20 purchase, 18 sale",
+     "url": null
+    },
+    {
+     "text": "◆ CLUSTER CTEV — 2 insiders, $6,021,185 (frozen definition)",
+     "url": null
+    },
+    {
+     "text": "◆ CLUSTER FF — 4 insiders, $307,781 (frozen definition)",
+     "url": null
+    },
+    {
+     "text": "◆ CLUSTER NTHI — 2 insiders, $734,112 (frozen definition)",
+     "url": null
+    },
+    {
+     "text": "◆ CLUSTER NXGL — 2 insiders, $757,691 (frozen definition)",
+     "url": null
+    },
+    {
+     "text": "AEBI — open-market purchase $12,138 by Schroeder Henning",
+     "url": "https://www.sec.gov/Archives/edgar/data/2048519/000143774926036915/"
+    },
+    {
+     "text": "BOTJ — open-market purchase $3,600 by SYREK MICHAEL A",
+     "url": "https://www.sec.gov/Archives/edgar/data/1275101/000143774926036710/"
+    },
+    {
+     "text": "CCNE — open-market purchase $19,970 by POWELL JEFFREY S",
+     "url": "https://www.sec.gov/Archives/edgar/data/736772/000119525226000006/"
+    },
+    {
+     "text": "CCNE — open-market purchase $17,817 by Peduzzi Michael D",
+     "url": "https://www.sec.gov/Archives/edgar/data/736772/000140972226000015/"
+    },
+    {
+     "text": "CTEV — open-market purchase $149,927 by Dalton Travis",
+     "url": "https://www.sec.gov/Archives/edgar/data/1793229/000162828026073944/"
+    },
+    {
+     "text": "FF — open-market purchase $30,315 by SPARKS ROSE",
+     "url": "https://www.sec.gov/Archives/edgar/data/1337298/000143774926036876/"
+    },
+    {
+     "text": "FF — open-market purchase $136,066 by Polet Roeland",
+     "url": "https://www.sec.gov/Archives/edgar/data/1337298/000143774926036877/"
+    },
+    {
+     "text": "FF — open-market purchase $28,200 by Butcher Pamela R — first open-market purchase by Butcher Pamela R in the history available (since 2024-03-20)",
+     "url": "https://www.sec.gov/Archives/edgar/data/1337298/000143774926036878/"
+    },
+    {
+     "text": "FF — open-market purchase $113,200 by Bedell Donald C.",
+     "url": "https://www.sec.gov/Archives/edgar/data/1337298/000143774926036880/"
+    }
+   ],
+   "note": "A purchase is a code-P open-market transaction read from Finnhub by accession. Past cluster buys over 21 bars (n=160): median -0.2% vs SPY, middle half -7.1% to +6.8%; registry verdict NOT MET. Past cluster buys over 63 bars (n=406): median -4.5% vs SPY, middle half -20.5% to +9.8%; registry verdict NOT MET.",
+   "shown": 14,
+   "source": {
+    "age_days": 0.01,
+    "name": "OBSERVER filings",
+    "stamp": "2026-11-15T03:36:14+00:00",
+    "status": "fresh",
+    "usable": true,
+    "why": "ok"
+   },
+   "title": "Insider activity",
+   "total": 25
+  },
+  {
+   "dark": false,
+   "id": "base_rates",
+   "lines": [
+    {
+     "text": "form4_cluster_buy over 21 bars vs SPY, n=160: median -0.2%, middle half -7.1% to +6.8%, worst -56.5%, best +118.2%, 49% positive — registry verdict NOT MET",
+     "url": null
+    },
+    {
+     "text": "form4_cluster_buy over 63 bars vs SPY, n=406: median -4.5%, middle half -20.5% to +9.8%, worst -77.2%, best +268.6%, 40% positive — registry verdict NOT MET",
+     "url": null
+    },
+    {
+     "text": "18 event type(s) observed; 17 have insufficient history for a base rate (no frozen outcome ledger)",
+     "url": null
+    }
+   ],
+   "note": "What followed past events of a type — a description, not a forecast. Computed only from reads already spent.",
+   "shown": 3,
+   "source": {
+    "age_days": 0.0,
+    "name": "ACTUARY analysis",
+    "stamp": "2026-11-15T03:47:38+00:00",
+    "status": "fresh",
+    "usable": true,
+    "why": "ok"
+   },
+   "title": "Base rates",
+   "total": 3
+  },
+  {
+   "dark": false,
+   "id": "exposure",
+   "lines": [
+    {
+     "text": "Not measured — no positions are declared in data/operator/positions.csv, so there is nothing to measure concentration of.",
+     "url": null
+    }
+   ],
+   "note": "Lines are flagged against the balanced limits (single name 20%); the figures are the same under every stance.",
+   "shown": 1,
+   "source": {
+    "age_days": 0.0,
+    "name": "ACTUARY analysis",
+    "stamp": "2026-11-15T03:47:38+00:00",
+    "status": "fresh",
+    "usable": true,
+    "why": "ok"
+   },
+   "title": "Exposure",
+   "total": 1
+  },
+  {
+   "dark": false,
+   "id": "macro",
+   "lines": [
+    {
+     "text": "⚫ 10-year Treasury yield: missing — fred api answered 400 — FRED says: Bad Request. The value for variable api_key is not a 32 character alpha-numeric lower-case string.; keyless csv: ReadTimeout",
+     "url": "https://fred.stlouisfed.org/series/DGS10"
+    },
+    {
+     "text": "⚫ 2-year Treasury yield: missing — fred api answered 400 — FRED says: Bad Request. The value for variable api_key is not a 32 character alpha-numeric lower-case string.; keyless csv: ReadTimeout",
+     "url": "https://fred.stlouisfed.org/series/DGS2"
+    },
+    {
+     "text": "⚫ 10y minus 2y spread: missing — not attempted: FRED failed 2 series in a row, so the source is treated as down",
+     "url": "https://fred.stlouisfed.org/series/T10Y2Y"
+    },
+    {
+     "text": "⚫ Effective fed funds rate: missing — not attempted: FRED failed 2 series in a row, so the source is treated as down",
+     "url": "https://fred.stlouisfed.org/series/DFF"
+    },
+    {
+     "text": "⚫ High-yield credit spread (OAS): missing — not attempted: FRED failed 2 series in a row, so the source is treated as down",
+     "url": "https://fred.stlouisfed.org/series/BAMLH0A0HYM2"
+    },
+    {
+     "text": "⚫ VIX: missing — not attempted: FRED failed 2 series in a row, so the source is treated as down",
+     "url": "https://fred.stlouisfed.org/series/VIXCLS"
+    },
+    {
+     "text": "⚫ Broad dollar index: missing — not attempted: FRED failed 2 series in a row, so the source is treated as down",
+     "url": "https://fred.stlouisfed.org/series/DTWEXBGS"
+    },
+    {
+     "text": "⚫ Initial jobless claims: missing — not attempted: FRED failed 2 series in a row, so the source is treated as down",
+     "url": "https://fred.stlouisfed.org/series/ICSA"
+    },
+    {
+     "text": "⚫ Unemployment rate: missing — not attempted: FRED failed 2 series in a row, so the source is treated as down",
+     "url": "https://fred.stlouisfed.org/series/UNRATE"
+    },
+    {
+     "text": "⚫ CPI (all urban, SA): missing — not attempted: FRED failed 2 series in a row, so the source is treated as down",
+     "url": "https://fred.stlouisfed.org/series/CPIAUCSL"
+    },
+    {
+     "text": "Iran's navy says three tankers on fire after hitting mines in Hormuz - Reuters",
+     "url": "https://news.google.com/rss/articles/CBMisAFBVV95cUxPZWt1cHFualJEVktnTTVvd21uVnljc0FqR2dRaWpaRnYwZ3luZ2t1dUlJNVUtLTVlWHJFOS1ocDBlaVZsTFNZdjRMeldFVFE1Q0Jqem9FbU9fMmp1YTBUTUhqTmYzR3FJN1Z1Y1dHY2d0Yjlzb2lBR0JvNllyT3pScjI2SEpkbkhiYzZSWW9Tb3dwemdWaVVmMjBPbXZqd0hOZzdpRDVSZlVlbzBnV1BjMQ?oc=5"
+    },
+    {
+     "text": "Hamas says senior armed commander killed in Israeli strike - Reuters",
+     "url": "https://news.google.com/rss/articles/CBMivwFBVV95cUxPYUhZd1pxN2d0N3pmR2RCbjhCQk9teURKLThfYzR0bC1rVWJpVGUwNkpJelBNeVNLY3hxS1B0c0p2bTk5VmhCeFVGUWpHSFVNdHFKZjcydUdYNDEyMThuQ3hTRmFNSTQ0Z05ZSWRSd1A3QnM3eTRjWkNJbkN2Z2E5M1FQaUdrdUtaYzVNcWtVMC1LOU1yUkpoUk82d0ZQejM5cDR3YXVqcE5xMlJkTVU2dGduMDdsUWp2UG5ERFZUZw?oc=5"
+    },
+    {
+     "text": "SpaceX, in a historic first, catches upper stage of its Starship rocket",
+     "url": "https://www.cnbc.com/2026/11/14/spacex-plans-to-try-first-ever-catch-of-starship-rocket-from-orbit.html"
+    },
+    {
+     "text": "Nvidia's leadership crisis rattles the AI trade. Here's how we're adjusting our portfolio",
+     "url": "https://www.cnbc.com/investingclub/2026/11/14/nvidias-leadership-crisis-rattles-wall-street-how-were-adjusting.html"
+    },
+    {
+     "text": "Rising rents draw Wall Street money to industrial outdoor storage lot investments across the U.S.",
+     "url": "https://www.cnbc.com/2026/11/14/real-estate-rental-income-industrial-storage-market.html"
+    },
+    {
+     "text": "Juice your growth and save on taxes in this workplace investment account",
+     "url": "https://www.cnbc.com/2026/11/14/hsa-investing-tax-benefits.html"
+    },
+    {
+     "text": "Retailers are turning to entertainment to win shoppers’ attention",
+     "url": "https://www.cnbc.com/2026/11/14/retailers-invest-entertainment.html"
+    },
+    {
+     "text": "Eric Trump-backed robot soldier startup can't pay staff after founder borrowed $4.6 million from company to buy home",
+     "url": "https://www.cnbc.com/2026/11/14/foundation-payroll-ceo-loan.html"
+    }
+   ],
+   "note": "Collected, not curated: series state their own age and headlines are newest-first, not most-important-first.",
+   "shown": 18,
+   "source": {
+    "age_days": 0.0,
+    "name": "OBSERVER macro",
+    "stamp": "2026-11-15T03:41:46+00:00",
+    "status": "fresh",
+    "usable": true,
+    "why": "ok"
+   },
+   "title": "Macro and headlines",
+   "total": 35
+  },
+  {
+   "dark": false,
+   "id": "universe",
+   "lines": [
+    {
+     "text": "1067 names pass the declared screen for session 2026-11-13 (+11 entered, −21 left)",
+     "url": null
+    },
+    {
+     "text": "IWM 277.54 · 1d -0.32% · ytd +12.3%",
+     "url": null
+    },
+    {
+     "text": "SPY 754.37 · 1d -0.36% · ytd +11.3%",
+     "url": null
+    },
+    {
+     "text": "The eligible list is not a buy list. Capital deployed: $0.",
+     "url": null
+    }
+   ],
+   "note": "",
+   "shown": 4,
+   "source": {
+    "age_days": 1.06,
+    "name": "daily snapshot",
+    "stamp": "2026-11-14T02:15:14Z",
+    "status": "fresh",
+    "usable": true,
+    "why": "ok"
+   },
+   "title": "Universe and benchmarks",
+   "total": 4
+  }
+ ],
+ "stance": "balanced",
+ "stance_info": {
+  "set_at": "2026-11-14",
+  "source": "data/operator/stance.json",
+  "stance": "balanced",
+  "valid": true
+ }
+}
