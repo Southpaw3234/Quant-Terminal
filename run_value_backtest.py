@@ -138,6 +138,54 @@ def _score_one_date(asof, members, funds_at, prices):
     return rows
 
 
+# Columns this driver actually scores on. They are named because the read
+# below turns NOTHING into NaN, so the numerics must be coerced DELIBERATELY
+# rather than by pandas' own guess at what a missing value looks like.
+PANEL_NUMERIC = ("price", "adv", "n_bars")
+FUNDS_NUMERIC = ("shares", "cash", "debt_lt", "op_income", "equity", "assets")
+
+
+def load_declared_csv(path: str, numeric=()) -> "pd.DataFrame":
+    """Read a declared input whose `ticker` column holds real ticker strings.
+
+    ⚠️ keep_default_na=False IS LITERAL, NOT DEFENSIVE.
+
+    `NA` is a real listed company (Nano Labs), and pandas.read_csv converts
+    the string "NA" to NaN by default. `panel = pd.read_csv(PANEL)` therefore
+    deleted 16 of the frozen panel's 152,006 name-months before the ticker
+    filter below ever saw them -- and that filter then reported the loss as
+    "16 panel rows dropped on an unusable ticker", which is the line the V29
+    registry records. THE TICKER WAS NEVER UNUSABLE. A CSV parsing default ate
+    it and the symptom was written down as a property of the data. "NAN",
+    "NULL", "NONE" and "N/A" are tickers pandas would swallow the same way, so
+    nothing is treated as missing here and emptiness is tested explicitly
+    instead. Same fix as extract_8k_deficiency.load_panel (313f455).
+
+    ⚠️ THIS CHANGES NO MEASURED RESULT. value_ebit_ev_v1 (t 0.71) and
+    value_ebit_ev_v2 (t 0.53) were read on a panel missing this one name, both
+    are NOT MET, and anti-deferral (CLAUDE.md §3 rule 3) means a bug found
+    afterwards does not reopen a spent read. 16 of 152,006 name-months cannot
+    move either t to 2.0. The fix is for FUTURE reads; the frozen reads stand.
+
+    `numeric` names the columns to coerce back to numbers, because with
+    nothing treated as missing an empty cell arrives as "" rather than NaN.
+    Unnamed columns are left exactly as read; this driver scores on the named
+    ones only.
+    """
+    df = pd.read_csv(path, dtype={"ticker": str},
+                     keep_default_na=False, na_values=[])
+    df["ticker"] = df["ticker"].astype(str).str.strip().str.upper()
+    blank = df["ticker"] == ""
+    if int(blank.sum()):
+        print(f"[v29] {int(blank.sum())} rows in {path} have a genuinely "
+              f"EMPTY ticker and are dropped (not the 'NA' case)")
+        df = df.loc[~blank].copy()
+    for c in numeric:
+        if c in df.columns:
+            df[c] = pd.to_numeric(df[c], errors="coerce")
+    return df
+
+
 def main() -> None:
     if MODE not in ("select", "read"):
         print(f"[v29] QT_V29_MODE must be 'select' or 'read', got {MODE!r}"); sys.exit(2)
@@ -228,8 +276,10 @@ def main() -> None:
               f"{r.k_budget}. {v.reason}")
 
     # ── inputs ─────────────────────────────────────────────────────────
-    panel = pd.read_csv(PANEL)
-    funds = pd.read_csv(FUNDS)
+    # ⚠️ NOT pd.read_csv(PANEL). See load_declared_csv: the plain read deleted
+    # ticker "NA" (Nano Labs) before any of the logic below ran.
+    panel = load_declared_csv(PANEL, PANEL_NUMERIC)
+    funds = load_declared_csv(FUNDS, FUNDS_NUMERIC)
     dates = sorted(panel["date"].unique())
     rebal = dates[::REBALANCE_EVERY]
     print(f"\n[v29] {len(panel):,} eligible name-months; {len(dates)} month-ends; "
@@ -239,6 +289,12 @@ def main() -> None:
     # them. Coercing at each use is how a float NaN ends up as a dict key and
     # a later sorted() dies comparing it to a string -- which is exactly what
     # happened on run 34050877302.
+    # ⚠️ DELIBERATE DIFFERENCE FROM THE FROZEN READS. The loader above now
+    # guarantees non-empty uppercase strings, so this filter catches only
+    # genuine garbage. Its message USED TO REPORT 16 PANEL ROWS -- the "16
+    # panel rows dropped on an unusable ticker" in the V29 registry -- and
+    # every one of them was ticker "NA" arriving as NaN from the read, not a
+    # malformed identifier. On the frozen panel the count is now 0.
     TICKER_RE = r"^[A-Z][A-Z0-9.\-]{0,5}$"
     for frame, label in ((panel, "panel"), (funds, "fundamentals")):
         frame["ticker"] = frame["ticker"].astype("string").str.upper()

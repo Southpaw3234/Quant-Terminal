@@ -138,3 +138,44 @@ Next, in order, and none of it spends budget until the last:
 3. Write and **sign** the specification above, with the four §③ decisions filled in.
 4. Build the calendar-time portfolio measurement.
 5. Read it once.
+
+## ⑧ A defect found after both reads — and why both reads stand
+
+Recorded 2026-11-09, after `value_ebit_ev_v1` (read 2026-11-08, **NOT MET**, t 0.71) and
+`value_ebit_ev_v2` (read 2026-11-09, **NOT MET**, t 0.53).
+
+**Both specifications were measured on a panel missing one company.** `NA` is a real listed
+ticker — Nano Labs — and `pandas.read_csv` converts the string `"NA"` to `NaN` by default.
+`run_value_backtest.py` read the frozen panel with a plain `pd.read_csv`, so 16 of its 152,006
+name-months were gone before the ticker filter ran, and that filter then printed the loss as
+
+> 16 panel rows dropped on an unusable ticker
+
+**That line was wrong, and it is the line the registry recorded** — verbatim, in both reads'
+`result.read.universe`, where it is **left uncorrected on purpose**. A spent read's result block
+records what was measured and reported; it is not a document to tidy up afterwards. The correction
+lives at programme level, in the registry's `_note` and here, so that it qualifies both reads
+without rewriting either. The ticker was never unusable.
+A CSV parsing default ate it and the symptom was written down as a property of the data — which is
+the more interesting half of this defect: not that one microcap went missing, but that the pipeline
+described its own parsing bug as a finding about the universe, and nothing in the record
+distinguished the two. `extract_fundamentals.py` read the same panel the same way, so the company
+was never swept at all, and neither `fundamentals_pit.csv` nor `fundamentals_ttm.csv` contains a
+row for it.
+
+**The reads stand.** Anti-deferral (CLAUDE.md §3 rule 3) is that a read is spent when taken and a
+bug found afterwards does not reopen it. The arithmetic agrees with the rule rather than merely
+submitting to it: 16 of 152,006 name-months cannot move t 0.71 or t 0.53 to 2.0, and both verdicts
+are NOT MET either way. So nothing is re-run, no result block is amended, and no frozen input is
+regenerated — the fingerprints in the registry are the bytes of the files as they were read.
+A re-read of either specification would be a **new declaration** against the remaining budget, not
+a correction of these two.
+
+**The code is fixed, for the next read.** `run_value_backtest.load_declared_csv` and
+`extract_fundamentals.load_panel` now read with `keep_default_na=False, na_values=[]`, strip and
+upper the ticker, drop only genuinely empty ones, and coerce the scored numeric columns back
+explicitly — the same fix landed in `extract_8k_deficiency.load_panel` (313f455). `"NAN"`, `"NULL"`,
+`"NONE"` and `"N/A"` are swallowed the same way and are covered too.
+`validate_na_ticker_reads.py` performs the ordinary read and counts what it loses **before**
+asserting the fix, because a regression test that asserts only the fix does not say what it is
+protecting against.

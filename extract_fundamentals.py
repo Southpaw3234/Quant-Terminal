@@ -366,12 +366,51 @@ def resolve_cik(sess, tk: str):
     return None
 
 
+def load_panel(path: str) -> "pd.DataFrame":
+    """The point-in-time panel, with its tickers read as the strings they are.
+
+    ⚠️ keep_default_na=False IS LITERAL, NOT DEFENSIVE.
+
+    `NA` is a real listed company (Nano Labs), and pandas.read_csv converts
+    the string "NA" to NaN by default. `panel = pd.read_csv(PANEL)` therefore
+    deleted 16 of the frozen V29 panel's 152,006 name-months, and this
+    extractor never asked SEC XBRL about the company at all -- which is why
+    fundamentals_pit.csv and fundamentals_ttm.csv contain no NA row to find.
+    The downstream count, "16 panel rows dropped on an unusable ticker", is
+    what the V29 registry records. THE TICKER WAS NEVER UNUSABLE. A CSV
+    parsing default ate it and the symptom was written down as a property of
+    the data. "NAN", "NULL", "NONE" and "N/A" are tickers pandas would swallow
+    the same way, so nothing is treated as missing here and emptiness is
+    tested explicitly instead. Same fix as extract_8k_deficiency.load_panel
+    (313f455).
+
+    ⚠️ THIS REGENERATES NOTHING. The TTM panel value_ebit_ev_v2 was read on is
+    a frozen, fingerprinted input and stays exactly as it is; anti-deferral
+    (CLAUDE.md §3 rule 3) means a bug found afterwards does not reopen a spent
+    read. The fix is so that a FUTURE sweep reads the universe correctly.
+
+    Keys other than `ticker` keep the strings they had: `date` is compared as
+    text downstream, and `cik` is already guarded against an empty value.
+    """
+    df = pd.read_csv(path, dtype={"ticker": str},
+                     keep_default_na=False, na_values=[])
+    df["ticker"] = df["ticker"].astype(str).str.strip().str.upper()
+    blank = df["ticker"] == ""
+    if int(blank.sum()):
+        print(f"[fundamentals] {int(blank.sum())} panel rows have a genuinely "
+              f"EMPTY ticker and are dropped (not the 'NA' case)")
+        df = df.loc[~blank].copy()
+    return df
+
+
 def main() -> None:
     import requests
     if not os.path.exists(PANEL):
         print(f"[fundamentals] missing {PANEL} — run the point-in-time universe first")
         sys.exit(1)
-    panel = pd.read_csv(PANEL)
+    # ⚠️ NOT pd.read_csv(PANEL). See load_panel: the plain read silently drops
+    # ticker "NA", and a name never swept is a name the value model cannot score.
+    panel = load_panel(PANEL)
     pairs = {(str(t).upper(), str(d)) for t, d in zip(panel["ticker"], panel["date"])}
     known_cik = {}
     for t, c in zip(panel["ticker"], panel.get("cik", [])):
