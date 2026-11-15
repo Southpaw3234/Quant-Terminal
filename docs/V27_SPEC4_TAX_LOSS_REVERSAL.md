@@ -1,11 +1,10 @@
 # Specification #4 — tax-loss selling reversal
 
-**Status:** ⛔ **BLOCKED BEFORE DECLARATION, 2026-11-15. Nothing is declared.
-K is 3/5 and untouched.** The availability rehearsal ran and showed the
-universe contains no delistings. See §⓿. Whether to repair the universe or
-retire this specification is the operator's decision; it has not been made.
-**§⓿ carries a correction dated 2026-11-15: the defect is narrower than first
-written.**
+**Status:** ⚪ **DRAFT, UNBLOCKED 2026-11-15. Nothing is declared. K is 3/5
+and untouched.** The availability rehearsal showed the universe cannot
+contain departures that have no price history (§⓿). The operator chose to
+**pre-register a bound** for that gap rather than buy data: it is criterion 9
+in §⑧. What still has to happen before declaring is in §⑨.
 
 This occupies the slot vacated by `docs/V27_SPEC4_LISTING_DEFICIENCY.md`,
 which was abandoned on 2026-11-11 before declaration when its availability
@@ -141,9 +140,11 @@ Either of two things, and the choice is the operator's:
   exists for this. The read then carries its own worst case instead of an
   unquantified warning.
 
-Until one of those is chosen **nothing in §⑤–§⑧ should be declared**, and
-the open question about the reality-check bar (0.0167 against 0.02) still
-does not need answering.
+**Chosen, 2026-11-15: pre-register the bound.** It is criterion 9 in §⑧,
+and its arithmetic is `phantom_count` and `phantom_restated` in
+`rehearse_tax_loss_availability.py`, pinned by `validate_extract_tax_loss.py`.
+The question about the reality-check bar (0.0167 against 0.02) is therefore
+open again and must be settled before declaring.
 
 No slot was spent learning any of this. That is what the rehearsal is for.
 
@@ -321,6 +322,7 @@ specification** and a different slot.
 | flat days | excluded from the measured series; excess is zero by construction |
 | round-trip cost | **50 bp**, charged once per cycle on full turnover |
 | delisting assumption | **−30%** base case, with sensitivities (see §⑧ criterion 8) |
+| survivorship bound | each cycle is charged **phantom positions at −100%**: **2% of that cycle's book, rounded up, never fewer than 3** (see §⑧ criterion 9) |
 | standard error | Newey–West, **lag 10**, within cycle |
 | reality check | WRC **and** SPA, `p < α/K_declared = 0.10/5 = 0.02`, unread slots charged |
 | terminal date | 2027-03-31 (unchanged) |
@@ -396,7 +398,7 @@ criteria in advance, where it can act, rather than into a post-mortem.
 
 ## ⑧ The criteria
 
-All eight must clear. Any single miss is a **NOT MET** verdict.
+All nine must clear. Any single miss is a **NOT MET** verdict.
 
 | # | criterion | bar |
 |---|---|---|
@@ -408,6 +410,7 @@ All eight must clear. Any single miss is a **NOT MET** verdict.
 | 6 | median **per-name** holding-period excess | **> 0** |
 | 7 | median **per-cycle** excess | **> 0** |
 | 8 | WRC **and** SPA p, Bonferroni over K_declared | **< 0.02** |
+| 9 | criteria **3, 5 and 7 restated with the phantom positions in** | **each still clears** |
 
 Criterion 5 under the null alone is p ≈ 0.17 — it is a **shape**
 requirement, not a statistical one, and it is not claimed as evidence by
@@ -419,6 +422,38 @@ base case, 0%, and −100% — and the verdict must be unchanged across all
 three. A six-week window makes delisting rare, so this sensitivity should be
 cheap; if it is not cheap, that is itself the finding and the verdict is NOT
 MET.
+
+### Criterion 9 — the survivorship bound, pre-registered 2026-11-15
+
+Criterion 8's delisting sensitivity restates the delistings the book
+**observed**. The rehearsal observed none, so on its own it is a test that
+cannot fail. Criterion 9 charges for the ones the universe cannot contain.
+
+**The rule.** In every cycle, add phantom positions to the equal-weight
+book, each returning **−100%** over the holding period. The number is **2%
+of that cycle's book, rounded up, and never fewer than 3**. On the book the
+rehearsal built that is 4, 4, 5, 5, 5, 6, 6, 6, 6 and 7 — **54 phantoms
+against 2,453 real positions**. A book that was otherwise flat is dragged
+about **−2%** per cycle.
+
+**What must hold.** With the phantoms in, the per-cycle excess over IWM is
+recomputed, and criteria **3** (annualised excess > 0), **5** (≥ 7 of 10
+cycles positive) and **7** (median per-cycle excess > 0) must each still
+clear. Criterion 4's Newey–West t is **not** restated: a phantom has no
+daily path, and inventing one would be a second assumption stacked on the
+first. That is a stated limit of the bound, not an oversight.
+
+**Why 2%, and why it is not tuned.** Across the ten holding windows, 13
+unpriceable departures classified as adverse were filed — 0.53% of the
+book, and that assumes every one was eligible and in the worst quintile.
+The roster is known to be thin before 2023, so the bound is set at roughly
+**four times** the observed rate rather than at it. The number was fixed
+from a count of filings; no return had been computed for this book when it
+was chosen, and none has been since.
+
+**What it does not do.** It does not credit the book for the 17 benign
+departures (acquisitions, redemptions) the universe also cannot contain.
+The bound is one-sided on purpose: it can only lower a result.
 
 Standing rule, restated because it applies the moment this is declared:
 **a read is spent when taken. A bug found afterwards does not reopen it and
@@ -443,6 +478,15 @@ None of this costs a slot. All of it must precede one.
    declaration, so the input cannot move between rehearsal and read.
 4. **The prior is signed** by the operator, in a commit that precedes the
    read, with the git timestamp as the evidence.
+5. **The reality-check bar is settled.** This would be the first v27
+   specification measured on the V29 panel. Criterion 8 currently says
+   0.02 (the v27 programme, 0.10/5); the panel's own family bar is 0.0167
+   (0.05/3). The stricter one is the defensible choice and the operator has
+   not yet said which applies.
+
+Where these stand on 2026-11-15: **1 and 2 are done** (the rehearsal is run
+`43671860047`, recorded in §0, and is what produced criterion 9). **3, 4
+and 5 are open**, and 4 and 5 are the operator's.
 
 On the prior: five of five reads have returned NOT MET, and this is the
 most-studied anomaly of the three candidates. A signed prior above the

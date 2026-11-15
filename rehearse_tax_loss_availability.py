@@ -105,6 +105,37 @@ def survivorship_refusal(n_priced: int, n_dead: int, n_missing: int,
     return None
 
 
+# 🔑 THE PRE-REGISTERED SURVIVORSHIP BOUND (spec §⑧ criterion 9).
+# Declared here, before any read, so the git history fixes it in advance.
+# Changing either number after the read is a new specification.
+PHANTOM_FRACTION = 0.02     # of each cycle's book, rounded UP
+PHANTOM_FLOOR = 3           # and never fewer than this per cycle
+PHANTOM_RETURN = -1.0       # each phantom is a total loss
+
+
+def phantom_count(n_names: int) -> int:
+    """How many total-loss positions a cycle is charged for names the
+    universe cannot contain. Zero for an empty cycle: there is no book to
+    restate."""
+    import math
+    if n_names <= 0:
+        return 0
+    return max(PHANTOM_FLOOR, math.ceil(PHANTOM_FRACTION * n_names))
+
+
+def phantom_restated(book_return: float, n_names: int) -> float:
+    """The equal-weight book's holding-period return with the phantoms in.
+
+    The real names keep their return; `phantom_count` extra names at
+    PHANTOM_RETURN are averaged in. Pure arithmetic on a number the read
+    produces -- nothing here measures anything.
+    """
+    k = phantom_count(n_names)
+    if n_names <= 0:
+        return book_return
+    return (n_names * book_return + k * PHANTOM_RETURN) / (n_names + k)
+
+
 def roster_exposure(positions: list, roster: list,
                     classified: list = None) -> dict:
     """Which exchange departures can this book see, and which can it not?
@@ -294,6 +325,19 @@ def main() -> None:
         else:
             print(f"  unpriceable departures               NOT CHECKED — "
                   f"{CLASSIFIED} is not on hand")
+
+    # ── the pre-registered bound, in counts ─────────────────────────────────
+    print("\n[rehearse] the survivorship bound (spec criterion 9) — phantom "
+          "total-loss positions charged per cycle")
+    tot_ph = 0
+    for cy, priced, _dead, _n, _st in rows:
+        k = phantom_count(priced)
+        tot_ph += k
+        print(f"  {cy}   book {priced:>4}   phantoms {k:>2}   "
+              f"drag on the book if all lose everything "
+              f"{phantom_restated(0.0, priced):+.2%}")
+    print(f"  total phantoms {tot_ph} against {tot_priced} real positions "
+          f"({PHANTOM_FRACTION:.0%} rounded up, floor {PHANTOM_FLOOR})")
 
     ok_cycles = [r for r in rows if r[4] == "ok"]
     days_min = int((live >= MIN_BOOK).sum())

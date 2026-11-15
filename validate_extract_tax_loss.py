@@ -334,6 +334,30 @@ def test_rehearsal_refuses_a_survivor_universe():
                                                 "bankruptcy": 2},
           "they left while a book was open and could not be in it — the "
           "June one fell between windows and is not counted")
+    # ── 🔑 the pre-registered bound ─────────────────────────────────────────
+    check("the-bound-is-two-percent-floor-three-total-loss",
+          (rh.PHANTOM_FRACTION, rh.PHANTOM_FLOOR, rh.PHANTOM_RETURN)
+          == (0.02, 3, -1.0),
+          "pinned: changing any of these after a read is a new specification")
+    sizes = [173, 194, 208, 210, 216, 263, 289, 300, 289, 311]
+    ph = [rh.phantom_count(n) for n in sizes]
+    check("phantoms-per-cycle-on-the-real-book-sizes",
+          ph == [4, 4, 5, 5, 5, 6, 6, 6, 6, 7] and sum(ph) == 54,
+          f"{ph} — 54 against 2,453 real positions")
+    check("the-count-rounds-UP", rh.phantom_count(151) == 4
+          and rh.phantom_count(150) == 3)
+    check("the-floor-applies-to-a-small-book", rh.phantom_count(5) == 3)
+    check("an-empty-cycle-is-charged-nothing", rh.phantom_count(0) == 0
+          and rh.phantom_restated(0.07, 0) == 0.07)
+    r = rh.phantom_restated(0.10, 196)          # 4 phantoms
+    check("restated-return-averages-the-phantoms-in",
+          abs(r - (196 * 0.10 - 4) / 200) < 1e-12, f"{r:+.4f}")
+    check("the-bound-can-only-lower-a-return",
+          all(rh.phantom_restated(x, n) < x
+              for x in (-0.5, 0.0, 0.08, 0.4) for n in (5, 173, 311)))
+    check("a-flat-book-of-311-is-dragged-about-two-percent",
+          abs(rh.phantom_restated(0.0, 311) - (-7 / 318)) < 1e-12)
+
     empty = rh.roster_exposure(pos, [], [])
     check("no-roster-is-zero-in-roster-not-a-crash",
           empty["tickers_in_roster"] == 0
