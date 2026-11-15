@@ -179,3 +179,34 @@ def submissions(sess, cik: int) -> dict:
                 "entityType": d.get("entityType") or ""}
     except Exception:              # noqa: BLE001 - absence, never a guess
         return {}
+
+
+def filing_history(sess, cik: int) -> dict:
+    """Recent filings for one CIK, as rows. For LIBRARIAN's baseline lookup.
+
+    -> {"ok": bool, "rows": [{"form","accession","filed"}], "reason": str}
+
+    🔑 Separate from `submissions`, which trims its response to the three
+    fields OBSERVER needs in order to tell an operating company from a
+    person. This one reports `ok` EXPLICITLY, because "the lookup failed"
+    and "this company has never filed this form before" are opposite facts
+    that an empty list renders identical -- and a caller that cannot tell
+    them apart will publish the second while the first is true.
+    """
+    try:
+        r = sess.get(SUBMISSIONS.format(cik=int(cik)), timeout=60)
+        if r.status_code != 200:
+            return {"ok": False, "rows": [],
+                    "reason": f"data.sec.gov answered {r.status_code}"}
+        time.sleep(SLEEP)
+        rec = (((r.json() or {}).get("filings") or {}).get("recent") or {})
+    except Exception as e:        # noqa: BLE001
+        return {"ok": False, "rows": [], "reason": type(e).__name__}
+    forms = rec.get("form") or []
+    if not forms:
+        return {"ok": False, "rows": [],
+                "reason": "submissions carried no filing history"}
+    return {"ok": True, "reason": "ok",
+            "rows": [{"form": f, "accession": a, "filed": d} for f, a, d in
+                     zip(forms, rec.get("accessionNumber") or [],
+                         rec.get("filingDate") or [])]}

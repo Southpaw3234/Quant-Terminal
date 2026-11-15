@@ -1,0 +1,56 @@
+{
+  "note": "Pre-registered phrase list for LIBRARIAN (collective agent module 3). A phrase is testable against a filing only if it was declared BEFORE that filing was published -- qt.librarian.check_declared_before refuses otherwise, and librarian_diff.py counts the refusals rather than skipping them quietly. Adding a phrase is free; it simply cannot be applied backwards. These phrases are canonical distress and disclosure language from auditing and reporting practice, deliberately NOT chosen by reading any particular company's filing.",
+  "declared_by": "operator",
+  "phrases": [
+    {
+      "text": "going concern",
+      "declared_at": "2026-11-11",
+      "why": "The auditor's own doubt, in the auditor's own words. Its APPEARANCE is the loudest single phrase in a filing; its DISAPPEARANCE after a prior appearance is a resolution the market often prices slowly."
+    },
+    {
+      "text": "substantial doubt",
+      "declared_at": "2026-11-11",
+      "why": "The statutory companion to going concern. Tested separately because the two are not always used together, and a filing can drop one while keeping the other."
+    },
+    {
+      "text": "material weakness",
+      "declared_at": "2026-11-11",
+      "why": "An admitted failure of internal control. Removal usually means a remediation the company believes is complete -- a claim worth checking against the next restatement."
+    },
+    {
+      "text": "restatement",
+      "declared_at": "2026-11-11",
+      "why": "Prior numbers were wrong. Appearance is the event; persistence across quarters says the clean-up is not finished."
+    },
+    {
+      "text": "covenant",
+      "declared_at": "2026-11-11",
+      "why": "Lenders, not shareholders, set the binding constraint on a levered company. Language about covenants entering or leaving a filing tracks who is actually in control."
+    },
+    {
+      "text": "waiver",
+      "declared_at": "2026-11-11",
+      "why": "A covenant that needed forgiving. Tested separately from 'covenant' because the waiver is the breach made visible."
+    },
+    {
+      "text": "delisting",
+      "declared_at": "2026-11-11",
+      "why": "The exchange's patience is finite and its notices are disclosed. Directly adjacent to the abandoned specification 4, which found this signal unreachable from prices alone."
+    },
+    {
+      "text": "reverse stock split",
+      "declared_at": "2026-11-11",
+      "why": "Most often a bid-price rescue rather than a capital decision. Appearance frequently precedes a delisting fight."
+    },
+    {
+      "text": "impairment",
+      "declared_at": "2026-11-11",
+      "why": "Management conceding that something it bought is worth less than it paid. A non-cash charge with cash-flow information in it."
+    },
+    {
+      "text": "discontinued operations",
+      "declared_at": "2026-11-11",
+      "why": "A business being exited. Its arrival reshapes every margin comparison that follows, which is exactly when quarter-over-quarter reading goes wrong."
+    }
+  ]
+}

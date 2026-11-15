@@ -40,3 +40,8 @@ run_logs/
 # never to master. A stray copy committed here would be served as a file
 # that can never update -- exactly the stale-feed failure this replaced.
 docs/daily.json
+
+# LIBRARIAN's briefs are published to the orphan `briefs` branch, never to
+# master. A stray copy committed here would be served as a file that can
+# never update -- the same stale-feed failure that docs/daily.json avoids.
+briefs/
