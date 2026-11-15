@@ -143,8 +143,8 @@ Either of two things, and the choice is the operator's:
 **Chosen, 2026-11-15: pre-register the bound.** It is criterion 9 in §⑧,
 and its arithmetic is `phantom_count` and `phantom_restated` in
 `rehearse_tax_loss_availability.py`, pinned by `validate_extract_tax_loss.py`.
-The question about the reality-check bar (0.0167 against 0.02) is therefore
-open again and must be settled before declaring.
+The question about the reality-check bar was then settled the same day:
+**0.0167**, the stricter of the two (§⑤, §⑧ criterion 8).
 
 No slot was spent learning any of this. That is what the rehearsal is for.
 
@@ -324,8 +324,17 @@ specification** and a different slot.
 | delisting assumption | **−30%** base case, with sensitivities (see §⑧ criterion 8) |
 | survivorship bound | each cycle is charged **phantom positions at −100%**: **2% of that cycle's book, rounded up, never fewer than 3** (see §⑧ criterion 9) |
 | standard error | Newey–West, **lag 10**, within cycle |
-| reality check | WRC **and** SPA, `p < α/K_declared = 0.10/5 = 0.02`, unread slots charged |
+| reality check | WRC **and** SPA, **`p < 0.0167`** — the V29 panel's family bar (`0.05/3`), not the v27 programme's `0.10/5 = 0.02`. See below. Unread slots charged |
+| panel fingerprint | sha256 (CRLF-normalised) `3b48776cc092aa910f31398c0c5355bde4c3641b2959764acbf78d9fa88773f7` — the read must refuse a panel that does not match |
 | terminal date | 2027-03-31 (unchanged) |
+
+**Why 0.0167 and not 0.02 — settled by the operator, 2026-11-15.** This
+slot belongs to the v27 programme, whose bar is 0.10/5 = 0.02. But it is
+measured on `v29_universe_pit.csv`, and two V29 specifications have already
+been read against that same panel under a family bar of 0.05/3 = 0.0167. A
+third look at one panel is a third comparison on that panel whichever
+programme's ledger it is booked to, so it is held to the panel's bar. The
+stricter number is used; the choice can only make a pass harder.
 
 The 15 December and 31 January anchors are round calendar dates either side
 of the 31 December deadline. They are not tuned, and that claim is checkable
@@ -409,7 +418,7 @@ All nine must clear. Any single miss is a **NOT MET** verdict.
 | 5 | cycles with positive excess | **≥ 7 of 10** |
 | 6 | median **per-name** holding-period excess | **> 0** |
 | 7 | median **per-cycle** excess | **> 0** |
-| 8 | WRC **and** SPA p, Bonferroni over K_declared | **< 0.02** |
+| 8 | WRC **and** SPA p, at the V29 panel's family bar | **< 0.0167** |
 | 9 | criteria **3, 5 and 7 restated with the phantom positions in** | **each still clears** |
 
 Criterion 5 under the null alone is p ≈ 0.17 — it is a **shape**
@@ -478,15 +487,19 @@ None of this costs a slot. All of it must precede one.
    declaration, so the input cannot move between rehearsal and read.
 4. **The prior is signed** by the operator, in a commit that precedes the
    read, with the git timestamp as the evidence.
-5. **The reality-check bar is settled.** This would be the first v27
-   specification measured on the V29 panel. Criterion 8 currently says
-   0.02 (the v27 programme, 0.10/5); the panel's own family bar is 0.0167
-   (0.05/3). The stricter one is the defensible choice and the operator has
-   not yet said which applies.
+5. **The reality-check bar is settled.** Done: **0.0167**, the V29 panel's
+   family bar, chosen by the operator on 2026-11-15 (§⑤).
 
-Where these stand on 2026-11-15: **1 and 2 are done** (the rehearsal is run
-`43671860047`, recorded in §0, and is what produced criterion 9). **3, 4
-and 5 are open**, and 4 and 5 are the operator's.
+Where these stand on 2026-11-15: **1, 2 and 5 are done** (the rehearsal is
+run `43671860047`, recorded in §0, and is what produced criterion 9).
+
+**3 is recorded here so it cannot move:** the book built by run
+`42977153884` has sha256 (CRLF-normalised)
+`52b61b0b4dc8412a0aee5e4ea9521f6e1d8726431bfa350202ffbe058c89a17f`, and the panel it was selected from is fingerprinted in §⑤.
+The declaration must repeat both and the read must refuse a mismatch.
+
+**4 is the only thing left, and it is the operator's:** a signed prior,
+committed before the read.
 
 On the prior: five of five reads have returned NOT MET, and this is the
 most-studied anomaly of the three candidates. A signed prior above the
