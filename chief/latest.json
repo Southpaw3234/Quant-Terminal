@@ -1,19 +1,9 @@
 {
- "attention": [
-  {
-   "text": "⚫ FRED is DARK — 0 of 10 macro series could be fetched: FRED_API_KEY is 33 character(s) and is not 32 lower-case alphanumerics, so FRED will refuse it — the secret is malformed (its value is not shown); keyless csv: ReadTimeout",
-   "url": null
-  }
- ],
+ "attention": [],
  "day": "2026-11-13",
  "describes": "filings published 2026-11-13",
  "facts": {
-  "attention": [
-   {
-    "text": "⚫ FRED is DARK — 0 of 10 macro series could be fetched: FRED_API_KEY is 33 character(s) and is not 32 lower-case alphanumerics, so FRED will refuse it — the secret is malformed (its value is not shown); keyless csv: ReadTimeout",
-    "url": null
-   }
-  ],
+  "attention": [],
   "sections": {
    "base_rates": {
     "dark": false,
@@ -36,7 +26,7 @@
     "source": {
      "age_days": 0.0,
      "name": "ACTUARY analysis",
-     "stamp": "2026-11-15T18:13:42+00:00",
+     "stamp": "2026-11-15T22:44:00+00:00",
      "status": "fresh",
      "usable": true,
      "why": "ok"
@@ -56,7 +46,7 @@
     "source": {
      "age_days": 0.0,
      "name": "ACTUARY analysis",
-     "stamp": "2026-11-15T18:13:42+00:00",
+     "stamp": "2026-11-15T22:44:00+00:00",
      "status": "fresh",
      "usable": true,
      "why": "ok"
@@ -360,7 +350,7 @@
     "source": {
      "age_days": 0.0,
      "name": "OBSERVER filings",
-     "stamp": "2026-11-15T18:07:59+00:00",
+     "stamp": "2026-11-15T22:38:51+00:00",
      "status": "fresh",
      "usable": true,
      "why": "ok"
@@ -476,7 +466,7 @@
     "source": {
      "age_days": 0.0,
      "name": "OBSERVER filings",
-     "stamp": "2026-11-15T18:07:59+00:00",
+     "stamp": "2026-11-15T22:38:51+00:00",
      "status": "fresh",
      "usable": true,
      "why": "ok"
@@ -624,7 +614,7 @@
     "source": {
      "age_days": 0.0,
      "name": "LIBRARIAN brief",
-     "stamp": "2026-11-15T18:09:06+00:00",
+     "stamp": "2026-11-15T22:39:16+00:00",
      "status": "fresh",
      "usable": true,
      "why": "ok"
@@ -636,44 +626,52 @@
     "id": "macro",
     "lines": [
      {
-      "text": "⚫ 10-year Treasury yield: missing — FRED_API_KEY is 33 character(s) and is not 32 lower-case alphanumerics, so FRED will refuse it — the secret is malformed (its value is not shown); keyless csv: ReadTimeout",
+      "text": "10-year Treasury yield: 5.1 % as of 2026-11-12 (+0.12 vs 2026-11-10)",
       "url": "https://fred.stlouisfed.org/series/DGS10"
      },
      {
-      "text": "⚫ 2-year Treasury yield: missing — FRED_API_KEY is 33 character(s) and is not 32 lower-case alphanumerics, so FRED will refuse it — the secret is malformed (its value is not shown); keyless csv: ReadTimeout",
+      "text": "2-year Treasury yield: 4.86 % as of 2026-11-12 (+0.13 vs 2026-11-10)",
       "url": "https://fred.stlouisfed.org/series/DGS2"
      },
      {
-      "text": "⚫ 10y minus 2y spread: missing — not attempted: FRED failed 2 series in a row, so the source is treated as down",
+      "text": "10y minus 2y spread: 0.27 pp as of 2026-11-13 (+0.03 vs 2026-11-12)",
       "url": "https://fred.stlouisfed.org/series/T10Y2Y"
      },
      {
-      "text": "⚫ Effective fed funds rate: missing — not attempted: FRED failed 2 series in a row, so the source is treated as down",
+      "text": "Effective fed funds rate: 3.88 % as of 2026-11-12 (+0 vs 2026-11-11)",
       "url": "https://fred.stlouisfed.org/series/DFF"
      },
      {
-      "text": "⚫ High-yield credit spread (OAS): missing — not attempted: FRED failed 2 series in a row, so the source is treated as down",
+      "text": "High-yield credit spread (OAS): 3.2 pp as of 2026-11-12 (-0.1 vs 2026-11-11)",
       "url": "https://fred.stlouisfed.org/series/BAMLH0A0HYM2"
      },
      {
-      "text": "⚫ VIX: missing — not attempted: FRED failed 2 series in a row, so the source is treated as down",
+      "text": "VIX: 18.7 index as of 2026-11-12 (+1.21 vs 2026-11-11)",
       "url": "https://fred.stlouisfed.org/series/VIXCLS"
      },
      {
-      "text": "⚫ Broad dollar index: missing — not attempted: FRED failed 2 series in a row, so the source is treated as down",
+      "text": "Broad dollar index: 121.88 index as of 2026-11-06 (+0.3742 vs 2026-11-05)",
       "url": "https://fred.stlouisfed.org/series/DTWEXBGS"
      },
      {
-      "text": "⚫ Initial jobless claims: missing — not attempted: FRED failed 2 series in a row, so the source is treated as down",
+      "text": "Initial jobless claims: 200000 claims as of 2026-11-07 (+9000 vs 2026-10-31)",
       "url": "https://fred.stlouisfed.org/series/ICSA"
      },
      {
-      "text": "⚫ Unemployment rate: missing — not attempted: FRED failed 2 series in a row, so the source is treated as down",
+      "text": "Unemployment rate: 4.1 % as of 2026-10-01 (-0.1 vs 2026-09-01)",
       "url": "https://fred.stlouisfed.org/series/UNRATE"
      },
      {
-      "text": "⚫ CPI (all urban, SA): missing — not attempted: FRED failed 2 series in a row, so the source is treated as down",
+      "text": "CPI (all urban, SA): 337.476 index as of 2026-10-01 (+1.178 vs 2026-09-01)",
       "url": "https://fred.stlouisfed.org/series/CPIAUCSL"
+     },
+     {
+      "text": "Anti-Houthi forces retreat in Yemen as Iran strikes Bahrain - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxOdTFBcWR1YzJhai1UdGgzMHpvdm40VExxeXFqM0NtbU9YVmNSNXpNeDlXTGllRXFtczhIUzVsaFFWdVV5TGxESWdneGlXbER1Qlg2b2VhQ2lqMmxVaEd4U01nZmNXcFY2bmNhSTdIN0VycE84MWJDRXdZOGxMRGo0U1k1UjhiamFNQ1JIQmp1MUdxNlZGRm1UanBvaENxR3V2N25NdFVOaWpXX1E?oc=5"
+     },
+     {
+      "text": "Yemen's Houthis say they launched ballistic missiles towards Riyadh airport, financial centre - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMixwFBVV95cUxOZ2NSdXVjeDlTU0lLeTAtMGs5RmdHaW0wTVhVbzUwempOYUdlNVB3NXprMGZqYksyVjhLUU1OV250QlczemJOT2tXcVFIZEJYb0dwblVCblExbnFmZkVyeGZnZ0NJY3Z3a3NTcmxUQ21tR0ZsQVdhTTNRNWJaZW5pOEk4RDNEMXN3aExOaEE0QVNzaXV3UTM3ZjlNa2hDenRtajR2aGVGT3RQR0NOSnY1VHQ3czdCSkJWSUgxaFFYNThEUlBBMVpn?oc=5"
      },
      {
       "text": "Battle for young male voters intensifies after US midterm rebuke of Republicans - Reuters",
@@ -682,6 +680,10 @@
      {
       "text": "3 big things we're watching in the stock market in the week ahead",
       "url": "https://www.cnbc.com/investingclub/2026/11/15/3-big-things-were-watching-in-the-stock-market-in-the-week-ahead.html"
+     },
+     {
+      "text": "Gulf bourses slide as Hormuz tensions and houthi strikes rattle traders - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMiugFBVV95cUxPZ1U5SnRYV0N6dE01QU1sOFNRWHR0WndCRG05bDl3UEhURE1jR01ZZ2p4dmFpb1llajB6QzdpRmp3WUZYSkhRRmhHT0tKY2hfWjN1b0U3UzJuUkZ3N3ZpWlU1Sk1pOWJvZ3cxcVVRVmhycW9ON2R1Um5nR3ZSQUtzTHE5aHlMb28wM2xyMzQtdnZHNUFfMWR4ZVZwN2pfc2RmcTRMTEtfY0NHbEh0dUo4N0g5UHNGTGJ3c1E?oc=5"
      },
      {
       "text": "Yemeni government force retreats from strait in major setback in war against Houthis - Reuters",
@@ -718,6 +720,10 @@
      {
       "text": "SpaceX, in a historic first, catches upper stage of its Starship rocket",
       "url": "https://www.cnbc.com/2026/11/14/spacex-plans-to-try-first-ever-catch-of-starship-rocket-from-orbit.html"
+     },
+     {
+      "text": "Law enforcement searches Illinois plant after 'credible threat' of explosive device - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMiwAFBVV95cUxPUWd2dWN5WmZWVFV3UFVQcU40U2lkY3B3Z3FRVFlHWDg1RGtodEt0T2d3QnQxSWxsXzFRWWV0anZqcW8xb2wxelg0UFZkODlQM3BTbENTaVdOSEZUM3NYblVESUdzTk14Rk9wcGlnWmJUdGxaTG5sM1Fsa0t3SHpxdkxMd3VPdEdkY1cxVDZoM1FfUW5BTGdzTVlCdG9Sc19JUzYzeUN1VFhzYm9jRDh1dVo0WjFVQk9TSTUyM2hTRE4?oc=5"
      },
      {
       "text": "Nvidia's leadership crisis rattles the AI trade. Here's how we're adjusting our portfolio",
@@ -758,29 +764,13 @@
      {
       "text": "Rubio assails international court in speech to conservative legal group - Reuters",
       "url": "https://news.google.com/rss/articles/CBMirwFBVV95cUxNblc1UEZaUHNzR0QzV051c0Nid3k2WWI3Y1RFNm00LW4wTm83X0Y5MlFRU29fZ0RvYnJFVURiMV96VS1HWmZnV1BkUW16MHJYdXdRbjJSOTJERzh5NXhiRGxjNUkwRDVwNjUxdHF3cXRKN21GNUVELWx2VHpMeHpUYjdjZWY3SFZ6QWs0MWh4cXFnUk1aMFMtT1NIMEl0VTJfcGFOalFvUG41ck5wczB3?oc=5"
-     },
-     {
-      "text": "US denies Iran's claim that it attacked early-warning radar in Bahrain - Reuters",
-      "url": "https://news.google.com/rss/articles/CBMitgFBVV95cUxNcjhnZVFHWnV4RHpscnFyUjFWOEl5VndNZ0Y4MFdEVlpueUNaeHRPMVdCbjA4Mmktc0tYWnFsZWdZSkd4dFNvTmszUHFWdC15S0pja2ozaTg0R0dOdEY3aDJtenZwREh5dmRvTGVTUkxVUDNjN3huQU1TRTU1bEVBampuYzdsTjJJZ2tBUXQwal85QnRsWDU4OWNvbDVzN0VUR1R0clNkZmpkaXZMaWh5dExSNHRCUQ?oc=5"
-     },
-     {
-      "text": "Trump to raise nuclear-arms cuts with Putin, Xi on Thursday, White House says - Reuters",
-      "url": "https://news.google.com/rss/articles/CBMilAFBVV95cUxPX1dzUndCOE42aUFUazd4SFcxMFVWUTl6VmRVOE5QR0ZjNWRXY19qWTVuRUthUXhDS3UybmZnQmFHSHVRV20wdXJwTUlKUTlGVU42N1B4bkVwSjI4bkdJeG94aFpxX01NUTdyWUJOUVZHSHlXZkxGZXlsTWhjSmUwRXoyRklMekIycXlEUk1pM1NpNjJp?oc=5"
-     },
-     {
-      "text": "Oil prices set for second straight weekly drop on signs of growing supply surplus - Reuters",
-      "url": "https://news.google.com/rss/articles/CBMiugFBVV95cUxOa0ZTUUtQbXVySmRXLWtEc2xtZDk5RWkwa29OWlEyQjN3UXVzMkZTYzF3ajVoNkVXZnBnODVRTkN0b1ZwaVk4VE5KOXFqZktYbG1PN1RwdEtwS1ZEb3BBUEkxM2JtUl91NkxCMWpjbmxWV3RScndxMjJUcjh4dEpZM256Nl8tY19iWmp4OExndnRRaXQwdFRpMGRYRDFnNGQ1eEFhNEVrZjZwaW0tamJkLXFYa1I3V1EzbVE?oc=5"
-     },
-     {
-      "text": "US Air Force responds to suspected drone activity over UK airbase - Reuters",
-      "url": "https://news.google.com/rss/articles/CBMivwFBVV95cUxPTkFnODI2ZmFiRTJzS3N4eXI5TzJqbXpFV3lUM29neFFnSFJJOVlQcDNZR3B3MmczQWlTNDA4ZE13bXpQcm9yQXdROXIzWjBCRnZHNzhwQkxldWtuREJ2Q1BvOFEzcTZRN2tpQkxwb3dCLUtvdzZiUEsxbGNvXzVmWTUzMTVvdHl5cjZBX2Y1VTJzZlFjUnZrMjFrVWZXTWltM1hoSkxDMThmdDdEckQ1NVJMbTE0dXFQYXJMM3NEVQ?oc=5"
      }
     ],
     "note": "Collected, not curated: series state their own age and headlines are newest-first, not most-important-first.",
     "source": {
      "age_days": 0.0,
      "name": "OBSERVER macro",
-     "stamp": "2026-11-15T18:08:15+00:00",
+     "stamp": "2026-11-15T22:39:04+00:00",
      "status": "fresh",
      "usable": true,
      "why": "ok"
@@ -800,7 +790,7 @@
     "source": {
      "age_days": 0.0,
      "name": "ACTUARY analysis",
-     "stamp": "2026-11-15T18:13:42+00:00",
+     "stamp": "2026-11-15T22:44:00+00:00",
      "status": "fresh",
      "usable": true,
      "why": "ok"
@@ -830,7 +820,7 @@
     ],
     "note": "",
     "source": {
-     "age_days": 1.67,
+     "age_days": 1.85,
      "name": "daily snapshot",
      "stamp": "2026-11-14T02:15:14Z",
      "status": "fresh",
@@ -841,19 +831,19 @@
    }
   }
  },
- "facts_sha256": "c9266bf9cb55b790415432f5b22b98e922510a5d5f355346b4f1e1beb5c23cc1",
- "generated_at": "2026-11-15T18:13:42+00:00",
+ "facts_sha256": "6c93b84e25e34d0c7d7256b13938332170bfa16e5e83b69ab988e82e2e1e37c4",
+ "generated_at": "2026-11-15T22:44:00+00:00",
  "inputs": {
   "analysis": {
    "age_days": 0.0,
    "name": "ACTUARY analysis",
-   "stamp": "2026-11-15T18:13:42+00:00",
+   "stamp": "2026-11-15T22:44:00+00:00",
    "status": "fresh",
    "usable": true,
    "why": "ok"
   },
   "daily snapshot": {
-   "age_days": 1.67,
+   "age_days": 1.85,
    "name": "daily snapshot",
    "stamp": "2026-11-14T02:15:14Z",
    "status": "fresh",
@@ -863,7 +853,7 @@
   "librarian": {
    "age_days": 0.0,
    "name": "LIBRARIAN brief",
-   "stamp": "2026-11-15T18:09:06+00:00",
+   "stamp": "2026-11-15T22:39:16+00:00",
    "status": "fresh",
    "usable": true,
    "why": "ok"
@@ -871,7 +861,7 @@
   "macro": {
    "age_days": 0.0,
    "name": "OBSERVER macro",
-   "stamp": "2026-11-15T18:08:15+00:00",
+   "stamp": "2026-11-15T22:39:04+00:00",
    "status": "fresh",
    "usable": true,
    "why": "ok"
@@ -879,7 +869,7 @@
   "observations": {
    "age_days": 0.0,
    "name": "OBSERVER filings",
-   "stamp": "2026-11-15T18:07:59+00:00",
+   "stamp": "2026-11-15T22:38:51+00:00",
    "status": "fresh",
    "usable": true,
    "why": "ok"
@@ -984,7 +974,7 @@
    "source": {
     "age_days": 0.0,
     "name": "ACTUARY analysis",
-    "stamp": "2026-11-15T18:13:42+00:00",
+    "stamp": "2026-11-15T22:44:00+00:00",
     "status": "fresh",
     "usable": true,
     "why": "ok"
@@ -1082,7 +1072,7 @@
    "source": {
     "age_days": 0.0,
     "name": "OBSERVER filings",
-    "stamp": "2026-11-15T18:07:59+00:00",
+    "stamp": "2026-11-15T22:38:51+00:00",
     "status": "fresh",
     "usable": true,
     "why": "ok"
@@ -1160,7 +1150,7 @@
    "source": {
     "age_days": 0.0,
     "name": "LIBRARIAN brief",
-    "stamp": "2026-11-15T18:09:06+00:00",
+    "stamp": "2026-11-15T22:39:16+00:00",
     "status": "fresh",
     "usable": true,
     "why": "ok"
@@ -1234,7 +1224,7 @@
    "source": {
     "age_days": 0.0,
     "name": "OBSERVER filings",
-    "stamp": "2026-11-15T18:07:59+00:00",
+    "stamp": "2026-11-15T22:38:51+00:00",
     "status": "fresh",
     "usable": true,
     "why": "ok"
@@ -1264,7 +1254,7 @@
    "source": {
     "age_days": 0.0,
     "name": "ACTUARY analysis",
-    "stamp": "2026-11-15T18:13:42+00:00",
+    "stamp": "2026-11-15T22:44:00+00:00",
     "status": "fresh",
     "usable": true,
     "why": "ok"
@@ -1286,7 +1276,7 @@
    "source": {
     "age_days": 0.0,
     "name": "ACTUARY analysis",
-    "stamp": "2026-11-15T18:13:42+00:00",
+    "stamp": "2026-11-15T22:44:00+00:00",
     "status": "fresh",
     "usable": true,
     "why": "ok"
@@ -1299,44 +1289,52 @@
    "id": "macro",
    "lines": [
     {
-     "text": "⚫ 10-year Treasury yield: missing — FRED_API_KEY is 33 character(s) and is not 32 lower-case alphanumerics, so FRED will refuse it — the secret is malformed (its value is not shown); keyless csv: ReadTimeout",
+     "text": "10-year Treasury yield: 5.1 % as of 2026-11-12 (+0.12 vs 2026-11-10)",
      "url": "https://fred.stlouisfed.org/series/DGS10"
     },
     {
-     "text": "⚫ 2-year Treasury yield: missing — FRED_API_KEY is 33 character(s) and is not 32 lower-case alphanumerics, so FRED will refuse it — the secret is malformed (its value is not shown); keyless csv: ReadTimeout",
+     "text": "2-year Treasury yield: 4.86 % as of 2026-11-12 (+0.13 vs 2026-11-10)",
      "url": "https://fred.stlouisfed.org/series/DGS2"
     },
     {
-     "text": "⚫ 10y minus 2y spread: missing — not attempted: FRED failed 2 series in a row, so the source is treated as down",
+     "text": "10y minus 2y spread: 0.27 pp as of 2026-11-13 (+0.03 vs 2026-11-12)",
      "url": "https://fred.stlouisfed.org/series/T10Y2Y"
     },
     {
-     "text": "⚫ Effective fed funds rate: missing — not attempted: FRED failed 2 series in a row, so the source is treated as down",
+     "text": "Effective fed funds rate: 3.88 % as of 2026-11-12 (+0 vs 2026-11-11)",
      "url": "https://fred.stlouisfed.org/series/DFF"
     },
     {
-     "text": "⚫ High-yield credit spread (OAS): missing — not attempted: FRED failed 2 series in a row, so the source is treated as down",
+     "text": "High-yield credit spread (OAS): 3.2 pp as of 2026-11-12 (-0.1 vs 2026-11-11)",
      "url": "https://fred.stlouisfed.org/series/BAMLH0A0HYM2"
     },
     {
-     "text": "⚫ VIX: missing — not attempted: FRED failed 2 series in a row, so the source is treated as down",
+     "text": "VIX: 18.7 index as of 2026-11-12 (+1.21 vs 2026-11-11)",
      "url": "https://fred.stlouisfed.org/series/VIXCLS"
     },
     {
-     "text": "⚫ Broad dollar index: missing — not attempted: FRED failed 2 series in a row, so the source is treated as down",
+     "text": "Broad dollar index: 121.88 index as of 2026-11-06 (+0.3742 vs 2026-11-05)",
      "url": "https://fred.stlouisfed.org/series/DTWEXBGS"
     },
     {
-     "text": "⚫ Initial jobless claims: missing — not attempted: FRED failed 2 series in a row, so the source is treated as down",
+     "text": "Initial jobless claims: 200000 claims as of 2026-11-07 (+9000 vs 2026-10-31)",
      "url": "https://fred.stlouisfed.org/series/ICSA"
     },
     {
-     "text": "⚫ Unemployment rate: missing — not attempted: FRED failed 2 series in a row, so the source is treated as down",
+     "text": "Unemployment rate: 4.1 % as of 2026-10-01 (-0.1 vs 2026-09-01)",
      "url": "https://fred.stlouisfed.org/series/UNRATE"
     },
     {
-     "text": "⚫ CPI (all urban, SA): missing — not attempted: FRED failed 2 series in a row, so the source is treated as down",
+     "text": "CPI (all urban, SA): 337.476 index as of 2026-10-01 (+1.178 vs 2026-09-01)",
      "url": "https://fred.stlouisfed.org/series/CPIAUCSL"
+    },
+    {
+     "text": "Anti-Houthi forces retreat in Yemen as Iran strikes Bahrain - Reuters",
+     "url": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxOdTFBcWR1YzJhai1UdGgzMHpvdm40VExxeXFqM0NtbU9YVmNSNXpNeDlXTGllRXFtczhIUzVsaFFWdVV5TGxESWdneGlXbER1Qlg2b2VhQ2lqMmxVaEd4U01nZmNXcFY2bmNhSTdIN0VycE84MWJDRXdZOGxMRGo0U1k1UjhiamFNQ1JIQmp1MUdxNlZGRm1UanBvaENxR3V2N25NdFVOaWpXX1E?oc=5"
+    },
+    {
+     "text": "Yemen's Houthis say they launched ballistic missiles towards Riyadh airport, financial centre - Reuters",
+     "url": "https://news.google.com/rss/articles/CBMixwFBVV95cUxOZ2NSdXVjeDlTU0lLeTAtMGs5RmdHaW0wTVhVbzUwempOYUdlNVB3NXprMGZqYksyVjhLUU1OV250QlczemJOT2tXcVFIZEJYb0dwblVCblExbnFmZkVyeGZnZ0NJY3Z3a3NTcmxUQ21tR0ZsQVdhTTNRNWJaZW5pOEk4RDNEMXN3aExOaEE0QVNzaXV3UTM3ZjlNa2hDenRtajR2aGVGT3RQR0NOSnY1VHQ3czdCSkJWSUgxaFFYNThEUlBBMVpn?oc=5"
     },
     {
      "text": "Battle for young male voters intensifies after US midterm rebuke of Republicans - Reuters",
@@ -1345,6 +1343,10 @@
     {
      "text": "3 big things we're watching in the stock market in the week ahead",
      "url": "https://www.cnbc.com/investingclub/2026/11/15/3-big-things-were-watching-in-the-stock-market-in-the-week-ahead.html"
+    },
+    {
+     "text": "Gulf bourses slide as Hormuz tensions and houthi strikes rattle traders - Reuters",
+     "url": "https://news.google.com/rss/articles/CBMiugFBVV95cUxPZ1U5SnRYV0N6dE01QU1sOFNRWHR0WndCRG05bDl3UEhURE1jR01ZZ2p4dmFpb1llajB6QzdpRmp3WUZYSkhRRmhHT0tKY2hfWjN1b0U3UzJuUkZ3N3ZpWlU1Sk1pOWJvZ3cxcVVRVmhycW9ON2R1Um5nR3ZSQUtzTHE5aHlMb28wM2xyMzQtdnZHNUFfMWR4ZVZwN2pfc2RmcTRMTEtfY0NHbEh0dUo4N0g5UHNGTGJ3c1E?oc=5"
     },
     {
      "text": "Yemeni government force retreats from strait in major setback in war against Houthis - Reuters",
@@ -1357,18 +1359,6 @@
     {
      "text": "'We slept here.' Flight delays linger as airlines scramble to recover from ground stop",
      "url": "https://www.cnbc.com/2026/11/15/flight-delays-ground-faa-stop.html"
-    },
-    {
-     "text": "Jordan sentences three men to death over deadly church attack - Reuters",
-     "url": "https://news.google.com/rss/articles/CBMisgFBVV95cUxOSW5qZzl5QmYwRkpOaUNfQlVXU1FOdEhVX0RUWEtsYjU5a3ZfWEJGS3R4MjVRYlVha3ZrcWpnQVV1SHQ0c09qY0V2U2RscnZUNjlaVjUwYW1GN2pfMjNHNE1LemRjUEZTSGlQY3JhcUNFTjhOYlNDZkVQTzFVbHZ1elgzX01md3BoRG0tam4zVEFha2tnUjU5TlllRmtrb09PMHFQVFZmNXNWSm9wTVRPYUFn?oc=5"
-    },
-    {
-     "text": "Bahrain intercepts Iranian aerial attacks as Tehran says it attacked US base - Reuters",
-     "url": "https://news.google.com/rss/articles/CBMisgFBVV95cUxNS2FyaWZZTTd4ZWFoWFdoTnFNVmpjakdwQUVnZ0UtMEY5MFc1dEFBeGd4UmczdGh1ektRTHBjRGxBOVlVQy1XV3NOdV9MbWotQkNVa1NBdmJaUloya1VhR2FEUTN3QkgwZ1JRN00wME5tc243TmZHU20zdlpaUHR2Q2lyby0tUkJsR0w5N1lXclI4ZWI5RTdfbjB2d1hxMXVjOVp4MlJPOF9IcjIxSE1JWWx3?oc=5"
-    },
-    {
-     "text": "Saudi-led coalition intercepts missiles towards Riyadh, drones in Eastern Province - Reuters",
-     "url": "https://news.google.com/rss/articles/CBMizAFBVV95cUxOemlqVE1TdmREQ0t3TjczWnBWVGZ3TkxTc0ZPVC1fZFlrUDJCZC1KV0liZGdUTHBXZEZpWG9SNkJJSlBYSjVPbE1aUnNtWHl2eE1FbzlURGRwckdIT3R2NG9rVm1oX1V0VEZoWmYxM1dSbmhNc1BidnFLX19YRVU3Q2tzR1F5Vk1QX3dDNXVCeXZ6bmVES0lZNTBlR3E0Z1hJcXFyYXpMam80TGRWbURod1NsUXBwZldjdHFVejFwaWtmVmo3ZWYzYW5QMzk?oc=5"
     }
    ],
    "note": "Collected, not curated: series state their own age and headlines are newest-first, not most-important-first.",
@@ -1376,7 +1366,7 @@
    "source": {
     "age_days": 0.0,
     "name": "OBSERVER macro",
-    "stamp": "2026-11-15T18:08:15+00:00",
+    "stamp": "2026-11-15T22:39:04+00:00",
     "status": "fresh",
     "usable": true,
     "why": "ok"
@@ -1408,7 +1398,7 @@
    "note": "",
    "shown": 4,
    "source": {
-    "age_days": 1.67,
+    "age_days": 1.85,
     "name": "daily snapshot",
     "stamp": "2026-11-14T02:15:14Z",
     "status": "fresh",
