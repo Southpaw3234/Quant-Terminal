@@ -207,6 +207,88 @@ def test_override_and_drift():
           "honouring a pre-registered stop is the behaviour worth counting")
 
 
+def test_gaps_found_in_audit():
+    print("\nfive gaps found by auditing the first version, each now shut")
+    F1, F2 = "active customers decline two quarters", "net cash per share < price"
+
+    # 1. 🔑 a falsifier must be one the thesis DECLARED
+    e = fresh()
+    ok, msg = refuses(th.review, e, "t1", "now", "x",
+                      falsifiers_fired=["the stock went down"])
+    check("undeclared-falsifier-cannot-be-fired", ok, msg[:90])
+    ok, _ = refuses(th.review, e, "t1", "now", "x",
+                    falsifiers_fired=["net cash per share <price"])
+    check("typo-in-a-fired-falsifier-is-refused", ok,
+          "it would count as fired while matching nothing the status view "
+          "can show")
+    ok, _ = refuses(th.override, e, "t1", "now", "something new", "because")
+    check("undeclared-falsifier-cannot-be-overridden", ok,
+          "a condition added at review time is renegotiation through the "
+          "side door")
+    ok, _ = refuses(th.close, e, "t1", "now", "falsifier_fired",
+                    falsifier="not declared")
+    check("cannot-close-on-an-undeclared-falsifier", ok)
+
+    # 2. 🔑 drift is per falsifier
+    e = fresh()
+    e.append(th.review(e, "t1", "now", "both went", falsifiers_fired=[F1, F2]))
+    check("two-fired-is-drift", len(th.unreviewed_fired(e)) == 1)
+    e.append(th.override(e, "t1", "now", F2, "one-off buyback"))
+    d = th.unreviewed_fired(e)
+    check("overriding-ONE-does-not-clear-the-other",
+          len(d) == 1 and d[0]["unaddressed"] == [F1],
+          "🔑 the first version asked only whether ANY override existed — "
+          "two conditions failed, one sentence written, nothing drifting")
+    e.append(th.override(e, "t1", "now", F1, "seasonal"))
+    check("overriding-both-clears-drift", th.unreviewed_fired(e) == [])
+    check("state-records-which-were-overridden",
+          sorted(th.state(e)["t1"]["overridden"]) == sorted([F1, F2]))
+
+    # 3. review dates are real dates
+    for bad in ("soon", "12/01/2026", "2026-13-01", "2026-1-5", "next week"):
+        ok, _ = refuses(th.open_thesis, [], "t", "X", "c", ["f"], bad, "now")
+        check(f"review-date-{bad.replace(' ', '_').replace('/', '-')}-refused", ok)
+    e = fresh()
+    ok, msg = refuses(th.review, e, "t1", "now", "x", next_review="later")
+    check("next-review-must-be-a-date", ok,
+          "dates are compared as text; 'later' sorts after every date this "
+          "century, so the review would never come due")
+
+    # 4. a malformed ledger is refused, located — not a traceback
+    import os, tempfile
+    d_ = tempfile.mkdtemp()
+    path = os.path.join(d_, "l.jsonl")
+    e = fresh()
+    th.append(path, e[0])
+    with open(path, "a", encoding="utf-8") as f:
+        f.write("{not json\n")
+    ok, msg = refuses(th.load, path)
+    check("malformed-line-is-refused-with-its-line-number",
+          ok and "line 2" in msg, msg[:80])
+
+    # 5. 🔑 the chain cannot see tail truncation; extends() can
+    e = fresh()
+    e.append(th.review(e, "t1", "now", "q3"))
+    e.append(th.override(e, "t1", "now", F2, "kept")
+             if False else th.note(e, "t1", "now", "added"))
+    cut = e[:-1]
+    check("a-truncated-ledger-still-VERIFIES", th.verify(cut)["ok"],
+          "which is exactly why verify alone is not enough")
+    x = th.extends(e, cut)
+    check("truncation-is-caught-as-a-shrink",
+          not x["ok"] and "SHRANK" in x["why"], x["why"][:70])
+    check("appending-is-allowed", th.extends(cut, e)["ok"])
+    check("identical-is-allowed", th.extends(e, e)["ok"])
+    forged = [dict(x_) for x_ in e]
+    forged[1] = th.seal({k: v for k, v in forged[1].items()
+                         if k not in ("hash", "prev")} | {"note": "rewritten"},
+                        forged[0]["hash"])
+    check("rewriting-a-middle-entry-is-caught",
+          not th.extends(e, forged)["ok"])
+    check("an-empty-previous-ledger-accepts-anything",
+          th.extends([], e)["ok"])
+
+
 def test_due_and_state():
     print("\nreviews due, and state folded from the log")
     e = fresh()
@@ -255,6 +337,7 @@ def main():
     test_no_mutation_exists()
     test_chain_detects_edits()
     test_override_and_drift()
+    test_gaps_found_in_audit()
     test_due_and_state()
     test_cli_cannot_decide()
 

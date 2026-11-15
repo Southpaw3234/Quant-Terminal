@@ -140,3 +140,48 @@ against a written spec parallelises well. Deciding whether a number means
 anything does not, and this repository's failures have been measurement
 failures, not throughput failures. Keep the orchestrator on anything that
 interprets a result.
+
+## 6. The collective agent
+
+Four agents, one nightly workflow. Read `docs/COLLECTIVE_AGENT_BRIEF.md` §1
+and §4 before touching any of it — the agents report evidence, distributions
+and status, and **never a recommendation**.
+
+| agent | entry point | pure logic | validator | writes |
+|---|---|---|---|---|
+| OBSERVER (filings) | `observer_filings.py` | `qt/edgar.py` | `validate_observer_filings.py` | `observations/` |
+| OBSERVER (macro, news) | `observer_macro.py` | — | `validate_observer_macro.py` | `macro/` |
+| LIBRARIAN | `librarian_diff.py` | `qt/librarian.py` | `validate_librarian_diff.py` | `briefs/` |
+| ACTUARY | `actuary.py` | `qt/actuary.py` | `validate_actuary.py` | `analysis/` |
+| CHIEF OF STAFF | `chief_of_staff.py` | `qt/chief.py` | `validate_chief_of_staff.py` | `chief/` |
+| thesis ledger | `thesis_ledger.py` | `qt/thesis.py` | `validate_thesis_ledger.py` | `data/theses/ledger.jsonl` (operator only) |
+
+Shared: `qt/agentio.py` (watch list, freshness verdicts, fingerprints),
+`qt/notify.py` (Discord). The pipeline is `.github/workflows/observer.yml`
+— the filename is historical — and publishes to the **`agent` branch** via
+`.github/scripts/publish_agent_branch.sh`. The dashboard reads
+`chief/latest.json` from that branch.
+
+Run it locally, in order: `observer_filings.py`, `observer_macro.py`,
+`librarian_diff.py`, `actuary.py`, `chief_of_staff.py`. Without
+`FINNHUB_API_KEY` Form 4 direction and headlines are reported as not
+observed; that is the correct output, not a failure.
+
+Rules these modules were built on, each paid for in a real failure:
+
+- **Operator inputs live under `data/operator/` and `data/theses/`.** No
+  agent writes them; CI asserts `data/` is untouched after the pipeline.
+- **Every upstream artifact is read through `agentio.artifact_status`.** A
+  stale or missing input becomes a dark section that says so. It is never
+  skipped and never replaced by yesterday's content.
+- **A request that fails is retried, then reported as unknown.** Never as
+  "no". `edgar.fetch_json` does not raise; the caller decides what an
+  unanswered question means.
+- **Deliver after publishing.** A message that links to the brief is sent
+  only once the brief is pushed.
+- **Stance orders and caps. It never changes a fact.** `chief.facts` takes no
+  stance; `chief.compose` receives finished lines.
+- **ACTUARY's base rates come only from ledgers listed in
+  `data/actuary/sources.json`**, and a ledger may be listed there only after
+  a pre-registered read has consumed it. Listing an unread ledger would let a
+  nightly job look at outcomes the registry has not paid for.

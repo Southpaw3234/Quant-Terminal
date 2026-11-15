@@ -151,6 +151,29 @@ section{padding-top:56px}
 .chan .send[aria-disabled="true"]{opacity:.45;cursor:not-allowed}
 .chan .hint{font-size:.78rem;color:var(--muted);line-height:1.5}
 .note{font-size:.86rem;color:var(--muted);line-height:1.55;font-style:italic}
+.brief{background:var(--surface);border:1px solid var(--rule);border-radius:4px;
+  padding:18px 20px;box-shadow:var(--shadow)}
+.brief .meta{font-family:"IBM Plex Mono",monospace;font-size:.72rem;
+  color:var(--muted);line-height:1.6;margin:0 0 14px}
+.brief .meta b{color:var(--ink);font-weight:600}
+.brief .attn{background:var(--miss-soft);border:1px solid var(--miss);
+  border-radius:4px;padding:11px 14px;margin:0 0 16px}
+.brief .attn h4{color:var(--miss)}
+.brief h4{font-family:"IBM Plex Mono",monospace;font-size:.74rem;font-weight:600;
+  letter-spacing:.04em;text-transform:uppercase;color:var(--ink);margin:18px 0 7px}
+.brief h4 span{color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0}
+.brief .attn h4{margin-top:0}
+.brief ul{list-style:none;margin:0;padding:0}
+.brief li{font-size:.86rem;color:var(--body);line-height:1.55;padding:3px 0;
+  border-bottom:1px solid var(--rule-soft);overflow-wrap:anywhere}
+.brief li:last-child{border-bottom:0}
+.brief li.sub{padding-left:22px;color:var(--muted);font-size:.82rem}
+.brief li.dk{color:var(--miss)}
+.brief li a{font-family:"IBM Plex Mono",monospace;font-size:.72rem;
+  color:var(--accent);text-decoration:none;margin-left:6px;white-space:nowrap}
+.brief li a:hover{text-decoration:underline}
+.brief .sn{font-size:.78rem;color:var(--muted);font-style:italic;line-height:1.5;
+  margin:6px 0 0}
 .pull{background:var(--surface);border:1px solid var(--rule);border-left:3px solid var(--miss);
   border-radius:0 4px 4px 0;padding:20px 24px;margin-top:24px}
 .pull p{font-family:Spectral,serif;font-size:1.14rem;color:var(--ink);line-height:1.42;text-wrap:balance}
@@ -181,6 +204,14 @@ section{padding-top:56px}
     <p>What the system can see right now: which names pass the declared eligibility screen, which 8-K and Form&nbsp;4 filings landed for them on the last filing day, and where the benchmarks closed. Gathered after each US close by a scheduled job that <em>cannot</em> reach the Referee, evaluate a criterion or spend a read — gathering is free under the protocol, measuring is not.</p>
   </div>
   <div id="daily"></div>
+</section>
+
+<section>
+  <div class="col stack">
+    <h2>The daily brief</h2>
+    <p>One page from the four agents: what was filed, what language changed, what has historically followed events like these, where you are concentrated, and where your own theses stand. Your stance changes the <em>order</em> of this page and how much of each section is shown. It cannot change a number — every line is computed before the stance is consulted, and the buttons below re-order the same facts in your browser.</p>
+  </div>
+  <div id="brief"></div>
 </section>
 
 <section>
@@ -623,17 +654,21 @@ function renderDaily(d){
    the issue thread IS the audit log — append-only, timestamped, and exactly
    the shape every other record in this project takes.
 
-   🔑 AND NOTHING IS LISTENING YET. CHIEF OF STAFF is module 5 of 7 and does
-   not exist. The panel says so. A chat box that implies an agent is reading
-   when none is would be the same class of lie as a frozen feed rendering as
-   current.                                                                */
+   🔑 WHAT IS LISTENING, EXACTLY. The Chief of Staff reads this thread on
+   each nightly run. It takes ONE thing from a message — the stance, an
+   enumerated word — and it replies once per thread. It does not interpret
+   free text as an instruction, and it reads only issues GitHub itself marks
+   as written by the repository owner, because the repo is public and anyone
+   can open an issue. The panel says all of that rather than implying a
+   conversation: a chat box that suggests more is listening than is would be
+   the same class of lie as a frozen feed rendering as current.           */
 var REPO = "https://github.com/Southpaw3234/Quant-Terminal";
 var STANCES = [
   ["conservative", "capital preservation first; show me what could go wrong"],
   ["balanced",     "weigh both sides evenly"],
   ["aggressive",   "surface opportunity first; I accept wider outcomes"]
 ];
-var CHIEF_EXISTS = false;   // flip when module 5 ships and answers here
+var CHIEF_EXISTS = true;    // module 5: chief_of_staff.py, nightly
 
 function getStance(){
   try { return localStorage.getItem("qt_stance") || "balanced"; }
@@ -642,6 +677,7 @@ function getStance(){
 function setStance(v){
   try { localStorage.setItem("qt_stance", v); } catch (e) {}
   renderChannel();
+  if (window.__brief) renderBrief(window.__brief);
 }
 
 function issueUrl(stance, msg){
@@ -653,7 +689,7 @@ function issueUrl(stance, msg){
   return REPO + "/issues/new" +
     "?labels=" + encodeURIComponent("chief-of-staff") +
     "&title=" + encodeURIComponent("[" + stance + "] " +
-        (msg || "").trim().split("\n")[0].slice(0, 60) || "operator message") +
+        ((msg || "").trim().split("\n")[0].slice(0, 60) || "operator message")) +
     "&body=" + encodeURIComponent(body);
 }
 
@@ -663,7 +699,11 @@ function renderChannel(){
   var cur = getStance();
 
   var status = CHIEF_EXISTS
-    ? "The Chief of Staff reads this thread and replies there."
+    ? "The Chief of Staff reads this channel on each nightly run. Your " +
+      "<b>newest message sets the stance</b> for the next brief, every open " +
+      "message is listed in that brief, and each thread gets one reply. It " +
+      "records and relays: it does not act on free text, place an order, or " +
+      "write to your thesis ledger. Close a thread when you are done with it."
     : "<b>Nothing is listening yet.</b> The Chief of Staff is module 5 of 7 " +
       "and has not been built. Messages are filed as GitHub issues and will " +
       "be read — by a person today, by the agent when it exists. The channel " +
@@ -710,6 +750,132 @@ function renderChannel(){
   sync();
 }
 renderChannel();
+
+/* ─── the daily brief ─────────────────────────────────────────────────────
+   Published by chief_of_staff.py to the `agent` branch.
+
+   🔑 THE PAGE RE-ORDERS; IT NEVER RE-COMPUTES. The brief carries its
+   complete stance-free `facts` and the three `layouts` (an order and a cap
+   per section). Pressing a stance button picks a layout and slices finished
+   lines. There is no arithmetic in this function, so an aggressive view
+   cannot show a different number from a conservative one.
+
+   🔑 SAME STALENESS RULE AS THE SNAPSHOT. A brief that cannot be dated, or
+   is older than the limit, renders the dark block instead of its content.
+   And a section whose upstream agent was down is already dark inside the
+   brief — it arrives as one line saying so, and is never capped away.    */
+var BRIEF = "https://raw.githubusercontent.com/Southpaw3234/Quant-Terminal/agent/chief/latest.json";
+var BRIEF_DARK_DAYS = 4;   // Friday's brief read on Monday is 3 days old
+
+function safeUrl(u){ return /^https:\/\//.test(u || "") ? u : null; }
+
+function briefLine(ln, dark){
+  var t = String(ln.text || ""), sub = t.indexOf("    ") === 0;
+  var u = safeUrl(ln.url);
+  return '<li class="' + (sub ? "sub" : "") + (dark ? " dk" : "") + '">' +
+    esc(sub ? t.slice(4) : t) +
+    (u ? '<a href="' + esc(u) + '" target="_blank" rel="noopener">open ↗</a>' : "") +
+    "</li>";
+}
+
+function renderBrief(d){
+  var el = document.getElementById("brief");
+  if (!el) return;
+  window.__brief = d;
+  var age = ageDays(d && d.generated_at);
+  if (age === null || !d.facts || !d.layouts){
+    el.innerHTML = darkBlock("Brief dark — not dated or not complete", [
+      "The published brief carries no readable <code>generated_at</code>, or " +
+      "is missing its facts. Nothing from it is shown. An undated record is " +
+      "treated exactly like a stale one."]);
+    return;
+  }
+  if (age > BRIEF_DARK_DAYS){
+    el.innerHTML = darkBlock("Brief dark — the last brief is stale", [
+      "The last brief was written <b>" + age.toFixed(1) + " days</b> ago (" +
+      esc(d.generated_at) + "), describing " + esc(d.describes || d.day) + ".",
+      "The nightly pipeline has stopped. <b>Its content is deliberately not " +
+      "rendered</b> — an old brief read as today's is the failure this page " +
+      "exists to prevent."]);
+    return;
+  }
+
+  var want = getStance();
+  var stance = d.layouts[want] ? want : d.stance;
+  var lay = d.layouts[stance], secs = d.facts.sections || {};
+  var html = '<div class="brief">';
+
+  html += '<p class="meta">Brief for <b>' + esc(d.day) + "</b> · " +
+    esc(d.describes || "") + " · written " + esc(d.generated_at) +
+    "<br>Showing the <b>" + esc(stance) + "</b> layout" +
+    (stance !== d.stance
+      ? " — the published brief and its Discord post used <b>" +
+        esc(d.stance) + "</b> (" + esc((d.stance_info || {}).source || "") +
+        "). Same facts, different order."
+      : " (" + esc((d.stance_info || {}).source || "") + ")") + "</p>";
+
+  if (age > 1.5){
+    html += '<div class="warn">This brief is <b>' + age.toFixed(1) +
+      " days</b> old — fresh enough to show, older than a nightly cadence.</div>";
+  }
+
+  var att = d.facts.attention || [];
+  if (att.length){
+    html += '<div class="attn"><h4>Needs your attention</h4><ul>' +
+      att.map(function(a){ return briefLine(a, false); }).join("") +
+      "</ul></div>";
+  }
+
+  for (var i = 0; i < lay.order.length; i++){
+    var sec = secs[lay.order[i]];
+    if (!sec) continue;
+    var cap = lay.caps[lay.order[i]];
+    // A dark section keeps its line whatever the cap says.
+    var lines = sec.dark ? sec.lines : sec.lines.slice(0, cap);
+    html += "<h4>" + esc(sec.title) +
+      (sec.lines.length > lines.length
+        ? " <span>— " + lines.length + " of " + sec.lines.length + "</span>" : "") +
+      "</h4><ul>" +
+      lines.map(function(l){ return briefLine(l, sec.dark); }).join("") +
+      "</ul>" + (sec.note ? '<p class="sn">' + esc(sec.note) + "</p>" : "");
+  }
+
+  var om = d.operator_messages || {};
+  html += "<h4>Your messages</h4>";
+  if (om.status !== "ok"){
+    html += '<ul><li class="dk">Not read on this run — ' +
+      esc(om.reason || "unknown") + "</li></ul>";
+  } else if (!(om.open || []).length){
+    html += "<ul><li>No open message. Send one below.</li></ul>";
+  } else {
+    html += "<ul>" + om.open.map(function(m){
+      return briefLine({text: "#" + m.number + " [" + (m.stance || "no stance") +
+        "] " + m.title, url: m.url}, false);
+    }).join("") + "</ul>";
+  }
+
+  html += '<div class="notbuy"><b>This brief makes no recommendation.</b> ' +
+    "It relays what was collected, structured and described. Base rates are " +
+    "what followed past events of a type, shown with the verdict of the read " +
+    "that produced them; they are not forecasts. Every decision is yours.</div>" +
+    "</div>";
+  el.innerHTML = html;
+}
+
+(function(){
+  fetch(BRIEF + "?cb=" + Date.now(), {cache: "no-store"}).then(function(r){
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r.json();
+  }).then(renderBrief).catch(function(err){
+    var el = document.getElementById("brief");
+    if (el) el.innerHTML = darkBlock("Brief dark — none published", [
+      "Could not load <code>chief/latest.json</code> from the " +
+      "<code>agent</code> branch (" + esc(err.message) + ").",
+      "This is the expected state before the pipeline's first run, and the " +
+      "correct state if it has stopped. Nothing is shown rather than " +
+      "something stale."]);
+  });
+})();
 
 (function(){
   fetch(DAILY + "?cb=" + Date.now(), {cache: "no-store"}).then(function(r){

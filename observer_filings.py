@@ -1,56 +1,74 @@
 #!/usr/bin/env python3
-"""OBSERVER — module 1 of the collective agent. Filings only.
+"""OBSERVER — module 1 of the collective agent. Filings.
 
 See docs/COLLECTIVE_AGENT_BRIEF.md §3.1. This agent COLLECTS. It does not
 score, rank, recommend, or drop a record because it looks unimportant.
 
-    collect  ->  observations/YYYY-MM-DD.jsonl  ->  digest -> Discord
+    EDGAR full-text search  ->  observations/YYYY-MM-DD.jsonl   (append-only)
+    Finnhub insider feed    ->  Form 4 direction, purchases, cluster buys
+                            ->  observations/YYYY-MM-DD.meta.json + .md
 
-Every record carries `observed_at`, its source, and a link to the filing.
+Forms: 8-K, 4, 10-Q, 10-K, 424B5. Every record carries `id`, `observed_at`,
+`source`, `url` and the `raw` fields it was built from.
 
-─────────────────────────────────────────────────────────────────────────────
-🔑 WHAT THIS AGENT CANNOT SEE, AND WHY IT SAYS SO
+-----------------------------------------------------------------------------
+🔑 FORM 4 DIRECTION: WHAT IS KNOWN, AND FROM WHERE
 
-The brief asks module 1 for "Form 4 cluster buys" and "first open-market
-purchase in N years". **Both require the Form 4 BODY, and the body is
-unreachable.** Transaction codes live in the ownership XML under
-`www.sec.gov/Archives/`, and that host answers 403 to this client — the same
-403 that cost specification #4's evidence feed a whole run.
+EDGAR's full-text index lists a Form 4's insider and issuer as bare CIKs.
+Whether the insider BOUGHT or SOLD is in the ownership XML under
+`www.sec.gov/Archives/`, which answers 403 to this client.
 
-So the direction of a Form 4 -- bought or sold -- is NOT KNOWN here.
+So direction comes from a second source, Finnhub's insider-transactions
+feed, matched to the filing by ACCESSION NUMBER -- not by date or name --
+and it is reported with its provenance:
 
-That is reported as `direction: null` with a reason, never guessed and never
-omitted. Insider SALES vastly outnumber purchases, so presenting undirected
-Form 4 activity as if it were buying would be wrong in the most flattering
-possible direction, every single day.
+  direction: "purchase" | "sale" | "mixed" | "other"   a transaction code
+                                                       was read
+  direction: null                                      NOT OBSERVED, with
+                                                       the reason
 
-If `FINNHUB_API_KEY` is configured, direction is attempted from Finnhub's
-insider-transactions endpoint. When that is unavailable the field stays
-null and `direction_source` says why. **A zero that cannot be non-zero is
-not a measurement**, and neither is a direction nobody could observe.
+`null` never means "no purchase". Insider SALES vastly outnumber purchases,
+so presenting undirected Form 4 activity as buying would be wrong in the
+most flattering possible direction, every single day. The first version of
+this file CLAIMED the Finnhub path in its docstring and did not contain it:
+every Form 4 it ever recorded has `direction: null`.
 
-─────────────────────────────────────────────────────────────────────────────
-WHAT IT DOES SEE
+Finnhub lags EDGAR, so a filing observed today may get its direction
+tomorrow. Records from the last few day files whose direction is still null
+are re-checked on every run, and a direction is filled in ONCE, stamped
+with when it was observed.
 
-  8-K   the ticker is in the EFTS display_names, and the `items` field says
-        which item was reported. Fully resolvable.
-  4     the ticker is NOT in display_names. The issuer is identified by
-        asking data.sec.gov which of the filing's CIKs has tickers -- an
-        operating company does, a person does not.
+-----------------------------------------------------------------------------
+🔑 CLUSTER BUYS USE THE FROZEN DEFINITION, BY IMPORT
+
+A cluster buy here is whatever `extract_form4.cluster` says it is -- the
+function that built the events behind the pre-registered form4_cluster_buy
+reads -- called with its declared defaults. It is imported, not restated,
+so an observed cluster and the historical base rate ACTUARY reports for it
+are the same kind of event by construction rather than by resemblance.
+
+-----------------------------------------------------------------------------
+🔑 APPEND-ONLY MEANS A RE-RUN CANNOT SHRINK A DAY
+
+The first version rewrote the day file from scratch on every run. A second
+run with a partial EDGAR response would have replaced a complete record
+with a shorter one, silently. `merge_day` keeps every record already
+written, exactly as written, and only adds.
 """
 
 from __future__ import annotations
 
 import datetime as dt
-import json
 import os
 import sys
+import time
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
+import extract_form4 as f4
+from qt import agentio as io
 from qt import edgar
-from qt import tickers as qtk
 
 # 🔑 DELIBERATELY NOT IMPORTED: qt.referee, qt.wrc, qt.calendar_time, and any
 # broker SDK. OBSERVER collects; it cannot spend a read, evaluate a criterion
@@ -59,34 +77,19 @@ from qt import tickers as qtk
 OUT_DIR = os.environ.get("QT_OBS_DIR", "observations")
 UNIVERSE = os.environ.get("QT_OBS_UNIVERSE", "")      # daily.json, optional
 PANEL = os.environ.get("QT_OBS_PANEL", "data/universe/v29_universe_pit.csv")
-CACHE = os.environ.get("QT_OBS_CACHE", "observations/cik_cache.json")
-FORMS = ("8-K", "4")
-MAX_PAGES = int(os.environ.get("QT_OBS_PAGES", "12"))
+LEDGER = os.environ.get("QT_THESIS_LEDGER", "data/theses/ledger.jsonl")
+CACHE = os.environ.get("QT_OBS_CACHE", os.path.join(OUT_DIR, "cik_cache.json"))
+FORMS = ("8-K", "4", "10-Q", "10-K", "424B5")
+MAX_PAGES = int(os.environ.get("QT_OBS_PAGES", "40"))
 FILING_URL = "https://www.sec.gov/Archives/edgar/data/{cik}/{acc}/"
 
+FINNHUB_KEY = os.environ.get("FINNHUB_API_KEY", "").strip()
+F4_LOOKBACK_DAYS = int(os.environ.get("QT_OBS_F4_LOOKBACK", "1095"))
+F4_RECHECK_FILES = int(os.environ.get("QT_OBS_F4_RECHECK", "5"))
+F4_MAX_TICKERS = int(os.environ.get("QT_OBS_F4_MAX", "120"))
 
-# ── the watched universe ─────────────────────────────────────────────────────
-
-def watched() -> set:
-    """Names currently in the universe.
-
-    Prefers the daily snapshot's eligible list (today's screen) and falls
-    back to every ticker the frozen panel ever contained. The fallback is
-    WIDER, not narrower: an observer that silently watches fewer names than
-    it claims is worse than one that watches too many.
-    """
-    if UNIVERSE and os.path.exists(UNIVERSE):
-        try:
-            d = json.loads(open(UNIVERSE, encoding="utf-8").read())
-            elig = (d.get("universe") or {}).get("eligible_tickers") or []
-            if elig:
-                return {str(t).strip().upper() for t in elig if str(t).strip()}
-        except (OSError, ValueError):
-            pass
-    if os.path.exists(PANEL):
-        df = qtk.read_csv(PANEL, usecols=["ticker"], dtype={"ticker": str})
-        return set(qtk.normalise(df["ticker"]).tolist())
-    return set()
+NO_BODY = ("Form 4 bodies are on www.sec.gov, which answers 403 to this "
+           "client")
 
 
 # ── pure shaping ─────────────────────────────────────────────────────────────
@@ -96,15 +99,26 @@ def filing_url(cik, accession: str) -> str:
     return FILING_URL.format(cik=int(cik), acc=str(accession).replace("-", ""))
 
 
+def is_form4(record: dict) -> bool:
+    return str(record.get("root_form") or record.get("form") or "") \
+        .startswith("4") and record.get("kind", "filing") == "filing"
+
+
 def observation(form: str, hit: dict, ticker: str, cik, observed_at: str,
                 direction=None, direction_source: str = "") -> dict:
-    """One record. Append-only, source-linked, and honest about direction."""
+    """One filing record. Source-linked, and honest about direction."""
     src = hit.get("_source") or {}
     acc = edgar.accession_of(hit)
+    own = str(form).startswith("4")
     return {
+        "id": f"edgar:{acc}",
+        "kind": "filing",
         "observed_at": observed_at,
         "source": "sec-edgar-fts",
-        "form": form,
+        # The form EDGAR recorded, so an amendment reads as 8-K/A rather
+        # than being folded into the form that was queried.
+        "form": src.get("form") or src.get("file_type") or form,
+        "root_form": form,
         "accession": acc,
         "filed": src.get("file_date"),
         "ticker": ticker,
@@ -113,50 +127,213 @@ def observation(form: str, hit: dict, ticker: str, cik, observed_at: str,
         "items": src.get("items") or [],
         "url": filing_url(cik, acc) if cik is not None else None,
         # null means NOT OBSERVED. It never means "no purchase".
-        "direction": direction,
-        "direction_source": direction_source or "unavailable: Form 4 bodies "
-                            "are on www.sec.gov, which answers 403",
+        "direction": direction if own else None,
+        "direction_source": (direction_source or f"unavailable: {NO_BODY}")
+        if own else "n/a: not an ownership form",
+        "direction_observed_at": None,
+        "raw": {"display_names": src.get("display_names") or [],
+                "period_ending": src.get("period_ending"),
+                "sics": src.get("sics") or [],
+                "file_description": src.get("file_description")},
     }
 
 
-def digest(records: list, day: str, totals: dict) -> str:
-    """The human-readable summary. States what was not observable."""
-    by_form = {}
-    for r in records:
-        by_form.setdefault(r["form"], []).append(r)
+def merge_day(existing: list, new: list) -> tuple:
+    """Append-only merge of one day's records. -> (merged, n_added)
 
-    lines = [f"**Filings for {day}** — {len(records)} in the watched universe"]
+    🔑 Every record already written is kept EXACTLY as written, including
+    its original `observed_at`. New ids are appended. A re-run can therefore
+    add to a day and can never shrink or restamp it.
+    """
+    seen = {r.get("id") for r in existing}
+    added = []
+    for r in new:
+        if r.get("id") not in seen:
+            seen.add(r.get("id"))
+            added.append(r)
+    return list(existing) + added, len(added)
+
+
+def direction_of(rows: list) -> str:
+    """The direction of ONE filing from its transaction rows.
+
+    Derivative rows are excluded on Finnhub's own flag rather than inferred
+    from the code. P is an open-market purchase and S an open-market sale;
+    everything else -- grants (A), option exercises (M), tax withholding
+    (F), gifts (G) -- is "other", because calling an option exercise a
+    purchase is the exact flattery this field exists to refuse.
+    """
+    codes = {r["code"] for r in rows or [] if not r.get("is_derivative")}
+    buy, sell = "P" in codes, "S" in codes
+    if buy and sell:
+        return "mixed"
+    if buy:
+        return "purchase"
+    if sell:
+        return "sale"
+    return "other"
+
+
+def purchase_value(rows: list) -> "float | None":
+    """Dollar value of the open-market purchases in one filing, or None when
+    no row carries a usable price. None is 'not stated', never zero."""
+    vals = [r["value"] for r in f4.filter_open_market_purchases(rows or [])]
+    return round(sum(vals), 2) if vals else None
+
+
+def enrich_direction(records: list, rows_by_ticker: dict, at: str,
+                     unavailable: dict = None) -> int:
+    """Fill a null Form 4 direction from Finnhub rows. -> number filled.
+
+    Matched on ACCESSION, never on date or name: two insiders can file on
+    the same day, and a same-day match would hand one filing the other's
+    direction. A direction is written ONCE; a record that already has one
+    is never revisited.
+    """
+    unavailable = unavailable or {}
+    filled = 0
+    for r in records:
+        if not is_form4(r) or r.get("direction"):
+            continue
+        tk = r.get("ticker")
+        if tk in unavailable:
+            r["direction_source"] = f"unavailable: {unavailable[tk]}"
+            continue
+        if tk not in rows_by_ticker:
+            continue
+        mine = [x for x in rows_by_ticker[tk]
+                if x.get("tx_id") and x.get("tx_id") == r.get("accession")]
+        if not mine:
+            r["direction_source"] = (
+                "unavailable: this accession is not in Finnhub's insider "
+                f"feed yet (checked {at}); re-checked on later runs")
+            continue
+        r["direction"] = direction_of(mine)
+        r["direction_source"] = "finnhub insider-transactions, by accession"
+        r["direction_observed_at"] = at
+        r["purchase_value"] = purchase_value(mine)
+        r["insiders"] = sorted({x["name"] for x in mine if x["name"]})
+        filled += 1
+    return filled
+
+
+def first_purchases(rows: list, day: str) -> list:
+    """Insiders whose open-market purchase filed on `day` is their first in
+    the history Finnhub returned.
+
+    🔑 "First in the available history", never "first ever". `history_from`
+    is the earliest filing date actually present for the ticker, so a
+    three-year feed cannot be read as a six-year claim.
+    """
+    buys = f4.filter_open_market_purchases(rows or [])
+    if not buys:
+        return []
+    dates = [r["filing_date"] for r in rows if r["filing_date"]]
+    history_from = min(dates) if dates else None
+    out = {}
+    for r in buys:
+        if r["filing_date"] != day or not r["name"]:
+            continue
+        earlier = [b for b in buys if b["name"] == r["name"]
+                   and b["filing_date"] < day]
+        if not earlier:
+            out.setdefault(r["name"], {"insider": r["name"], "value": 0.0,
+                                       "history_from": history_from})
+            out[r["name"]]["value"] = round(out[r["name"]]["value"]
+                                            + r["value"], 2)
+    return sorted(out.values(), key=lambda x: x["insider"])
+
+
+def cluster_events(rows: list, day: str, at: str) -> list:
+    """Cluster buys that COMPLETED on `day`, by the frozen definition.
+
+    `extract_form4.cluster` with its declared defaults, on the purchases
+    filed in the run-up to `day`. Kept only if the cluster's event date is
+    `day` itself -- the day the full cluster became visible.
+    """
+    try:
+        end = dt.date.fromisoformat(day)
+    except ValueError:
+        return []
+    start = (end - dt.timedelta(days=3 * f4.WINDOW_DAYS)).isoformat()
+    window = [r for r in f4.filter_open_market_purchases(rows or [])
+              if start <= r["filing_date"] <= day]
+    out = []
+    for ev in f4.cluster(window):
+        if ev["event_ts"] != day:
+            continue
+        out.append({
+            "id": f"derived:{ev['event_id']}",
+            "kind": "derived_event",
+            "event_type": ev["event_type"],
+            "observed_at": at,
+            "source": "finnhub insider-transactions",
+            "derived_by": "extract_form4.cluster (the frozen definition)",
+            "definition": {"min_insiders": f4.MIN_INSIDERS,
+                           "window_days": f4.WINDOW_DAYS,
+                           "min_value": f4.MIN_VALUE},
+            "form": "4", "root_form": "4",
+            "ticker": ev["ticker"], "filed": day,
+            "n_insiders": ev["n_insiders"], "n_filings": ev["n_filings"],
+            "total_value": ev["total_value"],
+            "first_filing": ev["first_filing"],
+            "url": None, "direction": "purchase",
+            "direction_source": "by construction: a cluster of code-P rows",
+        })
+    return out
+
+
+def digest(records: list, day: str, meta: dict) -> str:
+    """The human-readable summary. States what was not observable."""
+    totals = meta.get("totals") or {}
+    filings = [r for r in records if r.get("kind", "filing") == "filing"]
+    derived = [r for r in records if r.get("kind") == "derived_event"]
+    lines = [f"**Filings for {day}** — {len(filings)} in the watched "
+             f"universe of {meta.get('watched', '?')}"]
+
+    if derived:
+        lines.append("")
+        lines.append("__Form 4 cluster events (frozen definition: "
+                     f"≥{f4.MIN_INSIDERS} insiders, {f4.WINDOW_DAYS} days, "
+                     f"≥${f4.MIN_VALUE:,.0f})__")
+        for r in sorted(derived, key=lambda x: x["ticker"]):
+            lines.append(f"◆ `{r['ticker']}` — {r['n_insiders']} insiders, "
+                         f"${r['total_value']:,.0f}")
+
     for form in FORMS:
-        rs = by_form.get(form, [])
+        rs = [r for r in filings if (r.get("root_form") or r.get("form")) == form]
         t = totals.get(form, {})
         lines.append("")
-        lines.append(f"__{form}__ — {len(rs)} of {t.get('filings', 0)} "
+        lines.append(f"__{form}__ — {len(rs)} of {t.get('filings', '?')} "
                      f"filings market-wide"
                      + ("  _(sampled, not a full census)_"
                         if t.get("truncated") else ""))
         if not rs:
             lines.append("_none_")
             continue
-        for r in sorted(rs, key=lambda x: x["ticker"])[:25]:
-            items = (", ".join(str(i) for i in r["items"][:3])
-                     if r["items"] else "")
+        for r in sorted(rs, key=lambda x: (x["ticker"], x["accession"]))[:25]:
             bits = [f"`{r['ticker']}`"]
-            if items:
-                bits.append(f"item {items}")
-            if r["direction"]:
-                bits.append(f"**{r['direction']}**")
-            bits.append(f"<{r['url']}>")
+            if r.get("items"):
+                bits.append("item " + ", ".join(str(i) for i in r["items"][:4]))
+            if r.get("direction"):
+                d = f"**{r['direction']}**"
+                if r.get("purchase_value"):
+                    d += f" ${r['purchase_value']:,.0f}"
+                bits.append(d)
+            if r.get("url"):
+                bits.append(f"<{r['url']}>")
             lines.append("· " + " — ".join(bits))
         if len(rs) > 25:
             lines.append(f"_…and {len(rs) - 25} more_")
 
-    if any(r["form"] == "4" and r["direction"] is None for r in records):
+    unknown = sum(1 for r in filings if is_form4(r) and not r.get("direction"))
+    if unknown:
+        note = (meta.get("direction") or {}).get("note") or NO_BODY
         lines.append("")
-        lines.append("⚠️ **Form 4 direction is not observed.** Transaction "
-                     "codes are in the filing body, which EDGAR serves from "
-                     "a host that refuses this client. These are filings, "
-                     "**not** purchases — insider sales outnumber buys, so "
-                     "do not read them as buying.")
+        lines.append(f"⚠️ **{unknown} Form 4 filing(s) have no observed "
+                     f"direction.** {note}. These are filings, **not** "
+                     f"purchases — insider sales outnumber buys, so do not "
+                     f"read them as buying.")
     return "\n".join(lines)
 
 
@@ -168,8 +345,11 @@ def last_filing_day(sess, probe_form: str = "8-K") -> "str | None":
     A weekend, a holiday and "not published yet" are the same observation
     from here: zero hits.
     """
-    day = dt.date.today()
+    day = dt.datetime.now(dt.timezone.utc).date()
     for _ in range(7):
+        # A RuntimeError here means EDGAR did not answer after retries. It
+        # is allowed to propagate: "EDGAR is down" must not be reported as
+        # "no filings in the last seven days".
         if edgar.efts_page(sess, probe_form, day, 0)["total"] > 0:
             return str(day)
         day -= dt.timedelta(days=1)
@@ -177,25 +357,173 @@ def last_filing_day(sess, probe_form: str = "8-K") -> "str | None":
 
 
 def load_cache() -> dict:
-    try:
-        return {int(k): v for k, v in
-                json.loads(open(CACHE, encoding="utf-8").read()).items()}
-    except (OSError, ValueError):
-        return {}
+    d = io.read_json(CACHE) or {}
+    # 🔑 An empty entry is a FAILED lookup that an earlier version cached as
+    # if it were an answer, making that CIK unresolvable forever. Dropped on
+    # load so it is looked up again.
+    return {int(k): v for k, v in d.items() if v}
 
 
 def save_cache(cache: dict) -> None:
-    os.makedirs(os.path.dirname(CACHE) or ".", exist_ok=True)
-    with open(CACHE, "w", encoding="utf-8") as f:
-        json.dump({str(k): v for k, v in cache.items()}, f, indent=0,
-                  sort_keys=True)
-        f.write("\n")
+    io.write_json(CACHE, {str(k): v for k, v in cache.items() if v})
+
+
+def finnhub_insider(sess, ticker: str, key: str, lookback_days: int) -> dict:
+    """-> {"ok": bool, "rows": [normalised], "reason": str}
+
+    One retry on 429. A failure is reported as a failure, never as "this
+    company has no insider transactions".
+    """
+    to_d = dt.datetime.now(dt.timezone.utc).date()
+    params = {"symbol": ticker, "token": key,
+              "from": (to_d - dt.timedelta(days=lookback_days)).isoformat(),
+              "to": to_d.isoformat()}
+    for attempt in (1, 2):
+        try:
+            r = sess.get(f4.FINNHUB_URL, params=params, timeout=20)
+        except Exception as e:                       # noqa: BLE001
+            return {"ok": False, "rows": [], "reason": type(e).__name__}
+        if r.status_code == 429 and attempt == 1:
+            time.sleep(20)
+            continue
+        if r.status_code != 200:
+            return {"ok": False, "rows": [],
+                    "reason": f"finnhub answered {r.status_code}"}
+        try:
+            data = (r.json() or {}).get("data") or []
+        except ValueError:
+            return {"ok": False, "rows": [], "reason": "finnhub: not JSON"}
+        time.sleep(1.1)                              # free tier: 60 / minute
+        return {"ok": True, "rows": f4.normalise(data, ticker), "reason": "ok"}
+    return {"ok": False, "rows": [], "reason": "finnhub rate limited"}
+
+
+def collect_filings(sess, day: str, univ: set, cache: dict, now: str) -> tuple:
+    """-> (records, totals). One EDGAR census per form for `day`."""
+    records, totals = [], {}
+    for form in FORMS:
+        res = edgar.efts_day(sess, form, day, MAX_PAGES)
+        filings = edgar.dedupe_filings(res["hits"])
+        n_in = 0
+        for acc, hit in filings.items():
+            src = hit.get("_source") or {}
+            ciks = src.get("ciks") or []
+            if form == "4":
+                # Form 4 carries no ticker. Ask data.sec.gov which CIK is the
+                # issuer: an operating company has tickers, a person does not.
+                for c in ciks:
+                    try:
+                        ci = int(c)
+                    except (TypeError, ValueError):
+                        continue
+                    if ci not in cache:
+                        got = edgar.submissions(sess, ci)
+                        if got:                  # never cache a failure
+                            cache[ci] = got
+                cik, tk = edgar.pick_issuer(ciks, cache)
+            else:
+                tks = edgar.tickers_from_display_names(src.get("display_names"))
+                # Shortest first: the common share class, not the unit or
+                # the warrant, when a filing lists several.
+                tk = next((t for t in sorted(tks, key=lambda x: (len(x), x))
+                           if t in univ), None)
+                cik = int(ciks[0]) if ciks else None
+            if tk and tk in univ:
+                records.append(observation(form, hit, tk, cik, now))
+                n_in += 1
+        totals[form] = {"documents": res["total_documents"],
+                        "filings": len(filings), "in_universe": n_in,
+                        "truncated": res["truncated"],
+                        "error": res.get("error")}
+        if res.get("error"):
+            print(f"::warning::observer: {form} census incomplete — "
+                  f"{res['error']}")
+        print(f"[observer] {form:<6} {len(filings):>5} filings market-wide, "
+              f"{n_in:>4} in universe"
+              f"{'  [TRUNCATED — a sample]' if res['truncated'] else ''}")
+    return records, totals
+
+
+def direction_pass(sess, day: str, now: str) -> dict:
+    """Fill Form 4 directions for the last few day files, and derive events."""
+    files = io.day_files(OUT_DIR, ".jsonl")[-F4_RECHECK_FILES:]
+    loaded = {d: io.read_jsonl(p) for d, p in files}
+    need = []                                   # newest day first
+    for d in sorted(loaded, reverse=True):
+        for r in loaded[d]:
+            if is_form4(r) and not r.get("direction") \
+                    and r["ticker"] not in need:
+                need.append(r["ticker"])
+
+    out = {"key": bool(FINNHUB_KEY), "tickers_needed": len(need),
+           "tickers_checked": 0, "filled": 0, "failed": 0, "capped": False,
+           "clusters": 0, "first_purchases": 0}
+
+    def pending() -> int:
+        return sum(1 for recs in loaded.values() for r in recs
+                   if is_form4(r) and not r.get("direction"))
+
+    if not FINNHUB_KEY:
+        out["note"] = (f"{NO_BODY}, and FINNHUB_API_KEY is not configured, "
+                       f"so no second source was available")
+        for d, recs in loaded.items():
+            for r in recs:
+                if is_form4(r) and not r.get("direction"):
+                    r["direction_source"] = f"unavailable: {out['note']}"
+            io.write_jsonl(os.path.join(OUT_DIR, f"{d}.jsonl"), recs)
+        out["pending"] = pending()
+        return out
+
+    todo = need[:F4_MAX_TICKERS]
+    out["capped"] = len(need) > len(todo)
+    rows_by, unavailable = {}, {}
+    for i, tk in enumerate(todo, 1):
+        got = finnhub_insider(sess, tk, FINNHUB_KEY, F4_LOOKBACK_DAYS)
+        if got["ok"]:
+            rows_by[tk] = got["rows"]
+        else:
+            unavailable[tk] = got["reason"]
+            out["failed"] += 1
+        if i % 25 == 0:
+            print(f"[observer] finnhub {i}/{len(todo)}")
+    out["tickers_checked"] = len(todo)
+
+    for d, recs in loaded.items():
+        out["filled"] += enrich_direction(recs, rows_by, now, unavailable)
+        have = {r.get("id") for r in recs}
+        for tk, rows in rows_by.items():
+            for ev in cluster_events(rows, d, now):
+                if ev["id"] not in have:
+                    recs.append(ev)
+                    have.add(ev["id"])
+                    out["clusters"] += 1
+            if d != day:
+                continue
+            fp = first_purchases(rows, d)
+            for r in recs:
+                if (is_form4(r) and r.get("ticker") == tk
+                        and r.get("direction") in ("purchase", "mixed")
+                        and "first_purchase" not in r):
+                    mine = [x for x in fp
+                            if x["insider"] in (r.get("insiders") or [])]
+                    r["first_purchase"] = mine or None
+                    out["first_purchases"] += len(mine)
+        io.write_jsonl(os.path.join(OUT_DIR, f"{d}.jsonl"), recs)
+
+    out["pending"] = pending()
+    out["note"] = (f"{NO_BODY}; direction comes from Finnhub by accession, "
+                   f"which lags EDGAR — {out['pending']} still pending and "
+                   f"re-checked on later runs")
+    return out
 
 
 def main() -> None:
-    now = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
-    univ = watched()
-    print(f"[observer] watching {len(univ)} tickers")
+    now = io.now_utc()
+    w = io.watched_universe(UNIVERSE, PANEL, LEDGER)
+    univ = w["tickers"]
+    extra = (f" (+{w['thesis_added']} from open theses)"
+             if w["thesis_added"] else "")
+    print(f"[observer] watching {len(univ)} tickers — {w['source']}{extra}")
     if not univ:
         print("[observer] no universe — refusing to report an empty watch "
               "list as 'nothing happened'")
@@ -209,56 +537,38 @@ def main() -> None:
     print(f"[observer] filing day {day}")
 
     cache = load_cache()
-    records, totals = [], {}
-
-    for form in FORMS:
-        res = edgar.efts_day(sess, form, day, MAX_PAGES)
-        filings = edgar.dedupe_filings(res["hits"])
-        totals[form] = {"documents": res["total_documents"],
-                        "filings": len(filings),
-                        "truncated": res["truncated"]}
-        print(f"[observer] {form}: {len(filings)} filings "
-              f"({res['total_documents']} documents)"
-              f"{'  [TRUNCATED]' if res['truncated'] else ''}")
-
-        for acc, hit in filings.items():
-            src = hit.get("_source") or {}
-            ciks = src.get("ciks") or []
-            if form == "8-K":
-                tks = edgar.tickers_from_display_names(src.get("display_names"))
-                hit_tk = next((t for t in sorted(tks) if t in univ), None)
-                cik = int(ciks[0]) if ciks else None
-                if hit_tk:
-                    records.append(observation(form, hit, hit_tk, cik, now,
-                                               direction_source="n/a"))
-            else:
-                # Form 4 carries no ticker. Ask data.sec.gov which CIK is the
-                # issuer: an operating company has tickers, a person does not.
-                for c in ciks:
-                    ci = int(c)
-                    if ci not in cache:
-                        cache[ci] = edgar.submissions(sess, ci)
-                cik, tk = edgar.pick_issuer(ciks, cache)
-                if tk and tk in univ:
-                    records.append(observation(form, hit, tk, cik, now))
-
+    new, totals = collect_filings(sess, day, univ, cache, now)
     save_cache(cache)
-    os.makedirs(OUT_DIR, exist_ok=True)
+
     path = os.path.join(OUT_DIR, f"{day}.jsonl")
-    with open(path, "w", encoding="utf-8") as f:
-        for r in records:
-            f.write(json.dumps(r, sort_keys=True) + "\n")
+    existing, bad = io.read_jsonl_counted(path)
+    merged, n_added = merge_day(existing, new)
+    io.write_jsonl(path, merged)
+    print(f"[observer] {path}: {len(existing)} already recorded, "
+          f"+{n_added} new"
+          + (f", {bad} unreadable line(s) dropped" if bad else ""))
 
-    text = digest(records, day, totals)
-    with open(os.path.join(OUT_DIR, f"{day}.md"), "w", encoding="utf-8") as f:
-        f.write(text + "\n")
+    direction = direction_pass(sess, day, now)
+    records = io.read_jsonl(path)
 
-    print(f"\n[observer] wrote {path} — {len(records)} observations")
-    for form in FORMS:
-        n = sum(1 for r in records if r["form"] == form)
-        print(f"  {form:<5} {n} in universe of {totals[form]['filings']} filings")
-    print(f"  cik cache {len(cache)} entries")
-    print("\n" + text[:1200])
+    meta = {"generated_at": now, "filing_day": day, "watched": len(univ),
+            "universe_source": w["source"], "thesis_added": w["thesis_added"],
+            "totals": totals, "records": len(records),
+            "added_this_run": n_added, "direction": direction,
+            "forms": list(FORMS), "cik_cache": len(cache)}
+    io.write_json(os.path.join(OUT_DIR, f"{day}.meta.json"), meta)
+    text = digest(records, day, meta)
+    io.write_text(os.path.join(OUT_DIR, f"{day}.md"), text)
+
+    print(f"\n[observer] {len(records)} records for {day}")
+    print(f"  direction: key={'yes' if direction['key'] else 'NO'} · checked "
+          f"{direction['tickers_checked']} of {direction['tickers_needed']} "
+          f"ticker(s) · filled {direction['filled']} · pending "
+          f"{direction['pending']} · failed {direction['failed']}"
+          f"{'  [CAPPED]' if direction['capped'] else ''}")
+    print(f"  cluster events {direction['clusters']} · first purchases "
+          f"{direction['first_purchases']} · cik cache {len(cache)}")
+    print("\n" + text[:1500])
     print("\n[observer] collected only. Nothing scored, nothing recommended, "
           "no order placed, K unchanged.")
 

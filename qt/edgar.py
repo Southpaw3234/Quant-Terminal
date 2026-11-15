@@ -129,15 +129,56 @@ def session(user_agent: str = ""):
     return s
 
 
+RETRY_STATUS = (429, 500, 502, 503, 504)
+
+
+def fetch_json(sess, url: str, params: dict = None, attempts: int = 4,
+               timeout: int = 60) -> dict:
+    """GET JSON with retries. -> {"ok", "json", "status", "reason"}
+
+    🔑 Never raises. The first live run of LIBRARIAN made about 600 requests
+    and died on a single transient 500 from EDGAR, discarding fifty-five
+    issuers of finished work. One bad response in several hundred is the
+    normal condition of a long job, not an exception to it: it is retried
+    with backoff, and if it still fails the CALLER decides what an
+    unanswered question means -- which is never "the answer was no".
+    """
+    reason, status = "not attempted", None
+    for i in range(attempts):
+        try:
+            r = sess.get(url, params=params or {}, timeout=timeout)
+            status = r.status_code
+            if status == 200:
+                try:
+                    out = r.json()
+                except ValueError:
+                    reason = "response was not JSON"
+                else:
+                    time.sleep(SLEEP)
+                    return {"ok": True, "json": out or {}, "status": 200,
+                            "reason": "ok"}
+            elif status in RETRY_STATUS:
+                reason = f"answered {status}"
+            else:
+                return {"ok": False, "json": {}, "status": status,
+                        "reason": f"answered {status}"}
+        except Exception as e:                # noqa: BLE001 - see docstring
+            reason = type(e).__name__
+        if i + 1 < attempts:
+            time.sleep(1.5 * (2 ** i))        # 1.5s, 3s, 6s
+    return {"ok": False, "json": {}, "status": status,
+            "reason": f"{reason} after {attempts} attempts"}
+
+
 def efts_page(sess, form: str, day, frm: int = 0) -> dict:
     """One page of full-text search for a form on a date. Empty `q` — see
-    trap 3."""
-    r = sess.get(EFTS_URL, timeout=60, params={
+    trap 3. Raises RuntimeError only after the retries are exhausted."""
+    got = fetch_json(sess, EFTS_URL, {
         "q": "", "forms": form, "startdt": str(day), "enddt": str(day),
         "from": frm, "size": EFTS_PAGE})
-    r.raise_for_status()
-    time.sleep(SLEEP)
-    hits = ((r.json() or {}).get("hits") or {})
+    if not got["ok"]:
+        raise RuntimeError(f"EDGAR full-text search {got['reason']}")
+    hits = (got["json"].get("hits") or {})
     return {"total": ((hits.get("total") or {}).get("value") or 0),
             "hits": hits.get("hits") or []}
 
@@ -148,17 +189,24 @@ def efts_day(sess, form: str, day, max_pages: int = 12) -> dict:
     Returns `truncated` so a capped day is reported as a sample rather than
     presented as a complete census.
     """
-    out, total, pages = [], None, 0
+    out, total, pages, error = [], None, 0, None
     while pages < max_pages:
-        p = efts_page(sess, form, day, pages * EFTS_PAGE)
+        try:
+            p = efts_page(sess, form, day, pages * EFTS_PAGE)
+        except RuntimeError as e:
+            # A page that could not be fetched makes the day a SAMPLE. The
+            # pages already in hand are kept and the day is flagged, rather
+            # than the whole form being lost to one bad response.
+            error = str(e)
+            break
         if total is None:
             total = p["total"]
         out.extend(p["hits"])
         pages += 1
         if len(p["hits"]) < EFTS_PAGE or pages * EFTS_PAGE >= (total or 0):
             break
-    return {"total_documents": total or 0, "hits": out,
-            "truncated": (total or 0) > pages * EFTS_PAGE}
+    return {"total_documents": total or 0, "hits": out, "error": error,
+            "truncated": bool(error) or (total or 0) > pages * EFTS_PAGE}
 
 
 def submissions(sess, cik: int) -> dict:
@@ -169,16 +217,15 @@ def submissions(sess, cik: int) -> dict:
     caller cannot mistake a failed lookup for a resolved one.
     """
     try:
-        r = sess.get(SUBMISSIONS.format(cik=int(cik)), timeout=60)
-        if r.status_code != 200:
-            return {}
-        time.sleep(SLEEP)
-        d = r.json() or {}
-        return {"name": d.get("name") or "",
-                "tickers": d.get("tickers") or [],
-                "entityType": d.get("entityType") or ""}
-    except Exception:              # noqa: BLE001 - absence, never a guess
+        got = fetch_json(sess, SUBMISSIONS.format(cik=int(cik)), attempts=3)
+    except (TypeError, ValueError):
         return {}
+    if not got["ok"]:
+        return {}
+    d = got["json"]
+    return {"name": d.get("name") or "",
+            "tickers": d.get("tickers") or [],
+            "entityType": d.get("entityType") or ""}
 
 
 def filing_history(sess, cik: int) -> dict:
@@ -194,14 +241,13 @@ def filing_history(sess, cik: int) -> dict:
     them apart will publish the second while the first is true.
     """
     try:
-        r = sess.get(SUBMISSIONS.format(cik=int(cik)), timeout=60)
-        if r.status_code != 200:
-            return {"ok": False, "rows": [],
-                    "reason": f"data.sec.gov answered {r.status_code}"}
-        time.sleep(SLEEP)
-        rec = (((r.json() or {}).get("filings") or {}).get("recent") or {})
-    except Exception as e:        # noqa: BLE001
-        return {"ok": False, "rows": [], "reason": type(e).__name__}
+        got = fetch_json(sess, SUBMISSIONS.format(cik=int(cik)), attempts=3)
+    except (TypeError, ValueError):
+        return {"ok": False, "rows": [], "reason": "not a CIK"}
+    if not got["ok"]:
+        return {"ok": False, "rows": [],
+                "reason": f"data.sec.gov {got['reason']}"}
+    rec = ((got["json"].get("filings") or {}).get("recent") or {})
     forms = rec.get("form") or []
     if not forms:
         return {"ok": False, "rows": [],

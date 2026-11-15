@@ -259,7 +259,7 @@ def test_baseline_causes():
     check("empty-history-does-not-crash",
           not lib.baseline_from_history([], "10-Q", "x")["ok"])
 
-    src = inspect.getsource(agent.build)
+    src = inspect.getsource(agent.diff_filings)
     check("failed-lookup-and-absent-history-are-separate-buckets",
           "unavailable if prev[\"failed_lookup\"] else no_baseline" in src,
           "merging them would let an outage report itself as 'this company "
@@ -296,6 +296,130 @@ def test_selection_rule():
           [p[0] for p in picked2] == ["GRPN"] and mine2 == 1,
           "it is the oldest filing here and would otherwise be dropped — "
           "the thesis is the reason to care about the name")
+
+
+# ── it reads OBSERVER ────────────────────────────────────────────────────────
+
+def _obs(tk, form, acc, cik=1, root=None, kind="filing", filed="2026-11-13"):
+    return {"id": f"edgar:{acc}", "kind": kind, "form": form,
+            "root_form": root or form, "ticker": tk, "cik": cik,
+            "accession": acc, "filed": filed, "items": [], "url": "u"}
+
+
+def test_reads_observer():
+    print("\nLIBRARIAN consumes OBSERVER's records")
+    recs = [_obs("AAA", "10-Q", "a1"), _obs("BBB", "10-K", "b1", cik=2),
+            _obs("CCC", "10-Q/A", "c1", cik=3, root="10-Q"),
+            _obs("DDD", "8-K", "d1", cik=4), _obs("EEE", "4", "e1", cik=5),
+            _obs("FFF", "10-Q", "f1", cik=6, kind="derived_event"),
+            {"kind": "filing", "form": "10-Q", "ticker": "GGG"}]
+    c = agent.candidates_from_observations(recs)
+    check("only-10-Q-and-10-K-are-candidates",
+          set(c) == {("AAA", "10-Q"), ("BBB", "10-K")}, f"{sorted(c)}")
+    check("amendments-are-not-diffed",
+          ("CCC", "10-Q") not in c and ("CCC", "10-Q/A") not in c,
+          "a 10-Q/A against 'the previous 10-Q' compares a document with an "
+          "earlier version of itself")
+    check("derived-events-are-not-filings", ("FFF", "10-Q") not in c)
+    check("a-record-without-cik-or-accession-is-skipped",
+          ("GGG", "10-Q") not in c)
+    check("candidate-carries-what-the-diff-needs",
+          c[("AAA", "10-Q")] == (1, "a1", "2026-11-13"))
+    check("empty-observations-yield-nothing",
+          agent.candidates_from_observations([]) == {})
+
+    recent = {"2026-11-13": [_obs("GRPN", "8-K", "g1"), _obs("AAA", "10-Q", "a1")],
+              "2026-11-12": [_obs("GRPN", "4", "g2")]}
+    b = agent.bearing_on_theses(
+        [{"thesis_id": "t1", "ticker": "grpn", "review_date": "2026-12-01"},
+         {"thesis_id": "t2", "ticker": "ZZZZ", "review_date": "2026-12-01"}],
+        recent)
+    check("thesis-gets-every-observation-naming-its-ticker",
+          [h["id"] for h in b[0]["observations"]] == ["edgar:g1", "edgar:g2"],
+          "selected by ticker and nothing else — it surfaces, it does not "
+          "judge whether a filing matters")
+    check("newest-day-first", b[0]["observations"][0]["day"] == "2026-11-13")
+    check("a-quiet-thesis-is-listed-with-the-days-searched",
+          b[1]["observations"] == []
+          and b[1]["days_searched"] == ["2026-11-12", "2026-11-13"],
+          "an empty list beside the days searched is a finding; an omitted "
+          "thesis is a gap")
+    check("no-theses-no-rows", agent.bearing_on_theses([], recent) == [])
+
+    cand = {("AACO", "10-Q"): (1, "x", "2026-11-10"),
+            ("AACOU", "10-Q"): (1, "x", "2026-11-10")}
+    picked, _, _, mine = agent.select(cand, {"AACOU"}, 5)
+    check("a-thesis-ticker-wins-its-cik",
+          [p[0] for p in picked] == ["AACOU"] and mine == 1,
+          "the operator's own ticker is kept even when a shorter share "
+          "class exists on the same CIK")
+
+    c1 = lib.claim("AAA", 1, "10-Q", _phrase(),
+                   _side("a0", "2026-08-01", lib.PRESENT),
+                   _side("a1", "2026-11-13", lib.ABSENT), ["edgar:a1"])
+    check("a-claim-links-to-the-observation-it-came-from",
+          c1["observation_ids"] == ["edgar:a1"] and c1["observed_by_observer"])
+
+
+def test_failed_query_is_unknown():
+    print("\na query that could not be answered is unknown, never absent")
+    real = agent._fts
+    try:
+        agent._fts = lambda sess, **kw: {"ok": False, "total": 0,
+                                         "hits": [], "reason": "500"}
+        check("failed-phrase-query-returns-None-not-an-empty-set",
+              agent.phrase_accessions(None, 1, "10-Q", "x", "a", "b") is None,
+              "🔑 an empty set says the phrase is in neither filing; None "
+              "says nobody could look")
+        check("failed-index-check-yields-no-indexed-filings",
+              agent.indexed_accessions(None, 1, "10-Q", "a", "b") == set())
+
+        class _S:
+            pass
+        calls = {"n": 0}
+
+        def fake_prior(sess, cik, form, acc):
+            return {"ok": True, "accession": "p0", "filed": "2026-08-01",
+                    "failed_lookup": False, "reason": "ok"}
+        real_prior, real_idx = agent.prior_filing, agent.indexed_accessions
+        agent.prior_filing = fake_prior
+        agent.indexed_accessions = lambda *a, **k: {"p0", "c1"}
+        try:
+            d = agent.diff_filings(
+                _S(), {"phrases": [_phrase("covenant", "2026-01-01")]},
+                [("AAA", 1, "c1", "2026-11-13", "10-Q")])
+        finally:
+            agent.prior_filing, agent.indexed_accessions = real_prior, real_idx
+        c = d["claims"][0]
+        check("🔑-a-failed-phrase-query-is-INDETERMINATE-not-a-removal",
+              c["transition"] == lib.INDETERMINATE and not c["notable"],
+              "the dangerous alternative was to swallow the error and "
+              "report the phrase as absent from both filings")
+        check("and-the-claim-says-the-query-failed",
+              "query failed" in c["current"]["reason"])
+    finally:
+        agent._fts = real
+    check("fts-never-raises",
+          "raise_for_status" not in inspect.getsource(agent._fts))
+
+    # 🔑 The indexed-check asks about TEXT, not metadata.
+    seen = {}
+
+    def spy(sess, **kw):
+        seen.update(kw)
+        return {"ok": True, "total": 0, "hits": [], "reason": "ok"}
+    real2 = agent._fts
+    try:
+        agent._fts = spy
+        agent.indexed_accessions(None, 1, "10-Q", "a", "b")
+    finally:
+        agent._fts = real2
+    check("🔑-the-indexed-check-uses-a-control-phrase-not-an-empty-query",
+          seen.get("q") == f'"{agent.CONTROL_PHRASE}"',
+          "an empty query proves the filing is LISTED; only a phrase that "
+          "must be there proves its text is SEARCHABLE")
+    check("the-control-phrase-is-cover-page-boilerplate",
+          agent.CONTROL_PHRASE == "Securities Exchange Act of 1934")
 
 
 # ── 3. 🔑 no document is ever scored ─────────────────────────────────────────
@@ -406,13 +530,17 @@ def test_cannot_decide():
           f"found {bad}" if bad else
           "that host answers 403; only efts.sec.gov and data.sec.gov answer")
 
+    from qt import agentio
     check("ledger-is-read-only-if-its-chain-verifies",
-          "verify" in inspect.getsource(agent.thesis_tickers),
-          "widening the watch list from an altered ledger would bless the "
-          "alteration")
-    check("empty-universe-is-refused-not-reported",
-          "sys.exit(2)" in inspect.getsource(agent.main),
-          "an empty watch list must not read as 'no language changed'")
+          "verify" in inspect.getsource(agentio.open_theses),
+          "reading theses from an altered ledger would bless the alteration")
+    check("no-observations-is-refused-not-reported",
+          "sys.exit(6)" in inspect.getsource(agent.main),
+          "OBSERVER being down must not read as 'no filings today'")
+    check("does-not-collect-for-itself",
+          not hasattr(agent, "recent_filers"),
+          "the first version ran its own five-day EDGAR scan every night, "
+          "re-testing the same filings and dropping the truncation flag")
 
 
 def main():
@@ -423,6 +551,8 @@ def main():
     test_absent_is_not_unknown()
     test_baseline_causes()
     test_selection_rule()
+    test_reads_observer()
+    test_failed_query_is_unknown()
     test_nothing_is_scored()
     test_section_and_exhibits()
     test_cannot_decide()

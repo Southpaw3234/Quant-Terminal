@@ -224,3 +224,21 @@ touched:
 - [ ] A missing input exits with a distinct code and names the fix.
 - [ ] `data/` is asserted untouched.
 - [ ] The job prints what it produced, not just that it finished.
+
+## Four more traps, each found in production on 2026-11-14
+
+1. **Never `git checkout` a publish branch in the job's working tree.** Any
+   file you fetched earlier is untracked there and git refuses the checkout.
+   The first night works (the branch does not exist yet); every night after
+   it fails. Publish from a separate worktree — see
+   `.github/scripts/publish_agent_branch.sh`, and test a publish step against
+   a throwaway remote *with the branch already present* before trusting it.
+2. **Two crons thirty minutes apart are not ordered.** GitHub's scheduler is
+   best-effort and routinely hours late. If B must follow A, they are steps
+   or `needs:` jobs in one workflow.
+3. **A stage that fails must not stop the stages after it, and must not be
+   green.** Agent steps are `continue-on-error`; a final `if: always()` step
+   reads every `steps.<id>.outcome` and fails the run.
+4. **Python's default User-Agent is refused by Discord (403).** Post through
+   `qt/notify.py`. It never raises: by the time a message is sent the
+   artifact is published, and a webhook outage must not turn the run red.

@@ -246,7 +246,7 @@ def read_universe_file(p: Path) -> list:
     empty result that looks exactly like "this universe has no insider
     buying" rather than like a parsing bug. Detect the header instead.
     """
-    text = p.read_text()
+    text = p.read_text(encoding="utf-8")
     first = text.splitlines()[0] if text.splitlines() else ""
     if "," in first and "ticker" in first.lower():
         df = pd.read_csv(p)
