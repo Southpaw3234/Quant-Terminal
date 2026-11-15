@@ -39,6 +39,21 @@ BRANCH="${1:?usage: publish_agent_branch.sh <branch> <dir> [<dir> ...]}"
 shift
 [ "$#" -ge 1 ] || { echo "::error::publish: no directories given"; exit 2; }
 
+# 🔑 A branch is a path. `agent` cannot exist beside `agent/anything`, in
+# either direction. Checked FIRST and reported by name: the first live run
+# found this out as a git lock error after twenty minutes of collection.
+if git ls-remote --heads origin "$BRANCH/*" 2>/dev/null | grep -q .; then
+  echo "::error::publish: branch name '$BRANCH' collides with existing branches under '$BRANCH/' — git cannot hold both. Choose a name with no '$BRANCH/…' branches." >&2
+  exit 5
+fi
+case "$BRANCH" in
+  */*) parent="${BRANCH%%/*}"
+       if git ls-remote --exit-code --heads origin "$parent" >/dev/null 2>&1; then
+         echo "::error::publish: branch name '$BRANCH' collides with the existing branch '$parent'." >&2
+         exit 5
+       fi ;;
+esac
+
 ROOT="$(git rev-parse --show-toplevel)"
 WT="$(mktemp -d)"
 trap 'git -C "$ROOT" worktree remove --force "$WT" >/dev/null 2>&1 || true' EXIT

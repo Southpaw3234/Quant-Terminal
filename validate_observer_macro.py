@@ -180,6 +180,28 @@ def test_digest_and_refusal():
     src = inspect.getsource(om.main)
     check("an-all-dark-run-refuses-to-publish", "sys.exit(5)" in src,
           "ten missing series and no headlines is an outage, not a quiet day")
+    check("🔑-zero-fresh-series-fails-the-stage-AFTER-writing",
+          src.index("io.write_json") < src.index("if n_fresh == 0:")
+          and src.count("sys.exit(5)") == 2,
+          "the first live run had 0 of 10 series and exited 0 — a total "
+          "FRED outage in the green column")
+
+    class _R:
+        def __init__(self, payload):
+            self._p = payload
+
+        def json(self):
+            if self._p is None:
+                raise ValueError
+            return self._p
+    e = om.fred_error(_R({"error_code": 400, "error_message":
+        "Bad Request.  The value for variable api_key is not registered.  "
+        "Read https://fred.stlouisfed.org/docs/api/api_key.html for more "
+        "information."}))
+    check("FREDs-own-reason-is-surfaced",
+          "not registered" in e and "https://" not in e, e)
+    check("a-non-json-refusal-adds-nothing", om.fred_error(_R(None)) == "")
+    check("no-message-adds-nothing", om.fred_error(_R({})) == "")
 
 
 def main():

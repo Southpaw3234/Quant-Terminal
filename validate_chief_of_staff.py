@@ -284,6 +284,27 @@ def test_dark_inputs():
           and len(all_dark["attention"]) == 5,
           "an outage produces a page that says OUTAGE, not an empty page")
 
+    # 🔑 A fresh macro FILE with nothing in it. This was the first live run:
+    # FRED refused all ten series and the attention block said nothing.
+    hollow = inputs()
+    hollow["macro"] = {"series": [
+        {"status": "missing", "title": f"s{i}",
+         "reason": "fred api answered 400 — FRED says: api_key is not "
+                   "registered"} for i in range(10)],
+        "news": {"status": "not_collected", "reason": "no key"}}
+    ha = [a["text"] for a in chief.facts(hollow)["attention"]]
+    check("🔑-an-all-dark-FRED-reaches-the-attention-block",
+          any("FRED is DARK — 0 of 10" in a and "not registered" in a
+              for a in ha),
+          "'macro: fresh' was true of the file and false of its contents")
+    check("uncollected-headlines-reach-the-attention-block",
+          any("headlines were not collected" in a for a in ha))
+    partial = inputs()
+    check("one-stale-series-is-not-an-alarm",
+          not any("FRED is DARK" in a["text"]
+                  for a in chief.facts(partial)["attention"]),
+          "a single stale series is normal; all of them is an outage")
+
     f2 = chief.facts(inputs())
     macro = [ln["text"] for ln in f2["sections"]["macro"]["lines"]]
     check("a-stale-series-is-shown-as-stale-not-as-a-number",

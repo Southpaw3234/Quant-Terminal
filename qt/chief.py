@@ -388,12 +388,27 @@ def universe_section(daily: dict, status: dict) -> dict:
     return _section("universe", out, status)
 
 
-def attention(statuses: dict, analysis: dict, analysis_status: dict) -> list:
+def attention(statuses: dict, analysis: dict, analysis_status: dict,
+              macro: dict = None) -> list:
     """🔑 Pinned for every stance, uncapped. See the module header."""
     out = []
     for name, st in statuses.items():
         if not st["usable"]:
             out.append(line(f"⚫ {name} is DARK — {st['why']}"))
+    # A macro file can be perfectly fresh and still carry nothing: on the
+    # first live run it held headlines and ten series that FRED refused, and
+    # "macro: fresh" was all the attention block had to say about it.
+    if macro and (statuses.get("macro") or {}).get("usable"):
+        series = macro.get("series") or []
+        dead = [s for s in series if s.get("status") != "fresh"]
+        if series and len(dead) == len(series):
+            out.append(line(f"⚫ FRED is DARK — 0 of {len(series)} macro "
+                            f"series could be fetched: "
+                            f"{dead[0].get('reason')}"))
+        news = macro.get("news") or {}
+        if news.get("status") != "ok":
+            out.append(line(f"⚫ headlines were not collected — "
+                            f"{news.get('reason')}"))
     if analysis_status["usable"]:
         led = analysis.get("ledger") or {}
         if led.get("ok") is False:
@@ -434,7 +449,8 @@ def facts(inputs: dict) -> dict:
         "universe": universe_section(inputs.get("daily") or {},
                                      st["daily snapshot"]),
     }
-    return {"attention": attention(st, an, st["analysis"]),
+    return {"attention": attention(st, an, st["analysis"],
+                                   inputs.get("macro")),
             "sections": sections}
 
 

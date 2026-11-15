@@ -53,7 +53,7 @@ TOKEN = os.environ.get("GITHUB_TOKEN", "").strip()
 HOOK = os.environ.get("DISCORD_WEBHOOK_URL", "").strip()
 POST = os.environ.get("QT_CHIEF_POST", "") == "1"
 REPLY = os.environ.get("QT_CHIEF_REPLY", "") == "1"
-PUBLISH_BRANCH = os.environ.get("QT_AGENT_BRANCH", "agent")
+PUBLISH_BRANCH = os.environ.get("QT_AGENT_BRANCH", "agent-output")
 API = "https://api.github.com"
 
 # How old each input may be before its section goes dark. Friday's filings

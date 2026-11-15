@@ -225,6 +225,23 @@ def digest(doc: dict) -> str:
 
 # ── network ──────────────────────────────────────────────────────────────────
 
+def fred_error(resp) -> str:
+    """FRED's own explanation of a refusal, for the reason string.
+
+    🔑 The first live run reported "fred api answered 400" for every series
+    and nothing else, which cannot tell a key that was never registered from
+    one that was pasted with a stray character -- and those need different
+    fixes. FRED says which in `error_message`. The message never echoes the
+    key, so it is safe to print.
+    """
+    try:
+        msg = str((resp.json() or {}).get("error_message") or "").strip()
+    except ValueError:
+        return ""
+    msg = " ".join(msg.split()).split("  Read ")[0].split(" Read https")[0]
+    return f" — FRED says: {msg[:160]}" if msg else ""
+
+
 def fetch_fred(sess, series_id: str, key: str) -> dict:
     """-> {"ok", "obs", "source", "reason"}. Keyed API first, keyless CSV as
     the fallback; a failure of both is a failure, never an empty series."""
@@ -240,13 +257,13 @@ def fetch_fred(sess, series_id: str, key: str) -> dict:
                 if obs:
                     return {"ok": True, "obs": obs, "source": "fred-api",
                             "reason": "ok"}
-            why = f"fred api answered {r.status_code}"
+            why = f"fred api answered {r.status_code}{fred_error(r)}"
         except Exception as e:                       # noqa: BLE001
             why = f"fred api: {type(e).__name__}"
     else:
         why = "FRED_API_KEY not configured"
     try:
-        r = sess.get(FRED_CSV, timeout=20,
+        r = sess.get(FRED_CSV, timeout=45,
                      params={"id": series_id, "cosd": start})
         if r.status_code == 200:
             obs = parse_fred_csv(r.text)
@@ -362,6 +379,19 @@ def main() -> None:
           f"{len(SERIES)} series fresh")
     print("\n" + text[:1200])
     print("\n[macro] collected only. Nothing forecast, nothing interpreted.")
+
+    # 🔑 The file is written FIRST, so the brief still gets the headlines and
+    # ten lines saying each series is dark. Then the stage fails: on the
+    # first live run every series was missing and this step exited 0, which
+    # put a total FRED outage in the green column.
+    if n_fresh == 0:
+        print(f"::error::macro: 0 of {len(SERIES)} FRED series could be "
+              f"fetched — {series[0]['reason']}")
+        sys.exit(5)
+    dark = [s["id"] for s in series if s["status"] != "fresh"]
+    if dark:
+        print(f"::warning::macro: {len(dark)} of {len(SERIES)} series not "
+              f"fresh — {', '.join(dark)}")
 
 
 if __name__ == "__main__":

@@ -83,7 +83,15 @@ concurrency:
 
 env:
   PYTHONUNBUFFERED: '1'
-  AGENT_BRANCH: agent
+  # 🔑 NOT `agent`. Git stores a branch as a path, so a branch named `agent`
+  # cannot exist while branches named `agent/<anything>` do -- and this
+  # repository's working branches are `agent/**`. The first live run built a
+  # complete brief and then failed to publish it:
+  #     fatal: cannot lock ref 'HEAD': 'refs/heads/agent/collective' exists;
+  #     cannot create 'refs/heads/agent'
+  # The throwaway remote the publish script was tested against had no
+  # `agent/*` branches, so the test passed. It now includes one.
+  AGENT_BRANCH: agent-output
 
 jobs:
   validate:
@@ -150,27 +158,43 @@ jobs:
           echo hi > README.md; git add .; git commit -qm init
           git push -q origin HEAD:master
 
+          # The real repository has working branches named agent/<x>. The
+          # first version of this test did not, which is why it passed while
+          # the real publish could not create a branch called `agent`.
+          git push -q origin HEAD:refs/heads/agent/some-working-branch
+          B="$AGENT_BRANCH"
+
           mkdir -p observations chief
           printf '{"id":1}\n{"id":2}\n' > observations/2026-11-10.jsonl
           echo '{}' > observations/cik_cache.json
-          bash "$SCRIPT" agent observations macro chief
+          bash "$SCRIPT" "$B" observations macro chief
           printf '{"id":1}\n{"id":2}\n{"id":3}\n' > observations/2026-11-10.jsonl
           echo '{"c":1}' > observations/cik_cache.json
-          bash "$SCRIPT" agent observations macro chief
-          git fetch -q origin agent
+          bash "$SCRIPT" "$B" observations macro chief
+          git fetch -q origin "$B"
           [ "$(git show FETCH_HEAD:observations/2026-11-10.jsonl | wc -l)" -eq 3 ] \
             || { echo "::error::night two did not publish"; exit 1; }
           [ "$(git rev-list --count FETCH_HEAD)" -eq 2 ] \
             || { echo "::error::history was not appended to"; exit 1; }
 
           printf '{"id":1}\n' > observations/2026-11-10.jsonl
-          if bash "$SCRIPT" agent observations macro chief; then
+          if bash "$SCRIPT" "$B" observations macro chief; then
             echo "::error::a shrunken day file was published"; exit 1
           fi
-          git fetch -q origin agent
+          git fetch -q origin "$B"
           [ "$(git show FETCH_HEAD:observations/2026-11-10.jsonl | wc -l)" -eq 3 ] \
             || { echo "::error::a refused publish changed the branch"; exit 1; }
-          echo "OK — appends, survives untracked files, refuses a shrink."
+
+          # A name that collides with the agent/<x> namespace must be refused
+          # up front, by name, not discovered as a git lock error at the end
+          # of a twenty-minute run.
+          printf '{"id":1}\n{"id":2}\n{"id":3}\n' > observations/2026-11-10.jsonl
+          if bash "$SCRIPT" agent observations macro chief 2> /tmp/collide.txt; then
+            echo "::error::a colliding branch name was accepted"; exit 1
+          fi
+          grep -q "collides" /tmp/collide.txt \
+            || { echo "::error::the collision was not named"; cat /tmp/collide.txt; exit 1; }
+          echo "OK — appends, survives untracked files, refuses a shrink, names a ref collision."
 
       - name: Assert nothing under data/ changed
         run: |
@@ -189,7 +213,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 75
     permissions:
-      contents: write        # only ever to the agent branch
+      contents: write        # only ever to the agent-output branch
       issues: write          # to reply on the operator's own messages
     steps:
       - uses: actions/checkout@v4
@@ -303,7 +327,7 @@ jobs:
             if [ -n "$f" ]; then cat "$f"; else echo "_no brief was written_"; fi
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Publish to the agent branch
+      - name: Publish to the agent-output branch
         id: publish
         if: always() && steps.guard.outcome == 'success'
         run: bash .github/scripts/publish_agent_branch.sh "$AGENT_BRANCH" observations macro briefs analysis chief

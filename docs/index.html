@@ -752,7 +752,7 @@ function renderChannel(){
 renderChannel();
 
 /* ─── the daily brief ─────────────────────────────────────────────────────
-   Published by chief_of_staff.py to the `agent` branch.
+   Published by chief_of_staff.py to the `agent-output` branch.
 
    🔑 THE PAGE RE-ORDERS; IT NEVER RE-COMPUTES. The brief carries its
    complete stance-free `facts` and the three `layouts` (an order and a cap
@@ -764,7 +764,7 @@ renderChannel();
    is older than the limit, renders the dark block instead of its content.
    And a section whose upstream agent was down is already dark inside the
    brief — it arrives as one line saying so, and is never capped away.    */
-var BRIEF = "https://raw.githubusercontent.com/Southpaw3234/Quant-Terminal/agent/chief/latest.json";
+var BRIEF = "https://raw.githubusercontent.com/Southpaw3234/Quant-Terminal/agent-output/chief/latest.json";
 var BRIEF_DARK_DAYS = 4;   // Friday's brief read on Monday is 3 days old
 
 function safeUrl(u){ return /^https:\/\//.test(u || "") ? u : null; }
@@ -870,7 +870,7 @@ function renderBrief(d){
     var el = document.getElementById("brief");
     if (el) el.innerHTML = darkBlock("Brief dark — none published", [
       "Could not load <code>chief/latest.json</code> from the " +
-      "<code>agent</code> branch (" + esc(err.message) + ").",
+      "<code>agent-output</code> branch (" + esc(err.message) + ").",
       "This is the expected state before the pipeline's first run, and the " +
       "correct state if it has stopped. Nothing is shown rather than " +
       "something stale."]);

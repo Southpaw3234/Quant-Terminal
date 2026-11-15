@@ -158,9 +158,10 @@ and status, and **never a recommendation**.
 
 Shared: `qt/agentio.py` (watch list, freshness verdicts, fingerprints),
 `qt/notify.py` (Discord). The pipeline is `.github/workflows/observer.yml`
-— the filename is historical — and publishes to the **`agent` branch** via
+— the filename is historical — and publishes to the **`agent-output` branch** via
 `.github/scripts/publish_agent_branch.sh`. The dashboard reads
-`chief/latest.json` from that branch.
+`chief/latest.json` from that branch. (Not `agent`: git cannot hold a
+branch of that name beside the `agent/**` working branches.)
 
 Run it locally, in order: `observer_filings.py`, `observer_macro.py`,
 `librarian_diff.py`, `actuary.py`, `chief_of_staff.py`. Without
