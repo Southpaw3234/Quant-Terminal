@@ -1,0 +1,75 @@
+name: Validate the 'NA' ticker reads (hermetic)
+
+# ONE DEFECT, TWO READERS, so one suite rather than two.
+#
+# `NA` is a real listed company (Nano Labs) and pandas.read_csv turns the
+# string "NA" into NaN by default, which deleted 16 of the frozen V29 panel's
+# 152,006 name-months at read time in both run_value_backtest.py and
+# extract_fundamentals.py. extract_8k_deficiency.py was fixed in 313f455;
+# these two were flagged there and are fixed now.
+#
+# ⚠️ WHY THIS WORKFLOW EXISTS RATHER THAN A JOB IN run_value_backtest.yml.
+# That workflow's push trigger RUNS the driver (mode=select, ~120 minutes,
+# yfinance). value_ebit_ev_v1 and v2 are READ and FROZEN and must not be
+# re-run on the strength of a parsing fix, so the regression test gets a
+# hermetic home of its own: no network, no secrets, no yfinance, nothing
+# written under data/. It also means the test runs on any branch CI watches,
+# instead of only the ones that would fire the heavy job.
+#
+# The paths filter lists every input the suite reads. A filter that lags the
+# tests it guards reports on a stale snapshot of the thing it is watching --
+# four instances of that class are documented in validate_qt.yml.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'master'
+      - 'v27/**'
+      - 'v28/**'
+      - 'v29/**'
+      - 'docs/**'
+    paths:
+      - 'run_value_backtest.py'
+      - 'extract_fundamentals.py'
+      - 'validate_na_ticker_reads.py'
+      - '.github/workflows/validate_na_ticker_reads.yml'
+      - 'data/universe/v29_universe_pit.csv'
+      - 'data/registry/v29_specifications.json'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        # No requests, no yfinance. run_value_backtest.py imports yfinance
+        # lazily inside _load_prices and extract_fundamentals.py imports
+        # requests inside main(), precisely so this stays possible.
+        run: pip install "numpy<2.4" pandas
+      - name: Compile check
+        run: |
+          python -m py_compile run_value_backtest.py
+          python -m py_compile extract_fundamentals.py
+          python -m py_compile validate_na_ticker_reads.py
+      - name: Run pure-logic validation
+        run: python validate_na_ticker_reads.py
+      - name: Assert nothing under data/ changed
+        # The whole point of the fix is that no frozen input moves. The panel
+        # and the TTM fundamentals are fingerprinted inputs named by two spent
+        # reads; a suite that rewrote one would invalidate the record it is
+        # meant to protect.
+        if: always()
+        run: |
+          set -u
+          if ! git diff --quiet -- data/ 2>/dev/null; then
+            echo "::error::validation modified data/ — it must be read-only"; exit 1
+          fi
+          echo "OK — data/ untouched."
