@@ -57,8 +57,14 @@ def _load_sector_map():
     The map lives inside the CELL_13_PREPATCH string literal. A second copy
     here would drift from the one the sector cap enforces, and a trim that
     disagrees with the cap about what "Energy" means is worse than no trim at
-    all. Same extraction the validate suite uses (validate_gross_cap.py §10),
-    which also CI-enforces that every traded ticker is present.
+    all.
+
+    RETIRED 2026-11-07 (#81, docs/CARRY_FORWARD.md §⑤): quant_runner.py was
+    deleted with the v25 pipeline, so this function now raises
+    FileNotFoundError and sleeve=sector cannot run. The validate suite that
+    shared this extraction and CI-enforced that every traded ticker was
+    present (scripts/validate_gross_cap.py §10) went with it. Recorded, not
+    repaired: the book is flat and the programme is closed.
     """
     import ast
     here = os.path.dirname(os.path.abspath(__file__))
