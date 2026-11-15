@@ -1,12 +1,83 @@
 # Specification #4 — tax-loss selling reversal
 
-**Status:** ⚪ **DRAFT. Nothing is declared. K is 3/5 and untouched.**
+**Status:** ⛔ **BLOCKED BEFORE DECLARATION, 2026-11-15. Nothing is declared.
+K is 3/5 and untouched.** The availability rehearsal ran and showed the
+universe contains no delistings. See §⓿. Whether to repair the universe or
+retire this specification is the operator's decision; it has not been made.
 
 This occupies the slot vacated by `docs/V27_SPEC4_LISTING_DEFICIENCY.md`,
 which was abandoned on 2026-11-11 before declaration when its availability
 rehearsal showed the sample contained survivors rather than the deficiency
 population. No slot was spent there and none is spent here. Declaring is
 what costs K; everything in this document is free.
+
+---
+
+## ⓿ The availability rehearsal, 2026-11-15: nothing died, and nothing is missing
+
+Run `43671860047`, count-only, over the book built by run `42977153884`. No
+return was computed, the Referee was not consulted, K is unchanged.
+
+| | |
+|---|---|
+| cycles carrying a book | **10 of 10** |
+| positions | **2,453** across 1,359 distinct tickers |
+| tickers with a usable price history | **1,359 of 1,359** |
+| tickers with no history delivered | **0** |
+| positions that stopped trading inside their holding window | **0 of 2,453** |
+
+🔑 **That last row is not a result. It is a measurement of the universe.**
+
+This book is the worst-performing quintile of a microcap universe, formed
+every December for ten years. Some of those companies went to zero. A book
+of 2,453 such positions in which not one stopped trading while held, and in
+which not one ticker is missing a price history, was not drawn from the
+companies that existed at the time. It was drawn from the ones that still
+trade.
+
+The consequence is not a small bias. The hypothesis in §② is that December's
+losers REBOUND in January. The losers that did not rebound — the ones that
+delisted — are exactly the ones this universe cannot contain. Measuring the
+rebound on what is left measures it on the survivors of the thing being
+tested, and it would flatter the result in the one direction this
+specification hopes for.
+
+**This is the same defect that retired this slot's previous occupant**
+(`docs/V27_SPEC4_LISTING_DEFICIENCY.md` §⓿: 838 of 838 priced, 0 of 2,507
+delisted). It is a property of `data/universe/v29_universe_pit.csv` and the
+price layer under it, not of either specification, and it will be found
+again by anything that conditions on distress.
+
+### The rehearsal reported this as `status ok`
+
+That is recorded here because it is the more useful half of the finding.
+The rehearsal had a survivorship guard. It asked whether ANY series ends
+before the last session; three of 1,359 do, so it passed, printed `ok`
+beside every cycle, and described the zero as *"the tail the declaration
+must price, not a defect"* — a sentence written on the assumption the
+number would not be zero.
+
+The guard was testing whether the price layer can see some series end
+somewhere. The question that matters is whether a position that died while
+it was HELD shows up at all, as a death or as a missing ticker.
+`rehearse_tax_loss_availability.survivorship_refusal` now asks that, and
+this exact result — 2,453 priced, 0 dead, 0 missing — is a refusal with
+exit 5. `validate_extract_tax_loss.py` pins it.
+
+### What it would take
+
+A universe that includes the names that delisted, with their final prices.
+`data/universe/delisted_roster.csv` (434 rows) and
+`delisted_roster_2015.csv` (1,889 rows) are the start of that: Form 25
+filings since 2015. They are not yet joined to the panel, and many rows
+carry `identity-mismatch` or `otc-continuation`, so the join is real work
+and not a flag.
+
+Until then **nothing in §⑤–§⑧ should be declared**, and the open question
+about the reality-check bar (0.0167 against 0.02) does not need answering:
+there is no honest number to hold either bar against.
+
+No slot was spent learning this. That is what the rehearsal is for.
 
 ---
 
