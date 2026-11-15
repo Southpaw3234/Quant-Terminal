@@ -244,6 +244,15 @@ def test_stance_cannot_change_a_fact():
     att = " ".join(a["text"] for a in composed["balanced"]["attention"])
     check("🔑-a-drifting-thesis-is-pinned-to-the-top", "DRIFTING" in att,
           "record-keeping is not an opinion a risk appetite should reorder")
+    check("drifting-AND-overdue-reports-both",
+          "DRIFTING" in att and "review was due 2026-11-01" in att,
+          "two obligations, not one — the first version reported only the "
+          "drift and the overdue review vanished behind it")
+    th_lines = [ln["text"] for ln in f["sections"]["theses"]["lines"]]
+    check("a-thesis-line-carries-both-marks",
+          th_lines[0].startswith("🔴 DRIFTING ⏰ REVIEW DUE GRPN"))
+    check("no-thesis-line-starts-with-a-stray-bullet",
+          not any(t.startswith("· ") for t in th_lines))
 
 
 # ── 2. 🔑 a dark input is a section that says so ─────────────────────────────

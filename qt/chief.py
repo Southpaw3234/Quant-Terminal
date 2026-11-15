@@ -117,9 +117,11 @@ def theses_section(analysis: dict, status: dict) -> dict:
             "open` — it needs a falsifier and a review date.")], status)
     out = []
     for t in rows:
-        mark = ("🔴 DRIFTING" if t["drifting"]
-                else "⏰ REVIEW DUE" if t["review_due"] else "·")
-        out.append(line(f"{mark} {t['ticker'] or '—'} · {t['thesis_id']} — "
+        # Both can be true at once, and both are shown: a thesis that is
+        # drifting AND overdue is two obligations, not one.
+        mark = (("🔴 DRIFTING " if t["drifting"] else "")
+                + ("⏰ REVIEW DUE " if t["review_due"] else ""))
+        out.append(line(f"{mark}{t['ticker'] or '—'} · {t['thesis_id']} — "
                         f"{(t.get('claim') or '')[:110]} (review "
                         f"{t['review_date']})"))
         for f in t["falsifiers"]:
@@ -402,7 +404,7 @@ def attention(statuses: dict, analysis: dict, analysis_status: dict) -> list:
                     f"🔴 {t['ticker']} · {t['thesis_id']} is DRIFTING — a "
                     f"falsifier fired and nothing was recorded. Override it "
                     f"in writing or close the thesis."))
-            elif t["review_due"]:
+            if t["review_due"]:
                 out.append(line(f"⏰ {t['ticker']} · {t['thesis_id']} — "
                                 f"review was due {t['review_date']}"))
     return out
