@@ -60,6 +60,8 @@ on:
       - 'validate_extract_tax_loss.py'
       - 'qt/panel.py'
       - 'rehearse_tax_loss_availability.py'
+      - 'classify_departures.py'
+      - 'validate_classify_departures.py'
       - 'qt/tickers.py'
       - '.github/workflows/research_bot.yml'
       - 'data/registry/specifications.json'
@@ -87,8 +89,12 @@ jobs:
           python -m py_compile validate_extract_tax_loss.py
           python -m py_compile qt/panel.py
           python -m py_compile rehearse_tax_loss_availability.py
+          python -m py_compile classify_departures.py
+          python -m py_compile validate_classify_departures.py
       - name: Run pure-logic validation
         run: python validate_extract_tax_loss.py
+      - name: Departure classifier (step 2 of the survivorship fix)
+        run: python validate_classify_departures.py
       - name: Assert nothing under data/ changed
         run: |
           set -u

@@ -44,6 +44,9 @@ BOOK = os.environ.get("QT_TL_BOOK", "data/events/tax_loss_book.csv")
 BENCHMARK = "IWM"
 MIN_BOOK = 5
 PRICE_START = "2014-06-01"
+ROSTER = os.environ.get("QT_TL_ROSTER", "data/universe/delisted_roster_2015.csv")
+CLASSIFIED = os.environ.get("QT_TL_CLASSIFIED",
+                            "data/universe/departures_classified.csv")
 # Below this many priced positions, zero deaths proves nothing either way.
 MIN_POSITIONS_FOR_A_DEATH = 500
 
@@ -68,10 +71,22 @@ def survivorship_refusal(n_priced: int, n_dead: int, n_missing: int,
        The question was never whether the layer can see some series end
        somewhere. It is whether a position that died while it was HELD
        shows up, either as a death or as a ticker with no history. When a
-       large book shows neither, the universe was assembled from names that
-       still trade: the losers that went to zero are not mispriced, they
-       are absent. A January rebound measured on what is left is measured
-       on the survivors of the thing being tested.
+       large book shows neither, every name in it has a price history
+       running to the present.
+
+       🔑 What that does and does not mean, corrected after the roster was
+       joined to this book on 2026-11-15. It does NOT mean the universe
+       contains no delistings: 335 of the book's 1,359 tickers are in the
+       delisted roster, and 38 positions left their exchange within a year
+       of exit. Those continued over the counter, so their series never
+       ends, and that is the price path a holder really had.
+
+       What is absent is every departure the price source no longer
+       carries at all -- 518 names in the ten-year roster. They cannot be
+       screened, so they cannot be held, so they cannot die in this book.
+       `roster_exposure` reports both halves on every run, because the
+       first refusal message said "no delistings at all" and that was more
+       than the evidence supported.
     """
     if n_priced and n_stopped == 0:
         return (f"not one of the priced tickers has a series ending before "
@@ -82,9 +97,76 @@ def survivorship_refusal(n_priced: int, n_dead: int, n_missing: int,
         return (f"0 of {n_priced} positions stopped trading inside a "
                 f"holding window AND 0 tickers are missing a price history. "
                 f"In the worst quintile of a microcap universe that is not a "
-                f"measurement of the strategy — it is a universe containing "
-                f"no delistings at all, i.e. a sample of survivors")
+                f"measurement of the strategy: every name in it has a price "
+                f"history running to the present. Departures that continued "
+                f"over the counter are in it; the ones the price source no "
+                f"longer carries are not, and those are the ones that could "
+                f"have stopped — so what is left is a sample of survivors")
     return None
+
+
+def roster_exposure(positions: list, roster: list,
+                    classified: list = None) -> dict:
+    """Which exchange departures can this book see, and which can it not?
+
+    `positions` = [(ticker, entry, exit)] as ISO dates. `roster` = rows of
+    delisted_roster_2015.csv. `classified` = rows of
+    departures_classified.csv (the unpriceable ones, with a category).
+
+    Counts only. No price is read and nothing is measured.
+    """
+    by_ticker = {}
+    for r in roster or []:
+        tk = str(r.get("ticker") or "").strip().upper()
+        d = str(r.get("form25_date") or "")[:10]
+        if tk and len(d) == 10:
+            by_ticker.setdefault(tk, []).append((d, r.get("status") or ""))
+
+    held = {str(t).strip().upper() for t, _, _ in positions}
+    in_roster = sorted(t for t in held if t in by_ticker)
+    status = {}
+    for t in in_roster:
+        k = by_ticker[t][0][1] or "not recorded"
+        status[k] = status.get(k, 0) + 1
+
+    def plus_year(day: str) -> str:
+        return f"{int(day[:4]) + 1}{day[4:]}"
+
+    in_window = after = 0
+    for tk, entry, exit_ in positions:
+        e, x = str(entry)[:10], str(exit_)[:10]
+        days = [d for d, _ in by_ticker.get(str(tk).strip().upper(), [])]
+        if any(e <= d <= x for d in days):
+            in_window += 1
+        elif any(x < d <= plus_year(x) for d in days):
+            after += 1
+
+    # The other half: departures that happened DURING a holding window and
+    # have no price history, so could not have been in the book at all.
+    windows = sorted({(str(e)[:10], str(x)[:10]) for _, e, x in positions})
+    unseen = {}
+    for r in classified or []:
+        d = str(r.get("form25_date") or "")[:10]
+        if any(e <= d <= x for e, x in windows):
+            c = r.get("category") or "unclassified"
+            unseen[c] = unseen.get(c, 0) + 1
+    return {"tickers_held": len(held), "tickers_in_roster": len(in_roster),
+            "roster_status": dict(sorted(status.items())),
+            "positions_departing_in_window": in_window,
+            "positions_departing_within_a_year_after": after,
+            "unpriceable_departures_in_a_window": sum(unseen.values()),
+            "unpriceable_by_category": dict(sorted(unseen.items()))}
+
+
+def _csv_rows(path: str) -> list:
+    """Rows as dicts via the csv module, or [] if the file is not there.
+    Not pandas: it turns the ticker NA into NaN."""
+    import csv
+    try:
+        with open(path, encoding="utf-8", newline="") as f:
+            return list(csv.DictReader(f))
+    except OSError:
+        return []
 
 
 def fetch_closes(tickers):
@@ -183,6 +265,36 @@ def main() -> None:
     if ends:
         print(f"  distinct series end dates {len({e for e in ends.values()})}")
 
+    # ── the roster: which departures can this book see? ─────────────────────
+    roster_rows, cls_rows = _csv_rows(ROSTER), _csv_rows(CLASSIFIED)
+    print("\n[rehearse] the delisted roster — which departures can this "
+          "book see?")
+    if not roster_rows:
+        # Absent is said, not skipped: with no roster this block cannot
+        # distinguish "nothing departed" from "nobody looked".
+        print(f"  NOT CHECKED — {ROSTER} is not on hand")
+    else:
+        ex = roster_exposure(
+            [(t, str(e.date()), str(x.date()))
+             for t, e, x in zip(bk.ticker, bk.entry_ts, bk.exit_ts)],
+            roster_rows, cls_rows)
+        print(f"  tickers held                         {ex['tickers_held']}")
+        print(f"  of those, in the roster              "
+              f"{ex['tickers_in_roster']}  {ex['roster_status']}")
+        print(f"  positions departing INSIDE a window  "
+              f"{ex['positions_departing_in_window']}")
+        print(f"  positions departing within a year    "
+              f"{ex['positions_departing_within_a_year_after']}")
+        if cls_rows:
+            print(f"  UNPRICEABLE departures in a window   "
+                  f"{ex['unpriceable_departures_in_a_window']}  "
+                  f"{ex['unpriceable_by_category']}")
+            print("    ^ these left during a holding window and have no "
+                  "price history, so they could not be in the book.")
+        else:
+            print(f"  unpriceable departures               NOT CHECKED — "
+                  f"{CLASSIFIED} is not on hand")
+
     ok_cycles = [r for r in rows if r[4] == "ok"]
     days_min = int((live >= MIN_BOOK).sum())
     nz = live[live > 0]
@@ -205,10 +317,13 @@ def main() -> None:
         print(f"::error::{why}. The figure {tot_dead} dead is an artefact of "
               f"the universe, not a property of the book.")
         print("  This is exactly how specification #4's previous occupant "
-              "was found to be a sample of survivors. The universe needs "
-              "the names that delisted — data/universe/delisted_roster*.csv "
-              "is the start of that — before anything here is quoted in a "
-              "declaration.")
+              "was found to be a sample of survivors. The roster block "
+              "above says which departures this book can see and which it "
+              "cannot. The unpriceable ones cannot be screened from any "
+              "free source; data/universe/departures_classified.csv says "
+              "why each left. Nothing here should be quoted in a "
+              "declaration until that gap is priced or pre-registered as a "
+              "bound.")
         print("\n[rehearse] no return computed. K unchanged. Nothing declared.")
         sys.exit(5)
 

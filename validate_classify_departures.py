@@ -78,6 +78,84 @@ def test_the_five_real_shapes():
     check("a-closed-end-fund-is-a-fund", cat(fund, "2026-02-09") == "fund")
 
 
+def test_a_form25_is_not_a_departure():
+    print("\n🔑 a Form 25 is not a departure — what did the company do next?")
+    later = [("10-K", "2016-02-20"), ("10-Q", "2016-08-05"),
+             ("10-K", "2017-02-21"), ("10-Q", "2017-08-04")]
+
+    # Hanesbrands, 2015: a Form 25 and a Form 15 for one security. The
+    # company traded for another decade. First version: "deregistered".
+    hbi = sub([("25", "2015-11-12"), ("15-12B", "2015-11-24")] + later)
+    r = cd.classify(hbi, "2015-11-12")
+    check("a-company-that-kept-reporting-did-not-leave",
+          r["category"] == "continued_reporting",
+          "Hanesbrands was filed under 'deregistered' for 2015")
+    check("the-evidence-cites-a-later-report", "10-" in r["evidence"])
+
+    # TRI Pointe, 2015: the ACQUIRER. 425s on file, and still there in 2017.
+    tph = sub([("425", "2014-06-16"), ("425", "2014-06-19"),
+               ("425", "2014-06-23"), ("8-K", "2015-07-08", "2.01")] + later)
+    check("🔑-an-acquirer-that-carried-on-is-not-acquired",
+          cat(tph, "2015-07-08") == "continued_reporting",
+          "the buyer files 425s and an 8-K 2.01 too; only the target stops "
+          "reporting")
+
+    # Iteris, 2016: NYSE MKT to Nasdaq. Item 3.01 is ALSO 'Transfer of
+    # Listing'. First version: "delisted_for_cause".
+    iti = sub([("8-K", "2016-01-27", "3.01"), ("8-A12B", "2016-02-04"),
+               ("25", "2016-02-05")] + later)
+    check("🔑-a-transfer-of-listing-is-not-for-cause",
+          cat(iti, "2016-02-05") == "exchange_transfer",
+          "8-K item 3.01 is headed 'Notice of Delisting ...; Transfer of "
+          "Listing'")
+
+    # A genuine delisting for cause that then traded over the counter and
+    # kept filing is STILL adverse on the day — the exchange removed it.
+    otc = sub([("8-K", "2015-10-01", "3.01"), ("25-NSE", "2015-11-12")] + later)
+    r = cd.classify(otc, "2015-11-12")
+    check("for-cause-stays-for-cause-even-if-it-kept-reporting",
+          r["category"] == "delisted_for_cause"
+          and "over the counter" in r["evidence"],
+          "carrying on over the counter is not the same as never leaving")
+
+    check("one-later-report-is-not-enough",
+          cat(sub([("25", "2015-11-12"), ("10-K", "2017-02-21")]),
+              "2015-11-12") == "unclassified")
+    check("a-report-inside-the-year-does-not-count",
+          cat(sub([("25", "2015-11-12"), ("10-K", "2016-02-20"),
+                   ("10-Q", "2016-05-05")]), "2015-11-12") == "unclassified",
+          "a wind-down still files for a few quarters")
+    check("foreign-filers-count-through-20-F",
+          cat(sub([("25", "2015-01-20"), ("20-F", "2016-04-01"),
+                   ("20-F", "2017-04-01")]), "2015-01-20")
+          == "continued_reporting")
+    check("bankruptcy-still-outranks-carrying-on",
+          cat(sub([("8-K", "2015-10-01", "1.03")] + later), "2015-11-12")
+          == "bankruptcy",
+          "a company that emerges keeps reporting; its old equity did not")
+    # A real target: completed deal, and silence afterwards.
+    check("a-target-with-nothing-after-is-still-acquired",
+          cat(sub([("425", "2015-05-01"), ("425", "2015-06-01"),
+                   ("8-K", "2015-11-12", "2.01")]), "2015-11-12") == "acquired")
+
+    short = cd.classify(sub([("4", "2019-03-01"), ("8-K", "2019-05-01", "5.02")]),
+                        "2017-12-01")
+    check("🔑-a-history-too-short-to-judge-says-so",
+          short["category"] == "unclassified"
+          and "starts 2019-03-01" in short["evidence"],
+          "an absence of evidence that is really an absence of history")
+
+    check("every-category-is-in-exactly-one-group",
+          sorted(c for cats in cd.GROUPS.values() for c in cats)
+          == sorted(cd.CATEGORIES))
+    g = cd.grouped([{"category": "bankruptcy"}, {"category": "acquired"},
+                    {"category": "continued_reporting"},
+                    {"category": "exchange_transfer"},
+                    {"category": "unclassified"}])
+    check("groups-count", g == {"adverse": 1, "benign": 1,
+                                "not_a_departure": 2, "unknown": 1})
+
+
 def test_rule_order():
     print("\nthe first matching rule wins, and the order is deliberate")
     # A bankrupt company also files 5.01 and Form 15 on the way out.
@@ -188,6 +266,7 @@ def main():
     print("classify_departures — pure logic (no network)")
     print("=" * 70)
     test_the_five_real_shapes()
+    test_a_form25_is_not_a_departure()
     test_rule_order()
     test_windows_and_fallbacks()
     test_bookkeeping()
