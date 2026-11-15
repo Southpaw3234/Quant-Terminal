@@ -279,6 +279,7 @@ def test_spec4_tax_loss_not_declared():
 
 def test_rehearsal_refuses_a_survivor_universe():
     print("\nthe rehearsal refuses a universe with no delistings in it")
+    import inspect
     import rehearse_tax_loss_availability as rh
     f = rh.survivorship_refusal
 
@@ -288,6 +289,59 @@ def test_rehearsal_refuses_a_survivor_universe():
           "0 of 2,453 worst-quintile microcap positions dead in ten "
           "Decembers, 1,359 of 1,359 priced, printed as `status ok`")
     check("the-refusal-names-survivorship", "survivors" in (live or ""))
+    check("🔑-the-refusal-does-not-overclaim",
+          "no delistings at all" not in (live or "")
+          and "over the counter" in (live or ""),
+          "the first message said the universe held no delistings; 335 of "
+          "its tickers are in the roster — it is the UNPRICEABLE ones that "
+          "are absent")
+
+    # ── the roster join ─────────────────────────────────────────────────────
+    pos = [("AAA", "2019-12-16", "2020-01-31"),
+           ("BBB", "2019-12-16", "2020-01-31"),
+           ("CCC", "2019-12-16", "2020-01-31"),
+           ("DDD", "2019-12-16", "2020-01-31"),
+           ("AAA", "2020-12-15", "2021-02-01")]
+    roster = [{"ticker": "AAA", "form25_date": "2020-01-10",
+               "status": "otc-continuation"},
+              {"ticker": "bbb", "form25_date": "2020-09-01",
+               "status": "otc-continuation"},
+              {"ticker": "CCC", "form25_date": "2022-05-01",
+               "status": "still-listed"},
+              {"ticker": "ZZZ", "form25_date": "2020-01-05",
+               "status": "no-data"},
+              {"ticker": "", "form25_date": "2020-01-05"},
+              {"ticker": "QQQ", "form25_date": "garbage"}]
+    cls = [{"form25_date": "2020-01-05", "category": "bankruptcy"},
+           {"form25_date": "2020-01-20", "category": "acquired"},
+           {"form25_date": "2020-06-01", "category": "bankruptcy"},
+           {"form25_date": "2021-01-04", "category": "bankruptcy"}]
+    ex = rh.roster_exposure(pos, roster, cls)
+    check("roster-tickers-held-are-counted",
+          ex["tickers_held"] == 4 and ex["tickers_in_roster"] == 3,
+          f"{ex}")
+    check("status-is-reported-per-ticker",
+          ex["roster_status"] == {"otc-continuation": 2, "still-listed": 1})
+    check("a-departure-inside-the-window-is-counted-once",
+          ex["positions_departing_in_window"] == 1,
+          "AAA's 2019 cycle; its 2020 cycle is after the Form 25")
+    check("a-departure-within-a-year-after-exit",
+          ex["positions_departing_within_a_year_after"] == 1,
+          "BBB left in September; CCC, two years on, is outside the year")
+    check("🔑-unpriceable-departures-in-a-window-are-the-other-half",
+          ex["unpriceable_departures_in_a_window"] == 3
+          and ex["unpriceable_by_category"] == {"acquired": 1,
+                                                "bankruptcy": 2},
+          "they left while a book was open and could not be in it — the "
+          "June one fell between windows and is not counted")
+    empty = rh.roster_exposure(pos, [], [])
+    check("no-roster-is-zero-in-roster-not-a-crash",
+          empty["tickers_in_roster"] == 0
+          and empty["unpriceable_departures_in_a_window"] == 0)
+    check("a-missing-roster-is-reported-as-NOT-CHECKED",
+          "NOT CHECKED" in inspect.getsource(rh.main),
+          "with no roster the block cannot tell 'nothing departed' from "
+          "'nobody looked'")
 
     check("no-series-ending-early-is-still-refused",
           bool(f(n_priced=2453, n_dead=0, n_missing=0, n_stopped=0)))

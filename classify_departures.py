@@ -29,6 +29,10 @@ was being read as "died", and it is not one thing:
     fund                a closed-end fund merged or liquidated near NAV.
     still_listed        not a departure at all (a ticker or exchange change,
                         or a Form 25 for a warrant) -- a roster error.
+    exchange_transfer   re-registered on another exchange the same month.
+    continued_reporting kept filing annual and quarterly reports for more
+                        than a year afterwards: the Form 25 removed ONE
+                        security or ONE venue, not the company.
     bankruptcy          8-K item 1.03. The tail everyone means by "delisted".
     delisted_for_cause  exchange-initiated after a deficiency notice.
     deregistered        went dark voluntarily (Form 15).
@@ -48,6 +52,29 @@ listing. It does not read prose, weigh anything, or emit a number. The
 first rule that matches wins, in the order below, and the row records which
 evidence matched -- so a classification can be checked against the filing
 index by hand.
+
+-----------------------------------------------------------------------------
+🔑 A FORM 25 IS NOT A DEPARTURE, AND THE FIRST VERSION FORGOT THAT
+
+The first run of this file put Hanesbrands, Masimo and Southwestern Energy
+under `deregistered` for 2015-2018, and TRI Pointe and Kennedy-Wilson under
+`acquired`. Every one of them traded for years afterwards. Two things had
+gone wrong, and the roster builder's own docstring had warned about the
+first:
+
+  * A Form 25 removes A SECURITY -- a note series, a preferred, a warrant --
+    and is also filed on an exchange TRANSFER. The company can be untouched.
+  * These rows read `no-data` only because the company was acquired much
+    LATER, so "is it listed today?" could not rescue them, and the rules
+    fell through to whatever paperwork sat near the Form 25: a Form 15 for
+    the old exchange, or the 425s an ACQUIRER files.
+
+8-K item 3.01 has the same trap: it is headed "Notice of Delisting ...;
+Transfer of Listing", so Iteris moving from NYSE MKT to Nasdaq read as a
+delisting for cause.
+
+So two rules now ask what the company did AFTERWARDS rather than what it
+filed that month, and `acquired` requires that it did not carry on.
 
 Writes data/universe/departures_classified.csv. Computes no return, spends
 no K, and does not touch the frozen panel.
@@ -74,9 +101,23 @@ OUT_CSV = os.environ.get("QT_DEP_OUT", "data/universe/departures_classified.csv"
 STATUSES = tuple(os.environ.get("QT_DEP_STATUSES", "no-data").split(","))
 LIMIT = int(os.environ.get("QT_DEP_LIMIT", "0"))
 
-CATEGORIES = ("bankruptcy", "still_listed", "fund", "spac", "acquired",
-              "delisted_for_cause", "deregistered", "unclassified",
+CATEGORIES = ("bankruptcy", "still_listed", "exchange_transfer", "fund",
+              "spac", "acquired", "delisted_for_cause",
+              "continued_reporting", "deregistered", "unclassified",
               "lookup_failed")
+# What each category implies about the holder of the common stock ON THE
+# FORM 25 DATE. A grouping for reading the counts; nothing is computed from
+# it and no magnitude is attached.
+GROUPS = {
+    "adverse": ("bankruptcy", "delisted_for_cause", "deregistered"),
+    "benign": ("acquired", "spac", "fund"),
+    "not_a_departure": ("still_listed", "exchange_transfer",
+                        "continued_reporting"),
+    "unknown": ("unclassified", "lookup_failed"),
+}
+PERIODIC_FORMS = {"10-K", "10-Q", "10-K405", "10-KT", "20-F", "40-F"}
+REGISTRATION_FORMS = {"8-A12B", "8-A12B/A"}
+CONTINUED_AFTER_DAYS = 400      # more than one full annual reporting cycle
 MAJOR_EXCHANGES = ("NASDAQ", "NYSE", "CBOE", "BATS", "IEX")
 FUND_FORMS = {"N-CSR", "N-CSRS", "NPORT-P", "N-CEN", "N-2", "N-PX", "N-Q",
               "N-MFP", "N-30D"}
@@ -147,7 +188,21 @@ def classify(sub: dict, form25_date: str) -> dict:
                 "evidence": f"lists {', '.join(tks[:3])} on "
                             f"{', '.join(sorted(set(major)))} today"}
 
-    # 3. A registered fund.
+    # 3. Re-registered on an exchange the same month: a transfer.
+    moved = within(form_set=REGISTRATION_FORMS, lo=-45, hi=45)
+    if moved:
+        return {"category": "exchange_transfer",
+                "evidence": "; ".join(moved[:2])}
+
+    # What did the company do AFTERWARDS? Two or more annual or quarterly
+    # reports filed over a year past the Form 25 mean the registrant carried
+    # on, so whatever was removed that day was not the company.
+    later = [f"{f} {d}" for f, d, _ in rows
+             if f in PERIODIC_FORMS
+             and (_days(d, form25_date) or 0) > CONTINUED_AFTER_DAYS]
+    continued = len(later) >= 2
+
+    # 3b. A registered fund.
     fund = sorted({f for f, _, _ in rows if f in FUND_FORMS})
     if fund:
         return {"category": "fund",
@@ -159,28 +214,48 @@ def classify(sub: dict, form25_date: str) -> dict:
 
     # 5. Acquired: a completed acquisition or change of control reported
     #    around the departure, or a run of merger filings before it.
+    #    🔑 And it must NOT have carried on. The buyer files 425s and an
+    #    8-K 2.01 as well, and is still there the following year.
     done = within(item="2.01", lo=-60, hi=60) + within(item="5.01", lo=-60, hi=60)
     merger = within(form_set=MERGER_FORMS, lo=-400, hi=30)
-    if done or len(merger) >= 2:
+    if (done or len(merger) >= 2) and not continued:
         return {"category": "acquired",
                 "evidence": "; ".join((done + merger)[:3])
                             + (f" (+{len(merger)} merger filings)"
                                if len(merger) > 3 else "")}
 
     # 6. Exchange-initiated after a deficiency notice.
+    #    (A transfer of listing also files item 3.01; rule 3 took those.)
     cause = within(item="3.01", lo=-365, hi=30)
     if cause:
         return {"category": "delisted_for_cause",
-                "evidence": "; ".join(cause[:3])}
+                "evidence": "; ".join(cause[:3])
+                            + (" — kept reporting afterwards, so likely "
+                               "over the counter" if continued else "")}
+
+    # 6b. Carried on, with no bankruptcy, deficiency or transfer on record.
+    if continued:
+        return {"category": "continued_reporting",
+                "evidence": f"{len(later)} periodic report(s) more than "
+                            f"{CONTINUED_AFTER_DAYS} days later, e.g. "
+                            f"{later[-1]}"}
 
     # 7. Went dark.
     dereg = within(form_set=DEREG_FORMS, lo=-30, hi=365)
     if dereg:
         return {"category": "deregistered", "evidence": "; ".join(dereg[:2])}
 
+    # The payload's `recent` block holds about a thousand filings. For a
+    # heavy filer that may not reach back to the Form 25, and then the
+    # absence of evidence above is an absence of HISTORY, which is said.
+    oldest = min((d for _, d, _ in rows if d), default="")
+    short = bool(oldest) and (_days(oldest, form25_date) or 0) > -30
     return {"category": "unclassified",
-            "evidence": "no bankruptcy, merger, deficiency or deregistration "
-                        "filing in the window"}
+            "evidence": (f"filing history on hand starts {oldest}, after or "
+                         f"too close to the Form 25 — not enough to judge"
+                         if short else
+                         "no bankruptcy, merger, deficiency or "
+                         "deregistration filing in the window")}
 
 
 def summarise(rows: list) -> dict:
@@ -189,6 +264,16 @@ def summarise(rows: list) -> dict:
     for r in rows or []:
         out[r["category"]] = out.get(r["category"], 0) + 1
     out["total"] = len(rows or [])
+    return out
+
+
+def grouped(rows: list) -> dict:
+    """Counts per GROUP. Every category belongs to exactly one."""
+    out = {g: 0 for g in GROUPS}
+    for r in rows or []:
+        for g, cats in GROUPS.items():
+            if r["category"] in cats:
+                out[g] += 1
     return out
 
 
@@ -278,6 +363,10 @@ def main() -> None:
     for c in CATEGORIES:
         if s[c]:
             print(f"  {c:<20} {s[c]:>4}  {s[c] / s['total']:>6.1%}")
+    g = grouped(out)
+    print("\n[departures] read as")
+    for name, n in g.items():
+        print(f"  {name:<16} {n:>4}  {n / s['total']:>6.1%}")
     print("\n[departures] classified only. No name was priced, no return "
           "computed, the frozen panel untouched, K unchanged.")
 

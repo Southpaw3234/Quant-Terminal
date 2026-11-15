@@ -4,6 +4,8 @@
 K is 3/5 and untouched.** The availability rehearsal ran and showed the
 universe contains no delistings. See §⓿. Whether to repair the universe or
 retire this specification is the operator's decision; it has not been made.
+**§⓿ carries a correction dated 2026-11-15: the defect is narrower than first
+written.**
 
 This occupies the slot vacated by `docs/V27_SPEC4_LISTING_DEFICIENCY.md`,
 which was abandoned on 2026-11-11 before declaration when its availability
@@ -64,20 +66,86 @@ it was HELD shows up at all, as a death or as a missing ticker.
 this exact result — 2,453 priced, 0 dead, 0 missing — is a refusal with
 exit 5. `validate_extract_tax_loss.py` pins it.
 
+### ⚠️ Correction, 2026-11-15: the roster WAS already joined
+
+The paragraphs above say the book "was not drawn from the companies that
+existed at the time", and an earlier version of this section said the
+delisted roster was "not yet joined to the panel". **That was wrong, and it
+overstated the defect.** `build_universe_v29.py` has admitted roster names
+since the panel was built. Joining the roster to this book
+(`rehearse_tax_loss_availability.roster_exposure`) gives:
+
+| | |
+|---|---|
+| tickers held | 1,359 |
+| of those, in the delisted roster | **335** (152 continued over the counter, 143 still listed, 40 identity mismatch) |
+| positions leaving their exchange INSIDE a holding window | 5 |
+| positions leaving within a year after exit | 53 |
+
+So the universe does contain delistings. The ones it contains continued
+over the counter, their price series never ends, and that is the path a
+holder really had — which is why "stopped trading" reads zero.
+
+**What is actually absent** is every departure the price source no longer
+carries at all: 518 rows of `delisted_roster_2015.csv` with status
+`no-data`. They cannot be screened point-in-time, because eligibility is
+defined on price and volume and there is none. No free source prices them;
+the second one tried (Stooq) refuses scripted access outright.
+
+### Why each unpriceable name left
+
+`classify_departures.py` reads each company's own filing history on
+data.sec.gov and applies stated, mechanical rules. All 518 resolved; no
+lookup failed. `data/universe/departures_classified.csv` holds the rows.
+
+| reads as | all 518 | inside the panel window (385) |
+|---|---|---|
+| **adverse** — bankruptcy, delisted for cause, deregistered | 155 | 127 |
+| **benign** — acquired, SPAC redeemed, fund merged | 212 | 127 |
+| **not a departure** — still listed, exchange transfer, kept reporting | 131 | 117 |
+| unknown | 20 | 14 |
+
+Two things follow, and neither was known before this was counted.
+
+1. **"No-data" is not "died".** A quarter of these rows are not departures
+   at all: a Form 25 removes one security or one venue, and the company
+   carried on. Of the real departures inside the window, the adverse and
+   the benign are **even — 127 each**. Missing bankruptcies flatter a
+   result; missing acquisitions understate one. The bias this universe
+   carries has two signs, not one.
+
+2. **For THIS book the gap is small in count.** Across the ten holding
+   windows, 52 unpriceable departures were filed. Nineteen are not
+   departures and three are unknown, leaving **13 adverse and 17 benign** —
+   against 2,453 positions. Even if every one of the 13 had been eligible
+   and in the worst quintile, that is about half a percent of the book.
+
+⚠️ **Two limits on that second point, both real.** The roster is thin
+before 2023 — 6 to 26 unpriceable rows a year from 2015 to 2022 against
+113 and 165 in 2024 and 2025 — because EDGAR drops the ticker from an old
+filer's name and the roster is found by ticker; so the early cycles are
+under-counted by an unknown amount. And the six-week holding window is
+short: a name that fails in March is not in "departures during a window",
+though it was a loser in December.
+
 ### What it would take
 
-A universe that includes the names that delisted, with their final prices.
-`data/universe/delisted_roster.csv` (434 rows) and
-`delisted_roster_2015.csv` (1,889 rows) are the start of that: Form 25
-filings since 2015. They are not yet joined to the panel, and many rows
-carry `identity-mismatch` or `otc-continuation`, so the join is real work
-and not a flag.
+Either of two things, and the choice is the operator's:
 
-Until then **nothing in §⑤–§⑧ should be declared**, and the open question
-about the reality-check bar (0.0167 against 0.02) does not need answering:
-there is no honest number to hold either bar against.
+* **Price the gap.** A survivorship-free dataset with delisted names and
+  their final prices. Not free. This is the only route to a number with no
+  caveat.
+* **Pre-register the bound.** Declare, before the read, how the result is
+  restated if N phantom positions at a total loss are added per cycle, and
+  what N is taken to be. `qt.measurement.survivorship_sensitivity` already
+  exists for this. The read then carries its own worst case instead of an
+  unquantified warning.
 
-No slot was spent learning this. That is what the rehearsal is for.
+Until one of those is chosen **nothing in §⑤–§⑧ should be declared**, and
+the open question about the reality-check bar (0.0167 against 0.02) still
+does not need answering.
+
+No slot was spent learning any of this. That is what the rehearsal is for.
 
 ---
 
