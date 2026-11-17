@@ -1,4 +1,18 @@
 {
+ "1000697": {
+  "entityType": "operating",
+  "name": "WATERS CORP /DE/",
+  "tickers": [
+   "WAT"
+  ]
+ },
+ "1000753": {
+  "entityType": "operating",
+  "name": "INSPERITY, INC.",
+  "tickers": [
+   "NSP"
+  ]
+ },
  "1001250": {
   "entityType": "operating",
   "name": "ESTEE LAUDER COMPANIES INC",
@@ -11,6 +25,17 @@
   "name": "AMEREN CORP",
   "tickers": [
    "AEE"
+  ]
+ },
+ "1004434": {
+  "entityType": "operating",
+  "name": "AFFILIATED MANAGERS GROUP, INC.",
+  "tickers": [
+   "AMG",
+   "MGR",
+   "MGRB",
+   "MGRD",
+   "MGRE"
   ]
  },
  "10048": {
@@ -42,6 +67,13 @@
    "UAL"
   ]
  },
+ "1005210": {
+  "entityType": "operating",
+  "name": "SUBURBAN PROPANE PARTNERS LP",
+  "tickers": [
+   "SPH"
+  ]
+ },
  "1005817": {
   "entityType": "operating",
   "name": "TOMPKINS FINANCIAL CORP",
@@ -61,6 +93,21 @@
   "name": "Nordicus Partners Corp",
   "tickers": [
    "NORD"
+  ]
+ },
+ "101199": {
+  "entityType": "operating",
+  "name": "UNITED FIRE GROUP INC",
+  "tickers": [
+   "UFCS"
+  ]
+ },
+ "101382": {
+  "entityType": "operating",
+  "name": "UMB FINANCIAL CORP",
+  "tickers": [
+   "UMBF",
+   "UMBFO"
   ]
  },
  "1013934": {
@@ -84,6 +131,49 @@
    "AWRE"
   ]
  },
+ "1015922": {
+  "entityType": "other",
+  "name": "CHECK POINT SOFTWARE TECHNOLOGIES LTD",
+  "tickers": [
+   "CHKP"
+  ]
+ },
+ "1016805": {
+  "entityType": "other",
+  "name": "QUIRK RAYMOND R",
+  "tickers": []
+ },
+ "1016838": {
+  "entityType": "other",
+  "name": "RADCOM LTD",
+  "tickers": [
+   "RDCM"
+  ]
+ },
+ "1018724": {
+  "entityType": "operating",
+  "name": "AMAZON COM INC",
+  "tickers": [
+   "AMZN"
+  ]
+ },
+ "1019264": {
+  "entityType": "other",
+  "name": "WINMILL MARK CAMPBELL",
+  "tickers": []
+ },
+ "1019975": {
+  "entityType": "other",
+  "name": "CITRIN JEFFREY B",
+  "tickers": []
+ },
+ "1020569": {
+  "entityType": "operating",
+  "name": "IRON MOUNTAIN INC",
+  "tickers": [
+   "IRM"
+  ]
+ },
  "1020710": {
   "entityType": "operating",
   "name": "DXP ENTERPRISES INC",
@@ -95,6 +185,13 @@
   "entityType": "other",
   "name": "DOUGLAS RICHARD",
   "tickers": []
+ },
+ "1022079": {
+  "entityType": "operating",
+  "name": "QUEST DIAGNOSTICS INC",
+  "tickers": [
+   "DGX"
+  ]
  },
  "1022408": {
   "entityType": "operating",
@@ -137,10 +234,22 @@
   "name": "MULE EDWARD A",
   "tickers": []
  },
+ "1030514": {
+  "entityType": "other",
+  "name": "LANDUYT WILLIAM M",
+  "tickers": []
+ },
  "1030575": {
   "entityType": "other",
   "name": "FORMELA JEAN FRANCOIS",
   "tickers": []
+ },
+ "1031235": {
+  "entityType": "investment",
+  "name": "Global Self Storage, Inc.",
+  "tickers": [
+   "SELF"
+  ]
  },
  "1031308": {
   "entityType": "operating",
@@ -178,11 +287,49 @@
    "CRESY"
   ]
  },
+ "1035422": {
+  "entityType": "operating",
+  "name": "CTT PHARMACEUTICAL HOLDINGS, INC.",
+  "tickers": [
+   "CTTH"
+  ]
+ },
+ "1037182": {
+  "entityType": "other",
+  "name": "ELSZTAIN EDUARDO S",
+  "tickers": []
+ },
  "1037646": {
   "entityType": "operating",
   "name": "METTLER TOLEDO INTERNATIONAL INC/",
   "tickers": [
    "MTD"
+  ]
+ },
+ "1039280": {
+  "entityType": "operating",
+  "name": "NETSOL TECHNOLOGIES INC",
+  "tickers": [
+   "NTWK"
+  ]
+ },
+ "1040543": {
+  "entityType": "other",
+  "name": "IDOL JOHN D",
+  "tickers": []
+ },
+ "1041061": {
+  "entityType": "operating",
+  "name": "YUM BRANDS INC",
+  "tickers": [
+   "YUM"
+  ]
+ },
+ "104169": {
+  "entityType": "operating",
+  "name": "Walmart Inc.",
+  "tickers": [
+   "WMT"
   ]
  },
  "1042893": {
@@ -191,6 +338,11 @@
   "tickers": [
    "INVX"
   ]
+ },
+ "1043298": {
+  "entityType": "other",
+  "name": "BEZOS JEFFREY P",
+  "tickers": []
  },
  "1044777": {
   "entityType": "operating",
@@ -240,6 +392,13 @@
    "FDX"
   ]
  },
+ "1049502": {
+  "entityType": "operating",
+  "name": "MKS INC",
+  "tickers": [
+   "MKSI"
+  ]
+ },
  "1050377": {
   "entityType": "operating",
   "name": "PC CONNECTION INC",
@@ -273,6 +432,11 @@
   "name": "WIRTH JAMES F",
   "tickers": []
  },
+ "1055919": {
+  "entityType": "other",
+  "name": "DUGGAN ROBERT W",
+  "tickers": []
+ },
  "1055951": {
   "entityType": "other",
   "name": "ORBIMED ADVISORS LLC",
@@ -282,6 +446,13 @@
   "entityType": "other",
   "name": "HAMERSLAG STEVEN J",
   "tickers": []
+ },
+ "1056696": {
+  "entityType": "operating",
+  "name": "MANHATTAN ASSOCIATES INC",
+  "tickers": [
+   "MANH"
+  ]
  },
  "1056943": {
   "entityType": "operating",
@@ -309,6 +480,20 @@
   "name": "MOODYS CORP /DE/",
   "tickers": [
    "MCO"
+  ]
+ },
+ "106040": {
+  "entityType": "operating",
+  "name": "WESTERN DIGITAL CORP",
+  "tickers": [
+   "WDC"
+  ]
+ },
+ "1060955": {
+  "entityType": "other",
+  "name": "ICON PLC",
+  "tickers": [
+   "ICLR"
   ]
  },
  "1061736": {
@@ -342,6 +527,11 @@
    "EBAY"
   ]
  },
+ "1065094": {
+  "entityType": "other",
+  "name": "DU MOULIN RICHARD T",
+  "tickers": []
+ },
  "1065280": {
   "entityType": "operating",
   "name": "NETFLIX INC",
@@ -374,6 +564,19 @@
   "entityType": "other",
   "name": "SHEPARD GREGORY M",
   "tickers": []
+ },
+ "1067863": {
+  "entityType": "other",
+  "name": "CONGDON EARL E",
+  "tickers": []
+ },
+ "1067983": {
+  "entityType": "operating",
+  "name": "BERKSHIRE HATHAWAY INC",
+  "tickers": [
+   "BRK-B",
+   "BRK-A"
+  ]
  },
  "1069157": {
   "entityType": "operating",
@@ -418,6 +621,13 @@
   "name": "CoreCivic, Inc.",
   "tickers": [
    "CXW"
+  ]
+ },
+ "1072627": {
+  "entityType": "operating",
+  "name": "KINGSWAY Corp",
+  "tickers": [
+   "KWY"
   ]
  },
  "1074500": {
@@ -532,6 +742,11 @@
    "CORT"
   ]
  },
+ "1089409": {
+  "entityType": "other",
+  "name": "DEPTULA-HICKS DARLENE M",
+  "tickers": []
+ },
  "1090005": {
   "entityType": "other",
   "name": "MOULLET BARRY B",
@@ -542,6 +757,13 @@
   "name": "SOUTHERN FIRST BANCSHARES INC",
   "tickers": [
    "SFST"
+  ]
+ },
+ "1090012": {
+  "entityType": "operating",
+  "name": "DEVON ENERGY CORP/DE",
+  "tickers": [
+   "DVN"
   ]
  },
  "1090425": {
@@ -598,6 +820,11 @@
   "name": "MCDONALD JOHN T",
   "tickers": []
  },
+ "1094988": {
+  "entityType": "other",
+  "name": "RAVICH JESS M",
+  "tickers": []
+ },
  "1095073": {
   "entityType": "operating",
   "name": "EVEREST GROUP, LTD.",
@@ -619,6 +846,16 @@
    "EPC"
   ]
  },
+ "1098464": {
+  "entityType": "other",
+  "name": "NEUGEBAUER TOBY R",
+  "tickers": []
+ },
+ "1099776": {
+  "entityType": "other",
+  "name": "COULTER JAMES G",
+  "tickers": []
+ },
  "1099800": {
   "entityType": "operating",
   "name": "Edwards Lifesciences Corp",
@@ -630,6 +867,13 @@
   "entityType": "other",
   "name": "LIN SYARU SHIRLEY",
   "tickers": []
+ },
+ "1101239": {
+  "entityType": "operating",
+  "name": "EQUINIX INC",
+  "tickers": [
+   "EQIX"
+  ]
  },
  "1106232": {
   "entityType": "other",
@@ -653,12 +897,22 @@
    "KLNG"
   ]
  },
+ "1114848": {
+  "entityType": "other",
+  "name": "SADOWSKI PETER T",
+  "tickers": []
+ },
  "1114927": {
   "entityType": "operating",
   "name": "FIRST NORTHERN COMMUNITY BANCORP",
   "tickers": [
    "FNRN"
   ]
+ },
+ "1115428": {
+  "entityType": "other",
+  "name": "GHAURI NAEEM",
+  "tickers": []
  },
  "1116132": {
   "entityType": "operating",
@@ -678,6 +932,25 @@
   "entityType": "other",
   "name": "CASAMENTO CHARLES J",
   "tickers": []
+ },
+ "1120193": {
+  "entityType": "operating",
+  "name": "NASDAQ, INC.",
+  "tickers": [
+   "NDAQ"
+  ]
+ },
+ "1120556": {
+  "entityType": "other",
+  "name": "ROMRELL LARRY E",
+  "tickers": []
+ },
+ "1120914": {
+  "entityType": "operating",
+  "name": "PDF SOLUTIONS INC",
+  "tickers": [
+   "PDFS"
+  ]
  },
  "1121788": {
   "entityType": "operating",
@@ -739,9 +1012,21 @@
   "name": "BURRELL JONATHAN",
   "tickers": []
  },
+ "1134115": {
+  "entityType": "operating",
+  "name": "INTERNATIONAL TOWER HILL MINES LTD",
+  "tickers": [
+   "THM"
+  ]
+ },
  "1134431": {
   "entityType": "other",
   "name": "SHOEN MARK V",
+  "tickers": []
+ },
+ "1135216": {
+  "entityType": "other",
+  "name": "GHAURI NAJEEB",
   "tickers": []
  },
  "1136783": {
@@ -778,11 +1063,32 @@
   "name": "GALTNEY WILLIAM F JR",
   "tickers": []
  },
+ "1140411": {
+  "entityType": "other",
+  "name": "PIMCO CALIFORNIA MUNICIPAL INCOME FUND",
+  "tickers": [
+   "PCQ"
+  ]
+ },
+ "1140536": {
+  "entityType": "operating",
+  "name": "WILLIS TOWERS WATSON PLC",
+  "tickers": [
+   "WTW"
+  ]
+ },
  "1140859": {
   "entityType": "operating",
   "name": "Cencora, Inc.",
   "tickers": [
    "COR"
+  ]
+ },
+ "1141197": {
+  "entityType": "operating",
+  "name": "PEDEVCO CORP",
+  "tickers": [
+   "PED"
   ]
  },
  "1141688": {
@@ -825,6 +1131,13 @@
    "JBLU"
   ]
  },
+ "1159036": {
+  "entityType": "operating",
+  "name": "HALOZYME THERAPEUTICS, INC.",
+  "tickers": [
+   "HALO"
+  ]
+ },
  "1159152": {
   "entityType": "operating",
   "name": "James Hardie Industries plc",
@@ -832,6 +1145,11 @@
    "JHX",
    "JHIUF"
   ]
+ },
+ "1160225": {
+  "entityType": "other",
+  "name": "KELLY EDWARD J III",
+  "tickers": []
  },
  "1162644": {
   "entityType": "other",
@@ -859,9 +1177,19 @@
    "XPO"
   ]
  },
+ "1166573": {
+  "entityType": "other",
+  "name": "TOWERVIEW LLC",
+  "tickers": []
+ },
  "1167839": {
   "entityType": "other",
   "name": "BARNITZ ANNA P",
+  "tickers": []
+ },
+ "1168368": {
+  "entityType": "other",
+  "name": "SOLL BRUCE A",
   "tickers": []
  },
  "1168602": {
@@ -896,9 +1224,22 @@
    "ORMP"
   ]
  },
+ "1176948": {
+  "entityType": "operating",
+  "name": "Ares Management Corp",
+  "tickers": [
+   "ARES",
+   "ARES-PB"
+  ]
+ },
  "1178579": {
   "entityType": "other",
   "name": "TANG KEVIN",
+  "tickers": []
+ },
+ "1179684": {
+  "entityType": "other",
+  "name": "DILLARD WILLIAM T II",
   "tickers": []
  },
  "1179929": {
@@ -923,9 +1264,19 @@
   "name": "SIMPSON BOB R",
   "tickers": []
  },
+ "1183251": {
+  "entityType": "other",
+  "name": "TEAGUE AJ",
+  "tickers": []
+ },
  "1184632": {
   "entityType": "other",
   "name": "BRODIN J PER",
+  "tickers": []
+ },
+ "1184728": {
+  "entityType": "other",
+  "name": "KUMLER ALAN H",
   "tickers": []
  },
  "1184753": {
@@ -948,9 +1299,19 @@
   "name": "FARRELL PETER C",
   "tickers": []
  },
+ "1186746": {
+  "entityType": "other",
+  "name": "LANDAU ELLIS",
+  "tickers": []
+ },
  "1187473": {
   "entityType": "other",
   "name": "THINGELSTAD JAMIE",
+  "tickers": []
+ },
+ "1188027": {
+  "entityType": "other",
+  "name": "LOGAN HAROLD R JR",
   "tickers": []
  },
  "1188586": {
@@ -966,6 +1327,11 @@
  "1189174": {
   "entityType": "other",
   "name": "EGAN JOHN R",
+  "tickers": []
+ },
+ "1189561": {
+  "entityType": "other",
+  "name": "DE LA VEGA RAFAEL",
   "tickers": []
  },
  "1189614": {
@@ -1003,6 +1369,13 @@
   "name": "PIGOTT MARK C",
   "tickers": []
  },
+ "1192448": {
+  "entityType": "operating",
+  "name": "GLAUKOS Corp",
+  "tickers": [
+   "GKOS"
+  ]
+ },
  "1192758": {
   "entityType": "other",
   "name": "RAYMOND MARY JANE",
@@ -1011,6 +1384,16 @@
  "1193210": {
   "entityType": "other",
   "name": "COZADD BRUCE C",
+  "tickers": []
+ },
+ "1193432": {
+  "entityType": "other",
+  "name": "HENSELER PETER J",
+  "tickers": []
+ },
+ "1194016": {
+  "entityType": "other",
+  "name": "BENJAMIN JEFFREY D",
   "tickers": []
  },
  "1194637": {
@@ -1038,6 +1421,11 @@
   "name": "JOHNSON DENNIS W",
   "tickers": []
  },
+ "1196789": {
+  "entityType": "other",
+  "name": "JORDEN THOMAS E",
+  "tickers": []
+ },
  "1196952": {
   "entityType": "other",
   "name": "TURNER BRIAN KEVIN",
@@ -1056,6 +1444,21 @@
  "1197193": {
   "entityType": "other",
   "name": "BECKWITT RICHARD",
+  "tickers": []
+ },
+ "1198046": {
+  "entityType": "other",
+  "name": "Hennessy John L.",
+  "tickers": []
+ },
+ "1198960": {
+  "entityType": "other",
+  "name": "ZURAITIS MARITA",
+  "tickers": []
+ },
+ "1199820": {
+  "entityType": "other",
+  "name": "GILES WILLIAM T",
   "tickers": []
  },
  "1200375": {
@@ -1105,9 +1508,19 @@
   "name": "ANDERSON DARREL T",
   "tickers": []
  },
+ "1202432": {
+  "entityType": "other",
+  "name": "RAKOWICH WALTER C",
+  "tickers": []
+ },
  "1202543": {
   "entityType": "other",
   "name": "HOLLEY RICK R",
+  "tickers": []
+ },
+ "1202557": {
+  "entityType": "other",
+  "name": "CHEEVER CHARLIE E III",
   "tickers": []
  },
  "1203096": {
@@ -1115,9 +1528,29 @@
   "name": "SCALZO JOSEPH",
   "tickers": []
  },
+ "1203479": {
+  "entityType": "other",
+  "name": "RICKERTSEN CARL J",
+  "tickers": []
+ },
+ "1203674": {
+  "entityType": "other",
+  "name": "KRUSZEWSKI RONALD J",
+  "tickers": []
+ },
  "1204925": {
   "entityType": "other",
   "name": "BELLUZZO RICHARD",
+  "tickers": []
+ },
+ "1205411": {
+  "entityType": "other",
+  "name": "DEAL RICHARD",
+  "tickers": []
+ },
+ "1206587": {
+  "entityType": "other",
+  "name": "COVIELLO ARTHUR W JR",
   "tickers": []
  },
  "1207134": {
@@ -1128,6 +1561,16 @@
  "1208476": {
   "entityType": "other",
   "name": "101 HUNTINGTON HOLDINGS LLC",
+  "tickers": []
+ },
+ "1208749": {
+  "entityType": "other",
+  "name": "FERGUSON THOMAS E",
+  "tickers": []
+ },
+ "1209040": {
+  "entityType": "other",
+  "name": "BRONSON JOSEPH R",
   "tickers": []
  },
  "1209059": {
@@ -1165,9 +1608,36 @@
    "STRRP"
   ]
  },
+ "1211493": {
+  "entityType": "other",
+  "name": "ORLANDO STEVEN J",
+  "tickers": []
+ },
+ "1211583": {
+  "entityType": "operating",
+  "name": "FENNEC PHARMACEUTICALS INC.",
+  "tickers": [
+   "FENC"
+  ]
+ },
  "1212067": {
   "entityType": "other",
   "name": "SMITH BARRY M",
+  "tickers": []
+ },
+ "1212617": {
+  "entityType": "other",
+  "name": "DAMBROSIO A DAVIN",
+  "tickers": []
+ },
+ "1212618": {
+  "entityType": "other",
+  "name": "STIVALA MICHAEL A",
+  "tickers": []
+ },
+ "1213051": {
+  "entityType": "other",
+  "name": "COKE MICHAEL A",
   "tickers": []
  },
  "1213306": {
@@ -1180,6 +1650,13 @@
   "name": "GIBSON LEE R",
   "tickers": []
  },
+ "1217234": {
+  "entityType": "operating",
+  "name": "CareDx, Inc.",
+  "tickers": [
+   "CDNA"
+  ]
+ },
  "1217439": {
   "entityType": "other",
   "name": "FINNEY ELISHA W",
@@ -1190,6 +1667,33 @@
   "name": "REICH VICTORIA",
   "tickers": []
  },
+ "1218456": {
+  "entityType": "other",
+  "name": "PARK ANTHONY",
+  "tickers": []
+ },
+ "1218502": {
+  "entityType": "other",
+  "name": "SHWED GIL",
+  "tickers": []
+ },
+ "1218683": {
+  "entityType": "operating",
+  "name": "Big Digital Energy, Inc.",
+  "tickers": [
+   "BGDE"
+  ]
+ },
+ "1218713": {
+  "entityType": "other",
+  "name": "CASCELLA ROBERT",
+  "tickers": []
+ },
+ "1220829": {
+  "entityType": "other",
+  "name": "PARKER DAVID RAY",
+  "tickers": []
+ },
  "1220945": {
   "entityType": "other",
   "name": "GERLACH JOHN B JR",
@@ -1198,6 +1702,31 @@
  "1222287": {
   "entityType": "other",
   "name": "BOTHA ROELOF",
+  "tickers": []
+ },
+ "1222390": {
+  "entityType": "other",
+  "name": "KUKES SIMON G",
+  "tickers": []
+ },
+ "1222857": {
+  "entityType": "other",
+  "name": "EDELMAN HARRIET",
+  "tickers": []
+ },
+ "1223000": {
+  "entityType": "other",
+  "name": "KOZARICH JOHN W",
+  "tickers": []
+ },
+ "1223348": {
+  "entityType": "other",
+  "name": "WAGNER CHARLES F JR",
+  "tickers": []
+ },
+ "1223619": {
+  "entityType": "other",
+  "name": "BREEN EDWARD D",
   "tickers": []
  },
  "1224133": {
@@ -1229,6 +1758,16 @@
    "STIM"
   ]
  },
+ "1227847": {
+  "entityType": "other",
+  "name": "SMOLYANSKY EDWARD",
+  "tickers": []
+ },
+ "1227848": {
+  "entityType": "other",
+  "name": "SMOLYANSKY LUDMILA",
+  "tickers": []
+ },
  "1228146": {
   "entityType": "other",
   "name": "MUTCH JOHN",
@@ -1244,9 +1783,19 @@
   "name": "COLVIN DONALD A",
   "tickers": []
  },
+ "1229109": {
+  "entityType": "other",
+  "name": "KEMPER J MARINER",
+  "tickers": []
+ },
  "1229884": {
   "entityType": "other",
   "name": "FLANIGAN MATTHEW C",
+  "tickers": []
+ },
+ "1230482": {
+  "entityType": "other",
+  "name": "SHERMAN JEFFREY W",
   "tickers": []
  },
  "1231427": {
@@ -1300,9 +1849,24 @@
   "name": "MILLER MICHAEL PATRICK",
   "tickers": []
  },
+ "1236641": {
+  "entityType": "other",
+  "name": "PARKER MARK G",
+  "tickers": []
+ },
  "1236849": {
   "entityType": "other",
   "name": "JACKSON JOHN EARL",
+  "tickers": []
+ },
+ "1237264": {
+  "entityType": "other",
+  "name": "MUNDKUR CHRISTINE",
+  "tickers": []
+ },
+ "1241052": {
+  "entityType": "other",
+  "name": "Howie John K",
   "tickers": []
  },
  "1242207": {
@@ -1313,6 +1877,11 @@
  "1242824": {
   "entityType": "other",
   "name": "ESTES SCOTT A",
+  "tickers": []
+ },
+ "1243748": {
+  "entityType": "other",
+  "name": "PIZZUTO TERRI",
   "tickers": []
  },
  "1244172": {
@@ -1330,9 +1899,19 @@
   "name": "SLATTERY JOSEPH P",
   "tickers": []
  },
+ "1247456": {
+  "entityType": "other",
+  "name": "KOWLZAN MARK W",
+  "tickers": []
+ },
  "1249555": {
   "entityType": "other",
   "name": "KIRBY J SCOTT",
+  "tickers": []
+ },
+ "1250570": {
+  "entityType": "other",
+  "name": "PAGE GREGORY R",
   "tickers": []
  },
  "1251155": {
@@ -1355,6 +1934,16 @@
   "name": "MATLIN DAVID J",
   "tickers": []
  },
+ "1252191": {
+  "entityType": "other",
+  "name": "VON STAATS AARON C",
+  "tickers": []
+ },
+ "1253436": {
+  "entityType": "other",
+  "name": "LAZARUS STEPHEN",
+  "tickers": []
+ },
  "1253500": {
   "entityType": "other",
   "name": "ALLISON R DIRK",
@@ -1375,9 +1964,19 @@
   "name": "IZZO RALPH",
   "tickers": []
  },
+ "1259313": {
+  "entityType": "other",
+  "name": "ARES MANAGEMENT LLC",
+  "tickers": []
+ },
  "1259767": {
   "entityType": "other",
   "name": "KEOWN MICHAEL H",
+  "tickers": []
+ },
+ "1261919": {
+  "entityType": "other",
+  "name": "MINAMI W D",
   "tickers": []
  },
  "1261966": {
@@ -1412,6 +2011,11 @@
   "name": "BALL KRISTINE M",
   "tickers": []
  },
+ "1266395": {
+  "entityType": "other",
+  "name": "KISSAM LUTHER C IV",
+  "tickers": []
+ },
  "1266609": {
   "entityType": "other",
   "name": "WILCOX REED N",
@@ -1424,6 +2028,13 @@
    "VANI"
   ]
  },
+ "1267565": {
+  "entityType": "operating",
+  "name": "COLLEGIUM PHARMACEUTICAL, INC",
+  "tickers": [
+   "COLL"
+  ]
+ },
  "1268517": {
   "entityType": "other",
   "name": "BARNES KEITH",
@@ -1434,9 +2045,19 @@
   "name": "MCGRATH DENNIS M",
   "tickers": []
  },
+ "1270735": {
+  "entityType": "other",
+  "name": "ROEDER DOUGLAS A",
+  "tickers": []
+ },
  "1271016": {
   "entityType": "other",
   "name": "ALLEN WILLIAM B JR",
+  "tickers": []
+ },
+ "1271324": {
+  "entityType": "other",
+  "name": "PARKER JACQUELINE F",
   "tickers": []
  },
  "1271848": {
@@ -1480,6 +2101,11 @@
    "MKTX"
   ]
  },
+ "1278800": {
+  "entityType": "other",
+  "name": "JOHNSON TIMOTHY A",
+  "tickers": []
+ },
  "1279296": {
   "entityType": "other",
   "name": "KEVIL PHILLIP R",
@@ -1511,9 +2137,31 @@
   "name": "KAPPLER ANN M",
   "tickers": []
  },
+ "1282224": {
+  "entityType": "operating",
+  "name": "Dolphin Entertainment, Inc.",
+  "tickers": [
+   "DLPN"
+  ]
+ },
  "1282930": {
   "entityType": "other",
   "name": "GORDON CARL L",
+  "tickers": []
+ },
+ "1283563": {
+  "entityType": "other",
+  "name": "BOSTON BYRON L",
+  "tickers": []
+ },
+ "1284591": {
+  "entityType": "other",
+  "name": "HORNBECK TODD M",
+  "tickers": []
+ },
+ "1284602": {
+  "entityType": "other",
+  "name": "CLARKE JAMES J",
   "tickers": []
  },
  "1286043": {
@@ -1560,6 +2208,23 @@
    "MORN"
   ]
  },
+ "1290037": {
+  "entityType": "other",
+  "name": "Lowe Carol P",
+  "tickers": []
+ },
+ "1291855": {
+  "entityType": "other",
+  "name": "SuperCom Ltd",
+  "tickers": [
+   "SPCB"
+  ]
+ },
+ "1291981": {
+  "entityType": "other",
+  "name": "Diddell Wendy",
+  "tickers": []
+ },
  "1292592": {
   "entityType": "other",
   "name": "Leitch Andrew M",
@@ -1568,6 +2233,11 @@
  "1294357": {
   "entityType": "other",
   "name": "Barry John F",
+  "tickers": []
+ },
+ "1295084": {
+  "entityType": "other",
+  "name": "Shriram Kavitark Ram",
   "tickers": []
  },
  "1295834": {
@@ -1604,9 +2274,19 @@
    "AX"
   ]
  },
+ "1303829": {
+  "entityType": "other",
+  "name": "Grinberg Paul",
+  "tickers": []
+ },
  "1304395": {
   "entityType": "other",
   "name": "Bitterman Robert J",
+  "tickers": []
+ },
+ "1307061": {
+  "entityType": "other",
+  "name": "Halverson Bradley M",
   "tickers": []
  },
  "1307581": {
@@ -1614,9 +2294,24 @@
   "name": "SANTI ERNEST SCOTT",
   "tickers": []
  },
+ "1307744": {
+  "entityType": "other",
+  "name": "Swift Jane",
+  "tickers": []
+ },
+ "1307939": {
+  "entityType": "other",
+  "name": "Kerin Andrew Charles",
+  "tickers": []
+ },
  "1309219": {
   "entityType": "other",
   "name": "Stone West Mary E",
+  "tickers": []
+ },
+ "1309611": {
+  "entityType": "other",
+  "name": "BEINDORFF MICHAEL A",
   "tickers": []
  },
  "1313666": {
@@ -1633,6 +2328,13 @@
   "entityType": "other",
   "name": "Pintoff Scott",
   "tickers": []
+ },
+ "1314727": {
+  "entityType": "operating",
+  "name": "Sonos Inc",
+  "tickers": [
+   "SONO"
+  ]
  },
  "1314824": {
   "entityType": "other",
@@ -1659,6 +2361,16 @@
  "1316204": {
   "entityType": "other",
   "name": "Harris Angelee",
+  "tickers": []
+ },
+ "1316254": {
+  "entityType": "other",
+  "name": "Santi Roque A",
+  "tickers": []
+ },
+ "1316627": {
+  "entityType": "other",
+  "name": "Raymond Paul C",
   "tickers": []
  },
  "1317345": {
@@ -1705,9 +2417,19 @@
   "name": "Williams Thomas",
   "tickers": []
  },
+ "1320928": {
+  "entityType": "other",
+  "name": "Ward Thomas J",
+  "tickers": []
+ },
  "1320929": {
   "entityType": "other",
   "name": "Zubretsky Joseph M",
+  "tickers": []
+ },
+ "1321400": {
+  "entityType": "other",
+  "name": "DePinto Joseph Michael",
   "tickers": []
  },
  "1321655": {
@@ -1720,6 +2442,16 @@
  "1322028": {
   "entityType": "other",
   "name": "Smith Cathy R",
+  "tickers": []
+ },
+ "1322083": {
+  "entityType": "other",
+  "name": "Fox Alex J",
+  "tickers": []
+ },
+ "1322402": {
+  "entityType": "other",
+  "name": "Klein Mark D",
   "tickers": []
  },
  "1322745": {
@@ -1751,6 +2483,11 @@
   "name": "Mansueto Joseph D",
   "tickers": []
  },
+ "1325533": {
+  "entityType": "other",
+  "name": "Red Oak Partners, LLC",
+  "tickers": []
+ },
  "1325702": {
   "entityType": "operating",
   "name": "MAGNACHIP SEMICONDUCTOR Corp",
@@ -1770,6 +2507,11 @@
   "name": "KEAN STEVEN J",
   "tickers": []
  },
+ "1328417": {
+  "entityType": "other",
+  "name": "Brinkworth Douglas",
+  "tickers": []
+ },
  "1328742": {
   "entityType": "other",
   "name": "Fernald Lauri E",
@@ -1784,6 +2526,13 @@
   "entityType": "other",
   "name": "Zinsner David",
   "tickers": []
+ },
+ "1331875": {
+  "entityType": "operating",
+  "name": "Fidelity National Financial, Inc.",
+  "tickers": [
+   "FNF"
+  ]
  },
  "1332448": {
   "entityType": "other",
@@ -1856,6 +2605,16 @@
    "FF"
   ]
  },
+ "1338249": {
+  "entityType": "other",
+  "name": "Kober John",
+  "tickers": []
+ },
+ "1338351": {
+  "entityType": "other",
+  "name": "Atkinson Tracy A",
+  "tickers": []
+ },
  "1338627": {
   "entityType": "other",
   "name": "Taffe Norman P",
@@ -1869,6 +2628,11 @@
  "1339396": {
   "entityType": "other",
   "name": "Global GP LLC",
+  "tickers": []
+ },
+ "1339734": {
+  "entityType": "other",
+  "name": "Cummings Kevin",
   "tickers": []
  },
  "1340476": {
@@ -1885,9 +2649,31 @@
    "ALDX"
   ]
  },
+ "1345943": {
+  "entityType": "other",
+  "name": "Vintz Stephen A",
+  "tickers": []
+ },
+ "1347123": {
+  "entityType": "operating",
+  "name": "EBR Systems, Inc.",
+  "tickers": [
+   "EBRCZ"
+  ]
+ },
  "1347709": {
   "entityType": "other",
   "name": "Wenger E Philip",
+  "tickers": []
+ },
+ "1348355": {
+  "entityType": "other",
+  "name": "Lalor Angela S",
+  "tickers": []
+ },
+ "1349356": {
+  "entityType": "other",
+  "name": "Swift Christopher",
   "tickers": []
  },
  "1349688": {
@@ -1901,6 +2687,11 @@
   "tickers": [
    "ATEC"
   ]
+ },
+ "1350689": {
+  "entityType": "other",
+  "name": "Gravelle Michael L",
+  "tickers": []
  },
  "1351689": {
   "entityType": "other",
@@ -1942,6 +2733,11 @@
   "name": "Burns Richard John",
   "tickers": []
  },
+ "1359490": {
+  "entityType": "other",
+  "name": "SIEKERKA MICHELE N",
+  "tickers": []
+ },
  "1359579": {
   "entityType": "other",
   "name": "Gerson Gary",
@@ -1950,6 +2746,11 @@
  "1361379": {
   "entityType": "other",
   "name": "Fennebresque Kim S",
+  "tickers": []
+ },
+ "1361712": {
+  "entityType": "other",
+  "name": "Stampacchia Otello",
   "tickers": []
  },
  "1361935": {
@@ -2008,12 +2809,27 @@
    "ALLT"
   ]
  },
+ "1366331": {
+  "entityType": "other",
+  "name": "Hayford Michael D",
+  "tickers": []
+ },
+ "1366412": {
+  "entityType": "other",
+  "name": "Goldberg Michael",
+  "tickers": []
+ },
  "1366868": {
   "entityType": "operating",
   "name": "Globalstar, Inc.",
   "tickers": [
    "GSAT"
   ]
+ },
+ "1366946": {
+  "entityType": "other",
+  "name": "WINKELRIED JON",
+  "tickers": []
  },
  "1368054": {
   "entityType": "other",
@@ -2032,6 +2848,13 @@
    "SBH"
   ]
  },
+ "1368514": {
+  "entityType": "operating",
+  "name": "ADMA BIOLOGICS, INC.",
+  "tickers": [
+   "ADMA"
+  ]
+ },
  "1372612": {
   "entityType": "operating",
   "name": "BOX INC",
@@ -2043,6 +2866,16 @@
  "1373178": {
   "entityType": "other",
   "name": "Zur Nieden Clifford",
+  "tickers": []
+ },
+ "1373630": {
+  "entityType": "other",
+  "name": "Kapoor Rohit",
+  "tickers": []
+ },
+ "1373631": {
+  "entityType": "other",
+  "name": "Kini Narasimha",
   "tickers": []
  },
  "1373633": {
@@ -2062,6 +2895,13 @@
   "name": "Arvia Anne L",
   "tickers": []
  },
+ "1374690": {
+  "entityType": "operating",
+  "name": "Larimar Therapeutics, Inc.",
+  "tickers": [
+   "LRMR"
+  ]
+ },
  "1374831": {
   "entityType": "other",
   "name": "Blackburn Jeffrey M",
@@ -2078,6 +2918,11 @@
  "1375681": {
   "entityType": "other",
   "name": "Tewksbury Ted L III",
+  "tickers": []
+ },
+ "1375909": {
+  "entityType": "other",
+  "name": "Evans David C",
   "tickers": []
  },
  "1377144": {
@@ -2104,6 +2949,11 @@
   "name": "Soder Douglas L",
   "tickers": []
  },
+ "1382072": {
+  "entityType": "other",
+  "name": "Samuelson Errol G",
+  "tickers": []
+ },
  "1382617": {
   "entityType": "other",
   "name": "O'Shea Robert J",
@@ -2113,6 +2963,13 @@
   "entityType": "other",
   "name": "Limongelli Victor",
   "tickers": []
+ },
+ "1384195": {
+  "entityType": "operating",
+  "name": "RING ENERGY, INC.",
+  "tickers": [
+   "REI"
+  ]
  },
  "1384550": {
   "entityType": "other",
@@ -2150,9 +3007,38 @@
   "name": "Gentle Meg",
   "tickers": []
  },
+ "1389250": {
+  "entityType": "other",
+  "name": "Barua Neil",
+  "tickers": []
+ },
+ "1390194": {
+  "entityType": "other",
+  "name": "Musslewhite Robert W",
+  "tickers": []
+ },
  "1390764": {
   "entityType": "other",
   "name": "McConnell Michael J",
+  "tickers": []
+ },
+ "1391437": {
+  "entityType": "other",
+  "name": "Gabelli Healthcare & WellnessRx Trust",
+  "tickers": [
+   "GRX"
+  ]
+ },
+ "1391933": {
+  "entityType": "operating",
+  "name": "QUAINT OAK BANCORP, INC.",
+  "tickers": [
+   "QNTO"
+  ]
+ },
+ "1393007": {
+  "entityType": "other",
+  "name": "Woods Lori A",
   "tickers": []
  },
  "1393311": {
@@ -2209,6 +3095,26 @@
    "OSS"
   ]
  },
+ "1396698": {
+  "entityType": "other",
+  "name": "Hinchcliffe Dion",
+  "tickers": []
+ },
+ "1397261": {
+  "entityType": "other",
+  "name": "Red Oak Fund, LP",
+  "tickers": []
+ },
+ "1397331": {
+  "entityType": "other",
+  "name": "Williamson Robert F III",
+  "tickers": []
+ },
+ "1397947": {
+  "entityType": "other",
+  "name": "Robinson Teri",
+  "tickers": []
+ },
  "1398659": {
   "entityType": "operating",
   "name": "Genpact LTD",
@@ -2255,6 +3161,11 @@
   "name": "Azar Alex M II",
   "tickers": []
  },
+ "1402460": {
+  "entityType": "other",
+  "name": "Scadina Mark R",
+  "tickers": []
+ },
  "1403161": {
   "entityType": "operating",
   "name": "VISA INC.",
@@ -2277,6 +3188,18 @@
   "name": "Blackstone Group Management L.L.C.",
   "tickers": []
  },
+ "1404435": {
+  "entityType": "other",
+  "name": "Kuglin Michael",
+  "tickers": []
+ },
+ "1404655": {
+  "entityType": "operating",
+  "name": "HUBSPOT INC",
+  "tickers": [
+   "HUBS"
+  ]
+ },
  "1404912": {
   "entityType": "operating",
   "name": "KKR & Co. Inc.",
@@ -2286,6 +3209,11 @@
    "KKRS",
    "KKRT"
   ]
+ },
+ "1405109": {
+  "entityType": "other",
+  "name": "Su Lisa T",
+  "tickers": []
  },
  "1406386": {
   "entityType": "other",
@@ -2319,6 +3247,13 @@
   "name": "Peduzzi Michael D",
   "tickers": []
  },
+ "1410098": {
+  "entityType": "operating",
+  "name": "CorMedix Inc.",
+  "tickers": [
+   "CRMD"
+  ]
+ },
  "1410384": {
   "entityType": "operating",
   "name": "Q2 Holdings, Inc.",
@@ -2336,6 +3271,11 @@
   "name": "Moriarty Thomas M",
   "tickers": []
  },
+ "1412321": {
+  "entityType": "other",
+  "name": "Goodarzi Sasan K",
+  "tickers": []
+ },
  "1413447": {
   "entityType": "operating",
   "name": "NXP Semiconductors N.V.",
@@ -2348,14 +3288,34 @@
   "name": "Reisenauer Mark L",
   "tickers": []
  },
+ "1413612": {
+  "entityType": "other",
+  "name": "Edison Sheri H.",
+  "tickers": []
+ },
  "1413613": {
   "entityType": "other",
   "name": "Neuman Eric C",
   "tickers": []
  },
+ "1413726": {
+  "entityType": "other",
+  "name": "Leary Robert G",
+  "tickers": []
+ },
  "1414146": {
   "entityType": "other",
   "name": "Parrell Mark J.",
+  "tickers": []
+ },
+ "1414656": {
+  "entityType": "other",
+  "name": "Lee John Tseng-Chung",
+  "tickers": []
+ },
+ "1415303": {
+  "entityType": "other",
+  "name": "Brutto Daniel J",
   "tickers": []
  },
  "1417326": {
@@ -2367,6 +3327,13 @@
   "entityType": "other",
   "name": "Port Barry",
   "tickers": []
+ },
+ "1418121": {
+  "entityType": "operating",
+  "name": "Apple Hospitality REIT, Inc.",
+  "tickers": [
+   "APLE"
+  ]
  },
  "1418226": {
   "entityType": "other",
@@ -2400,10 +3367,22 @@
   "name": "SANI SURESH L",
   "tickers": []
  },
+ "1421339": {
+  "entityType": "other",
+  "name": "DeLuca Richard R.",
+  "tickers": []
+ },
  "1422024": {
   "entityType": "other",
   "name": "Leatherberry William J",
   "tickers": []
+ },
+ "1422143": {
+  "entityType": "operating",
+  "name": "Kura Oncology, Inc.",
+  "tickers": [
+   "KURA"
+  ]
  },
  "1422930": {
   "entityType": "operating",
@@ -2411,6 +3390,16 @@
   "tickers": [
    "PUBM"
   ]
+ },
+ "1423093": {
+  "entityType": "other",
+  "name": "Sandberg David",
+  "tickers": []
+ },
+ "1424201": {
+  "entityType": "other",
+  "name": "McClelland Bruce William",
+  "tickers": []
  },
  "1424688": {
   "entityType": "other",
@@ -2454,6 +3443,11 @@
    "ARR-PC"
   ]
  },
+ "1428396": {
+  "entityType": "other",
+  "name": "SMALLEY GARY G.",
+  "tickers": []
+ },
  "1428439": {
   "entityType": "operating",
   "name": "ROKU, INC",
@@ -2461,9 +3455,19 @@
    "ROKU"
   ]
  },
+ "1429244": {
+  "entityType": "other",
+  "name": "Ing Perry",
+  "tickers": []
+ },
  "1429920": {
   "entityType": "other",
   "name": "Bedell Donald C.",
+  "tickers": []
+ },
+ "1431838": {
+  "entityType": "other",
+  "name": "Hayley Kathryn",
   "tickers": []
  },
  "1432034": {
@@ -2495,11 +3499,28 @@
   "name": "Parker Herbert K",
   "tickers": []
  },
+ "1436840": {
+  "entityType": "other",
+  "name": "Brown Bruce",
+  "tickers": []
+ },
  "1437283": {
   "entityType": "operating",
   "name": "REGO PAYMENT ARCHITECTURES, INC.",
   "tickers": [
    "RPMT"
+  ]
+ },
+ "1437668": {
+  "entityType": "other",
+  "name": "John Moorhead",
+  "tickers": []
+ },
+ "1438423": {
+  "entityType": "operating",
+  "name": "EVERSPIN TECHNOLOGIES INC.",
+  "tickers": [
+   "MRAM"
   ]
  },
  "1441683": {
@@ -2509,9 +3530,26 @@
    "APPN"
   ]
  },
+ "1442145": {
+  "entityType": "operating",
+  "name": "Verisk Analytics, Inc.",
+  "tickers": [
+   "VRSK"
+  ]
+ },
+ "1442369": {
+  "entityType": "other",
+  "name": "Kelley Philip M",
+  "tickers": []
+ },
  "1443035": {
   "entityType": "other",
   "name": "Heshmatpour Amir F",
+  "tickers": []
+ },
+ "1443238": {
+  "entityType": "other",
+  "name": "Lillis Terrance",
   "tickers": []
  },
  "1443522": {
@@ -2519,9 +3557,34 @@
   "name": "NEXUS INDIA CAPITAL II LP",
   "tickers": []
  },
+ "1444238": {
+  "entityType": "other",
+  "name": "Avril Matthew E",
+  "tickers": []
+ },
  "1444319": {
   "entityType": "other",
   "name": "Nunn Jason Raleigh",
+  "tickers": []
+ },
+ "1444430": {
+  "entityType": "other",
+  "name": "Marion Elaine D",
+  "tickers": []
+ },
+ "1444856": {
+  "entityType": "other",
+  "name": "O'Keefe Amy K",
+  "tickers": []
+ },
+ "1445826": {
+  "entityType": "other",
+  "name": "Epstein David R",
+  "tickers": []
+ },
+ "1447258": {
+  "entityType": "other",
+  "name": "Cardinale Gerald J.",
   "tickers": []
  },
  "1447362": {
@@ -2544,6 +3607,11 @@
  "1449649": {
   "entityType": "other",
   "name": "Papermaster Mark D",
+  "tickers": []
+ },
+ "1450121": {
+  "entityType": "other",
+  "name": "Scanlon Neil",
   "tickers": []
  },
  "1450324": {
@@ -2571,6 +3639,11 @@
   "name": "Thomas John T",
   "tickers": []
  },
+ "1454623": {
+  "entityType": "other",
+  "name": "Capel Eddie",
+  "tickers": []
+ },
  "1454930": {
   "entityType": "other",
   "name": "Cromwell Thomas G",
@@ -2584,6 +3657,16 @@
  "1456921": {
   "entityType": "other",
   "name": "PRAGADA ROBERT V",
+  "tickers": []
+ },
+ "1459154": {
+  "entityType": "other",
+  "name": "Wahlstrom Mats",
+  "tickers": []
+ },
+ "1460217": {
+  "entityType": "other",
+  "name": "Liberman Alexander M.",
   "tickers": []
  },
  "1463826": {
@@ -2601,6 +3684,11 @@
  "1464695": {
   "entityType": "other",
   "name": "Blackstone Holdings I/II GP L.L.C.",
+  "tickers": []
+ },
+ "1464919": {
+  "entityType": "other",
+  "name": "Nick Mosich",
   "tickers": []
  },
  "1465128": {
@@ -2624,6 +3712,13 @@
   "entityType": "other",
   "name": "Solus GP LLC",
   "tickers": []
+ },
+ "1467623": {
+  "entityType": "operating",
+  "name": "DROPBOX, INC.",
+  "tickers": [
+   "DBX"
+  ]
  },
  "1468328": {
   "entityType": "operating",
@@ -2652,14 +3747,32 @@
   "name": "German Oscar Armando",
   "tickers": []
  },
+ "1469395": {
+  "entityType": "other",
+  "name": "Pampa Energy Inc.",
+  "tickers": [
+   "PAM",
+   "PPENF"
+  ]
+ },
  "1469468": {
   "entityType": "other",
   "name": "Ingram Bryan",
   "tickers": []
  },
+ "1469469": {
+  "entityType": "other",
+  "name": "Bettinger Douglas R",
+  "tickers": []
+ },
  "1470396": {
   "entityType": "other",
   "name": "Snapper Suzanne D.",
+  "tickers": []
+ },
+ "1471294": {
+  "entityType": "other",
+  "name": "Kaufmann Michael C",
   "tickers": []
  },
  "1472176": {
@@ -2703,6 +3816,13 @@
    "PRI"
   ]
  },
+ "1476150": {
+  "entityType": "operating",
+  "name": "Terreno Realty Corp",
+  "tickers": [
+   "TRNO"
+  ]
+ },
  "1476840": {
   "entityType": "operating",
   "name": "Expensify, Inc.",
@@ -2710,11 +3830,23 @@
    "EXFY"
   ]
  },
+ "1477037": {
+  "entityType": "other",
+  "name": "DO CUONG V",
+  "tickers": []
+ },
  "1477294": {
   "entityType": "operating",
   "name": "Sensata Technologies Holding plc",
   "tickers": [
    "ST"
+  ]
+ },
+ "1477333": {
+  "entityType": "operating",
+  "name": "Cloudflare, Inc.",
+  "tickers": [
+   "NET"
   ]
  },
  "1477815": {
@@ -2731,6 +3863,11 @@
    "ADPT"
   ]
  },
+ "1478560": {
+  "entityType": "other",
+  "name": "Fogarty Kevin Michael",
+  "tickers": []
+ },
  "1478669": {
   "entityType": "other",
   "name": "SMITH DAVID BYRON JR",
@@ -2744,6 +3881,11 @@
  "1479490": {
   "entityType": "other",
   "name": "Larson Robert Bruce",
+  "tickers": []
+ },
+ "1480330": {
+  "entityType": "other",
+  "name": "Hwang Donghyun Thomas",
   "tickers": []
  },
  "1480981": {
@@ -2801,12 +3943,22 @@
   "name": "Gavales Lisa A",
   "tickers": []
  },
+ "1490209": {
+  "entityType": "other",
+  "name": "Behl Nikhil",
+  "tickers": []
+ },
  "1490281": {
   "entityType": "operating",
   "name": "Groupon, Inc.",
   "tickers": [
    "GRPN"
   ]
+ },
+ "1490478": {
+  "entityType": "other",
+  "name": "Talton Sheila",
+  "tickers": []
  },
  "1490816": {
   "entityType": "other",
@@ -2828,6 +3980,11 @@
  "1491305": {
   "entityType": "other",
   "name": "Lipstein Steven H",
+  "tickers": []
+ },
+ "1491572": {
+  "entityType": "other",
+  "name": "Lewis Michael V",
   "tickers": []
  },
  "1491884": {
@@ -2852,9 +4009,31 @@
   "name": "Markscheid Stephen",
   "tickers": []
  },
+ "1495932": {
+  "entityType": "operating",
+  "name": "AGNT, Inc.",
+  "tickers": [
+   "AGNT"
+  ]
+ },
  "1496748": {
   "entityType": "other",
   "name": "Bhappu Ross R.",
+  "tickers": []
+ },
+ "1496772": {
+  "entityType": "other",
+  "name": "Smith Mark A.",
+  "tickers": []
+ },
+ "1496943": {
+  "entityType": "other",
+  "name": "Frantz Brian D",
+  "tickers": []
+ },
+ "1497561": {
+  "entityType": "other",
+  "name": "Allen Frances L.",
   "tickers": []
  },
  "1497770": {
@@ -2864,9 +4043,24 @@
    "WD"
   ]
  },
+ "1498132": {
+  "entityType": "other",
+  "name": "Agadi Harshavardhan V",
+  "tickers": []
+ },
+ "1498428": {
+  "entityType": "other",
+  "name": "Cox John",
+  "tickers": []
+ },
  "1498535": {
   "entityType": "other",
   "name": "MacLennan David",
+  "tickers": []
+ },
+ "1498992": {
+  "entityType": "other",
+  "name": "Burdick Kenneth A",
   "tickers": []
  },
  "1499092": {
@@ -2874,14 +4068,45 @@
   "name": "Blessing Jason",
   "tickers": []
  },
+ "1499494": {
+  "entityType": "other",
+  "name": "Eason Technology Ltd",
+  "tickers": [
+   "DXF"
+  ]
+ },
+ "1499505": {
+  "entityType": "other",
+  "name": "Adecoagro S.A.",
+  "tickers": [
+   "AGRO"
+  ]
+ },
+ "1500191": {
+  "entityType": "other",
+  "name": "Ratinoff Edward James",
+  "tickers": []
+ },
  "1500278": {
   "entityType": "other",
   "name": "Finley John G",
   "tickers": []
  },
+ "1500412": {
+  "entityType": "operating",
+  "name": "Ambiq Micro, Inc.",
+  "tickers": [
+   "AMBQ"
+  ]
+ },
  "1500899": {
   "entityType": "other",
   "name": "Rothrock Ray A.",
+  "tickers": []
+ },
+ "1501438": {
+  "entityType": "other",
+  "name": "Popenoe Smriti Laxman",
   "tickers": []
  },
  "1501573": {
@@ -2899,9 +4124,30 @@
   "name": "Taylor Ryan P.",
   "tickers": []
  },
+ "1501796": {
+  "entityType": "operating",
+  "name": "Aura Biosciences, Inc.",
+  "tickers": [
+   "AURA"
+  ]
+ },
  "1502858": {
   "entityType": "other",
   "name": "Wille Scott",
+  "tickers": []
+ },
+ "1504461": {
+  "entityType": "operating",
+  "name": "NGL Energy Partners LP",
+  "tickers": [
+   "NGL",
+   "NGL-PB",
+   "NGL-PC"
+  ]
+ },
+ "1504970": {
+  "entityType": "other",
+  "name": "Ramakrishna Sudhakar",
   "tickers": []
  },
  "1505155": {
@@ -2938,15 +4184,40 @@
   "name": "WELLS DAVID B",
   "tickers": []
  },
+ "1507650": {
+  "entityType": "other",
+  "name": "Zanganeh Mahkam",
+  "tickers": []
+ },
+ "1509470": {
+  "entityType": "operating",
+  "name": "Neostellar Capital Corp.",
+  "tickers": [
+   "NSLR",
+   "NSLRL"
+  ]
+ },
  "1510015": {
   "entityType": "other",
   "name": "Seager Richard B.",
+  "tickers": []
+ },
+ "1510064": {
+  "entityType": "other",
+  "name": "Marnick Samantha J.",
   "tickers": []
  },
  "1510281": {
   "entityType": "other",
   "name": "Saba Capital Management, L.P.",
   "tickers": []
+ },
+ "1510964": {
+  "entityType": "operating",
+  "name": "CV Sciences, Inc.",
+  "tickers": [
+   "CVSI"
+  ]
  },
  "1511194": {
   "entityType": "other",
@@ -3011,6 +4282,28 @@
    "VISN"
   ]
  },
+ "1517450": {
+  "entityType": "other",
+  "name": "JOHRI AKHIL",
+  "tickers": []
+ },
+ "1517518": {
+  "entityType": "other",
+  "name": "ClearBridge Energy Midstream Opportunity Fund Inc.",
+  "tickers": [
+   "EMO"
+  ]
+ },
+ "1517804": {
+  "entityType": "other",
+  "name": "COURT JAMES JOHN",
+  "tickers": []
+ },
+ "1517890": {
+  "entityType": "other",
+  "name": "Hall Patricia Hemingway",
+  "tickers": []
+ },
  "1518451": {
   "entityType": "other",
   "name": "Shaw Brian Gordon",
@@ -3023,14 +4316,48 @@
    "MTDR"
   ]
  },
+ "1520776": {
+  "entityType": "other",
+  "name": "O'Dowd William IV",
+  "tickers": []
+ },
+ "1521332": {
+  "entityType": "operating",
+  "name": "Aptiv PLC",
+  "tickers": [
+   "APTV"
+  ]
+ },
  "1521374": {
   "entityType": "other",
   "name": "Emery Christina",
   "tickers": []
  },
+ "1522484": {
+  "entityType": "other",
+  "name": "Conrad Thomas",
+  "tickers": []
+ },
  "1523145": {
   "entityType": "other",
   "name": "Newell Eric R",
+  "tickers": []
+ },
+ "1524316": {
+  "entityType": "other",
+  "name": "Beitel David A.",
+  "tickers": []
+ },
+ "1524358": {
+  "entityType": "operating",
+  "name": "MARRIOTT VACATIONS WORLDWIDE Corp",
+  "tickers": [
+   "VAC"
+  ]
+ },
+ "1524788": {
+  "entityType": "other",
+  "name": "Olson Jon W",
   "tickers": []
  },
  "1525221": {
@@ -3050,12 +4377,39 @@
   "name": "Suriano Douglas A",
   "tickers": []
  },
+ "1528185": {
+  "entityType": "other",
+  "name": "Torley Helen",
+  "tickers": []
+ },
+ "1528396": {
+  "entityType": "operating",
+  "name": "Guidewire Software, Inc.",
+  "tickers": [
+   "GWRE"
+  ]
+ },
+ "1529312": {
+  "entityType": "other",
+  "name": "Argalas James S",
+  "tickers": []
+ },
+ "1529460": {
+  "entityType": "other",
+  "name": "Brown Thomas Lynn",
+  "tickers": []
+ },
  "1529864": {
   "entityType": "operating",
   "name": "Enova International, Inc.",
   "tickers": [
    "ENVA"
   ]
+ },
+ "1530048": {
+  "entityType": "other",
+  "name": "Guo Yi",
+  "tickers": []
  },
  "1530084": {
   "entityType": "other",
@@ -3107,12 +4461,35 @@
   "name": "Green Equity Investors Side VI, L.P.",
   "tickers": []
  },
+ "1532619": {
+  "entityType": "operating",
+  "name": "Power REIT",
+  "tickers": [
+   "PW",
+   "PW-PA"
+  ]
+ },
  "1533040": {
   "entityType": "operating",
   "name": "Phio Pharmaceuticals Corp.",
   "tickers": [
    "PHIO"
   ]
+ },
+ "1534001": {
+  "entityType": "other",
+  "name": "Duva Jason A",
+  "tickers": []
+ },
+ "1534787": {
+  "entityType": "other",
+  "name": "Hinshaw John M",
+  "tickers": []
+ },
+ "1535419": {
+  "entityType": "other",
+  "name": "Holzer Sunita",
+  "tickers": []
  },
  "1535527": {
   "entityType": "operating",
@@ -3127,6 +4504,16 @@
   "tickers": [
    "LPCN"
   ]
+ },
+ "1536588": {
+  "entityType": "other",
+  "name": "AJB Investment Fund II, LP",
+  "tickers": []
+ },
+ "1536937": {
+  "entityType": "other",
+  "name": "Ares Management Holdings L.P.",
+  "tickers": []
  },
  "1538379": {
   "entityType": "operating",
@@ -3165,14 +4552,36 @@
   "name": "Balkan Andrea Sue",
   "tickers": []
  },
+ "1542517": {
+  "entityType": "other",
+  "name": "Grossman Adam S",
+  "tickers": []
+ },
  "1542605": {
   "entityType": "other",
   "name": "Jeffrey William Alan",
   "tickers": []
  },
+ "1543151": {
+  "entityType": "operating",
+  "name": "Uber Technologies, Inc",
+  "tickers": [
+   "UBER"
+  ]
+ },
  "1543401": {
   "entityType": "other",
   "name": "Brubaker Brad",
+  "tickers": []
+ },
+ "1543503": {
+  "entityType": "other",
+  "name": "Kennedy Keith",
+  "tickers": []
+ },
+ "1543841": {
+  "entityType": "other",
+  "name": "Coniglio Anthony",
   "tickers": []
  },
  "1544202": {
@@ -3201,6 +4610,11 @@
   "tickers": [
    "NMIH"
   ]
+ },
+ "1548007": {
+  "entityType": "other",
+  "name": "NORCROSS PHILIP A",
+  "tickers": []
  },
  "1548094": {
   "entityType": "other",
@@ -3283,6 +4697,11 @@
   "name": "SYREK MICHAEL A",
   "tickers": []
  },
+ "1554353": {
+  "entityType": "other",
+  "name": "Guiheen Lawrence P.",
+  "tickers": []
+ },
  "1555318": {
   "entityType": "other",
   "name": "Miscik Judith A",
@@ -3335,6 +4754,11 @@
   "name": "GRAY DIEDRE J",
   "tickers": []
  },
+ "1558255": {
+  "entityType": "other",
+  "name": "Charlton Kevin M.",
+  "tickers": []
+ },
  "1558676": {
   "entityType": "other",
   "name": "Eldessouky Sam",
@@ -3346,6 +4770,11 @@
   "tickers": [
    "PRTA"
   ]
+ },
+ "1559208": {
+  "entityType": "other",
+  "name": "Salmon Tom",
+  "tickers": []
  },
  "1559370": {
   "entityType": "other",
@@ -3371,9 +4800,47 @@
    "ABNB"
   ]
  },
+ "1560148": {
+  "entityType": "other",
+  "name": "Chanin Matthew J",
+  "tickers": []
+ },
+ "1560258": {
+  "entityType": "operating",
+  "name": "electroCore, Inc.",
+  "tickers": [
+   "ECOR"
+  ]
+ },
+ "1560327": {
+  "entityType": "operating",
+  "name": "Rapid7, Inc.",
+  "tickers": [
+   "RPD"
+  ]
+ },
+ "1560385": {
+  "entityType": "operating",
+  "name": "Liberty Media Corp",
+  "tickers": [
+   "FWONA",
+   "FWONK",
+   "FWONB"
+  ]
+ },
+ "1560945": {
+  "entityType": "other",
+  "name": "Elmiger Eugen J",
+  "tickers": []
+ },
  "1561858": {
   "entityType": "other",
   "name": "SPARKS ROSE",
+  "tickers": []
+ },
+ "1562549": {
+  "entityType": "other",
+  "name": "Davis Cindy L",
   "tickers": []
  },
  "1563190": {
@@ -3382,6 +4849,11 @@
   "tickers": [
    "COMP"
   ]
+ },
+ "1563623": {
+  "entityType": "other",
+  "name": "Gengos Andrew",
+  "tickers": []
  },
  "1563786": {
   "entityType": "other",
@@ -3424,9 +4896,21 @@
    "TONX"
   ]
  },
+ "1567094": {
+  "entityType": "operating",
+  "name": "CNH Industrial N.V.",
+  "tickers": [
+   "CNH"
+  ]
+ },
  "1567675": {
   "entityType": "other",
   "name": "Shepherd Brian A.",
+  "tickers": []
+ },
+ "1568592": {
+  "entityType": "other",
+  "name": "Peterson Bradley J",
   "tickers": []
  },
  "1568921": {
@@ -3446,6 +4930,16 @@
    "AHRT",
    "AHRT-PA"
   ]
+ },
+ "1569769": {
+  "entityType": "other",
+  "name": "Soni Manmeet Singh",
+  "tickers": []
+ },
+ "1570020": {
+  "entityType": "other",
+  "name": "Sudhir Srivastava",
+  "tickers": []
  },
  "1570284": {
   "entityType": "other",
@@ -3490,10 +4984,22 @@
    "ICE"
   ]
  },
+ "1572451": {
+  "entityType": "other",
+  "name": "Bonita David P",
+  "tickers": []
+ },
  "1572846": {
   "entityType": "other",
   "name": "Vong John",
   "tickers": []
+ },
+ "1573221": {
+  "entityType": "operating",
+  "name": "TheRealReal, Inc.",
+  "tickers": [
+   "REAL"
+  ]
  },
  "1573235": {
   "entityType": "other",
@@ -3512,6 +5018,11 @@
    "ADXN"
   ]
  },
+ "1574626": {
+  "entityType": "other",
+  "name": "Golder Jill",
+  "tickers": []
+ },
  "1575999": {
   "entityType": "other",
   "name": "Tolston Alex J",
@@ -3529,6 +5040,11 @@
   "name": "Hood Amy",
   "tickers": []
  },
+ "1578492": {
+  "entityType": "other",
+  "name": "Connolly Michael Colin",
+  "tickers": []
+ },
  "1579348": {
   "entityType": "other",
   "name": "VELTRI KATHY E",
@@ -3541,6 +5057,11 @@
    "VITL"
   ]
  },
+ "1579836": {
+  "entityType": "other",
+  "name": "Katz Philippe D",
+  "tickers": []
+ },
  "1579872": {
   "entityType": "other",
   "name": "Patel Mahesh V.",
@@ -3551,6 +5072,14 @@
   "name": "Figma, Inc.",
   "tickers": [
    "FIG"
+  ]
+ },
+ "1580149": {
+  "entityType": "operating",
+  "name": "BIOVIE INC.",
+  "tickers": [
+   "BIVI",
+   "BIVIW"
   ]
  },
  "1580560": {
@@ -3565,9 +5094,26 @@
   "name": "Boratto Eva C",
   "tickers": []
  },
+ "1580949": {
+  "entityType": "other",
+  "name": "Curless Michael S",
+  "tickers": []
+ },
+ "1581280": {
+  "entityType": "operating",
+  "name": "Twist Bioscience Corp",
+  "tickers": [
+   "TWST"
+  ]
+ },
  "1581655": {
   "entityType": "other",
   "name": "Alpine Global Management, LLC",
+  "tickers": []
+ },
+ "1583107": {
+  "entityType": "operating",
+  "name": "Theravance Biopharma, Inc.",
   "tickers": []
  },
  "1583109": {
@@ -3581,6 +5127,16 @@
   "tickers": [
    "S"
   ]
+ },
+ "1584349": {
+  "entityType": "other",
+  "name": "Fitzgerald John Taylor Maloney",
+  "tickers": []
+ },
+ "1584637": {
+  "entityType": "other",
+  "name": "Killefer Nancy",
+  "tickers": []
  },
  "1585689": {
   "entityType": "operating",
@@ -3609,6 +5165,16 @@
   "name": "Burton Eve B",
   "tickers": []
  },
+ "1587373": {
+  "entityType": "other",
+  "name": "Morgan Jonathan",
+  "tickers": []
+ },
+ "1588004": {
+  "entityType": "other",
+  "name": "Dennehy Robert",
+  "tickers": []
+ },
  "1588014": {
   "entityType": "operating",
   "name": "ADM ENDEAVORS, INC.",
@@ -3619,6 +5185,23 @@
  "1588395": {
   "entityType": "other",
   "name": "Mayersohn Joel David",
+  "tickers": []
+ },
+ "1589061": {
+  "entityType": "operating",
+  "name": "Gyrodyne, LLC",
+  "tickers": [
+   "GYRO"
+  ]
+ },
+ "1589597": {
+  "entityType": "other",
+  "name": "WILSON TROY EDWARD",
+  "tickers": []
+ },
+ "1589776": {
+  "entityType": "other",
+  "name": "Brughera Marco Maria",
   "tickers": []
  },
  "1590197": {
@@ -3638,10 +5221,51 @@
   "name": "Vergis Janet S.",
   "tickers": []
  },
+ "1590858": {
+  "entityType": "other",
+  "name": "CLIFFORD TIM",
+  "tickers": []
+ },
+ "1590947": {
+  "entityType": "other",
+  "name": "WERNER ROBERT F.",
+  "tickers": []
+ },
+ "1590955": {
+  "entityType": "operating",
+  "name": "Paycom Software, Inc.",
+  "tickers": [
+   "PAYC"
+  ]
+ },
+ "1590976": {
+  "entityType": "operating",
+  "name": "MALIBU BOATS, INC.",
+  "tickers": [
+   "MBUU"
+  ]
+ },
  "1591294": {
   "entityType": "other",
   "name": "Yucca (Jersey) SLP",
   "tickers": []
+ },
+ "1591338": {
+  "entityType": "other",
+  "name": "Beck Charles",
+  "tickers": []
+ },
+ "1591372": {
+  "entityType": "other",
+  "name": "Carter Stefani D",
+  "tickers": []
+ },
+ "1591588": {
+  "entityType": "operating",
+  "name": "Gold.com, Inc.",
+  "tickers": [
+   "GOLD"
+  ]
  },
  "1591698": {
   "entityType": "operating",
@@ -3649,6 +5273,11 @@
   "tickers": [
    "PCTY"
   ]
+ },
+ "1592710": {
+  "entityType": "other",
+  "name": "Vadala Shawn",
+  "tickers": []
  },
  "1593123": {
   "entityType": "other",
@@ -3689,6 +5318,11 @@
   "name": "Stark Juergen M.",
   "tickers": []
  },
+ "1595703": {
+  "entityType": "other",
+  "name": "BOURLA ALBERT",
+  "tickers": []
+ },
  "1595974": {
   "entityType": "operating",
   "name": "MAGNITE, INC.",
@@ -3708,10 +5342,46 @@
   "name": "Sarowitz Steven I",
   "tickers": []
  },
+ "1597949": {
+  "entityType": "other",
+  "name": "Gunby Steven Henry",
+  "tickers": []
+ },
+ "1598108": {
+  "entityType": "other",
+  "name": "Morris Donna",
+  "tickers": []
+ },
+ "1598424": {
+  "entityType": "other",
+  "name": "Mazzei Michael",
+  "tickers": []
+ },
+ "1599298": {
+  "entityType": "operating",
+  "name": "Summit Therapeutics Inc.",
+  "tickers": [
+   "SMMT"
+  ]
+ },
+ "1600033": {
+  "entityType": "operating",
+  "name": "e.l.f. Beauty, Inc.",
+  "tickers": [
+   "ELF"
+  ]
+ },
  "1600353": {
   "entityType": "other",
   "name": "Weisbord Robert",
   "tickers": []
+ },
+ "1600620": {
+  "entityType": "operating",
+  "name": "Aurinia Pharmaceuticals Inc.",
+  "tickers": [
+   "AUPH"
+  ]
  },
  "1601481": {
   "entityType": "other",
@@ -3733,10 +5403,22 @@
   "name": "BYE STEPHEN J",
   "tickers": []
  },
+ "1603527": {
+  "entityType": "other",
+  "name": "Halligan Brian",
+  "tickers": []
+ },
  "1603955": {
   "entityType": "other",
   "name": "Osnoss Joseph",
   "tickers": []
+ },
+ "1603978": {
+  "entityType": "operating",
+  "name": "AQUABOUNTY TECHNOLOGIES INC",
+  "tickers": [
+   "AQB"
+  ]
  },
  "1604565": {
   "entityType": "other",
@@ -3750,10 +5432,32 @@
    "NTRA"
   ]
  },
+ "1604945": {
+  "entityType": "other",
+  "name": "Bloomstein Daniel S",
+  "tickers": []
+ },
+ "1605077": {
+  "entityType": "other",
+  "name": "Cohen Michael Daniel",
+  "tickers": []
+ },
+ "1605605": {
+  "entityType": "other",
+  "name": "Red Oak Long Fund, LP",
+  "tickers": []
+ },
  "1606410": {
   "entityType": "other",
   "name": "Smith Dylan C",
   "tickers": []
+ },
+ "1606909": {
+  "entityType": "operating",
+  "name": "Pangaea Logistics Solutions Ltd.",
+  "tickers": [
+   "PANL"
+  ]
  },
  "1607113": {
   "entityType": "other",
@@ -3797,6 +5501,11 @@
   "name": "Bauduin Val",
   "tickers": []
  },
+ "1610766": {
+  "entityType": "other",
+  "name": "Lazarus Edward P",
+  "tickers": []
+ },
  "1611052": {
   "entityType": "operating",
   "name": "PROCORE TECHNOLOGIES, INC.",
@@ -3836,6 +5545,13 @@
   "name": "Nicholas J. Calamari",
   "tickers": []
  },
+ "1616543": {
+  "entityType": "operating",
+  "name": "Senseonics Holdings, Inc.",
+  "tickers": [
+   "SENS"
+  ]
+ },
  "1616707": {
   "entityType": "operating",
   "name": "Wayfair Inc.",
@@ -3843,9 +5559,52 @@
    "W"
   ]
  },
+ "1617640": {
+  "entityType": "operating",
+  "name": "ZILLOW GROUP, INC.",
+  "tickers": [
+   "ZG",
+   "Z"
+  ]
+ },
+ "1618945": {
+  "entityType": "other",
+  "name": "Applebaum Scott",
+  "tickers": []
+ },
+ "1619679": {
+  "entityType": "other",
+  "name": "Schumacher Amy M",
+  "tickers": []
+ },
+ "1619690": {
+  "entityType": "other",
+  "name": "Hermann Daniel S",
+  "tickers": []
+ },
  "1619901": {
   "entityType": "other",
   "name": "McNab Paul",
+  "tickers": []
+ },
+ "1620052": {
+  "entityType": "other",
+  "name": "Conine Steven",
+  "tickers": []
+ },
+ "1620093": {
+  "entityType": "other",
+  "name": "Shah Niraj",
+  "tickers": []
+ },
+ "1620263": {
+  "entityType": "other",
+  "name": "Ares Partners Holdco LLC",
+  "tickers": []
+ },
+ "1620264": {
+  "entityType": "other",
+  "name": "Ares Management GP LLC",
   "tickers": []
  },
  "1620393": {
@@ -3854,6 +5613,11 @@
   "tickers": [
    "NXRT"
   ]
+ },
+ "1621420": {
+  "entityType": "other",
+  "name": "MITTAL MOHIT",
+  "tickers": []
  },
  "1621434": {
   "entityType": "operating",
@@ -3865,6 +5629,11 @@
  "1621668": {
   "entityType": "other",
   "name": "Holland C Malcolm III",
+  "tickers": []
+ },
+ "1621706": {
+  "entityType": "other",
+  "name": "Quinn Sean Edward",
   "tickers": []
  },
  "1622536": {
@@ -3884,6 +5653,11 @@
   "name": "Norrod Forrest Eugene",
   "tickers": []
  },
+ "1623063": {
+  "entityType": "other",
+  "name": "Morrison Brent",
+  "tickers": []
+ },
  "1623812": {
   "entityType": "other",
   "name": "Bower Steven R.",
@@ -3892,6 +5666,21 @@
  "1624651": {
   "entityType": "other",
   "name": "Indelicarto Thomas C",
+  "tickers": []
+ },
+ "1624919": {
+  "entityType": "other",
+  "name": "Williams Gregg",
+  "tickers": []
+ },
+ "1625775": {
+  "entityType": "other",
+  "name": "Kaltenbach Patrick",
+  "tickers": []
+ },
+ "1626201": {
+  "entityType": "other",
+  "name": "West Tony",
   "tickers": []
  },
  "1626219": {
@@ -3963,6 +5752,11 @@
   "name": "Martell Bridget A",
   "tickers": []
  },
+ "1629885": {
+  "entityType": "other",
+  "name": "Kramer Kelly A.",
+  "tickers": []
+ },
  "1630472": {
   "entityType": "operating",
   "name": "TPG RE Finance Trust, Inc.",
@@ -3978,6 +5772,11 @@
    "BW",
    "BW-PA"
   ]
+ },
+ "1631683": {
+  "entityType": "other",
+  "name": "Dada Uzair",
+  "tickers": []
  },
  "1632071": {
   "entityType": "other",
@@ -4043,6 +5842,16 @@
   "name": "SEQUOIA CAPITAL U.S. VENTURE PARTNERS FUND XV (Q), L.P.",
   "tickers": []
  },
+ "1636037": {
+  "entityType": "other",
+  "name": "de Oliveira Marques Roberto",
+  "tickers": []
+ },
+ "1636174": {
+  "entityType": "other",
+  "name": "Madon Michael P",
+  "tickers": []
+ },
  "1636187": {
   "entityType": "other",
   "name": "McGraner Matt",
@@ -4093,6 +5902,11 @@
    "SNOW"
   ]
  },
+ "1641063": {
+  "entityType": "other",
+  "name": "Deming David H",
+  "tickers": []
+ },
  "1641138": {
   "entityType": "other",
   "name": "Rouf Henrik",
@@ -4108,6 +5922,16 @@
  "1641925": {
   "entityType": "other",
   "name": "Unruh Jess",
+  "tickers": []
+ },
+ "1641965": {
+  "entityType": "other",
+  "name": "Macken Patrick W",
+  "tickers": []
+ },
+ "1642832": {
+  "entityType": "other",
+  "name": "Sutton Scott McDougald",
   "tickers": []
  },
  "1642896": {
@@ -4127,6 +5951,16 @@
   "name": "Devanur Giri",
   "tickers": []
  },
+ "1644148": {
+  "entityType": "other",
+  "name": "Stewart Derrick J",
+  "tickers": []
+ },
+ "1645424": {
+  "entityType": "other",
+  "name": "Marianos Stephanie S",
+  "tickers": []
+ },
  "1645756": {
   "entityType": "other",
   "name": "Doherty John N.",
@@ -4135,6 +5969,11 @@
  "1646649": {
   "entityType": "other",
   "name": "Sheena Jonathan",
+  "tickers": []
+ },
+ "1646760": {
+  "entityType": "other",
+  "name": "Lauber Scott J",
   "tickers": []
  },
  "1646763": {
@@ -4157,6 +5996,16 @@
  "1647222": {
   "entityType": "other",
   "name": "Lawton III Harry A",
+  "tickers": []
+ },
+ "1647486": {
+  "entityType": "other",
+  "name": "Thomas Corey E.",
+  "tickers": []
+ },
+ "1647550": {
+  "entityType": "other",
+  "name": "Parasnis Abhay",
   "tickers": []
  },
  "1647639": {
@@ -4222,9 +6071,51 @@
    "BEIGF"
   ]
  },
+ "1651496": {
+  "entityType": "other",
+  "name": "Diges Carmen L",
+  "tickers": []
+ },
+ "1651579": {
+  "entityType": "other",
+  "name": "Thurmond Mark C.",
+  "tickers": []
+ },
+ "1651631": {
+  "entityType": "other",
+  "name": "RUMSEY JENNIFER",
+  "tickers": []
+ },
+ "1652044": {
+  "entityType": "operating",
+  "name": "Alphabet Inc.",
+  "tickers": [
+   "GOOGL",
+   "GOOG",
+   "GOOGM",
+   "GOOGN"
+  ]
+ },
+ "1652535": {
+  "entityType": "operating",
+  "name": "ICHOR HOLDINGS, LTD.",
+  "tickers": [
+   "ICHR"
+  ]
+ },
  "1653153": {
   "entityType": "other",
   "name": "Silcock Christopher W",
+  "tickers": []
+ },
+ "1653286": {
+  "entityType": "other",
+  "name": "Walker Paul S",
+  "tickers": []
+ },
+ "1653487": {
+  "entityType": "other",
+  "name": "Cumming Christine M",
   "tickers": []
  },
  "1655210": {
@@ -4232,6 +6123,13 @@
   "name": "BEYOND MEAT, INC.",
   "tickers": [
    "BYND"
+  ]
+ },
+ "1655888": {
+  "entityType": "operating",
+  "name": "Blue Owl Capital Corp",
+  "tickers": [
+   "OBDC"
   ]
  },
  "1655923": {
@@ -4244,6 +6142,11 @@
  "1656592": {
   "entityType": "other",
   "name": "MOLLOY JOHN P",
+  "tickers": []
+ },
+ "1656998": {
+  "entityType": "other",
+  "name": "Azelby Robert",
   "tickers": []
  },
  "1657573": {
@@ -4264,6 +6167,28 @@
   "tickers": [
    "BSEM"
   ]
+ },
+ "1658711": {
+  "entityType": "other",
+  "name": "Onderdonk Keith P",
+  "tickers": []
+ },
+ "1659705": {
+  "entityType": "other",
+  "name": "Hall Mary Dean",
+  "tickers": []
+ },
+ "1660280": {
+  "entityType": "operating",
+  "name": "Tenable Holdings, Inc.",
+  "tickers": [
+   "TENB"
+  ]
+ },
+ "1661038": {
+  "entityType": "other",
+  "name": "Dierker Richard A",
+  "tickers": []
  },
  "1661059": {
   "entityType": "operating",
@@ -4309,11 +6234,28 @@
   "name": "Pollack Jonathan Lee",
   "tickers": []
  },
+ "1662967": {
+  "entityType": "other",
+  "name": "Joiner Cindy Jeannette",
+  "tickers": []
+ },
  "1662991": {
   "entityType": "operating",
   "name": "Sezzle Inc.",
   "tickers": [
    "SEZL"
+  ]
+ },
+ "1663155": {
+  "entityType": "other",
+  "name": "Nolan Michael Joseph",
+  "tickers": []
+ },
+ "1664710": {
+  "entityType": "operating",
+  "name": "Keros Therapeutics, Inc.",
+  "tickers": [
+   "KROS"
   ]
  },
  "1665149": {
@@ -4336,6 +6278,13 @@
   "name": "Sear Steven M",
   "tickers": []
  },
+ "1666700": {
+  "entityType": "operating",
+  "name": "DuPont de Nemours, Inc.",
+  "tickers": [
+   "DD"
+  ]
+ },
  "1666968": {
   "entityType": "other",
   "name": "TYRRELL NATHAN S",
@@ -4346,9 +6295,19 @@
   "name": "Fipps Paul",
   "tickers": []
  },
+ "1669058": {
+  "entityType": "other",
+  "name": "KNAVISH TIMOTHY M",
+  "tickers": []
+ },
  "1669081": {
   "entityType": "other",
   "name": "Watson Noel Bertram",
+  "tickers": []
+ },
+ "1669531": {
+  "entityType": "other",
+  "name": "Mawer Stephen P",
   "tickers": []
  },
  "1669811": {
@@ -4358,10 +6317,22 @@
    "DFIN"
   ]
  },
+ "1669983": {
+  "entityType": "other",
+  "name": "Ares Holdco LLC",
+  "tickers": []
+ },
  "1670481": {
   "entityType": "other",
   "name": "Klein Karin",
   "tickers": []
+ },
+ "1670541": {
+  "entityType": "operating",
+  "name": "Adient plc",
+  "tickers": [
+   "ADNT"
+  ]
  },
  "1670683": {
   "entityType": "other",
@@ -4373,12 +6344,22 @@
   "name": "Webb Carol",
   "tickers": []
  },
+ "1671728": {
+  "entityType": "other",
+  "name": "Dahdah Robert",
+  "tickers": []
+ },
  "1671933": {
   "entityType": "operating",
   "name": "Trade Desk, Inc.",
   "tickers": [
    "TTD"
   ]
+ },
+ "1671992": {
+  "entityType": "other",
+  "name": "Kaye Eric A.",
+  "tickers": []
  },
  "1672990": {
   "entityType": "other",
@@ -4389,6 +6370,13 @@
   "entityType": "other",
   "name": "POFF BRIAN",
   "tickers": []
+ },
+ "1673358": {
+  "entityType": "operating",
+  "name": "Yum China Holdings, Inc.",
+  "tickers": [
+   "YUMC"
+  ]
  },
  "1673743": {
   "entityType": "operating",
@@ -4436,6 +6424,23 @@
   "name": "Ball Titus B.",
   "tickers": []
  },
+ "1675736": {
+  "entityType": "other",
+  "name": "Bowers Thomas A.",
+  "tickers": []
+ },
+ "1676163": {
+  "entityType": "operating",
+  "name": "SS Innovations International, Inc.",
+  "tickers": [
+   "SSII"
+  ]
+ },
+ "1677141": {
+  "entityType": "other",
+  "name": "Kapadia Sandip",
+  "tickers": []
+ },
  "1678064": {
   "entityType": "other",
   "name": "ICONIQ Strategic Partners III, L.P.",
@@ -4473,14 +6478,46 @@
   "name": "PORTER JONATHAN",
   "tickers": []
  },
+ "1685295": {
+  "entityType": "other",
+  "name": "O'Daniel Julie Marie",
+  "tickers": []
+ },
+ "1685399": {
+  "entityType": "other",
+  "name": "Gardella David A",
+  "tickers": []
+ },
+ "1685591": {
+  "entityType": "other",
+  "name": "Ondrof Thomas Gerard",
+  "tickers": []
+ },
+ "1686017": {
+  "entityType": "other",
+  "name": "Hansen Kent A",
+  "tickers": []
+ },
  "1686963": {
   "entityType": "other",
   "name": "Train Michael H.",
   "tickers": []
  },
+ "1687229": {
+  "entityType": "operating",
+  "name": "Invitation Homes Inc.",
+  "tickers": [
+   "INVH"
+  ]
+ },
  "1687748": {
   "entityType": "other",
   "name": "Manolis Eva",
+  "tickers": []
+ },
+ "1687804": {
+  "entityType": "other",
+  "name": "Weaver Susan T",
   "tickers": []
  },
  "1687898": {
@@ -4508,6 +6545,11 @@
   "name": "Makan Divesh",
   "tickers": []
  },
+ "1689279": {
+  "entityType": "other",
+  "name": "Connors Terence J",
+  "tickers": []
+ },
  "1689411": {
   "entityType": "other",
   "name": "Pinczuk Ana G.",
@@ -4518,19 +6560,82 @@
   "name": "Ciardiello Steven",
   "tickers": []
  },
+ "1689739": {
+  "entityType": "other",
+  "name": "Pershing Edward",
+  "tickers": []
+ },
  "1690332": {
   "entityType": "other",
   "name": "Shea Jacqueline K",
   "tickers": []
+ },
+ "1692536": {
+  "entityType": "other",
+  "name": "Brown Timothy C. E.",
+  "tickers": []
+ },
+ "1692787": {
+  "entityType": "operating",
+  "name": "Kinetik Holdings Inc.",
+  "tickers": [
+   "KNTK"
+  ]
+ },
+ "1693256": {
+  "entityType": "operating",
+  "name": "Select Water Solutions, Inc.",
+  "tickers": [
+   "WTTR"
+  ]
+ },
+ "1693402": {
+  "entityType": "other",
+  "name": "Mulato James",
+  "tickers": []
+ },
+ "1693736": {
+  "entityType": "operating",
+  "name": "EquipmentShare.com Inc",
+  "tickers": [
+   "EQPT"
+  ]
  },
  "1695434": {
   "entityType": "other",
   "name": "Fendley Steven S.",
   "tickers": []
  },
+ "1695951": {
+  "entityType": "other",
+  "name": "Linares Carlos G.",
+  "tickers": []
+ },
+ "1696555": {
+  "entityType": "other",
+  "name": "Kandal Philipp Wolfgang Josef",
+  "tickers": []
+ },
  "1696663": {
   "entityType": "other",
   "name": "Cohn Andrew M.",
+  "tickers": []
+ },
+ "1697185": {
+  "entityType": "other",
+  "name": "Dorlack Jerome J.",
+  "tickers": []
+ },
+ "1697500": {
+  "entityType": "operating",
+  "name": "Solaris Energy Infrastructure, Inc.",
+  "tickers": [
+   "SEI"
+  ]
+ },
+ "1697616": {
+  "entityType": "other",
+  "name": "Lucera Erick",
   "tickers": []
  },
  "1698665": {
@@ -4548,6 +6653,13 @@
   "name": "Accel Entertainment, Inc.",
   "tickers": [
    "ACEL"
+  ]
+ },
+ "1699031": {
+  "entityType": "operating",
+  "name": "GRAIL, Inc.",
+  "tickers": [
+   "GRAL"
   ]
  },
  "1699150": {
@@ -4572,6 +6684,11 @@
   "name": "Conley Jason",
   "tickers": []
  },
+ "1699488": {
+  "entityType": "other",
+  "name": "Karnani Vikram",
+  "tickers": []
+ },
  "1699796": {
   "entityType": "other",
   "name": "Karon Adam",
@@ -4593,6 +6710,18 @@
   "tickers": [
    "SPRO"
   ]
+ },
+ "1701605": {
+  "entityType": "operating",
+  "name": "Baker Hughes Co",
+  "tickers": [
+   "BKR"
+  ]
+ },
+ "1702459": {
+  "entityType": "other",
+  "name": "Carlin Peter",
+  "tickers": []
  },
  "1702744": {
   "entityType": "operating",
@@ -4665,6 +6794,23 @@
    "CBUS"
   ]
  },
+ "1705850": {
+  "entityType": "other",
+  "name": "Gilliam Joseph E",
+  "tickers": []
+ },
+ "1706394": {
+  "entityType": "other",
+  "name": "Hornberger David Todd",
+  "tickers": []
+ },
+ "1706431": {
+  "entityType": "operating",
+  "name": "Vir Biotechnology, Inc.",
+  "tickers": [
+   "VIR"
+  ]
+ },
  "1707384": {
   "entityType": "other",
   "name": "Lynch Mark Steven",
@@ -4674,6 +6820,13 @@
   "entityType": "other",
   "name": "Friedrich Amy Christine",
   "tickers": []
+ },
+ "1708055": {
+  "entityType": "operating",
+  "name": "Ribbon Communications Inc.",
+  "tickers": [
+   "RBBN"
+  ]
  },
  "1709048": {
   "entityType": "other",
@@ -4687,12 +6840,22 @@
   "name": "DeBiase Christine M.",
   "tickers": []
  },
+ "1709160": {
+  "entityType": "other",
+  "name": "Simonelli Lorenzo",
+  "tickers": []
+ },
  "1709628": {
   "entityType": "operating",
   "name": "CLOUDASTRUCTURE, INC.",
   "tickers": [
    "CSAI"
   ]
+ },
+ "1709817": {
+  "entityType": "other",
+  "name": "Wacksman Jeremy",
+  "tickers": []
  },
  "1710072": {
   "entityType": "operating",
@@ -4745,6 +6908,13 @@
    "LILAP"
   ]
  },
+ "1712189": {
+  "entityType": "operating",
+  "name": "Target Hospitality Corp.",
+  "tickers": [
+   "TH"
+  ]
+ },
  "1712627": {
   "entityType": "other",
   "name": "Liu Deborah",
@@ -4764,6 +6934,16 @@
    "RDDT"
   ]
  },
+ "1713701": {
+  "entityType": "other",
+  "name": "Elmaliah Oren",
+  "tickers": []
+ },
+ "1713777": {
+  "entityType": "other",
+  "name": "O'Sullivan Michael J.",
+  "tickers": []
+ },
  "1714080": {
   "entityType": "other",
   "name": "Arjona Ferreira Juan Camilo",
@@ -4779,6 +6959,18 @@
   "name": "Wood Anthony J.",
   "tickers": []
  },
+ "1717067": {
+  "entityType": "other",
+  "name": "Sandler Yael",
+  "tickers": []
+ },
+ "1717547": {
+  "entityType": "operating",
+  "name": "BrightSpire Capital, Inc.",
+  "tickers": [
+   "BRSP"
+  ]
+ },
  "1717847": {
   "entityType": "other",
   "name": "Barry Andrea Jean",
@@ -4787,6 +6979,16 @@
  "1718249": {
   "entityType": "other",
   "name": "Rajeh Maamoun",
+  "tickers": []
+ },
+ "1718348": {
+  "entityType": "other",
+  "name": "Petrie Michael F.",
+  "tickers": []
+ },
+ "1718356": {
+  "entityType": "other",
+  "name": "Dury Michael R.",
   "tickers": []
  },
  "1718405": {
@@ -4800,6 +7002,11 @@
  "1718490": {
   "entityType": "other",
   "name": "Koors Jerry F.",
+  "tickers": []
+ },
+ "1718600": {
+  "entityType": "other",
+  "name": "Laroyia Varun",
   "tickers": []
  },
  "1718789": {
@@ -4848,9 +7055,29 @@
    "NVT"
   ]
  },
+ "1720721": {
+  "entityType": "other",
+  "name": "Marmurek Eric S",
+  "tickers": []
+ },
+ "1721029": {
+  "entityType": "other",
+  "name": "Skarke Michael",
+  "tickers": []
+ },
+ "1721965": {
+  "entityType": "other",
+  "name": "Boss John G.",
+  "tickers": []
+ },
  "1723339": {
   "entityType": "other",
   "name": "FERGUSON III MARK E",
+  "tickers": []
+ },
+ "1723433": {
+  "entityType": "other",
+  "name": "Swyt Greg",
   "tickers": []
  },
  "1723690": {
@@ -4916,9 +7143,31 @@
   "name": "Blankenship Charles P",
   "tickers": []
  },
+ "1728513": {
+  "entityType": "other",
+  "name": "Stikker Allerd D.",
+  "tickers": []
+ },
  "1728693": {
   "entityType": "other",
   "name": "Bruno Frank W",
+  "tickers": []
+ },
+ "1729173": {
+  "entityType": "other",
+  "name": "Uxin Ltd",
+  "tickers": [
+   "UXIN"
+  ]
+ },
+ "1729518": {
+  "entityType": "other",
+  "name": "Tan Irving",
+  "tickers": []
+ },
+ "1729886": {
+  "entityType": "other",
+  "name": "Katzman James C",
   "tickers": []
  },
  "1729988": {
@@ -4941,14 +7190,29 @@
   "name": "Brown David Craig",
   "tickers": []
  },
+ "1730978": {
+  "entityType": "other",
+  "name": "Fernandez Gomez Luciano",
+  "tickers": []
+ },
  "1732021": {
   "entityType": "other",
   "name": "McCauley Tim",
   "tickers": []
  },
+ "1732147": {
+  "entityType": "other",
+  "name": "Sartori Juan",
+  "tickers": []
+ },
  "1732984": {
   "entityType": "other",
   "name": "Zorn Rebecca E",
+  "tickers": []
+ },
+ "1733091": {
+  "entityType": "other",
+  "name": "Galvin Carmel",
   "tickers": []
  },
  "1733278": {
@@ -4961,6 +7225,11 @@
   "name": "Qiming Managing Directors Fund VI, L.P.",
   "tickers": []
  },
+ "1734563": {
+  "entityType": "other",
+  "name": "Houston Andrew",
+  "tickers": []
+ },
  "1734722": {
   "entityType": "operating",
   "name": "UiPath, Inc.",
@@ -4971,6 +7240,11 @@
  "1734897": {
   "entityType": "other",
   "name": "Boyle Tom",
+  "tickers": []
+ },
+ "1735929": {
+  "entityType": "other",
+  "name": "DeBiase Francesca A.",
   "tickers": []
  },
  "1735944": {
@@ -4995,6 +7269,11 @@
    "ARLO"
   ]
  },
+ "1737633": {
+  "entityType": "other",
+  "name": "Errico Thomas J.",
+  "tickers": []
+ },
  "1737652": {
   "entityType": "other",
   "name": "SLTA V (GP), L.L.C.",
@@ -5015,6 +7294,16 @@
  "1738093": {
   "entityType": "other",
   "name": "Abbate Salvatore A",
+  "tickers": []
+ },
+ "1739202": {
+  "entityType": "other",
+  "name": "Kitchell Ryan C",
+  "tickers": []
+ },
+ "1739859": {
+  "entityType": "other",
+  "name": "Creed Joseph E",
   "tickers": []
  },
  "1739876": {
@@ -5079,6 +7368,11 @@
   "name": "SC U.S. Venture XV Management, L.P.",
   "tickers": []
  },
+ "1743069": {
+  "entityType": "other",
+  "name": "Szymanski Brian",
+  "tickers": []
+ },
  "1743276": {
   "entityType": "other",
   "name": "SC U.S. Growth VIII Management, L.P.",
@@ -5093,6 +7387,21 @@
   "entityType": "other",
   "name": "Pisano Wayne",
   "tickers": []
+ },
+ "1743725": {
+  "entityType": "operating",
+  "name": "GRID DYNAMICS HOLDINGS, INC.",
+  "tickers": [
+   "GDYN"
+  ]
+ },
+ "1744676": {
+  "entityType": "other",
+  "name": "Tencent Music Entertainment Group",
+  "tickers": [
+   "TME",
+   "TCMEF"
+  ]
  },
  "1744684": {
   "entityType": "other",
@@ -5114,6 +7423,13 @@
   "name": "Burr Erin",
   "tickers": []
  },
+ "1745431": {
+  "entityType": "other",
+  "name": "StoneCo Ltd.",
+  "tickers": [
+   "STNE"
+  ]
+ },
  "1745888": {
   "entityType": "other",
   "name": "Keller Gerry",
@@ -5134,9 +7450,33 @@
   "name": "LUNA GINA",
   "tickers": []
  },
+ "1746967": {
+  "entityType": "other",
+  "name": "RiverNorth Opportunistic Municipal Income Fund, Inc.",
+  "tickers": [
+   "RMI"
+  ]
+ },
  "1747604": {
   "entityType": "other",
   "name": "Robinson Nathaniel",
+  "tickers": []
+ },
+ "1747777": {
+  "entityType": "operating",
+  "name": "Blue Owl Technology Finance Corp.",
+  "tickers": [
+   "OTF"
+  ]
+ },
+ "1748392": {
+  "entityType": "other",
+  "name": "Williams Timothy",
+  "tickers": []
+ },
+ "1748615": {
+  "entityType": "other",
+  "name": "Morich Frank",
   "tickers": []
  },
  "1749656": {
@@ -5168,6 +7508,21 @@
   "name": "Hollin Edward J.",
   "tickers": []
  },
+ "1753285": {
+  "entityType": "other",
+  "name": "Lane Jeannine J",
+  "tickers": []
+ },
+ "1753655": {
+  "entityType": "other",
+  "name": "Leproust Emily M.",
+  "tickers": []
+ },
+ "1753672": {
+  "entityType": "other",
+  "name": "Green Paula",
+  "tickers": []
+ },
  "1753712": {
   "entityType": "other",
   "name": "Lord Abbett Credit Opportunities Fund",
@@ -5175,9 +7530,19 @@
    "LARAX"
   ]
  },
+ "1754267": {
+  "entityType": "other",
+  "name": "Aarnes Robert B",
+  "tickers": []
+ },
  "1754423": {
   "entityType": "other",
   "name": "McGrew Matthew",
+  "tickers": []
+ },
+ "1754632": {
+  "entityType": "other",
+  "name": "Yoss Jennifer",
   "tickers": []
  },
  "1754862": {
@@ -5200,12 +7565,29 @@
   "name": "Index Venture Associates VI Ltd",
   "tickers": []
  },
+ "1755672": {
+  "entityType": "operating",
+  "name": "Corteva, Inc.",
+  "tickers": [
+   "CTVA"
+  ]
+ },
+ "1755970": {
+  "entityType": "other",
+  "name": "Finn Patrick John",
+  "tickers": []
+ },
  "1756908": {
   "entityType": "other",
   "name": "PIMCO Dynamic Income Strategy Fund",
   "tickers": [
    "PDX"
   ]
+ },
+ "1756991": {
+  "entityType": "other",
+  "name": "Goncalves Joana",
+  "tickers": []
  },
  "1758488": {
   "entityType": "operating",
@@ -5255,6 +7637,16 @@
    "KTB"
   ]
  },
+ "1761656": {
+  "entityType": "other",
+  "name": "Ares Voting LLC",
+  "tickers": []
+ },
+ "1761904": {
+  "entityType": "other",
+  "name": "Gobar Jacob",
+  "tickers": []
+ },
  "1762098": {
   "entityType": "other",
   "name": "AYYAPPAN AJAY",
@@ -5265,9 +7657,19 @@
   "name": "Braunegg George Gwyer",
   "tickers": []
  },
+ "1763047": {
+  "entityType": "other",
+  "name": "Schrenk Troy C.",
+  "tickers": []
+ },
  "1764225": {
   "entityType": "other",
   "name": "Taylor Timothy Evan",
+  "tickers": []
+ },
+ "1764279": {
+  "entityType": "other",
+  "name": "Dai Kun",
   "tickers": []
  },
  "1764897": {
@@ -5290,6 +7692,15 @@
   "name": "Pennant Group, Inc.",
   "tickers": [
    "PNTG"
+  ]
+ },
+ "1766478": {
+  "entityType": "operating",
+  "name": "Angel Oak Mortgage REIT, Inc.",
+  "tickers": [
+   "AOMR",
+   "AOMD",
+   "AOMN"
   ]
  },
  "1766963": {
@@ -5321,6 +7732,11 @@
    "LKNCY"
   ]
  },
+ "1767865": {
+  "entityType": "other",
+  "name": "Kunkel Ginger G",
+  "tickers": []
+ },
  "1768337": {
   "entityType": "other",
   "name": "Plott Ronald Todd",
@@ -5350,14 +7766,34 @@
    "TXG"
   ]
  },
+ "1770991": {
+  "entityType": "other",
+  "name": "Koepke Bryon L",
+  "tickers": []
+ },
  "1771330": {
   "entityType": "other",
   "name": "Plaines Stephanie",
   "tickers": []
  },
+ "1771362": {
+  "entityType": "other",
+  "name": "Steimberg Amichai",
+  "tickers": []
+ },
  "1771587": {
   "entityType": "other",
   "name": "McClaflin Michael Joseph",
+  "tickers": []
+ },
+ "1771759": {
+  "entityType": "other",
+  "name": "Deppe Michael J",
+  "tickers": []
+ },
+ "1771798": {
+  "entityType": "other",
+  "name": "Spaulding Dan",
   "tickers": []
  },
  "1771826": {
@@ -5380,6 +7816,18 @@
  "1774022": {
   "entityType": "other",
   "name": "BARKER BRIAN",
+  "tickers": []
+ },
+ "1774170": {
+  "entityType": "operating",
+  "name": "Powerfleet, Inc.",
+  "tickers": [
+   "AIOT"
+  ]
+ },
+ "1774807": {
+  "entityType": "other",
+  "name": "Todisco Joseph",
   "tickers": []
  },
  "1774857": {
@@ -5406,6 +7854,11 @@
   "name": "Aboelnaga Mona",
   "tickers": []
  },
+ "1776393": {
+  "entityType": "other",
+  "name": "Khwaja Omar",
+  "tickers": []
+ },
  "1776929": {
   "entityType": "other",
   "name": "De Witte Jan",
@@ -5414,6 +7867,11 @@
  "1777036": {
   "entityType": "other",
   "name": "Arnold Zena Srivatsa",
+  "tickers": []
+ },
+ "1777085": {
+  "entityType": "other",
+  "name": "Marte Mario Jesus",
   "tickers": []
  },
  "1777328": {
@@ -5466,9 +7924,24 @@
   "name": "GHOSH SOURAV",
   "tickers": []
  },
+ "1780551": {
+  "entityType": "other",
+  "name": "Sahi Levesque Rati",
+  "tickers": []
+ },
  "1780664": {
   "entityType": "other",
   "name": "RUBINSTEIN JULIE",
+  "tickers": []
+ },
+ "1780940": {
+  "entityType": "other",
+  "name": "Lo Steve Ming",
+  "tickers": []
+ },
+ "1781021": {
+  "entityType": "other",
+  "name": "Huang Jian James",
   "tickers": []
  },
  "1781051": {
@@ -5488,12 +7961,24 @@
    "OTIS"
   ]
  },
+ "1781730": {
+  "entityType": "operating",
+  "name": "Third Coast Bancshares, Inc.",
+  "tickers": [
+   "TCBX"
+  ]
+ },
  "1782303": {
   "entityType": "operating",
   "name": "Boundless Bio, Inc.",
   "tickers": [
    "BOLD"
   ]
+ },
+ "1782502": {
+  "entityType": "other",
+  "name": "Willsher Martyn",
+  "tickers": []
  },
  "1783464": {
   "entityType": "other",
@@ -5533,6 +8018,11 @@
   "tickers": [
    "BETA"
   ]
+ },
+ "1784996": {
+  "entityType": "other",
+  "name": "Rosenbaum Michael George",
+  "tickers": []
  },
  "1785797": {
   "entityType": "other",
@@ -5575,6 +8065,16 @@
   "name": "Ehrman Monika U",
   "tickers": []
  },
+ "1786926": {
+  "entityType": "other",
+  "name": "Suder Katrin",
+  "tickers": []
+ },
+ "1787292": {
+  "entityType": "other",
+  "name": "Bohlig Tamara N",
+  "tickers": []
+ },
  "1787353": {
   "entityType": "other",
   "name": "Ning Hongjun",
@@ -5592,12 +8092,48 @@
   "name": "ICONIQ Strategic Partners III TT GP, Ltd.",
   "tickers": []
  },
+ "1788882": {
+  "entityType": "operating",
+  "name": "Root, Inc.",
+  "tickers": [
+   "ROOT"
+  ]
+ },
+ "1789192": {
+  "entityType": "operating",
+  "name": "Nexentis Technologies Inc.",
+  "tickers": [
+   "NXTS"
+  ]
+ },
+ "1789720": {
+  "entityType": "other",
+  "name": "WEITMAN GARY",
+  "tickers": []
+ },
+ "1790340": {
+  "entityType": "operating",
+  "name": "Immuneering Corp",
+  "tickers": [
+   "IMRX"
+  ]
+ },
+ "1790681": {
+  "entityType": "other",
+  "name": "Smith Gregory Scott",
+  "tickers": []
+ },
  "1792580": {
   "entityType": "operating",
   "name": "Ovintiv Inc.",
   "tickers": [
    "OVV"
   ]
+ },
+ "1792846": {
+  "entityType": "other",
+  "name": "Roth Ambra R.",
+  "tickers": []
  },
  "1793229": {
   "entityType": "operating",
@@ -5621,6 +8157,11 @@
   "name": "TUCKER DAVID W.",
   "tickers": []
  },
+ "1793548": {
+  "entityType": "other",
+  "name": "ASOF Investment Management LLC",
+  "tickers": []
+ },
  "1793663": {
   "entityType": "other",
   "name": "VTEX",
@@ -5642,6 +8183,14 @@
   "entityType": "other",
   "name": "Rubenstein Andrew H.",
   "tickers": []
+ },
+ "1794669": {
+  "entityType": "operating",
+  "name": "Shift4 Payments, Inc.",
+  "tickers": [
+   "FOUR",
+   "FOUR-PA"
+  ]
  },
  "1794783": {
   "entityType": "operating",
@@ -5695,6 +8244,11 @@
   "name": "MORRIS SUSAN",
   "tickers": []
  },
+ "1797917": {
+  "entityType": "other",
+  "name": "Prener Anne",
+  "tickers": []
+ },
  "1797932": {
   "entityType": "other",
   "name": "DHANDA ANUJ",
@@ -5741,6 +8295,20 @@
   "name": "Anders Jack",
   "tickers": []
  },
+ "1801198": {
+  "entityType": "other",
+  "name": "Legend Biotech Corp",
+  "tickers": [
+   "LEGN"
+  ]
+ },
+ "1801368": {
+  "entityType": "operating",
+  "name": "MP Materials Corp. / DE",
+  "tickers": [
+   "MP"
+  ]
+ },
  "1801732": {
   "entityType": "other",
   "name": "Nottebohm Olivia",
@@ -5751,14 +8319,38 @@
   "name": "Kirkham Michael Ryan",
   "tickers": []
  },
+ "1802156": {
+  "entityType": "operating",
+  "name": "Xponential Fitness, Inc.",
+  "tickers": [
+   "XPOF"
+  ]
+ },
  "1802419": {
   "entityType": "other",
   "name": "Phelan Robert J.",
   "tickers": []
  },
+ "1802646": {
+  "entityType": "other",
+  "name": "Niederpruem Gary John",
+  "tickers": []
+ },
+ "1802883": {
+  "entityType": "other",
+  "name": "Agora, Inc.",
+  "tickers": [
+   "API"
+  ]
+ },
  "1803038": {
   "entityType": "other",
   "name": "Sweet Leah",
+  "tickers": []
+ },
+ "1803860": {
+  "entityType": "other",
+  "name": "King David Arnold",
   "tickers": []
  },
  "1804176": {
@@ -5820,14 +8412,44 @@
    "EVLV"
   ]
  },
+ "1805630": {
+  "entityType": "other",
+  "name": "Lauber David Taylor",
+  "tickers": []
+ },
+ "1805673": {
+  "entityType": "other",
+  "name": "Gryzlov Yury",
+  "tickers": []
+ },
  "1805735": {
   "entityType": "other",
   "name": "Courtemanche Craig F. Jr.",
   "tickers": []
  },
+ "1806159": {
+  "entityType": "other",
+  "name": "Kennedy Joseph Jude",
+  "tickers": []
+ },
+ "1806183": {
+  "entityType": "other",
+  "name": "Rubin Shmuel",
+  "tickers": []
+ },
+ "1806935": {
+  "entityType": "other",
+  "name": "STROSAHL JOHN",
+  "tickers": []
+ },
  "1807367": {
   "entityType": "other",
   "name": "Cradic Amy",
+  "tickers": []
+ },
+ "1807721": {
+  "entityType": "other",
+  "name": "Gallagher Karen Catherine",
   "tickers": []
  },
  "1807940": {
@@ -5853,6 +8475,23 @@
  "1808744": {
   "entityType": "other",
   "name": "OrbiMed Genesis GP LLC",
+  "tickers": []
+ },
+ "1809519": {
+  "entityType": "operating",
+  "name": "GoodRx Holdings, Inc.",
+  "tickers": [
+   "GDRX"
+  ]
+ },
+ "1809539": {
+  "entityType": "other",
+  "name": "Caldwell Jonathan L.",
+  "tickers": []
+ },
+ "1809747": {
+  "entityType": "other",
+  "name": "Semerjian Harout",
   "tickers": []
  },
  "1810228": {
@@ -5896,12 +8535,22 @@
   "name": "Schwarting Elizabeth M",
   "tickers": []
  },
+ "1814189": {
+  "entityType": "other",
+  "name": "Kerr Douglas",
+  "tickers": []
+ },
  "1816017": {
   "entityType": "operating",
   "name": "Spire Global, Inc.",
   "tickers": [
    "SPIR"
   ]
+ },
+ "1816171": {
+  "entityType": "other",
+  "name": "Ferencz Garrett",
+  "tickers": []
  },
  "1816505": {
   "entityType": "other",
@@ -5920,6 +8569,11 @@
    "OUST"
   ]
  },
+ "1817414": {
+  "entityType": "other",
+  "name": "George Christopher Kile",
+  "tickers": []
+ },
  "1817513": {
   "entityType": "other",
   "name": "Papapostolou Ted",
@@ -5935,6 +8589,13 @@
   "name": "MediaAlpha, Inc.",
   "tickers": [
    "MAX"
+  ]
+ },
+ "1818794": {
+  "entityType": "operating",
+  "name": "Dyne Therapeutics, Inc.",
+  "tickers": [
+   "DYN"
   ]
  },
  "1818810": {
@@ -5971,6 +8632,11 @@
  "1821332": {
   "entityType": "other",
   "name": "Howard David E",
+  "tickers": []
+ },
+ "1821820": {
+  "entityType": "other",
+  "name": "Beggs Jamie A.",
   "tickers": []
  },
  "1821825": {
@@ -6043,6 +8709,21 @@
   "name": "Stucki Aaron Kyle",
   "tickers": []
  },
+ "1824854": {
+  "entityType": "other",
+  "name": "Bucci Sam",
+  "tickers": []
+ },
+ "1824876": {
+  "entityType": "other",
+  "name": "Odell Jamie",
+  "tickers": []
+ },
+ "1825242": {
+  "entityType": "other",
+  "name": "Korsanos Antonia",
+  "tickers": []
+ },
  "1825257": {
   "entityType": "other",
   "name": "Andre Werner",
@@ -6072,6 +8753,29 @@
   "tickers": [
    "TIMB"
   ]
+ },
+ "1826667": {
+  "entityType": "operating",
+  "name": "TriSalus Life Sciences, Inc.",
+  "tickers": [
+   "TLSI",
+   "TLSIW"
+  ]
+ },
+ "1827166": {
+  "entityType": "other",
+  "name": "Tiltmann Heather M",
+  "tickers": []
+ },
+ "1827198": {
+  "entityType": "other",
+  "name": "Laponis Adam",
+  "tickers": []
+ },
+ "1827353": {
+  "entityType": "other",
+  "name": "Brennan Michelle",
+  "tickers": []
  },
  "1827633": {
   "entityType": "other",
@@ -6133,9 +8837,31 @@
    "CARE"
   ]
  },
+ "1829864": {
+  "entityType": "operating",
+  "name": "TaskUs, Inc.",
+  "tickers": [
+   "TASK"
+  ]
+ },
  "1829969": {
   "entityType": "other",
   "name": "Yeh Kuanling Amy",
+  "tickers": []
+ },
+ "1830033": {
+  "entityType": "operating",
+  "name": "PureCycle Technologies, Inc.",
+  "tickers": [
+   "PCT",
+   "PCTBP",
+   "PCTTU",
+   "PCTTW"
+  ]
+ },
+ "1830472": {
+  "entityType": "other",
+  "name": "Chen Minlei",
   "tickers": []
  },
  "1830830": {
@@ -6153,6 +8879,11 @@
   "name": "Mahaney Allison Rebecca",
   "tickers": []
  },
+ "1831686": {
+  "entityType": "other",
+  "name": "Corbett Ryan",
+  "tickers": []
+ },
  "1831907": {
   "entityType": "other",
   "name": "LuxExperience B.V.",
@@ -6163,6 +8894,16 @@
  "1832812": {
   "entityType": "other",
   "name": "Gu Paul",
+  "tickers": []
+ },
+ "1832883": {
+  "entityType": "other",
+  "name": "Probert Todd",
+  "tickers": []
+ },
+ "1833116": {
+  "entityType": "other",
+  "name": "Cleffi Francesca",
   "tickers": []
  },
  "1833465": {
@@ -6212,6 +8953,25 @@
   "name": "Jacobovitz Shalom",
   "tickers": []
  },
+ "1835632": {
+  "entityType": "operating",
+  "name": "Marvell Technology, Inc.",
+  "tickers": [
+   "MRVL"
+  ]
+ },
+ "1835654": {
+  "entityType": "other",
+  "name": "Innoviz Technologies Ltd.",
+  "tickers": [
+   "INVZ"
+  ]
+ },
+ "1835674": {
+  "entityType": "other",
+  "name": "Sheeran Josette",
+  "tickers": []
+ },
  "1835830": {
   "entityType": "operating",
   "name": "Klaviyo, Inc.",
@@ -6251,12 +9011,47 @@
   "name": "Zang Saul",
   "tickers": []
  },
+ "1837149": {
+  "entityType": "other",
+  "name": "Dibadj Ali",
+  "tickers": []
+ },
  "1837607": {
   "entityType": "operating",
   "name": "AEON Biopharma, Inc.",
   "tickers": [
    "AEON"
   ]
+ },
+ "1837798": {
+  "entityType": "other",
+  "name": "Robertson Stephen P.",
+  "tickers": []
+ },
+ "1839074": {
+  "entityType": "other",
+  "name": "Geiser Edward",
+  "tickers": []
+ },
+ "1839077": {
+  "entityType": "other",
+  "name": "Schmidt Joshua",
+  "tickers": []
+ },
+ "1839103": {
+  "entityType": "other",
+  "name": "Juniper Capital III GP, L.P.",
+  "tickers": []
+ },
+ "1839104": {
+  "entityType": "other",
+  "name": "Juniper Capital II GP, L.P.",
+  "tickers": []
+ },
+ "1839323": {
+  "entityType": "other",
+  "name": "HAY JEFFERY TIM",
+  "tickers": []
  },
  "1839341": {
   "entityType": "operating",
@@ -6272,6 +9067,13 @@
   "entityType": "other",
   "name": "Crotwell Jim",
   "tickers": []
+ },
+ "1840706": {
+  "entityType": "other",
+  "name": "SOPHiA GENETICS SA",
+  "tickers": [
+   "SOPH"
+  ]
  },
  "1840776": {
   "entityType": "operating",
@@ -6299,6 +9101,28 @@
    "RPC"
   ]
  },
+ "1841994": {
+  "entityType": "other",
+  "name": "Alexander Lee",
+  "tickers": []
+ },
+ "1842279": {
+  "entityType": "operating",
+  "name": "OPAL Fuels Inc.",
+  "tickers": [
+   "OPAL"
+  ]
+ },
+ "1842694": {
+  "entityType": "other",
+  "name": "Tannenbaum Robyn",
+  "tickers": []
+ },
+ "1843236": {
+  "entityType": "other",
+  "name": "Zhao Bin",
+  "tickers": []
+ },
  "1843714": {
   "entityType": "operating",
   "name": "Zapata Quantum, Inc.",
@@ -6325,6 +9149,11 @@
   "name": "Johnson Jennifer Amy",
   "tickers": []
  },
+ "1844600": {
+  "entityType": "other",
+  "name": "Pettiti Gianluca",
+  "tickers": []
+ },
  "1845257": {
   "entityType": "operating",
   "name": "LifeStance Health Group, Inc.",
@@ -6337,6 +9166,13 @@
   "name": "Alpine Partners (BVI), L.P.",
   "tickers": []
  },
+ "1845338": {
+  "entityType": "other",
+  "name": "monday.com Ltd.",
+  "tickers": [
+   "MNDY"
+  ]
+ },
  "1845827": {
   "entityType": "other",
   "name": "Boone Cornelius",
@@ -6347,9 +9183,21 @@
   "name": "Fullen Elliot K.",
   "tickers": []
  },
+ "1846576": {
+  "entityType": "operating",
+  "name": "FIGS, Inc.",
+  "tickers": [
+   "FIGS"
+  ]
+ },
  "1847014": {
   "entityType": "other",
   "name": "Rollins Emily",
+  "tickers": []
+ },
+ "1847066": {
+  "entityType": "other",
+  "name": "Musa Fernando",
   "tickers": []
  },
  "1847178": {
@@ -6360,6 +9208,11 @@
  "1847224": {
   "entityType": "other",
   "name": "McLaughlin Steven J.",
+  "tickers": []
+ },
+ "1847339": {
+  "entityType": "other",
+  "name": "Daniele Tiffany F.",
   "tickers": []
  },
  "1847839": {
@@ -6379,6 +9232,11 @@
    "VRNO"
   ]
  },
+ "1848483": {
+  "entityType": "other",
+  "name": "Bellezza Alisha",
+  "tickers": []
+ },
  "1848554": {
   "entityType": "other",
   "name": "Hirsh David Z.",
@@ -6389,12 +9247,22 @@
   "name": "Soderstrom Gustav",
   "tickers": []
  },
+ "1848873": {
+  "entityType": "other",
+  "name": "Narang Mahesh",
+  "tickers": []
+ },
  "1849056": {
   "entityType": "operating",
   "name": "Oklo Inc.",
   "tickers": [
    "OKLO"
   ]
+ },
+ "1849436": {
+  "entityType": "other",
+  "name": "Kalifi Udi Ovadia",
+  "tickers": []
  },
  "1849454": {
   "entityType": "other",
@@ -6416,6 +9284,11 @@
    "STVN"
   ]
  },
+ "1850260": {
+  "entityType": "other",
+  "name": "Dagan Douglas",
+  "tickers": []
+ },
  "1851003": {
   "entityType": "operating",
   "name": "Zeta Global Holdings Corp.",
@@ -6423,11 +9296,23 @@
    "ZETA"
   ]
  },
+ "1851031": {
+  "entityType": "other",
+  "name": "WILSON LIAM DANIEL",
+  "tickers": []
+ },
  "1851484": {
   "entityType": "operating",
   "name": "CITIUS ONCOLOGY, INC.",
   "tickers": [
    "CTOR"
+  ]
+ },
+ "1851491": {
+  "entityType": "operating",
+  "name": "AMASS BRANDS",
+  "tickers": [
+   "AMSS"
   ]
  },
  "1851564": {
@@ -6448,6 +9333,16 @@
  "1853617": {
   "entityType": "other",
   "name": "glassman steven mark",
+  "tickers": []
+ },
+ "1853624": {
+  "entityType": "other",
+  "name": "Saville Kendall",
+  "tickers": []
+ },
+ "1853985": {
+  "entityType": "other",
+  "name": "Charles Faith L.",
   "tickers": []
  },
  "1854167": {
@@ -6477,10 +9372,30 @@
   "name": "Nexus India Management II, L.P.",
   "tickers": []
  },
+ "1854964": {
+  "entityType": "operating",
+  "name": "NewLake Capital Partners, Inc.",
+  "tickers": [
+   "NLCP"
+  ]
+ },
+ "1855171": {
+  "entityType": "other",
+  "name": "Sanchez Monique",
+  "tickers": []
+ },
  "1855299": {
   "entityType": "other",
   "name": "Lord Abbett Corporate Opportunities Fund",
   "tickers": []
+ },
+ "1855474": {
+  "entityType": "operating",
+  "name": "AirJoule Technologies Corp.",
+  "tickers": [
+   "AIRJ",
+   "AIRJW"
+  ]
  },
  "1855612": {
   "entityType": "other",
@@ -6488,6 +9403,13 @@
   "tickers": [
    "GRAB",
    "GRABW"
+  ]
+ },
+ "1856031": {
+  "entityType": "operating",
+  "name": "Vivid Seats Inc.",
+  "tickers": [
+   "SEAT"
   ]
  },
  "1856366": {
@@ -6498,6 +9420,11 @@
  "1856542": {
   "entityType": "other",
   "name": "Juvenal Tobin W",
+  "tickers": []
+ },
+ "1856545": {
+  "entityType": "other",
+  "name": "Stith Thomas A. III",
   "tickers": []
  },
  "1857038": {
@@ -6520,6 +9447,11 @@
   "name": "Roche Corleen M.",
   "tickers": []
  },
+ "1858646": {
+  "entityType": "other",
+  "name": "Meeker Matt",
+  "tickers": []
+ },
  "1858681": {
   "entityType": "operating",
   "name": "Apollo Global Management, Inc.",
@@ -6540,12 +9472,22 @@
   "name": "Slocum William J",
   "tickers": []
  },
+ "1859805": {
+  "entityType": "other",
+  "name": "Morrissey Joseph T. Jr.",
+  "tickers": []
+ },
  "1860543": {
   "entityType": "operating",
   "name": "Cadre Holdings, Inc.",
   "tickers": [
    "CDRE"
   ]
+ },
+ "1860803": {
+  "entityType": "other",
+  "name": "Black Travis",
+  "tickers": []
  },
  "1860941": {
   "entityType": "other",
@@ -6574,6 +9516,14 @@
   "name": "Kang Eric P",
   "tickers": []
  },
+ "1861737": {
+  "entityType": "other",
+  "name": "Hesai Group",
+  "tickers": [
+   "HSAI",
+   "HSIGF"
+  ]
+ },
  "1861974": {
   "entityType": "other",
   "name": "ECARX Holdings Inc.",
@@ -6587,6 +9537,11 @@
   "name": "Orgel Rob",
   "tickers": []
  },
+ "1862094": {
+  "entityType": "other",
+  "name": "Johnson Jarrod",
+  "tickers": []
+ },
  "1862680": {
   "entityType": "other",
   "name": "Wallis-Lage Cindy L.",
@@ -6595,6 +9550,11 @@
  "1862791": {
   "entityType": "other",
   "name": "Levine Jonathan L",
+  "tickers": []
+ },
+ "1862946": {
+  "entityType": "other",
+  "name": "King David R.",
   "tickers": []
  },
  "1864193": {
@@ -6629,9 +9589,29 @@
   "name": "Ravella Satish",
   "tickers": []
  },
+ "1865291": {
+  "entityType": "other",
+  "name": "Energy Evolution Master Fund, Ltd.",
+  "tickers": []
+ },
  "1865531": {
   "entityType": "other",
   "name": "Pardo Ryan",
+  "tickers": []
+ },
+ "1865691": {
+  "entityType": "other",
+  "name": "Ard Amy E",
+  "tickers": []
+ },
+ "1865858": {
+  "entityType": "other",
+  "name": "Wade Claude E.",
+  "tickers": []
+ },
+ "1866122": {
+  "entityType": "other",
+  "name": "DeMilia David M",
   "tickers": []
  },
  "1866145": {
@@ -6652,9 +9632,26 @@
    "BULLW"
   ]
  },
+ "1866675": {
+  "entityType": "other",
+  "name": "Andres Dale",
+  "tickers": []
+ },
+ "1866692": {
+  "entityType": "operating",
+  "name": "Amplitude, Inc.",
+  "tickers": [
+   "AMPL"
+  ]
+ },
  "1866794": {
   "entityType": "other",
   "name": "Krause Justin",
+  "tickers": []
+ },
+ "1868343": {
+  "entityType": "other",
+  "name": "Hottinger Tyson",
   "tickers": []
  },
  "1869115": {
@@ -6689,6 +9686,11 @@
   "name": "Deardorf Caren",
   "tickers": []
  },
+ "1871355": {
+  "entityType": "other",
+  "name": "O'Connor Gavin M.",
+  "tickers": []
+ },
  "1872100": {
   "entityType": "other",
   "name": "Koss Jennifer G.",
@@ -6699,6 +9701,16 @@
   "name": "Kwon David",
   "tickers": []
  },
+ "1873242": {
+  "entityType": "other",
+  "name": "Carlet Michael",
+  "tickers": []
+ },
+ "1873961": {
+  "entityType": "other",
+  "name": "Cooper Arthur S.",
+  "tickers": []
+ },
  "1873985": {
   "entityType": "other",
   "name": "ALKIRE JOSEPH A",
@@ -6707,6 +9719,11 @@
  "1874169": {
   "entityType": "other",
   "name": "Browers Blaine",
+  "tickers": []
+ },
+ "1874814": {
+  "entityType": "other",
+  "name": "Erickson Joshua M",
   "tickers": []
  },
  "1875444": {
@@ -6738,6 +9755,11 @@
   "name": "Williams Brad",
   "tickers": []
  },
+ "1877589": {
+  "entityType": "other",
+  "name": "Samaha Eli",
+  "tickers": []
+ },
  "1877747": {
   "entityType": "other",
   "name": "Hill Patrick",
@@ -6755,6 +9777,21 @@
   "name": "Drumgoole Christopher",
   "tickers": []
  },
+ "1879699": {
+  "entityType": "other",
+  "name": "White Timothy N",
+  "tickers": []
+ },
+ "1880290": {
+  "entityType": "other",
+  "name": "Fey Lawrence",
+  "tickers": []
+ },
+ "1881781": {
+  "entityType": "other",
+  "name": "Krasner Andrew Jay",
+  "tickers": []
+ },
  "1882375": {
   "entityType": "other",
   "name": "CATOGGIO NICOLAS",
@@ -6763,6 +9800,16 @@
  "1882641": {
   "entityType": "other",
   "name": "Campbell Elizabeth S",
+  "tickers": []
+ },
+ "1882913": {
+  "entityType": "other",
+  "name": "Skates Spenser",
+  "tickers": []
+ },
+ "1883451": {
+  "entityType": "other",
+  "name": "Cho Dennis",
   "tickers": []
  },
  "1883581": {
@@ -6812,6 +9859,13 @@
   "name": "ROTTENBERG JULIE B",
   "tickers": []
  },
+ "1889109": {
+  "entityType": "other",
+  "name": "BELITE BIO, INC",
+  "tickers": [
+   "BLTE"
+  ]
+ },
  "1889123": {
   "entityType": "operating",
   "name": "Fold Holdings, Inc.",
@@ -6841,6 +9895,21 @@
  "1891273": {
   "entityType": "other",
   "name": "Breland Benjamin T.",
+  "tickers": []
+ },
+ "1891853": {
+  "entityType": "other",
+  "name": "Caraway Bart",
+  "tickers": []
+ },
+ "1892397": {
+  "entityType": "other",
+  "name": "Howe Jill Ann",
+  "tickers": []
+ },
+ "1894578": {
+  "entityType": "other",
+  "name": "Sankara Nandini",
   "tickers": []
  },
  "1894643": {
@@ -6905,6 +9974,36 @@
   "name": "Rajavelu Esther",
   "tickers": []
  },
+ "1903793": {
+  "entityType": "other",
+  "name": "TPG GP A, LLC",
+  "tickers": []
+ },
+ "1903968": {
+  "entityType": "other",
+  "name": "Paul Alison Kenney",
+  "tickers": []
+ },
+ "1904404": {
+  "entityType": "other",
+  "name": "I Squared Capital, LLC",
+  "tickers": []
+ },
+ "1904413": {
+  "entityType": "other",
+  "name": "ISQ Holdings, LLC",
+  "tickers": []
+ },
+ "1904934": {
+  "entityType": "other",
+  "name": "ISQ Global Fund II GP LLC",
+  "tickers": []
+ },
+ "1905293": {
+  "entityType": "other",
+  "name": "Hood Ramona",
+  "tickers": []
+ },
  "1906616": {
   "entityType": "other",
   "name": "Nexus Ventures Management Holdings, LLC",
@@ -6947,6 +10046,11 @@
   "name": "IXL Ltd Liability Co",
   "tickers": []
  },
+ "1909539": {
+  "entityType": "other",
+  "name": "Murphy Scott M",
+  "tickers": []
+ },
  "1910025": {
   "entityType": "other",
   "name": "Qiming Venture Partners VIII-HC, L.P.",
@@ -6961,6 +10065,14 @@
   "entityType": "other",
   "name": "Topercer Benjamin James",
   "tickers": []
+ },
+ "1913847": {
+  "entityType": "other",
+  "name": "Coincheck Group N.V.",
+  "tickers": [
+   "CNCK",
+   "CNCKW"
+  ]
  },
  "1913920": {
   "entityType": "other",
@@ -6985,6 +10097,11 @@
  "1915550": {
   "entityType": "other",
   "name": "Rainwater Evan",
+  "tickers": []
+ },
+ "1915598": {
+  "entityType": "other",
+  "name": "Friedl-Naderer Johanna",
   "tickers": []
  },
  "1915657": {
@@ -7024,6 +10141,11 @@
  "1918701": {
   "entityType": "other",
   "name": "Toohey Robert",
+  "tickers": []
+ },
+ "1918805": {
+  "entityType": "other",
+  "name": "Buchert Brian D",
   "tickers": []
  },
  "1919492": {
@@ -7096,6 +10218,16 @@
   "name": "Choate Anne F",
   "tickers": []
  },
+ "1933113": {
+  "entityType": "other",
+  "name": "ASOF II Holdings I, L.P.",
+  "tickers": []
+ },
+ "1933136": {
+  "entityType": "other",
+  "name": "ASOF II A (DE) Holdings I, L.P.",
+  "tickers": []
+ },
  "1934245": {
   "entityType": "operating",
   "name": "Newton Golf Company, Inc.",
@@ -7112,6 +10244,11 @@
    "FGSN"
   ]
  },
+ "1935704": {
+  "entityType": "other",
+  "name": "Hamill Anna",
+  "tickers": []
+ },
  "1935707": {
   "entityType": "other",
   "name": "Mataac Lara",
@@ -7127,6 +10264,11 @@
   "name": "Longitude Venture Partners V, L.P.",
   "tickers": []
  },
+ "1936255": {
+  "entityType": "operating",
+  "name": "Four Leaf Acquisition Corp",
+  "tickers": []
+ },
  "1937073": {
   "entityType": "other",
   "name": "Calamos Aksia Alternative Credit & Income Fund",
@@ -7137,10 +10279,29 @@
   "name": "Fuchsberg Gilbert",
   "tickers": []
  },
+ "1937653": {
+  "entityType": "operating",
+  "name": "Zymeworks Inc.",
+  "tickers": [
+   "ZYME"
+  ]
+ },
+ "1938192": {
+  "entityType": "other",
+  "name": "Moore Paul Andrew",
+  "tickers": []
+ },
  "1938861": {
   "entityType": "other",
   "name": "Cook Meredith",
   "tickers": []
+ },
+ "1938865": {
+  "entityType": "other",
+  "name": "Nexpu Ltd.",
+  "tickers": [
+   "DPU"
+  ]
  },
  "1938943": {
   "entityType": "other",
@@ -7189,9 +10350,19 @@
    "SVCO"
   ]
  },
+ "1943551": {
+  "entityType": "other",
+  "name": "Banner Jonathan",
+  "tickers": []
+ },
  "1943565": {
   "entityType": "other",
   "name": "Martell Jorge Garcia",
+  "tickers": []
+ },
+ "1943784": {
+  "entityType": "other",
+  "name": "Fahnemann Thomas",
   "tickers": []
  },
  "1944401": {
@@ -7204,9 +10375,24 @@
   "name": "Thawley Michael",
   "tickers": []
  },
+ "1946705": {
+  "entityType": "other",
+  "name": "SGK 2018 REVOCABLE TRUST",
+  "tickers": []
+ },
+ "1946842": {
+  "entityType": "other",
+  "name": "Mann Elizabeth",
+  "tickers": []
+ },
  "1948678": {
   "entityType": "other",
   "name": "Rimer Daniel H.",
+  "tickers": []
+ },
+ "1949513": {
+  "entityType": "other",
+  "name": "MARTIN WILLIAM E. III",
   "tickers": []
  },
  "1950052": {
@@ -7268,9 +10454,19 @@
   "name": "Gilstrap Doug",
   "tickers": []
  },
+ "1956657": {
+  "entityType": "other",
+  "name": "Conklin James",
+  "tickers": []
+ },
  "1957129": {
   "entityType": "other",
   "name": "Zornio Peter",
+  "tickers": []
+ },
+ "1957568": {
+  "entityType": "other",
+  "name": "Wong Ann Ping Richard",
   "tickers": []
  },
  "19584": {
@@ -7280,9 +10476,24 @@
    "CHE"
   ]
  },
+ "1958709": {
+  "entityType": "other",
+  "name": "HO LAWRENCE YAU LUNG",
+  "tickers": []
+ },
  "1959033": {
   "entityType": "other",
   "name": "Banks Matthew C.",
+  "tickers": []
+ },
+ "1960971": {
+  "entityType": "other",
+  "name": "Cooper Bradley P",
+  "tickers": []
+ },
+ "1961289": {
+  "entityType": "other",
+  "name": "Sawaf Aziz",
   "tickers": []
  },
  "19617": {
@@ -7299,6 +10510,11 @@
    "JPM-PM",
    "VYLD"
   ]
+ },
+ "1961736": {
+  "entityType": "other",
+  "name": "Weber Steven P.",
+  "tickers": []
  },
  "1962747": {
   "entityType": "other",
@@ -7371,6 +10587,11 @@
   "name": "Gomes Andre Spolidoro Ferreira",
   "tickers": []
  },
+ "1968983": {
+  "entityType": "other",
+  "name": "Gelman Eliahu Meir",
+  "tickers": []
+ },
  "1968991": {
   "entityType": "other",
   "name": "Jones Marie L.",
@@ -7381,12 +10602,22 @@
   "name": "SAGAR MALAVIKA",
   "tickers": []
  },
+ "1969089": {
+  "entityType": "other",
+  "name": "Gardner Adrian",
+  "tickers": []
+ },
  "1969373": {
   "entityType": "other",
   "name": "Vesta Real Estate Corporation, S.A.B. de C.V.",
   "tickers": [
    "VTMX"
   ]
+ },
+ "1969583": {
+  "entityType": "other",
+  "name": "Abrahami Avishai",
+  "tickers": []
  },
  "1969674": {
   "entityType": "investment",
@@ -7396,6 +10627,11 @@
  "1969820": {
   "entityType": "other",
   "name": "Darden Alexander Newsom",
+  "tickers": []
+ },
+ "1970818": {
+  "entityType": "other",
+  "name": "Wang Alvin",
   "tickers": []
  },
  "1971213": {
@@ -7420,9 +10656,24 @@
   "name": "KELLY SARA",
   "tickers": []
  },
+ "1972752": {
+  "entityType": "other",
+  "name": "PM Squared LLC",
+  "tickers": []
+ },
  "1972846": {
   "entityType": "other",
   "name": "Allen Shana",
+  "tickers": []
+ },
+ "1973262": {
+  "entityType": "other",
+  "name": "Lau Alan Ka Ming",
+  "tickers": []
+ },
+ "1973437": {
+  "entityType": "other",
+  "name": "Murray Ciaran",
   "tickers": []
  },
  "1973454": {
@@ -7455,14 +10706,29 @@
   "name": "Inson Paul Joseph",
   "tickers": []
  },
+ "1974296": {
+  "entityType": "other",
+  "name": "Black David Scott",
+  "tickers": []
+ },
  "1974846": {
   "entityType": "other",
   "name": "Shapiro Benjamin",
   "tickers": []
  },
+ "1975155": {
+  "entityType": "other",
+  "name": "Torcello Diane D",
+  "tickers": []
+ },
  "1975281": {
   "entityType": "other",
   "name": "Landry Benjamin",
+  "tickers": []
+ },
+ "1975291": {
+  "entityType": "other",
+  "name": "Adams Amy",
   "tickers": []
  },
  "1975310": {
@@ -7475,6 +10741,16 @@
   "name": "Cao Wenbao",
   "tickers": []
  },
+ "1975427": {
+  "entityType": "other",
+  "name": "Braun Kevin D.",
+  "tickers": []
+ },
+ "1975442": {
+  "entityType": "other",
+  "name": "Hagerty Chancey E.",
+  "tickers": []
+ },
  "1976381": {
   "entityType": "other",
   "name": "Shaw Brian D",
@@ -7483,6 +10759,21 @@
  "1977617": {
   "entityType": "other",
   "name": "Jedrzejek David",
+  "tickers": []
+ },
+ "1977786": {
+  "entityType": "other",
+  "name": "Tan Sin Yin",
+  "tickers": []
+ },
+ "1977858": {
+  "entityType": "other",
+  "name": "Allison Jonathan",
+  "tickers": []
+ },
+ "1977942": {
+  "entityType": "other",
+  "name": "Hofmann Jeremy",
   "tickers": []
  },
  "1978954": {
@@ -7497,12 +10788,27 @@
   "name": "WM Hinson (Bermuda) Ltd.",
   "tickers": []
  },
+ "1979376": {
+  "entityType": "other",
+  "name": "Charlton Rebecca L",
+  "tickers": []
+ },
  "1979414": {
   "entityType": "operating",
   "name": "NEONC TECHNOLOGIES HOLDINGS, INC.",
   "tickers": [
    "NTHI"
   ]
+ },
+ "1980183": {
+  "entityType": "other",
+  "name": "Rivard Bill John",
+  "tickers": []
+ },
+ "1980382": {
+  "entityType": "other",
+  "name": "AMIT RAM",
+  "tickers": []
  },
  "1980845": {
   "entityType": "operating",
@@ -7570,6 +10876,13 @@
   "name": "Harari Eyal David",
   "tickers": []
  },
+ "1985487": {
+  "entityType": "other",
+  "name": "Joint Stock Co Kaspi.kz",
+  "tickers": [
+   "KSPI"
+  ]
+ },
  "1985493": {
   "entityType": "other",
   "name": "Daewoong Co., Ltd",
@@ -7635,12 +10948,37 @@
   "name": "Tomazin Matthew D",
   "tickers": []
  },
+ "1990128": {
+  "entityType": "other",
+  "name": "Centeno Alejandro",
+  "tickers": []
+ },
  "1990354": {
   "entityType": "operating",
   "name": "Waystar Holding Corp.",
   "tickers": [
    "WAY"
   ]
+ },
+ "1990390": {
+  "entityType": "other",
+  "name": "Makori Michelle",
+  "tickers": []
+ },
+ "1990612": {
+  "entityType": "other",
+  "name": "Underwood Rebecca",
+  "tickers": []
+ },
+ "1990865": {
+  "entityType": "other",
+  "name": "Ong Chin Yin",
+  "tickers": []
+ },
+ "1991399": {
+  "entityType": "other",
+  "name": "Edmond Landon",
+  "tickers": []
  },
  "1991763": {
   "entityType": "other",
@@ -7684,9 +11022,19 @@
   "name": "Shopify Strategic Holdings 3 LLC",
   "tickers": []
  },
+ "1993586": {
+  "entityType": "other",
+  "name": "Kershaw David",
+  "tickers": []
+ },
  "1993657": {
   "entityType": "other",
   "name": "Johnson Tim Donald",
+  "tickers": []
+ },
+ "1994049": {
+  "entityType": "other",
+  "name": "Zimmermann Martine",
   "tickers": []
  },
  "1994581": {
@@ -7697,6 +11045,26 @@
  "1994659": {
   "entityType": "other",
   "name": "Leskinen Michael D.",
+  "tickers": []
+ },
+ "1995401": {
+  "entityType": "other",
+  "name": "Moyer Kelly",
+  "tickers": []
+ },
+ "1996458": {
+  "entityType": "other",
+  "name": "Fulcher Linne",
+  "tickers": []
+ },
+ "1997710": {
+  "entityType": "other",
+  "name": "Hopkins Janet Jill",
+  "tickers": []
+ },
+ "1998024": {
+  "entityType": "other",
+  "name": "Savarese Noelle",
   "tickers": []
  },
  "1998256": {
@@ -7756,9 +11124,34 @@
   "name": "Shigley John",
   "tickers": []
  },
+ "2000496": {
+  "entityType": "other",
+  "name": "Pirogova Olga",
+  "tickers": []
+ },
  "2000552": {
   "entityType": "other",
   "name": "Akkaraju Laxmi",
+  "tickers": []
+ },
+ "2000759": {
+  "entityType": "other",
+  "name": "Palleschi Craig",
+  "tickers": []
+ },
+ "2001825": {
+  "entityType": "other",
+  "name": "MAK YAU KEE ADRIAN",
+  "tickers": []
+ },
+ "2001931": {
+  "entityType": "other",
+  "name": "Wardell-Smith Sara",
+  "tickers": []
+ },
+ "2002294": {
+  "entityType": "other",
+  "name": "Darveau-Garneau Nicolas",
   "tickers": []
  },
  "200406": {
@@ -7767,6 +11160,11 @@
   "tickers": [
    "JNJ"
   ]
+ },
+ "2004121": {
+  "entityType": "other",
+  "name": "OSWALD MARK A",
+  "tickers": []
  },
  "2004380": {
   "entityType": "other",
@@ -7788,6 +11186,11 @@
   "name": "Wainwright Simon",
   "tickers": []
  },
+ "2004858": {
+  "entityType": "other",
+  "name": "Cucuz Sasha",
+  "tickers": []
+ },
  "2005023": {
   "entityType": "other",
   "name": "Ozeki Arthur",
@@ -7803,6 +11206,11 @@
   "name": "Dhillon Mannik S.",
   "tickers": []
  },
+ "2006362": {
+  "entityType": "other",
+  "name": "Xu Zhenyu",
+  "tickers": []
+ },
  "2006665": {
   "entityType": "other",
   "name": "Bennett Nathan Reed",
@@ -7811,6 +11219,11 @@
  "2006688": {
   "entityType": "other",
   "name": "Kyriakakis Christopher",
+  "tickers": []
+ },
+ "2007480": {
+  "entityType": "other",
+  "name": "CHRISTENSON ALICE",
   "tickers": []
  },
  "2007587": {
@@ -7826,6 +11239,11 @@
   "tickers": [
    "TWFG"
   ]
+ },
+ "2007626": {
+  "entityType": "other",
+  "name": "Casey Saori",
+  "tickers": []
  },
  "2007691": {
   "entityType": "operating",
@@ -7888,11 +11306,30 @@
    "AMTM"
   ]
  },
+ "2011643": {
+  "entityType": "other",
+  "name": "Lyons Michael James",
+  "tickers": []
+ },
+ "2012706": {
+  "entityType": "operating",
+  "name": "Sunrise Realty Trust, Inc.",
+  "tickers": [
+   "SUNS"
+  ]
+ },
  "2012726": {
   "entityType": "operating",
   "name": "Fifth District Bancorp, Inc.",
   "tickers": [
    "FDSB"
+  ]
+ },
+ "2013745": {
+  "entityType": "operating",
+  "name": "Calumet, Inc. /DE",
+  "tickers": [
+   "CLMT"
   ]
  },
  "2013807": {
@@ -7903,12 +11340,22 @@
    "FOXXW"
   ]
  },
+ "2014308": {
+  "entityType": "other",
+  "name": "Menu Philippe",
+  "tickers": []
+ },
  "2014596": {
   "entityType": "operating",
   "name": "Concentra Group Holdings Parent, Inc.",
   "tickers": [
    "CON"
   ]
+ },
+ "2015428": {
+  "entityType": "other",
+  "name": "Langenbacher Stefano",
+  "tickers": []
  },
  "2015556": {
   "entityType": "other",
@@ -7923,6 +11370,11 @@
  "2015667": {
   "entityType": "other",
   "name": "Novachki Vladimir",
+  "tickers": []
+ },
+ "2015849": {
+  "entityType": "other",
+  "name": "MA Specialty Credit Income Fund",
   "tickers": []
  },
  "2016010": {
@@ -8002,6 +11454,30 @@
    "HIT"
   ]
  },
+ "2020795": {
+  "entityType": "operating",
+  "name": "Uniti Group Inc.",
+  "tickers": [
+   "UNIT"
+  ]
+ },
+ "2020876": {
+  "entityType": "other",
+  "name": "Bhandari Gautam",
+  "tickers": []
+ },
+ "2020905": {
+  "entityType": "other",
+  "name": "Wahba Sadek",
+  "tickers": []
+ },
+ "2020932": {
+  "entityType": "other",
+  "name": "AgomAb Therapeutics NV",
+  "tickers": [
+   "AGMB"
+  ]
+ },
  "2022145": {
   "entityType": "other",
   "name": "Jones Heather D",
@@ -8010,6 +11486,11 @@
  "2022347": {
   "entityType": "other",
   "name": "Dahl Andrew M.",
+  "tickers": []
+ },
+ "2022545": {
+  "entityType": "other",
+  "name": "Pesch Michael Robert",
   "tickers": []
  },
  "2022718": {
@@ -8027,9 +11508,19 @@
   "name": "Shambro Lori",
   "tickers": []
  },
+ "2024196": {
+  "entityType": "other",
+  "name": "Freidin Aaron",
+  "tickers": []
+ },
  "2025039": {
   "entityType": "other",
   "name": "Angelette Benjamin J",
+  "tickers": []
+ },
+ "2025321": {
+  "entityType": "other",
+  "name": "Peck Randall",
   "tickers": []
  },
  "2025416": {
@@ -8090,6 +11581,11 @@
    "CINF"
   ]
  },
+ "2028916": {
+  "entityType": "other",
+  "name": "Mindlin Damian Miguel",
+  "tickers": []
+ },
  "2029039": {
   "entityType": "other",
   "name": "Nasus Pharma Ltd",
@@ -8100,6 +11596,31 @@
  "2029073": {
   "entityType": "other",
   "name": "Chack Eric Theodore",
+  "tickers": []
+ },
+ "2029485": {
+  "entityType": "other",
+  "name": "Kim Vyacheslav",
+  "tickers": []
+ },
+ "2029684": {
+  "entityType": "other",
+  "name": "Conser Jonathan P.",
+  "tickers": []
+ },
+ "2029837": {
+  "entityType": "other",
+  "name": "Gilbert Greg M.",
+  "tickers": []
+ },
+ "2029838": {
+  "entityType": "other",
+  "name": "Devasia Thomas A.",
+  "tickers": []
+ },
+ "2030120": {
+  "entityType": "other",
+  "name": "Liberio Frank D",
   "tickers": []
  },
  "2030701": {
@@ -8118,6 +11639,18 @@
   "entityType": "other",
   "name": "Scannell Paul",
   "tickers": []
+ },
+ "2031707": {
+  "entityType": "other",
+  "name": "Newton William Keith",
+  "tickers": []
+ },
+ "2032341": {
+  "entityType": "operating",
+  "name": "CYABRA, INC.",
+  "tickers": [
+   "CYAB"
+  ]
  },
  "2033362": {
   "entityType": "operating",
@@ -8180,6 +11713,11 @@
   "name": "Krawczyk Joseph R II",
   "tickers": []
  },
+ "2035847": {
+  "entityType": "other",
+  "name": "DiRico Jennifer Leigh",
+  "tickers": []
+ },
  "2036111": {
   "entityType": "other",
   "name": "Taylor Joseph Michael",
@@ -8200,6 +11738,16 @@
   "name": "Bruning Jill L",
   "tickers": []
  },
+ "2037266": {
+  "entityType": "other",
+  "name": "Evans Bronwyn",
+  "tickers": []
+ },
+ "2037272": {
+  "entityType": "other",
+  "name": "Sabatini Brent",
+  "tickers": []
+ },
  "2037528": {
   "entityType": "other",
   "name": "Bem Karrie M.",
@@ -8215,6 +11763,16 @@
   "name": "Jones Richard David",
   "tickers": []
  },
+ "2038025": {
+  "entityType": "other",
+  "name": "Stewart Adam",
+  "tickers": []
+ },
+ "2038397": {
+  "entityType": "other",
+  "name": "Browne Jonathan Paul",
+  "tickers": []
+ },
  "2039101": {
   "entityType": "other",
   "name": "Cui Haitao",
@@ -8225,9 +11783,24 @@
   "name": "Jackson Candace",
   "tickers": []
  },
+ "2039256": {
+  "entityType": "other",
+  "name": "Pletcher Kurt",
+  "tickers": []
+ },
  "2039582": {
   "entityType": "other",
   "name": "Broos Carlo",
+  "tickers": []
+ },
+ "2040111": {
+  "entityType": "other",
+  "name": "Cross Kimberly D",
+  "tickers": []
+ },
+ "2040376": {
+  "entityType": "other",
+  "name": "Finer Jeffrey",
   "tickers": []
  },
  "2040500": {
@@ -8294,6 +11867,11 @@
   "name": "De Vre Raymond",
   "tickers": []
  },
+ "2043323": {
+  "entityType": "other",
+  "name": "Dante Elmer",
+  "tickers": []
+ },
  "2043520": {
   "entityType": "other",
   "name": "McGinnis Patrick",
@@ -8319,14 +11897,76 @@
   "name": "Czerney Kevin",
   "tickers": []
  },
+ "2044615": {
+  "entityType": "other",
+  "name": "Van Steenberg Christopher J",
+  "tickers": []
+ },
+ "2045066": {
+  "entityType": "other",
+  "name": "Vogt Adam M",
+  "tickers": []
+ },
  "2045377": {
   "entityType": "other",
   "name": "Sun Nelson",
   "tickers": []
  },
+ "2045600": {
+  "entityType": "other",
+  "name": "Daar Yossef",
+  "tickers": []
+ },
+ "2045603": {
+  "entityType": "other",
+  "name": "Shraga Ido",
+  "tickers": []
+ },
+ "2045605": {
+  "entityType": "other",
+  "name": "Pompeo Michael",
+  "tickers": []
+ },
+ "2045607": {
+  "entityType": "other",
+  "name": "Brahmy Dan",
+  "tickers": []
+ },
+ "2045608": {
+  "entityType": "other",
+  "name": "Heymann Emmanuel",
+  "tickers": []
+ },
  "2045686": {
   "entityType": "other",
   "name": "Jaiman Manasi",
+  "tickers": []
+ },
+ "2045844": {
+  "entityType": "other",
+  "name": "Lin Lawrence Y.",
+  "tickers": []
+ },
+ "2045863": {
+  "entityType": "other",
+  "name": "Vu Sonny",
+  "tickers": []
+ },
+ "2046196": {
+  "entityType": "other",
+  "name": "Totah Sami",
+  "tickers": []
+ },
+ "2046386": {
+  "entityType": "operating",
+  "name": "Medline Inc.",
+  "tickers": [
+   "MDLN"
+  ]
+ },
+ "2048333": {
+  "entityType": "other",
+  "name": "Kim Lawrence Y.",
   "tickers": []
  },
  "2048519": {
@@ -8351,6 +11991,19 @@
   "name": "Sherif Riad",
   "tickers": []
  },
+ "2049114": {
+  "entityType": "other",
+  "name": "MA Eagle II Holdings Fund",
+  "tickers": []
+ },
+ "2049662": {
+  "entityType": "operating",
+  "name": "Factorial Energy Inc.",
+  "tickers": [
+   "FAC",
+   "FACWW"
+  ]
+ },
  "2049674": {
   "entityType": "other",
   "name": "V-Cube, Inc.",
@@ -8369,6 +12022,11 @@
  "2051264": {
   "entityType": "other",
   "name": "SHAFFER REUBEN M.",
+  "tickers": []
+ },
+ "2051649": {
+  "entityType": "other",
+  "name": "Frymyer Cameron M",
   "tickers": []
  },
  "2051747": {
@@ -8428,9 +12086,24 @@
   "name": "McComb Gregory Scott",
   "tickers": []
  },
+ "2055582": {
+  "entityType": "other",
+  "name": "Shaikh Erhaan",
+  "tickers": []
+ },
+ "2055583": {
+  "entityType": "other",
+  "name": "Clark Eric Andrew",
+  "tickers": []
+ },
  "2055600": {
   "entityType": "other",
   "name": "BENNETHUM DEBRA",
+  "tickers": []
+ },
+ "2055648": {
+  "entityType": "other",
+  "name": "Flanagan James Francis",
   "tickers": []
  },
  "2056033": {
@@ -8441,6 +12114,11 @@
  "2056716": {
   "entityType": "other",
   "name": "Lim Soon Huat",
+  "tickers": []
+ },
+ "2056949": {
+  "entityType": "other",
+  "name": "Forsythe Wendy",
   "tickers": []
  },
  "2057403": {
@@ -8473,9 +12151,19 @@
   "name": "Chandhok Nikhil",
   "tickers": []
  },
+ "2061052": {
+  "entityType": "other",
+  "name": "Boyle James M",
+  "tickers": []
+ },
  "2061169": {
   "entityType": "other",
   "name": "Krass Caroline",
+  "tickers": []
+ },
+ "2061266": {
+  "entityType": "other",
+  "name": "Laabs Amanda H.",
   "tickers": []
  },
  "2061395": {
@@ -8483,9 +12171,29 @@
   "name": "Boyle Robert E",
   "tickers": []
  },
+ "2061504": {
+  "entityType": "other",
+  "name": "Golwas Douglas P",
+  "tickers": []
+ },
+ "2062355": {
+  "entityType": "other",
+  "name": "Goldman Tepper Leslie",
+  "tickers": []
+ },
+ "2062356": {
+  "entityType": "other",
+  "name": "Coleman Amy",
+  "tickers": []
+ },
  "2062598": {
   "entityType": "other",
   "name": "Fletcher Carl Russell IV",
+  "tickers": []
+ },
+ "2062735": {
+  "entityType": "other",
+  "name": "REARDON DANIEL C",
   "tickers": []
  },
  "2063388": {
@@ -8553,9 +12261,24 @@
   "name": "Milosevich Gregory M",
   "tickers": []
  },
+ "2067990": {
+  "entityType": "other",
+  "name": "Pompliano Anthony John III",
+  "tickers": []
+ },
  "2068076": {
   "entityType": "other",
   "name": "Patel Priti Rashmikant",
+  "tickers": []
+ },
+ "2068103": {
+  "entityType": "other",
+  "name": "Hefel Juliane M.",
+  "tickers": []
+ },
+ "2068190": {
+  "entityType": "other",
+  "name": "Massy Robert L.",
   "tickers": []
  },
  "2068530": {
@@ -8583,6 +12306,11 @@
   "name": "Noel Megan",
   "tickers": []
  },
+ "2069816": {
+  "entityType": "other",
+  "name": "Starr Ephraim",
+  "tickers": []
+ },
  "2070849": {
   "entityType": "operating",
   "name": "BillionToOne, Inc.",
@@ -8600,6 +12328,13 @@
   "name": "Booth Thomas Ryder",
   "tickers": []
  },
+ "2071778": {
+  "entityType": "operating",
+  "name": "Fermi Inc.",
+  "tickers": [
+   "FRMI"
+  ]
+ },
  "2073519": {
   "entityType": "other",
   "name": "Pursglove Geordan Garrett",
@@ -8610,6 +12345,16 @@
   "name": "GRAMS MICHAEL DAVID",
   "tickers": []
  },
+ "2074268": {
+  "entityType": "other",
+  "name": "Asterbadi Dalia Nadine",
+  "tickers": []
+ },
+ "2074273": {
+  "entityType": "other",
+  "name": "Florek John Casimir",
+  "tickers": []
+ },
  "2074510": {
   "entityType": "other",
   "name": "McGurn Kevin",
@@ -8618,6 +12363,11 @@
  "2075043": {
   "entityType": "other",
   "name": "Terreri Donald Joseph",
+  "tickers": []
+ },
+ "2075137": {
+  "entityType": "other",
+  "name": "Quinn Carle Ann",
   "tickers": []
  },
  "2075228": {
@@ -8635,6 +12385,11 @@
   "name": "Zhernov Mykhailo",
   "tickers": []
  },
+ "2075704": {
+  "entityType": "other",
+  "name": "Schubach Sarah Elizabeth",
+  "tickers": []
+ },
  "2075834": {
   "entityType": "other",
   "name": "Hanson Michael J.",
@@ -8649,6 +12404,14 @@
   "entityType": "other",
   "name": "Zarate Adrian Raul",
   "tickers": []
+ },
+ "2076163": {
+  "entityType": "operating",
+  "name": "Silvia, Inc.",
+  "tickers": [
+   "SVIA",
+   "SVIAW"
+  ]
  },
  "2076374": {
   "entityType": "other",
@@ -8695,6 +12458,16 @@
   "name": "Ellison David Ferris",
   "tickers": []
  },
+ "2078454": {
+  "entityType": "other",
+  "name": "Esaka Fumihide",
+  "tickers": []
+ },
+ "2079361": {
+  "entityType": "other",
+  "name": "Dougherty Sean Michael",
+  "tickers": []
+ },
  "2079717": {
   "entityType": "other",
   "name": "Ou June",
@@ -8705,9 +12478,21 @@
   "name": "Verghese Vikram",
   "tickers": []
  },
+ "2080126": {
+  "entityType": "operating",
+  "name": "Forgent Power Solutions, Inc.",
+  "tickers": [
+   "FPS"
+  ]
+ },
  "2080387": {
   "entityType": "other",
   "name": "Olsen Sarah Josephine",
+  "tickers": []
+ },
+ "2080717": {
+  "entityType": "other",
+  "name": "Goodwin William Carroll Murphy",
   "tickers": []
  },
  "2080894": {
@@ -8755,6 +12540,18 @@
   "name": "Uychiat Pison Marivic",
   "tickers": []
  },
+ "2085762": {
+  "entityType": "other",
+  "name": "Fresco Gutierrez Diego",
+  "tickers": []
+ },
+ "2086587": {
+  "entityType": "operating",
+  "name": "York Space Systems Inc.",
+  "tickers": [
+   "YSS"
+  ]
+ },
  "2087587": {
   "entityType": "other",
   "name": "CoinShares PLC",
@@ -8774,6 +12571,26 @@
   "tickers": [
    "ETRA"
   ]
+ },
+ "2088468": {
+  "entityType": "other",
+  "name": "Salovey Peter",
+  "tickers": []
+ },
+ "2088794": {
+  "entityType": "other",
+  "name": "Melissa A. Neugebauer 2020 Trust",
+  "tickers": []
+ },
+ "2088934": {
+  "entityType": "other",
+  "name": "Savchenko Sergey",
+  "tickers": []
+ },
+ "2089321": {
+  "entityType": "other",
+  "name": "Thomas John Harper",
+  "tickers": []
  },
  "2089424": {
   "entityType": "other",
@@ -8802,6 +12619,11 @@
   "name": "Zegarelli Christopher John",
   "tickers": []
  },
+ "2091677": {
+  "entityType": "other",
+  "name": "Schlacks Jabbok",
+  "tickers": []
+ },
  "2092820": {
   "entityType": "other",
   "name": "James Benjamin Worthy",
@@ -8810,6 +12632,11 @@
  "2093135": {
   "entityType": "other",
   "name": "Wang Haichen",
+  "tickers": []
+ },
+ "2093155": {
+  "entityType": "other",
+  "name": "Wanke Dietrich",
   "tickers": []
  },
  "2093536": {
@@ -8822,6 +12649,21 @@
  "2093849": {
   "entityType": "other",
   "name": "Martin Ryan J",
+  "tickers": []
+ },
+ "2094283": {
+  "entityType": "other",
+  "name": "Davis Matthew W.",
+  "tickers": []
+ },
+ "2094421": {
+  "entityType": "other",
+  "name": "McNamara Thomas M.",
+  "tickers": []
+ },
+ "2094581": {
+  "entityType": "other",
+  "name": "FRANKLIN KRISTEL MARY",
   "tickers": []
  },
  "2094629": {
@@ -8837,6 +12679,11 @@
  "2095553": {
   "entityType": "other",
   "name": "Wu Naixi",
+  "tickers": []
+ },
+ "2095704": {
+  "entityType": "other",
+  "name": "te Boekhorst Paul Francis Olivier",
   "tickers": []
  },
  "2096406": {
@@ -8858,6 +12705,11 @@
    "ACU"
   ]
  },
+ "2098061": {
+  "entityType": "other",
+  "name": "STEVENSON JON",
+  "tickers": []
+ },
  "2098430": {
   "entityType": "operating",
   "name": "Madison Air Solutions Corp",
@@ -8872,9 +12724,29 @@
    "WSE"
   ]
  },
+ "2099373": {
+  "entityType": "other",
+  "name": "Juniper Capital IV GP, L.P.",
+  "tickers": []
+ },
+ "2101945": {
+  "entityType": "other",
+  "name": "Endeavor Blockchain, LLC",
+  "tickers": []
+ },
+ "2102508": {
+  "entityType": "other",
+  "name": "Herberg David",
+  "tickers": []
+ },
  "2102527": {
   "entityType": "other",
   "name": "Casulli Edward T.",
+  "tickers": []
+ },
+ "2102996": {
+  "entityType": "other",
+  "name": "Wittorf Oliver",
   "tickers": []
  },
  "2103966": {
@@ -8889,12 +12761,34 @@
    "ALMR"
   ]
  },
+ "2105139": {
+  "entityType": "operating",
+  "name": "ADI GLOBAL DISTRIBUTION INC.",
+  "tickers": [
+   "ADIG"
+  ]
+ },
  "2105398": {
   "entityType": "operating",
   "name": "Csquare, Inc.",
   "tickers": [
    "CSQR"
   ]
+ },
+ "2105932": {
+  "entityType": "other",
+  "name": "Kilgore Joshua Allen",
+  "tickers": []
+ },
+ "2106415": {
+  "entityType": "other",
+  "name": "Smith Cody",
+  "tickers": []
+ },
+ "2107290": {
+  "entityType": "other",
+  "name": "DasGupta Arijit",
+  "tickers": []
  },
  "2107340": {
   "entityType": "other",
@@ -8911,6 +12805,11 @@
   "name": "ZHANG RUI",
   "tickers": []
  },
+ "2108514": {
+  "entityType": "other",
+  "name": "Bhatia Neel",
+  "tickers": []
+ },
  "2108547": {
   "entityType": "other",
   "name": "Mahrer Thomas",
@@ -8919,6 +12818,11 @@
  "2108748": {
   "entityType": "other",
   "name": "Rossitto Erica",
+  "tickers": []
+ },
+ "2108806": {
+  "entityType": "other",
+  "name": "Leader's Advantage Company, LLC",
   "tickers": []
  },
  "2109046": {
@@ -8934,6 +12838,25 @@
  "2109606": {
   "entityType": "other",
   "name": "Green Ira Harris Jr",
+  "tickers": []
+ },
+ "2109823": {
+  "entityType": "operating",
+  "name": "Leader's Advantage Acquisition Corp.",
+  "tickers": [
+   "LEDR",
+   "LEDRU",
+   "LEDRW"
+  ]
+ },
+ "2109843": {
+  "entityType": "other",
+  "name": "Krautkramer Jeffrey",
+  "tickers": []
+ },
+ "2110450": {
+  "entityType": "other",
+  "name": "Worsham Adam C.",
   "tickers": []
  },
  "2110522": {
@@ -8961,9 +12884,24 @@
   "name": "Cooper Kenneth Lyle",
   "tickers": []
  },
+ "2111682": {
+  "entityType": "other",
+  "name": "Tang Andrew R",
+  "tickers": []
+ },
  "2111691": {
   "entityType": "other",
   "name": "Pinkham Allison Suzanne",
+  "tickers": []
+ },
+ "2111739": {
+  "entityType": "other",
+  "name": "Johl Sundip Singh",
+  "tickers": []
+ },
+ "2111899": {
+  "entityType": "other",
+  "name": "Hoffmann David Henry",
   "tickers": []
  },
  "2111929": {
@@ -8989,6 +12927,11 @@
  "2113214": {
   "entityType": "other",
   "name": "Wang Yanjun",
+  "tickers": []
+ },
+ "2113223": {
+  "entityType": "other",
+  "name": "Scholl Hendrik Peter",
   "tickers": []
  },
  "2113320": {
@@ -9136,6 +13079,11 @@
   "name": "Ritter James Scott",
   "tickers": []
  },
+ "2115847": {
+  "entityType": "other",
+  "name": "Trabelsi Arie",
+  "tickers": []
+ },
  "2115914": {
   "entityType": "other",
   "name": "Freedman Amy",
@@ -9154,6 +13102,36 @@
  "2117289": {
   "entityType": "other",
   "name": "Estrada Attolini Gerardo",
+  "tickers": []
+ },
+ "2117321": {
+  "entityType": "other",
+  "name": "Ren Jia",
+  "tickers": []
+ },
+ "2117371": {
+  "entityType": "other",
+  "name": "Ferreira Vicente De Moraes",
+  "tickers": []
+ },
+ "2117399": {
+  "entityType": "other",
+  "name": "Fadda Luca",
+  "tickers": []
+ },
+ "2117450": {
+  "entityType": "other",
+  "name": "Hastings John Rae",
+  "tickers": []
+ },
+ "2117555": {
+  "entityType": "other",
+  "name": "ASOF III Holdings I LP",
+  "tickers": []
+ },
+ "2117719": {
+  "entityType": "other",
+  "name": "Deprati Christian Ferdinando Emilio",
   "tickers": []
  },
  "2117905": {
@@ -9181,6 +13159,13 @@
   "name": "Lane Michael Wayne",
   "tickers": []
  },
+ "2119322": {
+  "entityType": "operating",
+  "name": "Digimarc Corp",
+  "tickers": [
+   "DMRC"
+  ]
+ },
  "2119453": {
   "entityType": "other",
   "name": "Sage Antony William Paul",
@@ -9189,6 +13174,16 @@
  "2119764": {
   "entityType": "other",
   "name": "Elsztain Alejandro Gustavo",
+  "tickers": []
+ },
+ "2120008": {
+  "entityType": "other",
+  "name": "Denny Jordan M.",
+  "tickers": []
+ },
+ "2120865": {
+  "entityType": "other",
+  "name": "Hoxworth Seth Alan",
   "tickers": []
  },
  "2121611": {
@@ -9246,9 +13241,41 @@
   "name": "BERHO CORONA LORENZO MANUEL",
   "tickers": []
  },
+ "2124343": {
+  "entityType": "other",
+  "name": "Burg David Brock",
+  "tickers": []
+ },
+ "2124350": {
+  "entityType": "other",
+  "name": "Suzuki Yuri",
+  "tickers": []
+ },
+ "2124472": {
+  "entityType": "operating",
+  "name": "Orion180 Insurance Group Inc.",
+  "tickers": [
+   "OIG"
+  ]
+ },
  "2124855": {
   "entityType": "other",
   "name": "Jain Sachin",
+  "tickers": []
+ },
+ "2125273": {
+  "entityType": "other",
+  "name": "Cates G. Staley",
+  "tickers": []
+ },
+ "2125336": {
+  "entityType": "other",
+  "name": "WILSON ROBERT ALLEN",
+  "tickers": []
+ },
+ "2125481": {
+  "entityType": "other",
+  "name": "St.-Jean Pascal",
   "tickers": []
  },
  "2125533": {
@@ -9261,9 +13288,29 @@
   "name": "Masters Daniel",
   "tickers": []
  },
+ "2126196": {
+  "entityType": "other",
+  "name": "Liao Zhanlin",
+  "tickers": []
+ },
+ "2126204": {
+  "entityType": "other",
+  "name": "Li Yibing",
+  "tickers": []
+ },
  "2126572": {
   "entityType": "other",
   "name": "Sealfon Ross Bradley",
+  "tickers": []
+ },
+ "2127284": {
+  "entityType": "other",
+  "name": "Searle Craig Chih-Meng",
+  "tickers": []
+ },
+ "2127288": {
+  "entityType": "other",
+  "name": "Serafini John Sheldon",
   "tickers": []
  },
  "2128694": {
@@ -9333,6 +13380,11 @@
   "name": "CALLAHAN MICHAEL KEVIN",
   "tickers": []
  },
+ "2131829": {
+  "entityType": "other",
+  "name": "Chan Thomas (TC)",
+  "tickers": []
+ },
  "2131880": {
   "entityType": "other",
   "name": "Warriner Kenneth Thomas",
@@ -9346,6 +13398,18 @@
  "2131936": {
   "entityType": "other",
   "name": "Jefferson Philip Ashley",
+  "tickers": []
+ },
+ "2132582": {
+  "entityType": "operating",
+  "name": "Lyntris Inc.",
+  "tickers": [
+   "LYNX"
+  ]
+ },
+ "2132719": {
+  "entityType": "other",
+  "name": "Barbieri Frank",
   "tickers": []
  },
  "2133255": {
@@ -9364,6 +13428,16 @@
   "tickers": [
    "KO"
   ]
+ },
+ "2135086": {
+  "entityType": "other",
+  "name": "Gregg Kenneth",
+  "tickers": []
+ },
+ "2135467": {
+  "entityType": "other",
+  "name": "Huang Siyu",
+  "tickers": []
  },
  "2135942": {
   "entityType": "other",
@@ -9397,6 +13471,11 @@
   "name": "Wu Yi-Huang",
   "tickers": []
  },
+ "2136888": {
+  "entityType": "other",
+  "name": "Yu Yingchao",
+  "tickers": []
+ },
  "2138432": {
   "entityType": "other",
   "name": "Cook Steven R. E.",
@@ -9412,6 +13491,46 @@
   "name": "Barton-Brobst Lindi Rene",
   "tickers": []
  },
+ "2139769": {
+  "entityType": "other",
+  "name": "Chang Charles C",
+  "tickers": []
+ },
+ "2140113": {
+  "entityType": "other",
+  "name": "Scuteri Jeffrey T. Jr.",
+  "tickers": []
+ },
+ "2141222": {
+  "entityType": "other",
+  "name": "He Longwen (Stanley)",
+  "tickers": []
+ },
+ "2141914": {
+  "entityType": "other",
+  "name": "AJB Capital, LLC",
+  "tickers": []
+ },
+ "2141916": {
+  "entityType": "other",
+  "name": "Bradley Adam James",
+  "tickers": []
+ },
+ "2141919": {
+  "entityType": "other",
+  "name": "Bradley Melinda Hodges",
+  "tickers": []
+ },
+ "2142215": {
+  "entityType": "other",
+  "name": "Chakrabarti Paritosh M.",
+  "tickers": []
+ },
+ "2142352": {
+  "entityType": "other",
+  "name": "Shukla Chinmay",
+  "tickers": []
+ },
  "2142627": {
   "entityType": "other",
   "name": "BHAV Acquisition Corp II",
@@ -9423,6 +13542,21 @@
  "2142629": {
   "entityType": "other",
   "name": "BHAV Partners II LLC",
+  "tickers": []
+ },
+ "2144017": {
+  "entityType": "other",
+  "name": "Cardazzi Marco",
+  "tickers": []
+ },
+ "2144081": {
+  "entityType": "other",
+  "name": "Six Thirty AI, LLC",
+  "tickers": []
+ },
+ "2144083": {
+  "entityType": "other",
+  "name": "Copeland Alicia Crispin",
   "tickers": []
  },
  "2144166": {
@@ -9440,14 +13574,31 @@
   "name": "Jagasia Madan",
   "tickers": []
  },
+ "2145089": {
+  "entityType": "other",
+  "name": "WINDWARD BIO GROUP AG",
+  "tickers": [
+   "WWB"
+  ]
+ },
  "2145750": {
   "entityType": "other",
   "name": "Hari Parameswaran",
   "tickers": []
  },
+ "2145803": {
+  "entityType": "other",
+  "name": "Har Even Yoav",
+  "tickers": []
+ },
  "2146790": {
   "entityType": "other",
   "name": "Narayanadas Vivek",
+  "tickers": []
+ },
+ "2147076": {
+  "entityType": "other",
+  "name": "Morrison Brian",
   "tickers": []
  },
  "2147189": {
@@ -9470,9 +13621,19 @@
   "name": "Krishnaswamy Brijesh",
   "tickers": []
  },
+ "2149552": {
+  "entityType": "other",
+  "name": "Fengler Justin",
+  "tickers": []
+ },
  "2149660": {
   "entityType": "other",
   "name": "Peri Jonathan",
+  "tickers": []
+ },
+ "2149661": {
+  "entityType": "other",
+  "name": "Murray Jason W.",
   "tickers": []
  },
  "2150534": {
@@ -9483,6 +13644,11 @@
  "2150557": {
   "entityType": "other",
   "name": "Truban Erica N.",
+  "tickers": []
+ },
+ "2150768": {
+  "entityType": "other",
+  "name": "Wiens David Victor",
   "tickers": []
  },
  "2151431": {
@@ -9500,6 +13666,26 @@
   "name": "Duvenhage Stephanus",
   "tickers": []
  },
+ "2152228": {
+  "entityType": "other",
+  "name": "Waits Julian Wendell Sr.",
+  "tickers": []
+ },
+ "2152862": {
+  "entityType": "other",
+  "name": "Wu Tong (NMN)",
+  "tickers": []
+ },
+ "2154435": {
+  "entityType": "other",
+  "name": "Bello Erik J.",
+  "tickers": []
+ },
+ "2155008": {
+  "entityType": "other",
+  "name": "Tremblay Rikki",
+  "tickers": []
+ },
  "2156034": {
   "entityType": "other",
   "name": "Jenks Trisha Esakoff",
@@ -9515,6 +13701,11 @@
   "name": "Tsang Chi Kwong",
   "tickers": []
  },
+ "2157619": {
+  "entityType": "other",
+  "name": "Harris Kevin Andrew",
+  "tickers": []
+ },
  "2157881": {
   "entityType": "other",
   "name": "Rondot Thomas",
@@ -9523,6 +13714,11 @@
  "2158111": {
   "entityType": "other",
   "name": "Perdue Cody",
+  "tickers": []
+ },
+ "2158490": {
+  "entityType": "other",
+  "name": "De Leon Gamboa Naiara",
   "tickers": []
  },
  "2158793": {
@@ -9545,6 +13741,11 @@
   "name": "Balow Frank Anthony III",
   "tickers": []
  },
+ "2160088": {
+  "entityType": "other",
+  "name": "D'Augusta Claudia",
+  "tickers": []
+ },
  "2160181": {
   "entityType": "other",
   "name": "Krishnapura Sheshaprasad Govindaraju",
@@ -9560,9 +13761,19 @@
   "name": "Almond Amanda C",
   "tickers": []
  },
+ "2160791": {
+  "entityType": "other",
+  "name": "Barnes Jason",
+  "tickers": []
+ },
  "2161365": {
   "entityType": "other",
   "name": "Arntzen Steven W.",
+  "tickers": []
+ },
+ "2162137": {
+  "entityType": "other",
+  "name": "Santarelli Luca",
   "tickers": []
  },
  "2162291": {
@@ -9593,6 +13804,11 @@
  "2163322": {
   "entityType": "other",
   "name": "Mittal Ajay V.",
+  "tickers": []
+ },
+ "2163328": {
+  "entityType": "other",
+  "name": "Mufti Iqbal Rasool",
   "tickers": []
  },
  "2164570": {
@@ -9627,11 +13843,25 @@
    "CMTL"
   ]
  },
+ "24090": {
+  "entityType": "operating",
+  "name": "CITIZENS, INC.",
+  "tickers": [
+   "CIA"
+  ]
+ },
  "2488": {
   "entityType": "operating",
   "name": "ADVANCED MICRO DEVICES INC",
   "tickers": [
    "AMD"
+  ]
+ },
+ "26172": {
+  "entityType": "operating",
+  "name": "CUMMINS INC",
+  "tickers": [
+   "CMI"
   ]
  },
  "275694": {
@@ -9655,6 +13885,42 @@
    "DAL"
   ]
  },
+ "27996": {
+  "entityType": "operating",
+  "name": "DELUXE CORP",
+  "tickers": [
+   "DLX"
+  ]
+ },
+ "28917": {
+  "entityType": "operating",
+  "name": "DILLARD'S, INC.",
+  "tickers": [
+   "DDS",
+   "DDT"
+  ]
+ },
+ "29989": {
+  "entityType": "operating",
+  "name": "OMNICOM GROUP INC.",
+  "tickers": [
+   "OMC"
+  ]
+ },
+ "310158": {
+  "entityType": "operating",
+  "name": "Merck & Co., Inc.",
+  "tickers": [
+   "MRK"
+  ]
+ },
+ "31235": {
+  "entityType": "operating",
+  "name": "EASTMAN KODAK CO",
+  "tickers": [
+   "KODK"
+  ]
+ },
  "313143": {
   "entityType": "operating",
   "name": "HAEMONETICS CORP",
@@ -9676,6 +13942,20 @@
    "CHD"
   ]
  },
+ "314203": {
+  "entityType": "operating",
+  "name": "McEwen Inc.",
+  "tickers": [
+   "MUX"
+  ]
+ },
+ "315545": {
+  "entityType": "operating",
+  "name": "PROVECTUS BIOPHARMACEUTICALS, INC.",
+  "tickers": [
+   "PVCT"
+  ]
+ },
  "316709": {
   "entityType": "operating",
   "name": "SCHWAB CHARLES CORP",
@@ -9690,6 +13970,13 @@
   "name": "PEOPLES BANCORP INC",
   "tickers": [
    "PEBO"
+  ]
+ },
+ "318306": {
+  "entityType": "operating",
+  "name": "ABEONA THERAPEUTICS INC.",
+  "tickers": [
+   "ABEO"
   ]
  },
  "319655": {
@@ -9733,6 +14020,20 @@
   "name": "ESCALADE INC",
   "tickers": [
    "ESCA"
+  ]
+ },
+ "33992": {
+  "entityType": "operating",
+  "name": "KINGSTONE COMPANIES, INC.",
+  "tickers": [
+   "KINS"
+  ]
+ },
+ "351998": {
+  "entityType": "operating",
+  "name": "DATA I/O CORP",
+  "tickers": [
+   "DAIO"
   ]
  },
  "352955": {
@@ -9809,6 +14110,13 @@
    "SWKS"
   ]
  },
+ "41719": {
+  "entityType": "operating",
+  "name": "Magnera Corp",
+  "tickers": [
+   "MAGN"
+  ]
+ },
  "4457": {
   "entityType": "operating",
   "name": "U-Haul Holding Co /NV/",
@@ -9822,6 +14130,20 @@
   "name": "HERSHEY CO",
   "tickers": [
    "HSY"
+  ]
+ },
+ "48287": {
+  "entityType": "operating",
+  "name": "HNI CORP",
+  "tickers": [
+   "HNI"
+  ]
+ },
+ "49754": {
+  "entityType": "operating",
+  "name": "Dine Brands Global, Inc.",
+  "tickers": [
+   "DIN"
   ]
  },
  "4977": {
@@ -9852,6 +14174,13 @@
    "MZTI"
   ]
  },
+ "58361": {
+  "entityType": "operating",
+  "name": "LEE ENTERPRISES, Inc",
+  "tickers": [
+   "LEE"
+  ]
+ },
  "59478": {
   "entityType": "operating",
   "name": "ELI LILLY & Co",
@@ -9865,6 +14194,13 @@
   "tickers": [
    "LNC",
    "LNC-PD"
+  ]
+ },
+ "63908": {
+  "entityType": "operating",
+  "name": "MCDONALDS CORP",
+  "tickers": [
+   "MCD"
   ]
  },
  "64996": {
@@ -9925,11 +14261,27 @@
    "THC"
   ]
  },
+ "703351": {
+  "entityType": "operating",
+  "name": "BRINKER INTERNATIONAL, INC",
+  "tickers": [
+   "EAT"
+  ]
+ },
  "705432": {
   "entityType": "operating",
   "name": "SOUTHSIDE BANCSHARES INC",
   "tickers": [
    "SBSI"
+  ]
+ },
+ "707179": {
+  "entityType": "operating",
+  "name": "OLD NATIONAL BANCORP /IN/",
+  "tickers": [
+   "ONB",
+   "ONBPO",
+   "ONBPP"
   ]
  },
  "707605": {
@@ -9979,6 +14331,21 @@
    "GABC"
   ]
  },
+ "719413": {
+  "entityType": "operating",
+  "name": "HECLA MINING CO/DE/",
+  "tickers": [
+   "HL",
+   "HL-PB"
+  ]
+ },
+ "721371": {
+  "entityType": "operating",
+  "name": "CARDINAL HEALTH INC",
+  "tickers": [
+   "CAH"
+  ]
+ },
  "728387": {
   "entityType": "operating",
   "name": "Perspective Therapeutics, Inc.",
@@ -10005,6 +14372,13 @@
   "name": "UNITEDHEALTH GROUP INC",
   "tickers": [
    "UNH"
+  ]
+ },
+ "736012": {
+  "entityType": "operating",
+  "name": "INTRUSION INC",
+  "tickers": [
+   "INTZ"
   ]
  },
  "736772": {
@@ -10043,6 +14417,21 @@
    "IMNN"
   ]
  },
+ "750004": {
+  "entityType": "operating",
+  "name": "Light & Wonder, Inc.",
+  "tickers": [
+   "LAWIL",
+   "LNWO"
+  ]
+ },
+ "7536": {
+  "entityType": "operating",
+  "name": "ARROW ELECTRONICS, INC.",
+  "tickers": [
+   "ARW"
+  ]
+ },
  "75362": {
   "entityType": "operating",
   "name": "PACCAR INC",
@@ -10057,6 +14446,23 @@
    "GROW"
   ]
  },
+ "75677": {
+  "entityType": "operating",
+  "name": "PACKAGING CORP OF AMERICA",
+  "tickers": [
+   "PKG"
+  ]
+ },
+ "759944": {
+  "entityType": "operating",
+  "name": "CITIZENS FINANCIAL GROUP INC/RI",
+  "tickers": [
+   "CFG",
+   "CFG-PE",
+   "CFG-PH",
+   "CFG-PI"
+  ]
+ },
  "765880": {
   "entityType": "operating",
   "name": "HEALTHPEAK PROPERTIES, INC.",
@@ -10064,11 +14470,32 @@
    "DOC"
   ]
  },
+ "768899": {
+  "entityType": "operating",
+  "name": "TrueBlue, Inc.",
+  "tickers": [
+   "TBI"
+  ]
+ },
  "77360": {
   "entityType": "operating",
   "name": "PENTAIR plc",
   "tickers": [
    "PNR"
+  ]
+ },
+ "775158": {
+  "entityType": "operating",
+  "name": "OSHKOSH CORP",
+  "tickers": [
+   "OSK"
+  ]
+ },
+ "77543": {
+  "entityType": "operating",
+  "name": "TUTOR PERINI CORP",
+  "tickers": [
+   "TPC"
   ]
  },
  "776867": {
@@ -10085,11 +14512,30 @@
    "INDB"
   ]
  },
+ "777917": {
+  "entityType": "operating",
+  "name": "PRUCO LIFE INSURANCE CO",
+  "tickers": []
+ },
  "779152": {
   "entityType": "operating",
   "name": "JACK HENRY & ASSOCIATES INC",
   "tickers": [
    "JKHY"
+  ]
+ },
+ "78003": {
+  "entityType": "operating",
+  "name": "PFIZER INC",
+  "tickers": [
+   "PFE"
+  ]
+ },
+ "783325": {
+  "entityType": "operating",
+  "name": "WEC ENERGY GROUP, INC.",
+  "tickers": [
+   "WEC"
   ]
  },
  "789019": {
@@ -10099,12 +14545,42 @@
    "MSFT"
   ]
  },
+ "793040": {
+  "entityType": "other",
+  "name": "ELLSWORTH GROWTH & INCOME FUND LTD",
+  "tickers": [
+   "ECF",
+   "ECF-PA"
+  ]
+ },
+ "79879": {
+  "entityType": "operating",
+  "name": "PPG INDUSTRIES INC",
+  "tickers": [
+   "PPG"
+  ]
+ },
+ "799292": {
+  "entityType": "operating",
+  "name": "M/I HOMES, INC.",
+  "tickers": [
+   "MHO"
+  ]
+ },
  "800457": {
   "entityType": "operating",
   "name": "DONEGAL GROUP INC",
   "tickers": [
    "DGICB",
    "DGICA"
+  ]
+ },
+ "8063": {
+  "entityType": "operating",
+  "name": "ASTRONICS CORP",
+  "tickers": [
+   "ATRO",
+   "ATROB"
   ]
  },
  "807882": {
@@ -10119,6 +14595,13 @@
   "name": "PHOTRONICS INC",
   "tickers": [
    "PLAB"
+  ]
+ },
+ "811641": {
+  "entityType": "operating",
+  "name": "IMMUCELL CORP /DE/",
+  "tickers": [
+   "ICCC"
   ]
  },
  "813298": {
@@ -10149,6 +14632,13 @@
    "FICO"
   ]
  },
+ "814586": {
+  "entityType": "operating",
+  "name": "Lifeway Foods, Inc.",
+  "tickers": [
+   "LWAY"
+  ]
+ },
  "814676": {
   "entityType": "operating",
   "name": "CPS TECHNOLOGIES CORP/DE/",
@@ -10177,6 +14667,13 @@
    "XRAY"
   ]
  },
+ "818972": {
+  "entityType": "other",
+  "name": "BNY MELLON STRATEGIC MUNICIPALS, INC.",
+  "tickers": [
+   "LEO"
+  ]
+ },
  "822818": {
   "entityType": "operating",
   "name": "CLEAN HARBORS INC",
@@ -10189,6 +14686,22 @@
   "name": "INNSUITES HOSPITALITY TRUST",
   "tickers": [
    "IHT"
+  ]
+ },
+ "826154": {
+  "entityType": "operating",
+  "name": "ORRSTOWN FINANCIAL SERVICES INC",
+  "tickers": [
+   "ORRF"
+  ]
+ },
+ "826675": {
+  "entityType": "operating",
+  "name": "DYNEX CAPITAL INC",
+  "tickers": [
+   "DX",
+   "DX-PC",
+   "DX-PD"
   ]
  },
  "827054": {
@@ -10248,6 +14761,13 @@
    "ROL"
   ]
  },
+ "849146": {
+  "entityType": "operating",
+  "name": "Lifevantage Corp",
+  "tickers": [
+   "LFVN"
+  ]
+ },
  "849395": {
   "entityType": "operating",
   "name": "CRH PUBLIC LTD CO",
@@ -10262,6 +14782,13 @@
    "HMN"
   ]
  },
+ "850429": {
+  "entityType": "operating",
+  "name": "TREDEGAR CORP",
+  "tickers": [
+   "TG"
+  ]
+ },
  "855658": {
   "entityType": "operating",
   "name": "LATTICE SEMICONDUCTOR CORP",
@@ -10269,11 +14796,46 @@
    "LSCC"
   ]
  },
+ "855887": {
+  "entityType": "other",
+  "name": "BNY MELLON STRATEGIC MUNICIPAL BOND FUND, INC.",
+  "tickers": [
+   "DSM"
+  ]
+ },
+ "857005": {
+  "entityType": "operating",
+  "name": "PTC INC.",
+  "tickers": [
+   "PTC"
+  ]
+ },
+ "857855": {
+  "entityType": "operating",
+  "name": "UNITED COMMUNITY BANKS INC",
+  "tickers": [
+   "UCB"
+  ]
+ },
+ "858706": {
+  "entityType": "other",
+  "name": "NEW GERMANY FUND INC",
+  "tickers": [
+   "GF"
+  ]
+ },
  "859070": {
   "entityType": "operating",
   "name": "FIRST COMMUNITY BANKSHARES INC /VA/",
   "tickers": [
    "FCBC"
+  ]
+ },
+ "859796": {
+  "entityType": "other",
+  "name": "JAPAN SMALLER CAPITALIZATION FUND INC",
+  "tickers": [
+   "JOF"
   ]
  },
  "860413": {
@@ -10295,6 +14857,13 @@
   "name": "MEXICO EQUITY & INCOME FUND INC",
   "tickers": [
    "MXE"
+  ]
+ },
+ "866829": {
+  "entityType": "operating",
+  "name": "HORNBECK OFFSHORE SERVICES, INC.",
+  "tickers": [
+   "HOS"
   ]
  },
  "8670": {
@@ -10332,6 +14901,13 @@
    "VRTX"
   ]
  },
+ "876343": {
+  "entityType": "operating",
+  "name": "Lineage Cell Therapeutics, Inc.",
+  "tickers": [
+   "LCTX"
+  ]
+ },
  "876437": {
   "entityType": "operating",
   "name": "MGIC INVESTMENT CORP",
@@ -10339,11 +14915,25 @@
    "MTG"
   ]
  },
+ "878927": {
+  "entityType": "operating",
+  "name": "OLD DOMINION FREIGHT LINE, INC.",
+  "tickers": [
+   "ODFL"
+  ]
+ },
  "879169": {
   "entityType": "operating",
   "name": "INCYTE CORP",
   "tickers": [
    "INCY"
+  ]
+ },
+ "879635": {
+  "entityType": "operating",
+  "name": "MID PENN BANCORP INC",
+  "tickers": [
+   "MPB"
   ]
  },
  "880266": {
@@ -10358,6 +14948,13 @@
   "name": "SPX Technologies, Inc.",
   "tickers": [
    "SPXC"
+  ]
+ },
+ "882095": {
+  "entityType": "operating",
+  "name": "GILEAD SCIENCES, INC.",
+  "tickers": [
+   "GILD"
   ]
  },
  "882835": {
@@ -10381,11 +14978,79 @@
    "RCL"
   ]
  },
+ "885307": {
+  "entityType": "operating",
+  "name": "JEWETT CAMERON TRADING CO LTD",
+  "tickers": [
+   "JCTC"
+  ]
+ },
+ "885550": {
+  "entityType": "operating",
+  "name": "CREDIT ACCEPTANCE CORP",
+  "tickers": [
+   "CACC"
+  ]
+ },
+ "886163": {
+  "entityType": "operating",
+  "name": "LIGAND PHARMACEUTICALS INC",
+  "tickers": [
+   "LGND",
+   "LGNDZ",
+   "LGNXZ",
+   "LGNYZ",
+   "LGNZZ"
+  ]
+ },
+ "886206": {
+  "entityType": "operating",
+  "name": "FRANKLIN COVEY CO",
+  "tickers": [
+   "FC"
+  ]
+ },
+ "886744": {
+  "entityType": "operating",
+  "name": "GERON CORP",
+  "tickers": [
+   "GERN"
+  ]
+ },
+ "887396": {
+  "entityType": "operating",
+  "name": "EMPIRE PETROLEUM CORP",
+  "tickers": [
+   "EP"
+  ]
+ },
+ "887733": {
+  "entityType": "operating",
+  "name": "CENTRAL GARDEN & PET CO",
+  "tickers": [
+   "CENT",
+   "CENTA"
+  ]
+ },
  "88941": {
   "entityType": "operating",
   "name": "SEMTECH CORP",
   "tickers": [
    "SMTC"
+  ]
+ },
+ "889609": {
+  "entityType": "operating",
+  "name": "CONSUMER PORTFOLIO SERVICES, INC.",
+  "tickers": [
+   "CPSS"
+  ]
+ },
+ "889971": {
+  "entityType": "operating",
+  "name": "LIGHTPATH TECHNOLOGIES INC",
+  "tickers": [
+   "LPTH"
   ]
  },
  "894405": {
@@ -10400,6 +15065,13 @@
   "name": "OHIO VALLEY BANC CORP",
   "tickers": [
    "OVBC"
+  ]
+ },
+ "8947": {
+  "entityType": "operating",
+  "name": "AZZ INC",
+  "tickers": [
+   "AZZ"
   ]
  },
  "895421": {
@@ -10444,6 +15116,13 @@
    "ALL-PJ"
   ]
  },
+ "899715": {
+  "entityType": "operating",
+  "name": "TANGER INC.",
+  "tickers": [
+   "SKT"
+  ]
+ },
  "901832": {
   "entityType": "other",
   "name": "ASTRAZENECA PLC",
@@ -10456,12 +15135,24 @@
   "name": "FOLEY WILLIAM P II",
   "tickers": []
  },
+ "90498": {
+  "entityType": "operating",
+  "name": "SIMMONS FIRST NATIONAL CORP",
+  "tickers": [
+   "SFNC"
+  ]
+ },
  "906107": {
   "entityType": "operating",
   "name": "VIVMARK RESIDENTIAL",
   "tickers": [
    "VMRK"
   ]
+ },
+ "906134": {
+  "entityType": "other",
+  "name": "TUTOR RONALD N",
+  "tickers": []
  },
  "907471": {
   "entityType": "operating",
@@ -10522,6 +15213,13 @@
    "GRPFF"
   ]
  },
+ "91440": {
+  "entityType": "operating",
+  "name": "Snap-on Inc",
+  "tickers": [
+   "SNA"
+  ]
+ },
  "915389": {
   "entityType": "operating",
   "name": "EASTMAN CHEMICAL CO",
@@ -10542,6 +15240,11 @@
   "name": "ORTENZIO ROBERT A",
   "tickers": []
  },
+ "920097": {
+  "entityType": "other",
+  "name": "UNIVEST SECURITIES, LLC",
+  "tickers": []
+ },
  "921669": {
   "entityType": "other",
   "name": "ICAHN CARL C",
@@ -10551,6 +15254,20 @@
   "entityType": "other",
   "name": "Schwab Charles R.",
   "tickers": []
+ },
+ "928054": {
+  "entityType": "operating",
+  "name": "FLOTEK INDUSTRIES INC/CN/",
+  "tickers": [
+   "FTK"
+  ]
+ },
+ "928658": {
+  "entityType": "operating",
+  "name": "COVENANT LOGISTICS GROUP, INC.",
+  "tickers": [
+   "CVLG"
+  ]
  },
  "933036": {
   "entityType": "operating",
@@ -10564,6 +15281,13 @@
   "name": "IRSA INVESTMENTS & REPRESENTATIONS INC",
   "tickers": [
    "IRS"
+  ]
+ },
+ "933974": {
+  "entityType": "operating",
+  "name": "Azenta, Inc.",
+  "tickers": [
+   "AZTA"
   ]
  },
  "93410": {
@@ -10580,9 +15304,19 @@
    "SWK"
   ]
  },
+ "935596": {
+  "entityType": "other",
+  "name": "DONEGAL MUTUAL INSURANCE CO",
+  "tickers": []
+ },
  "937797": {
   "entityType": "other",
   "name": "MALONE JOHN C",
+  "tickers": []
+ },
+ "938543": {
+  "entityType": "other",
+  "name": "HERSHEY TRUST CO TRUSTEE IN TRUST FOR MILTON HERSHEY SCHOOL",
   "tickers": []
  },
  "94049": {
@@ -10661,6 +15395,13 @@
   "name": "TEXAS INSTRUMENTS INC",
   "tickers": [
    "TXN"
+  ]
+ },
+ "97745": {
+  "entityType": "operating",
+  "name": "THERMO FISHER SCIENTIFIC INC.",
+  "tickers": [
+   "TMO"
   ]
  }
 }
