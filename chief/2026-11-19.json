@@ -1,0 +1,1023 @@
+{
+ "attention": [],
+ "day": "2026-11-19",
+ "describes": "filings published 2026-11-19",
+ "facts": {
+  "attention": [],
+  "sections": {
+   "base_rates": {
+    "dark": false,
+    "id": "base_rates",
+    "lines": [
+     {
+      "text": "form4_cluster_buy over 21 bars vs SPY, n=160: median -0.2%, middle half -7.1% to +6.8%, worst -56.5%, best +118.2%, 49% positive — registry verdict NOT MET",
+      "url": null
+     },
+     {
+      "text": "form4_cluster_buy over 63 bars vs SPY, n=406: median -4.5%, middle half -20.5% to +9.8%, worst -77.2%, best +268.6%, 40% positive — registry verdict NOT MET",
+      "url": null
+     },
+     {
+      "text": "12 event type(s) observed; 12 have insufficient history for a base rate (no frozen outcome ledger)",
+      "url": null
+     }
+    ],
+    "note": "What followed past events of a type — a description, not a forecast. Computed only from reads already spent.",
+    "source": {
+     "age_days": 0.0,
+     "name": "ACTUARY analysis",
+     "stamp": "2026-11-20T04:04:44+00:00",
+     "status": "fresh",
+     "usable": true,
+     "why": "ok"
+    },
+    "title": "Base rates"
+   },
+   "exposure": {
+    "dark": false,
+    "id": "exposure",
+    "lines": [
+     {
+      "text": "Not measured — no positions are declared in data/operator/positions.csv, so there is nothing to measure concentration of.",
+      "url": null
+     }
+    ],
+    "note": "Lines are flagged against the balanced limits (single name 20%); the figures are the same under every stance.",
+    "source": {
+     "age_days": 0.0,
+     "name": "ACTUARY analysis",
+     "stamp": "2026-11-20T04:04:44+00:00",
+     "status": "fresh",
+     "usable": true,
+     "why": "ok"
+    },
+    "title": "Exposure"
+   },
+   "filings": {
+    "dark": false,
+    "id": "filings",
+    "lines": [
+     {
+      "text": "10-K: 1 in the watched universe of 18 market-wide",
+      "url": null
+     },
+     {
+      "text": "10-Q: 4 in the watched universe of 24 market-wide",
+      "url": null
+     },
+     {
+      "text": "4: 74 in the watched universe of 578 market-wide",
+      "url": null
+     },
+     {
+      "text": "424B5: 1 in the watched universe of 16 market-wide",
+      "url": null
+     },
+     {
+      "text": "8-K: 46 in the watched universe of 258 market-wide",
+      "url": null
+     },
+     {
+      "text": "8-K items: 1.01 × 4, 2.02 × 6, 3.02 × 2, 5.02 × 7, 5.03 × 1, 5.07 × 8, 7.01 × 14, 8.01 × 16, 9.01 × 40",
+      "url": null
+     },
+     {
+      "text": "AIFA — 8-K item 1.01, 3.02, 5.02, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1708341/000121390026122019/"
+     },
+     {
+      "text": "AMWL — 8-K item 5.02",
+      "url": "https://www.sec.gov/Archives/edgar/data/1393584/000095010326017856/"
+     },
+     {
+      "text": "ARAY — 8-K item 5.07, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1138723/000143774926037717/"
+     },
+     {
+      "text": "ARDT — 8-K item 8.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1756655/000110465926130121/"
+     },
+     {
+      "text": "ATLO — 8-K item 8.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1132651/000143774926037728/"
+     },
+     {
+      "text": "BCML — 8-K item 8.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1730984/000173098426000089/"
+     },
+     {
+      "text": "BIAF — 8-K item 8.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1712762/000149315226053172/"
+     },
+     {
+      "text": "BNAI — 10-K/A",
+      "url": "https://www.sec.gov/Archives/edgar/data/1838163/000149315226053306/"
+     },
+     {
+      "text": "BSET — 8-K item 5.02, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/10329/000143774926037751/"
+     },
+     {
+      "text": "CITR — 8-K item 5.02, 7.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/894556/000168316826008943/"
+     },
+     {
+      "text": "CTSO — 8-K/A item 2.02, 7.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1175151/000110465926129936/"
+     },
+     {
+      "text": "EFSI — 8-K item 5.07, 8.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/880641/000119312526468653/"
+     },
+     {
+      "text": "FISI — 8-K item 7.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/862831/000119312526468610/"
+     },
+     {
+      "text": "FTW — 8-K item 1.01, 7.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/2083125/000121390026121969/"
+     },
+     {
+      "text": "GEOS — 8-K item 2.02, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1001115/000143774926037760/"
+     },
+     {
+      "text": "HQI — 8-K item 7.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1140102/000143774926037725/"
+     },
+     {
+      "text": "HSCS — 8-K item 1.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1468492/000121390026122044/"
+     },
+     {
+      "text": "HSCS — 424B5",
+      "url": "https://www.sec.gov/Archives/edgar/data/1468492/000121390026122049/"
+     },
+     {
+      "text": "HSCS — 8-K item 5.07",
+      "url": "https://www.sec.gov/Archives/edgar/data/1468492/000121390026122281/"
+     },
+     {
+      "text": "HY — 8-K item 8.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1173514/000117351426000259/"
+     },
+     {
+      "text": "HYNE — 8-K item 7.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/2073153/000110465926130197/"
+     },
+     {
+      "text": "HYPD — 8-K item 5.02",
+      "url": "https://www.sec.gov/Archives/edgar/data/1682639/000110465926130118/"
+     },
+     {
+      "text": "ICCC — 8-K/A item 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/811641/000143774926037731/"
+     },
+     {
+      "text": "INGN — 8-K item 5.02, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1294133/000129413326000047/"
+     },
+     {
+      "text": "ISBA — 8-K item 8.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/842517/000084251726000243/"
+     },
+     {
+      "text": "JMSB — 8-K item 5.07, 8.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1710482/000110465926130177/"
+     },
+     {
+      "text": "KRSA — 8-K item 5.07",
+      "url": "https://www.sec.gov/Archives/edgar/data/1755237/000119312526468661/"
+     },
+     {
+      "text": "MSBI — 8-K item 8.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1466026/000110465926130130/"
+     },
+     {
+      "text": "NGVC — 8-K item 2.02, 7.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1547459/000143774926037715/"
+     },
+     {
+      "text": "ONIT — 8-K item 7.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/873860/000149315226053154/"
+     },
+     {
+      "text": "ORMP — 8-K item 8.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1176309/000121390026122239/"
+     },
+     {
+      "text": "OVBC — 8-K item 5.02, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/894671/000089467126000076/"
+     },
+     {
+      "text": "PASG — 8-K item 7.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1787297/000114036126044811/"
+     },
+     {
+      "text": "PASG — 8-K item 8.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1787297/000114036126044947/"
+     },
+     {
+      "text": "PCYO — 8-K item 2.02, 7.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/276720/000110465926129985/"
+     },
+     {
+      "text": "PDEX — 8-K item 5.07, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/788920/000140025326000043/"
+     },
+     {
+      "text": "PLBC — 8-K item 5.03, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1168455/000143774926037643/"
+     },
+     {
+      "text": "RMBI — 8-K item 8.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1767837/000162828026074897/"
+     },
+     {
+      "text": "SBC — 8-K item 8.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1930313/000149315226053135/"
+     },
+     {
+      "text": "SCNX — 8-K item 2.02, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1382574/000149315226053245/"
+     },
+     {
+      "text": "SHPH — 8-K item 1.01, 3.02, 8.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1757499/000149315226053297/"
+     },
+     {
+      "text": "SLRC — 8-K item 5.07",
+      "url": "https://www.sec.gov/Archives/edgar/data/1418076/000119312526468526/"
+     },
+     {
+      "text": "SPWR — 8-K item 2.02, 7.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1838987/000121390026122000/"
+     },
+     {
+      "text": "SRBK — 8-K item 5.07, 7.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1951276/000094337426000495/"
+     },
+     {
+      "text": "SZZL — 8-K item 7.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/2030663/000121390026122053/"
+     },
+     {
+      "text": "TONX — 8-K item 7.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/1566610/000149315226053239/"
+     },
+     {
+      "text": "UBCP — 8-K item 8.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/731653/000110465926130093/"
+     },
+     {
+      "text": "UNTY — 8-K item 8.01, 9.01",
+      "url": "https://www.sec.gov/Archives/edgar/data/920427/000119312526468515/"
+     }
+    ],
+    "note": "Filing day 2026-11-19. Listed alphabetically — nothing here is ordered by importance.",
+    "source": {
+     "age_days": 0.0,
+     "name": "OBSERVER filings",
+     "stamp": "2026-11-20T03:58:53+00:00",
+     "status": "fresh",
+     "usable": true,
+     "why": "ok"
+    },
+    "title": "Filings in the watched universe"
+   },
+   "insiders": {
+    "dark": false,
+    "id": "insiders",
+    "lines": [
+     {
+      "text": "74 Form 4 filing(s) in the watched universe: 74 not observed",
+      "url": null
+     },
+     {
+      "text": "⚠️ 74 have no observed direction — these are filings, NOT purchases; insider sales outnumber buys. Form 4 bodies are on www.sec.gov, which answers 403 to this client; direction comes from Finnhub by accession, which lags EDGAR — 105 still pending and re-checked on later runs",
+      "url": null
+     }
+    ],
+    "note": "A purchase is a code-P open-market transaction read from Finnhub by accession. Past cluster buys over 21 bars (n=160): median -0.2% vs SPY, middle half -7.1% to +6.8%; registry verdict NOT MET. Past cluster buys over 63 bars (n=406): median -4.5% vs SPY, middle half -20.5% to +9.8%; registry verdict NOT MET.",
+    "source": {
+     "age_days": 0.0,
+     "name": "OBSERVER filings",
+     "stamp": "2026-11-20T03:58:53+00:00",
+     "status": "fresh",
+     "usable": true,
+     "why": "ok"
+    },
+    "title": "Insider activity"
+   },
+   "language": {
+    "dark": false,
+    "id": "language",
+    "lines": [
+     {
+      "text": "1 filing pair(s) compared across 1 issuer(s): 0 removed, 0 added, 6 retained, 0 indeterminate",
+      "url": null
+     }
+    ],
+    "note": "A phrase-presence diff over pre-declared phrases, not a section diff: language nobody declared is invisible here, and Item 1A vs Item 7 is not observed.",
+    "source": {
+     "age_days": 0.0,
+     "name": "LIBRARIAN brief",
+     "stamp": "2026-11-20T04:04:38+00:00",
+     "status": "fresh",
+     "usable": true,
+     "why": "ok"
+    },
+    "title": "Filing language"
+   },
+   "macro": {
+    "dark": false,
+    "id": "macro",
+    "lines": [
+     {
+      "text": "10-year Treasury yield: 5.07 % as of 2026-11-18 (-0.03 vs 2026-11-17)",
+      "url": "https://fred.stlouisfed.org/series/DGS10"
+     },
+     {
+      "text": "2-year Treasury yield: 4.8 % as of 2026-11-18 (+0 vs 2026-11-17)",
+      "url": "https://fred.stlouisfed.org/series/DGS2"
+     },
+     {
+      "text": "10y minus 2y spread: 0.28 pp as of 2026-11-19 (+0.01 vs 2026-11-18)",
+      "url": "https://fred.stlouisfed.org/series/T10Y2Y"
+     },
+     {
+      "text": "Effective fed funds rate: 3.88 % as of 2026-11-18 (+0 vs 2026-11-17)",
+      "url": "https://fred.stlouisfed.org/series/DFF"
+     },
+     {
+      "text": "High-yield credit spread (OAS): 3.47 pp as of 2026-11-18 (+0.04 vs 2026-11-17)",
+      "url": "https://fred.stlouisfed.org/series/BAMLH0A0HYM2"
+     },
+     {
+      "text": "VIX: 24.56 index as of 2026-11-18 (-0.9 vs 2026-11-17)",
+      "url": "https://fred.stlouisfed.org/series/VIXCLS"
+     },
+     {
+      "text": "Broad dollar index: 122.65 index as of 2026-11-13 (+0.107 vs 2026-11-12)",
+      "url": "https://fred.stlouisfed.org/series/DTWEXBGS"
+     },
+     {
+      "text": "Initial jobless claims: 203000 claims as of 2026-11-14 (+1000 vs 2026-11-07)",
+      "url": "https://fred.stlouisfed.org/series/ICSA"
+     },
+     {
+      "text": "Unemployment rate: 4.1 % as of 2026-10-01 (-0.1 vs 2026-09-01)",
+      "url": "https://fred.stlouisfed.org/series/UNRATE"
+     },
+     {
+      "text": "CPI (all urban, SA): 337.476 index as of 2026-10-01 (+1.178 vs 2026-09-01)",
+      "url": "https://fred.stlouisfed.org/series/CPIAUCSL"
+     },
+     {
+      "text": "Oil prices edge higher as Houthi attacks on Riyadh raise supply concerns - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMiugFBVV95cUxPb3pQREZDSHE2RmNHdDdGdExDUXhYeWljc2VualVoQ09oQV90WnFQQlZkYW1rWnl5ODJ6N2haaVBDVUY4VmFvRmtLSlZKbU5kR1lHNklrUUR3X3JGc181OHZCUHpXalZFUllBZXVEczJPUUdZZUt1MmpsTEN0MkJGSDNCVHhoa25pZFBSb1lldS1US0VJNVNBWWN1U2VwQmd0WmlQR1RKWmgyS2lyUDVfNHdWeWhzaFhmZ1E?oc=5"
+     },
+     {
+      "text": "Houthi strike damages Riyadh’s tallest skyscraper - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTFBlellNcl9iOFk5YURTaUJXSTRKZkVTWk13NUhyS3ptX3VUOVMzVkV4VFdGQjZpQU9DMFdkNUNXMUZuNWl5SWxxdTZUcXIyNE1NM3VaOHBGWG41RThNQjJ3WjA1Tm0zU28?oc=5"
+     },
+     {
+      "text": "Trump says no rush on Iran decision, looks to next year - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMisgFBVV95cUxNQkkzQVk3M3pnOXRWVlFCMmVzUEN0alhCS0gzQUhYNkhCMDhCOUM0N0tmMFpZNVNKcnVNbktaYXV5MV9ERm13WHoxTEVtUGRMUkZwT3dJZmlRZ2pyRE1WMGoyZW1VcXVWdTVRTmxZV1RISHNXWE9YY1BUUC1EWlJWRWRsYzlGTXo0WmhjaUxiUnAyMDl2OU9mWmliYndLd0htWGVLYWFUUldMOUIzLV9TSnBB?oc=5"
+     },
+     {
+      "text": "Gap names new Athleta CEO, lowers full-year guidance",
+      "url": "https://www.cnbc.com/2026/11/19/gap-gap-q3-2026-earnings.html"
+     },
+     {
+      "text": "3-step method to influence people and win them over, from a Stanford expert: ‘Your voice is like a muscle’",
+      "url": "https://www.cnbc.com/make-it/2026/11/19/matt-abrahams-persuasive-speaking-tips.html"
+     },
+     {
+      "text": "Somalia orders UAE ambassador to leave, citing 'invasion' - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMiqAFBVV95cUxQWEg3aWNsUnlnMDBWSmdjZGtyWjJrMXROTHFNMXlycC15MU14bzV1UjUwVVJzR1JFek53RDVnV05DSkdtZnVzLUpQdFEyMGFLbDdpZEc0MlNUNzFFVHV2YkxLMnlHd2hBUVA2M1BlaW5OT041Y0s1OERhT1o3YTRXZ2d6aUl4NGs2cFVyRnQ0VmhLOXJUMkRCQWpmZ3FYODMwTU1iekNoelc?oc=5"
+     },
+     {
+      "text": "S&P 500 heads for 6th straight decline. Plus, J&J advances two key products",
+      "url": "https://www.cnbc.com/investingclub/2026/11/19/sp-500-heads-for-6th-straight-decline-plus-jj-advances-two-key-products.html"
+     },
+     {
+      "text": "Backing Trump, US Senate Republicans block Iran war resolution - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMiowFBVV95cUxOcmstcFNFWmdlWE9OT3pCd2JxN1RvaDZMZ2dlZC01YU9hUVFDdFdETmRJLWYtRWI5bkpNVHgyQUFTRVNncW9kUUZkdGhFRkl1RUx6MGs2eVhNNXhZbzROalJGQnRSSUdqdVBhQ1NuLTRONXEyQWpYemhwenhCd2VlNlY4VUZJT3NRdjBmdzBTZGxreUlHNmgyX0p4TzVxX1FvaXZR?oc=5"
+     },
+     {
+      "text": "As Sanofi's Pompe drug shortage drags on, some patients struggle to access treatments",
+      "url": "https://www.cnbc.com/2026/11/19/as-pompe-drug-shortage-drags-on-patients-struggle-to-get-treatments.html"
+     },
+     {
+      "text": "Netherlands summons Russian ambassador as Kyiv embassy hit - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMingFBVV95cUxPSlhpc3VjQlJUMS1pb2FxdTNFSFlNODl6NFB5RXlnMlljcXI5dGl0emdoTkpFNmRRWnJzOXhVakxhQWdWb1hvb2tnaFZkLWZoYUFTc1lEQ0VmOXBETkp6TDQ0Tk84QWhWWlVqUFM3bG0tVXk5YVVveU91TU1MUHpvdVk4TTdBLVQtZGs0enhlZ290bjUzbDRQU1liWmVpUQ?oc=5"
+     },
+     {
+      "text": "Anthropic's historic IPO is a boon to these 12 portfolio stocks. Here's how they benefit",
+      "url": "https://www.cnbc.com/investingclub/2026/11/19/anthropics-historic-ipo-is-a-boon-to-these-12-portfolio-stocks-heres-how-they-benefit.html"
+     },
+     {
+      "text": "West presses Iran at IAEA to let inspections resume at bombed nuclear sites - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMitAFBVV95cUxNX1BENXJsTm9KVlRxVjk0SENfVmszM1ZXVFpjQzJZcVRneVFiR210MTNseE0yUlJqWmRObE9ndjlKQkZUVFJqd0Joc3hFLWNhcW5KQ0ZKZWdBWDZ5Q1BCNWFQcDdBN1N5MDllSGNNYjdOUG1IaG5BNjB2S3hPMHRTSGpDM2phXzkzSUF6TkJtMktQRWpodkdiRVVSM0FJZ0lDOVRLZk5Dby1SdXV1elBEaW5GM0k?oc=5"
+     },
+     {
+      "text": "Iraqi forces strike compromise with powerful pro-Iran militia, security officials say - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMizwFBVV95cUxOVE54c3Eza3gxMTYwRmh4U0tZR0ZvWmctdm1OV1dkN1BzZXNXdFFiTjZkZlc5Mk01YVQzN2ZkZFZzUVVPdmMtc3ZzRjJZY28wdFE3ejFtcnlkbWZmUkZicXFKMU1ydEJZalZwZlFnQkhWSGVaMXFUUkt5T0pVaUp1WUxJMjdiVDhCWnlOLXRKaFh2UXhvQnNNQnNnZVBkWEdwMFBPOEEtc1ZzOTFIOHNfZklhZWJuQVVJaDBpU3hPNk4ycllOcTg4WmZoRG5zaDg?oc=5"
+     },
+     {
+      "text": "Russia repels Ukrainian drones attack on oil facility in Tatarstan region, local authorities say - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMivgFBVV95cUxPUXY4SS1DQy01LTV4VDEwYTVCV2hCeThSemNINHhHNFk2Zk1ZNGpIWVk1MFlyMUJwWGFlS1otZGRYSHpYYUlqQlZOMjRrQURxU29GNlhkTmJVU1l3VE1TTkR1dWhCM2dJT2QyUnRkR0dlRVE5eHhiUHBVSUVaa0ppOFJDb0I1M081eHhNQUd4WXhlWnJ6d0RYTVhWamRONXVFZmpjVGFuYmtTeG5FYXVkcXRFaVY1RnhobzYzZjNB?oc=5"
+     },
+     {
+      "text": "Saudi crown prince meets US CENTCOM chief amid escalating Houthi hostilities - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMiygFBVV95cUxObmJSSy0yWk1zbDFnQ3ZSY3BZUEJ6NURyNzFqOGNJYWVxUFl1bHJWSVRFWllnanZxZFRPMnEwemZIQVpGN3EzenFOcEN2czBpakNnU19EVkFrMGxVT1lSblVEUW5DTE8zckg5YTFEbUF4VG4xd2JocUUwZ3JvZGxLNVZhNGNSWXh0clJDVk5GdklKZmtfb2tSejUtSHc3aFMwV2xQeVlSXzFvS3hsUm05SEtEcjZNcUw0U3l4RnJLVUo3RElsN3Q1aHZn?oc=5"
+     },
+     {
+      "text": "Jim Cramer says to buy stock in this sleeping tech giant 'aggressively, aggressively'",
+      "url": "https://www.cnbc.com/investingclub/2026/11/19/jim-cramer-says-to-buy-stock-in-this-sleeping-tech-giant-aggressively.html"
+     },
+     {
+      "text": "We're adding to a consumer stock as the market enters oversold territory",
+      "url": "https://www.cnbc.com/investingclub/2026/11/19/were-adding-to-a-consumer-stock-as-the-market-enters-oversold-territory.html"
+     },
+     {
+      "text": "US weekly jobless claims edge up, but labor market remains resilient - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMikAFBVV95cUxPUjdpV0lCY3lUWlhjZzVkdTNNa1hrazREdFRCMjFSRlpzYmpXNlpYeXdOeXJyZk44NGQwT0FuN1cxdWRyUWtLenNCTGNDSVM0NERhNW5PemtfbTI1UkFtcDdvUklKdjZZM2c4NTZlUVBlYVF5SVBubVFnbkhueHNTWDhLd1c4MVJLM2g1ekQ3bHo?oc=5"
+     },
+     {
+      "text": "Yemen's Houthis say they targeted king khalid airport and financial center in riyadh - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMiygFBVV95cUxOdWlyWlB1bmVVRm40Nkw2NXluNnQweUUtc0F4eTlKaHJrakhUY1ZpaUYwVjRveFRTay1CSnFpR1ZxSzR0cWFqZWFrZUFfY2Jvb1FxNWZmUzFTaXZCejdEbnMwSVQ4UHc3bzkwcU9rdGp1RTl1b1BtYWZfcG40WlR6Y0FUWkhvVGczU2hJT2dpb0FxNXlzTzFrM01Cb2N0bWI4YlNSZk5YTTlRTXpSTEwxa2ZkU2RUVU5QZTU1VTIycWpCNUxjaEtxNENR?oc=5"
+     },
+     {
+      "text": "Trump pressures Congress to pass farm bill this year - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMijAFBVV95cUxPdnJlNUdSV2wtMnpOOTVFWlVLMThyVDV1M0lSLXJaZTlKQnJZQTJPbTNZc2REeW9kUENIeWJ1Vjh0VU9CY0o4Mmk3Z181YXdDbjlNZGZiRkk2M2FaZ0dDNmlZQUNfQjZ6R1hxaENNcEZENkZmWTZ4N2kzUFJXbjh1NWdYSXhKbzBEZUY4UA?oc=5"
+     },
+     {
+      "text": "Houthi attacks on Saudi Arabia - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxOTXVIQUMwVTA5TllQb203X3V6XzNUVlNqaHhXd3NlNjJ0VF9rVUp1OTdRRjBWaVFMREswSVlfNjVESFAwb2w0NGMyVk5LeWNjTU42RnBIOWRsR05kWFktNFhrNnJtMm84cGNmekdUYmlvREJLQkt6NjUxMEZ2Sy1wUjVQbnhMS2JG?oc=5"
+     },
+     {
+      "text": "Amazon launches in-app push against Mamdani-backed delivery bill in New York City",
+      "url": "https://www.cnbc.com/2026/11/19/amazon-nyc-delivery-protection-act.html"
+     },
+     {
+      "text": "Putin defends his 'Yalta', as 3-way summit draws parallels to post-war carve-up - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMiugFBVV95cUxNS2RyVUFBbDcxYWtIYjFjd0NtUmhUMzJDSXZqbWhkTFNYYXkzU3kzRF9WZnBTTGphWmI0UmQzUFFMRk9WODN6ZmlGVk1QSXNBR01hdk93RG9SbWJrb3RObU40aWFNUjFNX1JLTnlXbmdqSmlZLUVOaWdtMFBqZVYwV3BhbmFlcS1TRTFRUnZ3YXlzN190M3dXa0QtazJ5d1NVT2huaDFGR29OSTgtVnNmLUxfVWx0R1BVeEE?oc=5"
+     },
+     {
+      "text": "Gazans return to battered camp after Israel says it concluded tank raid - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMimAFBVV95cUxNSTlHeU1CNWItYmpkOXVld21mVVRpNm9EbHhicnE3d1BQcmJ3em1HREh3NkFTUVNSUVFxMjFrWVU5V1dhT2Q2TWZEZ3VwYW9WSjB0SkhJU0JNMUxVMlAyU0RWYnZTekpLUS1oT0xPUXNzUWpjT0dhSktadFFXalBlcG1EaUJXaU1HMnBYb3pxd0V6OVBGdElzYg?oc=5"
+     },
+     {
+      "text": "We're buying 1 non-tech stock and 1 tech stock as the market tips oversold",
+      "url": "https://www.cnbc.com/investingclub/2026/11/19/were-buying-1-non-tech-stock-and-1-tech-stock-as-the-market-tips-oversold.html"
+     }
+    ],
+    "note": "Collected, not curated: series state their own age and headlines are newest-first, not most-important-first.",
+    "source": {
+     "age_days": 0.0,
+     "name": "OBSERVER macro",
+     "stamp": "2026-11-20T04:04:34+00:00",
+     "status": "fresh",
+     "usable": true,
+     "why": "ok"
+    },
+    "title": "Macro and headlines"
+   },
+   "theses": {
+    "dark": false,
+    "id": "theses",
+    "lines": [
+     {
+      "text": "No thesis is open. Record one with `python thesis_ledger.py open` — it needs a falsifier and a review date.",
+      "url": null
+     }
+    ],
+    "note": "",
+    "source": {
+     "age_days": 0.0,
+     "name": "ACTUARY analysis",
+     "stamp": "2026-11-20T04:04:44+00:00",
+     "status": "fresh",
+     "usable": true,
+     "why": "ok"
+    },
+    "title": "Your theses"
+   },
+   "universe": {
+    "dark": false,
+    "id": "universe",
+    "lines": [
+     {
+      "text": "1024 names pass the declared screen for session 2026-11-19 (+9 entered, −27 left)",
+      "url": null
+     },
+     {
+      "text": "IWM 264.22 · 1d -2.18% · ytd +6.9%",
+      "url": null
+     },
+     {
+      "text": "SPY 715.87 · 1d -1.96% · ytd +5.6%",
+      "url": null
+     },
+     {
+      "text": "The eligible list is not a buy list. Capital deployed: $0.",
+      "url": null
+     }
+    ],
+    "note": "",
+    "source": {
+     "age_days": 0.05,
+     "name": "daily snapshot",
+     "stamp": "2026-11-20T02:59:45Z",
+     "status": "fresh",
+     "usable": true,
+     "why": "ok"
+    },
+    "title": "Universe and benchmarks"
+   }
+  }
+ },
+ "facts_sha256": "544dbe9d0dec90d9b49dfa8433d1b9edeae1e2d23399a79e30554a19bde30065",
+ "generated_at": "2026-11-20T04:04:45+00:00",
+ "inputs": {
+  "analysis": {
+   "age_days": 0.0,
+   "name": "ACTUARY analysis",
+   "stamp": "2026-11-20T04:04:44+00:00",
+   "status": "fresh",
+   "usable": true,
+   "why": "ok"
+  },
+  "daily snapshot": {
+   "age_days": 0.05,
+   "name": "daily snapshot",
+   "stamp": "2026-11-20T02:59:45Z",
+   "status": "fresh",
+   "usable": true,
+   "why": "ok"
+  },
+  "librarian": {
+   "age_days": 0.0,
+   "name": "LIBRARIAN brief",
+   "stamp": "2026-11-20T04:04:38+00:00",
+   "status": "fresh",
+   "usable": true,
+   "why": "ok"
+  },
+  "macro": {
+   "age_days": 0.0,
+   "name": "OBSERVER macro",
+   "stamp": "2026-11-20T04:04:34+00:00",
+   "status": "fresh",
+   "usable": true,
+   "why": "ok"
+  },
+  "observations": {
+   "age_days": 0.0,
+   "name": "OBSERVER filings",
+   "stamp": "2026-11-20T03:58:53+00:00",
+   "status": "fresh",
+   "usable": true,
+   "why": "ok"
+  }
+ },
+ "is_not_a_recommendation": "This brief relays what was collected, structured and described. It contains no buy, sell or hold, and the stance changes only the order and length of sections.",
+ "layouts": {
+  "aggressive": {
+   "caps": {
+    "base_rates": 6,
+    "exposure": 20,
+    "filings": 30,
+    "insiders": 30,
+    "language": 10,
+    "macro": 14,
+    "theses": 40,
+    "universe": 6
+   },
+   "order": [
+    "insiders",
+    "base_rates",
+    "filings",
+    "language",
+    "theses",
+    "exposure",
+    "macro",
+    "universe"
+   ]
+  },
+  "balanced": {
+   "caps": {
+    "base_rates": 6,
+    "exposure": 30,
+    "filings": 20,
+    "insiders": 14,
+    "language": 15,
+    "macro": 18,
+    "theses": 60,
+    "universe": 6
+   },
+   "order": [
+    "theses",
+    "filings",
+    "language",
+    "insiders",
+    "base_rates",
+    "exposure",
+    "macro",
+    "universe"
+   ]
+  },
+  "conservative": {
+   "caps": {
+    "base_rates": 6,
+    "exposure": 40,
+    "filings": 14,
+    "insiders": 8,
+    "language": 25,
+    "macro": 22,
+    "theses": 60,
+    "universe": 6
+   },
+   "order": [
+    "theses",
+    "exposure",
+    "language",
+    "macro",
+    "filings",
+    "insiders",
+    "base_rates",
+    "universe"
+   ]
+  }
+ },
+ "operator_messages": {
+  "open": [],
+  "reason": "ok",
+  "status": "ok"
+ },
+ "order": [
+  "theses",
+  "filings",
+  "language",
+  "insiders",
+  "base_rates",
+  "exposure",
+  "macro",
+  "universe"
+ ],
+ "sections": [
+  {
+   "dark": false,
+   "id": "theses",
+   "lines": [
+    {
+     "text": "No thesis is open. Record one with `python thesis_ledger.py open` — it needs a falsifier and a review date.",
+     "url": null
+    }
+   ],
+   "note": "",
+   "shown": 1,
+   "source": {
+    "age_days": 0.0,
+    "name": "ACTUARY analysis",
+    "stamp": "2026-11-20T04:04:44+00:00",
+    "status": "fresh",
+    "usable": true,
+    "why": "ok"
+   },
+   "title": "Your theses",
+   "total": 1
+  },
+  {
+   "dark": false,
+   "id": "filings",
+   "lines": [
+    {
+     "text": "10-K: 1 in the watched universe of 18 market-wide",
+     "url": null
+    },
+    {
+     "text": "10-Q: 4 in the watched universe of 24 market-wide",
+     "url": null
+    },
+    {
+     "text": "4: 74 in the watched universe of 578 market-wide",
+     "url": null
+    },
+    {
+     "text": "424B5: 1 in the watched universe of 16 market-wide",
+     "url": null
+    },
+    {
+     "text": "8-K: 46 in the watched universe of 258 market-wide",
+     "url": null
+    },
+    {
+     "text": "8-K items: 1.01 × 4, 2.02 × 6, 3.02 × 2, 5.02 × 7, 5.03 × 1, 5.07 × 8, 7.01 × 14, 8.01 × 16, 9.01 × 40",
+     "url": null
+    },
+    {
+     "text": "AIFA — 8-K item 1.01, 3.02, 5.02, 9.01",
+     "url": "https://www.sec.gov/Archives/edgar/data/1708341/000121390026122019/"
+    },
+    {
+     "text": "AMWL — 8-K item 5.02",
+     "url": "https://www.sec.gov/Archives/edgar/data/1393584/000095010326017856/"
+    },
+    {
+     "text": "ARAY — 8-K item 5.07, 9.01",
+     "url": "https://www.sec.gov/Archives/edgar/data/1138723/000143774926037717/"
+    },
+    {
+     "text": "ARDT — 8-K item 8.01, 9.01",
+     "url": "https://www.sec.gov/Archives/edgar/data/1756655/000110465926130121/"
+    },
+    {
+     "text": "ATLO — 8-K item 8.01, 9.01",
+     "url": "https://www.sec.gov/Archives/edgar/data/1132651/000143774926037728/"
+    },
+    {
+     "text": "BCML — 8-K item 8.01, 9.01",
+     "url": "https://www.sec.gov/Archives/edgar/data/1730984/000173098426000089/"
+    },
+    {
+     "text": "BIAF — 8-K item 8.01, 9.01",
+     "url": "https://www.sec.gov/Archives/edgar/data/1712762/000149315226053172/"
+    },
+    {
+     "text": "BNAI — 10-K/A",
+     "url": "https://www.sec.gov/Archives/edgar/data/1838163/000149315226053306/"
+    },
+    {
+     "text": "BSET — 8-K item 5.02, 9.01",
+     "url": "https://www.sec.gov/Archives/edgar/data/10329/000143774926037751/"
+    },
+    {
+     "text": "CITR — 8-K item 5.02, 7.01, 9.01",
+     "url": "https://www.sec.gov/Archives/edgar/data/894556/000168316826008943/"
+    },
+    {
+     "text": "CTSO — 8-K/A item 2.02, 7.01, 9.01",
+     "url": "https://www.sec.gov/Archives/edgar/data/1175151/000110465926129936/"
+    },
+    {
+     "text": "EFSI — 8-K item 5.07, 8.01, 9.01",
+     "url": "https://www.sec.gov/Archives/edgar/data/880641/000119312526468653/"
+    },
+    {
+     "text": "FISI — 8-K item 7.01, 9.01",
+     "url": "https://www.sec.gov/Archives/edgar/data/862831/000119312526468610/"
+    },
+    {
+     "text": "FTW — 8-K item 1.01, 7.01, 9.01",
+     "url": "https://www.sec.gov/Archives/edgar/data/2083125/000121390026121969/"
+    }
+   ],
+   "note": "Filing day 2026-11-19. Listed alphabetically — nothing here is ordered by importance.",
+   "shown": 20,
+   "source": {
+    "age_days": 0.0,
+    "name": "OBSERVER filings",
+    "stamp": "2026-11-20T03:58:53+00:00",
+    "status": "fresh",
+    "usable": true,
+    "why": "ok"
+   },
+   "title": "Filings in the watched universe",
+   "total": 54
+  },
+  {
+   "dark": false,
+   "id": "language",
+   "lines": [
+    {
+     "text": "1 filing pair(s) compared across 1 issuer(s): 0 removed, 0 added, 6 retained, 0 indeterminate",
+     "url": null
+    }
+   ],
+   "note": "A phrase-presence diff over pre-declared phrases, not a section diff: language nobody declared is invisible here, and Item 1A vs Item 7 is not observed.",
+   "shown": 1,
+   "source": {
+    "age_days": 0.0,
+    "name": "LIBRARIAN brief",
+    "stamp": "2026-11-20T04:04:38+00:00",
+    "status": "fresh",
+    "usable": true,
+    "why": "ok"
+   },
+   "title": "Filing language",
+   "total": 1
+  },
+  {
+   "dark": false,
+   "id": "insiders",
+   "lines": [
+    {
+     "text": "74 Form 4 filing(s) in the watched universe: 74 not observed",
+     "url": null
+    },
+    {
+     "text": "⚠️ 74 have no observed direction — these are filings, NOT purchases; insider sales outnumber buys. Form 4 bodies are on www.sec.gov, which answers 403 to this client; direction comes from Finnhub by accession, which lags EDGAR — 105 still pending and re-checked on later runs",
+     "url": null
+    }
+   ],
+   "note": "A purchase is a code-P open-market transaction read from Finnhub by accession. Past cluster buys over 21 bars (n=160): median -0.2% vs SPY, middle half -7.1% to +6.8%; registry verdict NOT MET. Past cluster buys over 63 bars (n=406): median -4.5% vs SPY, middle half -20.5% to +9.8%; registry verdict NOT MET.",
+   "shown": 2,
+   "source": {
+    "age_days": 0.0,
+    "name": "OBSERVER filings",
+    "stamp": "2026-11-20T03:58:53+00:00",
+    "status": "fresh",
+    "usable": true,
+    "why": "ok"
+   },
+   "title": "Insider activity",
+   "total": 2
+  },
+  {
+   "dark": false,
+   "id": "base_rates",
+   "lines": [
+    {
+     "text": "form4_cluster_buy over 21 bars vs SPY, n=160: median -0.2%, middle half -7.1% to +6.8%, worst -56.5%, best +118.2%, 49% positive — registry verdict NOT MET",
+     "url": null
+    },
+    {
+     "text": "form4_cluster_buy over 63 bars vs SPY, n=406: median -4.5%, middle half -20.5% to +9.8%, worst -77.2%, best +268.6%, 40% positive — registry verdict NOT MET",
+     "url": null
+    },
+    {
+     "text": "12 event type(s) observed; 12 have insufficient history for a base rate (no frozen outcome ledger)",
+     "url": null
+    }
+   ],
+   "note": "What followed past events of a type — a description, not a forecast. Computed only from reads already spent.",
+   "shown": 3,
+   "source": {
+    "age_days": 0.0,
+    "name": "ACTUARY analysis",
+    "stamp": "2026-11-20T04:04:44+00:00",
+    "status": "fresh",
+    "usable": true,
+    "why": "ok"
+   },
+   "title": "Base rates",
+   "total": 3
+  },
+  {
+   "dark": false,
+   "id": "exposure",
+   "lines": [
+    {
+     "text": "Not measured — no positions are declared in data/operator/positions.csv, so there is nothing to measure concentration of.",
+     "url": null
+    }
+   ],
+   "note": "Lines are flagged against the balanced limits (single name 20%); the figures are the same under every stance.",
+   "shown": 1,
+   "source": {
+    "age_days": 0.0,
+    "name": "ACTUARY analysis",
+    "stamp": "2026-11-20T04:04:44+00:00",
+    "status": "fresh",
+    "usable": true,
+    "why": "ok"
+   },
+   "title": "Exposure",
+   "total": 1
+  },
+  {
+   "dark": false,
+   "id": "macro",
+   "lines": [
+    {
+     "text": "10-year Treasury yield: 5.07 % as of 2026-11-18 (-0.03 vs 2026-11-17)",
+     "url": "https://fred.stlouisfed.org/series/DGS10"
+    },
+    {
+     "text": "2-year Treasury yield: 4.8 % as of 2026-11-18 (+0 vs 2026-11-17)",
+     "url": "https://fred.stlouisfed.org/series/DGS2"
+    },
+    {
+     "text": "10y minus 2y spread: 0.28 pp as of 2026-11-19 (+0.01 vs 2026-11-18)",
+     "url": "https://fred.stlouisfed.org/series/T10Y2Y"
+    },
+    {
+     "text": "Effective fed funds rate: 3.88 % as of 2026-11-18 (+0 vs 2026-11-17)",
+     "url": "https://fred.stlouisfed.org/series/DFF"
+    },
+    {
+     "text": "High-yield credit spread (OAS): 3.47 pp as of 2026-11-18 (+0.04 vs 2026-11-17)",
+     "url": "https://fred.stlouisfed.org/series/BAMLH0A0HYM2"
+    },
+    {
+     "text": "VIX: 24.56 index as of 2026-11-18 (-0.9 vs 2026-11-17)",
+     "url": "https://fred.stlouisfed.org/series/VIXCLS"
+    },
+    {
+     "text": "Broad dollar index: 122.65 index as of 2026-11-13 (+0.107 vs 2026-11-12)",
+     "url": "https://fred.stlouisfed.org/series/DTWEXBGS"
+    },
+    {
+     "text": "Initial jobless claims: 203000 claims as of 2026-11-14 (+1000 vs 2026-11-07)",
+     "url": "https://fred.stlouisfed.org/series/ICSA"
+    },
+    {
+     "text": "Unemployment rate: 4.1 % as of 2026-10-01 (-0.1 vs 2026-09-01)",
+     "url": "https://fred.stlouisfed.org/series/UNRATE"
+    },
+    {
+     "text": "CPI (all urban, SA): 337.476 index as of 2026-10-01 (+1.178 vs 2026-09-01)",
+     "url": "https://fred.stlouisfed.org/series/CPIAUCSL"
+    },
+    {
+     "text": "Oil prices edge higher as Houthi attacks on Riyadh raise supply concerns - Reuters",
+     "url": "https://news.google.com/rss/articles/CBMiugFBVV95cUxPb3pQREZDSHE2RmNHdDdGdExDUXhYeWljc2VualVoQ09oQV90WnFQQlZkYW1rWnl5ODJ6N2haaVBDVUY4VmFvRmtLSlZKbU5kR1lHNklrUUR3X3JGc181OHZCUHpXalZFUllBZXVEczJPUUdZZUt1MmpsTEN0MkJGSDNCVHhoa25pZFBSb1lldS1US0VJNVNBWWN1U2VwQmd0WmlQR1RKWmgyS2lyUDVfNHdWeWhzaFhmZ1E?oc=5"
+    },
+    {
+     "text": "Houthi strike damages Riyadh’s tallest skyscraper - Reuters",
+     "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTFBlellNcl9iOFk5YURTaUJXSTRKZkVTWk13NUhyS3ptX3VUOVMzVkV4VFdGQjZpQU9DMFdkNUNXMUZuNWl5SWxxdTZUcXIyNE1NM3VaOHBGWG41RThNQjJ3WjA1Tm0zU28?oc=5"
+    },
+    {
+     "text": "Trump says no rush on Iran decision, looks to next year - Reuters",
+     "url": "https://news.google.com/rss/articles/CBMisgFBVV95cUxNQkkzQVk3M3pnOXRWVlFCMmVzUEN0alhCS0gzQUhYNkhCMDhCOUM0N0tmMFpZNVNKcnVNbktaYXV5MV9ERm13WHoxTEVtUGRMUkZwT3dJZmlRZ2pyRE1WMGoyZW1VcXVWdTVRTmxZV1RISHNXWE9YY1BUUC1EWlJWRWRsYzlGTXo0WmhjaUxiUnAyMDl2OU9mWmliYndLd0htWGVLYWFUUldMOUIzLV9TSnBB?oc=5"
+    },
+    {
+     "text": "Gap names new Athleta CEO, lowers full-year guidance",
+     "url": "https://www.cnbc.com/2026/11/19/gap-gap-q3-2026-earnings.html"
+    },
+    {
+     "text": "3-step method to influence people and win them over, from a Stanford expert: ‘Your voice is like a muscle’",
+     "url": "https://www.cnbc.com/make-it/2026/11/19/matt-abrahams-persuasive-speaking-tips.html"
+    },
+    {
+     "text": "Somalia orders UAE ambassador to leave, citing 'invasion' - Reuters",
+     "url": "https://news.google.com/rss/articles/CBMiqAFBVV95cUxQWEg3aWNsUnlnMDBWSmdjZGtyWjJrMXROTHFNMXlycC15MU14bzV1UjUwVVJzR1JFek53RDVnV05DSkdtZnVzLUpQdFEyMGFLbDdpZEc0MlNUNzFFVHV2YkxLMnlHd2hBUVA2M1BlaW5OT041Y0s1OERhT1o3YTRXZ2d6aUl4NGs2cFVyRnQ0VmhLOXJUMkRCQWpmZ3FYODMwTU1iekNoelc?oc=5"
+    },
+    {
+     "text": "S&P 500 heads for 6th straight decline. Plus, J&J advances two key products",
+     "url": "https://www.cnbc.com/investingclub/2026/11/19/sp-500-heads-for-6th-straight-decline-plus-jj-advances-two-key-products.html"
+    },
+    {
+     "text": "Backing Trump, US Senate Republicans block Iran war resolution - Reuters",
+     "url": "https://news.google.com/rss/articles/CBMiowFBVV95cUxOcmstcFNFWmdlWE9OT3pCd2JxN1RvaDZMZ2dlZC01YU9hUVFDdFdETmRJLWYtRWI5bkpNVHgyQUFTRVNncW9kUUZkdGhFRkl1RUx6MGs2eVhNNXhZbzROalJGQnRSSUdqdVBhQ1NuLTRONXEyQWpYemhwenhCd2VlNlY4VUZJT3NRdjBmdzBTZGxreUlHNmgyX0p4TzVxX1FvaXZR?oc=5"
+    }
+   ],
+   "note": "Collected, not curated: series state their own age and headlines are newest-first, not most-important-first.",
+   "shown": 18,
+   "source": {
+    "age_days": 0.0,
+    "name": "OBSERVER macro",
+    "stamp": "2026-11-20T04:04:34+00:00",
+    "status": "fresh",
+    "usable": true,
+    "why": "ok"
+   },
+   "title": "Macro and headlines",
+   "total": 35
+  },
+  {
+   "dark": false,
+   "id": "universe",
+   "lines": [
+    {
+     "text": "1024 names pass the declared screen for session 2026-11-19 (+9 entered, −27 left)",
+     "url": null
+    },
+    {
+     "text": "IWM 264.22 · 1d -2.18% · ytd +6.9%",
+     "url": null
+    },
+    {
+     "text": "SPY 715.87 · 1d -1.96% · ytd +5.6%",
+     "url": null
+    },
+    {
+     "text": "The eligible list is not a buy list. Capital deployed: $0.",
+     "url": null
+    }
+   ],
+   "note": "",
+   "shown": 4,
+   "source": {
+    "age_days": 0.05,
+    "name": "daily snapshot",
+    "stamp": "2026-11-20T02:59:45Z",
+    "status": "fresh",
+    "usable": true,
+    "why": "ok"
+   },
+   "title": "Universe and benchmarks",
+   "total": 4
+  }
+ ],
+ "stance": "balanced",
+ "stance_info": {
+  "set_at": "2026-11-14",
+  "source": "data/operator/stance.json",
+  "stance": "balanced",
+  "valid": true
+ }
+}

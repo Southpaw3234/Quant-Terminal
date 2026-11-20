@@ -1,0 +1,333 @@
+{
+ "base_rates": [
+  {
+   "abnormal": {
+    "best": 1.181539,
+    "mean": 0.017647,
+    "median": -0.001724,
+    "min_n": 30,
+    "n": 160,
+    "p05": -0.226355,
+    "p95": 0.366338,
+    "q25": -0.071496,
+    "q75": 0.068296,
+    "share_positive": 0.4875,
+    "sufficient": true,
+    "worst": -0.565368
+   },
+   "control": "SPY",
+   "event_type": "form4_cluster_buy",
+   "exits": {
+    "not recorded": 160
+   },
+   "horizon_bars": 21,
+   "how_to_read": "What followed past events of this type — a description, not a forecast. The pre-registered read on this ledger returned NOT MET: the average was not established as different from zero at the declared threshold.",
+   "n_events": 160,
+   "raw": {
+    "best": 1.20339,
+    "mean": 0.038897,
+    "median": 0.021703,
+    "min_n": 30,
+    "n": 160,
+    "p05": -0.214628,
+    "p95": 0.34686,
+    "q25": -0.053161,
+    "q75": 0.103459,
+    "share_positive": 0.5625,
+    "sufficient": true,
+    "worst": -0.580861
+   },
+   "registry": {
+    "declared_at": "2026-09-01",
+    "read_at": "2026-09-02",
+    "reason": "ok",
+    "spec_id": "form4_cluster_buy_v1",
+    "verdict": "NOT MET"
+   },
+   "sample": {
+    "from": "2025-09-04",
+    "to": "2026-07-28"
+   },
+   "source": {
+    "path": "data/events/event_study.csv",
+    "rows": 160,
+    "sha256": "73adbd608695b0f73bab216ba62c1637177ac45488c2f502896b6ad93c04f2ed"
+   }
+  },
+  {
+   "abnormal": {
+    "best": 2.686383,
+    "mean": 0.011851,
+    "median": -0.0449,
+    "min_n": 30,
+    "n": 406,
+    "p05": -0.451243,
+    "p95": 0.647318,
+    "q25": -0.205326,
+    "q75": 0.098431,
+    "share_positive": 0.4015,
+    "sufficient": true,
+    "worst": -0.771707
+   },
+   "control": "SPY",
+   "event_type": "form4_cluster_buy",
+   "exits": {
+    "ok": 406
+   },
+   "horizon_bars": 63,
+   "how_to_read": "What followed past events of this type — a description, not a forecast. The pre-registered read on this ledger returned NOT MET: the average was not established as different from zero at the declared threshold.",
+   "n_events": 406,
+   "raw": {
+    "best": 2.742857,
+    "mean": 0.071739,
+    "median": 0.01705,
+    "min_n": 30,
+    "n": 406,
+    "p05": -0.393975,
+    "p95": 0.724362,
+    "q25": -0.144528,
+    "q75": 0.166437,
+    "share_positive": 0.532,
+    "sufficient": true,
+    "worst": -0.747209
+   },
+   "registry": {
+    "declared_at": "2026-09-04",
+    "read_at": "2026-09-05",
+    "reason": "ok",
+    "spec_id": "form4_cluster_buy_v2",
+    "verdict": "NOT MET"
+   },
+   "sample": {
+    "from": "2023-09-08",
+    "to": "2026-06-01"
+   },
+   "source": {
+    "path": "data/events/event_study_v2.csv",
+    "rows": 406,
+    "sha256": "45498e5cb74920c9cf51e18130bc20fa3abfce2108c9e60cab2278012bafe22f"
+   }
+  }
+ ],
+ "cluster_events": [],
+ "day": "2026-11-19",
+ "describes": "filings published 2026-11-19",
+ "exposure": {
+  "as_of": null,
+  "limits": {
+   "days_to_exit": 5.0,
+   "sector": 0.4,
+   "single_name": 0.2,
+   "top3": 0.5
+  },
+  "positions_without_a_thesis": [],
+  "reason": "no positions are declared in data/operator/positions.csv, so there is nothing to measure concentration of",
+  "rejected_rows": [],
+  "stance": "balanced",
+  "status": "no_positions",
+  "theses_without_a_position": [],
+  "total_dollars": null
+ },
+ "falsifiers": [],
+ "generated_at": "2026-11-20T04:04:44+00:00",
+ "is_not_a_recommendation": "This document reports distributions with n, concentration figures and ledger status. It contains no buy, sell, hold, rating, target or confidence, and nothing in it should be read as one.",
+ "ledger": {
+  "ok": true,
+  "why": "chain intact"
+ },
+ "min_n": 30,
+ "observed_today": [
+  {
+   "base_rates": [
+    {
+     "event_type": "8k_item_1.01",
+     "n": 0,
+     "reason": "insufficient history: no frozen outcome ledger exists for this event type",
+     "sufficient": false
+    }
+   ],
+   "count": 4,
+   "event_type": "8k_item_1.01"
+  },
+  {
+   "base_rates": [
+    {
+     "event_type": "8k_item_2.02",
+     "n": 0,
+     "reason": "insufficient history: no frozen outcome ledger exists for this event type",
+     "sufficient": false
+    }
+   ],
+   "count": 6,
+   "event_type": "8k_item_2.02"
+  },
+  {
+   "base_rates": [
+    {
+     "event_type": "8k_item_3.02",
+     "n": 0,
+     "reason": "insufficient history: no frozen outcome ledger exists for this event type",
+     "sufficient": false
+    }
+   ],
+   "count": 2,
+   "event_type": "8k_item_3.02"
+  },
+  {
+   "base_rates": [
+    {
+     "event_type": "8k_item_5.02",
+     "n": 0,
+     "reason": "insufficient history: no frozen outcome ledger exists for this event type",
+     "sufficient": false
+    }
+   ],
+   "count": 7,
+   "event_type": "8k_item_5.02"
+  },
+  {
+   "base_rates": [
+    {
+     "event_type": "8k_item_5.03",
+     "n": 0,
+     "reason": "insufficient history: no frozen outcome ledger exists for this event type",
+     "sufficient": false
+    }
+   ],
+   "count": 1,
+   "event_type": "8k_item_5.03"
+  },
+  {
+   "base_rates": [
+    {
+     "event_type": "8k_item_5.07",
+     "n": 0,
+     "reason": "insufficient history: no frozen outcome ledger exists for this event type",
+     "sufficient": false
+    }
+   ],
+   "count": 8,
+   "event_type": "8k_item_5.07"
+  },
+  {
+   "base_rates": [
+    {
+     "event_type": "8k_item_7.01",
+     "n": 0,
+     "reason": "insufficient history: no frozen outcome ledger exists for this event type",
+     "sufficient": false
+    }
+   ],
+   "count": 14,
+   "event_type": "8k_item_7.01"
+  },
+  {
+   "base_rates": [
+    {
+     "event_type": "8k_item_8.01",
+     "n": 0,
+     "reason": "insufficient history: no frozen outcome ledger exists for this event type",
+     "sufficient": false
+    }
+   ],
+   "count": 16,
+   "event_type": "8k_item_8.01"
+  },
+  {
+   "base_rates": [
+    {
+     "event_type": "8k_item_9.01",
+     "n": 0,
+     "reason": "insufficient history: no frozen outcome ledger exists for this event type",
+     "sufficient": false
+    }
+   ],
+   "count": 40,
+   "event_type": "8k_item_9.01"
+  },
+  {
+   "base_rates": [
+    {
+     "event_type": "filing_10-K",
+     "n": 0,
+     "reason": "insufficient history: no frozen outcome ledger exists for this event type",
+     "sufficient": false
+    }
+   ],
+   "count": 1,
+   "event_type": "filing_10-K"
+  },
+  {
+   "base_rates": [
+    {
+     "event_type": "filing_10-Q",
+     "n": 0,
+     "reason": "insufficient history: no frozen outcome ledger exists for this event type",
+     "sufficient": false
+    }
+   ],
+   "count": 4,
+   "event_type": "filing_10-Q"
+  },
+  {
+   "base_rates": [
+    {
+     "event_type": "form4_direction_not_observed",
+     "n": 0,
+     "reason": "insufficient history: no frozen outcome ledger exists for this event type",
+     "sufficient": false
+    }
+   ],
+   "count": 75,
+   "event_type": "form4_direction_not_observed"
+  }
+ ],
+ "sources": [
+  {
+   "event_types": [
+    "form4_cluster_buy"
+   ],
+   "ledger": "data/events/event_study.csv",
+   "rows": 160,
+   "sha256": "73adbd608695b0f73bab216ba62c1637177ac45488c2f502896b6ad93c04f2ed",
+   "spec_id": "form4_cluster_buy_v1",
+   "status": "ok",
+   "verdict": "NOT MET"
+  },
+  {
+   "event_types": [
+    "form4_cluster_buy"
+   ],
+   "ledger": "data/events/event_study_v2.csv",
+   "rows": 406,
+   "sha256": "45498e5cb74920c9cf51e18130bc20fa3abfce2108c9e60cab2278012bafe22f",
+   "spec_id": "form4_cluster_buy_v2",
+   "status": "ok",
+   "verdict": "NOT MET"
+  }
+ ],
+ "stance": {
+  "set_at": "2026-11-14",
+  "source": "data/operator/stance.json",
+  "stance": "balanced",
+  "valid": true
+ },
+ "upstream": {
+  "librarian": {
+   "age_days": 0.0,
+   "name": "librarian brief",
+   "stamp": "2026-11-20T04:04:38+00:00",
+   "status": "fresh",
+   "usable": true,
+   "why": "ok"
+  },
+  "observations": {
+   "age_days": 0.0,
+   "name": "observations",
+   "stamp": "2026-11-20T03:58:53+00:00",
+   "status": "fresh",
+   "usable": true,
+   "why": "ok"
+  }
+ }
+}
