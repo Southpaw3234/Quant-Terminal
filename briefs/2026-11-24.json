@@ -1,0 +1,887 @@
+{
+ "baseline_unavailable": [],
+ "bearing_on_theses": [],
+ "claims": [
+  {
+   "baseline": {
+    "accession": "0001193125-26-366101",
+    "filed": "2026-08-26",
+    "reason": "",
+    "state": "absent"
+   },
+   "cik": 72573,
+   "current": {
+    "accession": "0001193125-26-473574",
+    "filed": "2026-11-24",
+    "reason": "",
+    "state": "absent"
+   },
+   "form": "10-Q",
+   "notable": false,
+   "observation_ids": [
+    "edgar:0001193125-26-473574"
+   ],
+   "observed_by_observer": true,
+   "phrase": "going concern",
+   "phrase_declared_at": "2026-11-11",
+   "section": null,
+   "section_source": "unavailable: section attribution needs the filing body, served from www.sec.gov, which answers 403",
+   "ticker": "MOV",
+   "transition": "absent_both",
+   "why_declared": "The auditor's own doubt, in the auditor's own words. Its APPEARANCE is the loudest single phrase in a filing; its DISAPPEARANCE after a prior appearance is a resolution the market often prices slowly."
+  },
+  {
+   "baseline": {
+    "accession": "0001193125-26-366101",
+    "filed": "2026-08-26",
+    "reason": "",
+    "state": "absent"
+   },
+   "cik": 72573,
+   "current": {
+    "accession": "0001193125-26-473574",
+    "filed": "2026-11-24",
+    "reason": "",
+    "state": "absent"
+   },
+   "form": "10-Q",
+   "notable": false,
+   "observation_ids": [
+    "edgar:0001193125-26-473574"
+   ],
+   "observed_by_observer": true,
+   "phrase": "substantial doubt",
+   "phrase_declared_at": "2026-11-11",
+   "section": null,
+   "section_source": "unavailable: section attribution needs the filing body, served from www.sec.gov, which answers 403",
+   "ticker": "MOV",
+   "transition": "absent_both",
+   "why_declared": "The statutory companion to going concern. Tested separately because the two are not always used together, and a filing can drop one while keeping the other."
+  },
+  {
+   "baseline": {
+    "accession": "0001193125-26-366101",
+    "filed": "2026-08-26",
+    "reason": "",
+    "state": "absent"
+   },
+   "cik": 72573,
+   "current": {
+    "accession": "0001193125-26-473574",
+    "filed": "2026-11-24",
+    "reason": "",
+    "state": "absent"
+   },
+   "form": "10-Q",
+   "notable": false,
+   "observation_ids": [
+    "edgar:0001193125-26-473574"
+   ],
+   "observed_by_observer": true,
+   "phrase": "material weakness",
+   "phrase_declared_at": "2026-11-11",
+   "section": null,
+   "section_source": "unavailable: section attribution needs the filing body, served from www.sec.gov, which answers 403",
+   "ticker": "MOV",
+   "transition": "absent_both",
+   "why_declared": "An admitted failure of internal control. Removal usually means a remediation the company believes is complete -- a claim worth checking against the next restatement."
+  },
+  {
+   "baseline": {
+    "accession": "0001193125-26-366101",
+    "filed": "2026-08-26",
+    "reason": "",
+    "state": "present"
+   },
+   "cik": 72573,
+   "current": {
+    "accession": "0001193125-26-473574",
+    "filed": "2026-11-24",
+    "reason": "",
+    "state": "present"
+   },
+   "form": "10-Q",
+   "notable": false,
+   "observation_ids": [
+    "edgar:0001193125-26-473574"
+   ],
+   "observed_by_observer": true,
+   "phrase": "restatement",
+   "phrase_declared_at": "2026-11-11",
+   "section": null,
+   "section_source": "unavailable: section attribution needs the filing body, served from www.sec.gov, which answers 403",
+   "ticker": "MOV",
+   "transition": "retained",
+   "why_declared": "Prior numbers were wrong. Appearance is the event; persistence across quarters says the clean-up is not finished."
+  },
+  {
+   "baseline": {
+    "accession": "0001193125-26-366101",
+    "filed": "2026-08-26",
+    "reason": "",
+    "state": "absent"
+   },
+   "cik": 72573,
+   "current": {
+    "accession": "0001193125-26-473574",
+    "filed": "2026-11-24",
+    "reason": "",
+    "state": "absent"
+   },
+   "form": "10-Q",
+   "notable": false,
+   "observation_ids": [
+    "edgar:0001193125-26-473574"
+   ],
+   "observed_by_observer": true,
+   "phrase": "covenant",
+   "phrase_declared_at": "2026-11-11",
+   "section": null,
+   "section_source": "unavailable: section attribution needs the filing body, served from www.sec.gov, which answers 403",
+   "ticker": "MOV",
+   "transition": "absent_both",
+   "why_declared": "Lenders, not shareholders, set the binding constraint on a levered company. Language about covenants entering or leaving a filing tracks who is actually in control."
+  },
+  {
+   "baseline": {
+    "accession": "0001193125-26-366101",
+    "filed": "2026-08-26",
+    "reason": "",
+    "state": "absent"
+   },
+   "cik": 72573,
+   "current": {
+    "accession": "0001193125-26-473574",
+    "filed": "2026-11-24",
+    "reason": "",
+    "state": "present"
+   },
+   "form": "10-Q",
+   "notable": true,
+   "observation_ids": [
+    "edgar:0001193125-26-473574"
+   ],
+   "observed_by_observer": true,
+   "phrase": "waiver",
+   "phrase_declared_at": "2026-11-11",
+   "section": null,
+   "section_source": "unavailable: section attribution needs the filing body, served from www.sec.gov, which answers 403",
+   "ticker": "MOV",
+   "transition": "added",
+   "why_declared": "A covenant that needed forgiving. Tested separately from 'covenant' because the waiver is the breach made visible."
+  },
+  {
+   "baseline": {
+    "accession": "0001193125-26-366101",
+    "filed": "2026-08-26",
+    "reason": "",
+    "state": "absent"
+   },
+   "cik": 72573,
+   "current": {
+    "accession": "0001193125-26-473574",
+    "filed": "2026-11-24",
+    "reason": "",
+    "state": "absent"
+   },
+   "form": "10-Q",
+   "notable": false,
+   "observation_ids": [
+    "edgar:0001193125-26-473574"
+   ],
+   "observed_by_observer": true,
+   "phrase": "delisting",
+   "phrase_declared_at": "2026-11-11",
+   "section": null,
+   "section_source": "unavailable: section attribution needs the filing body, served from www.sec.gov, which answers 403",
+   "ticker": "MOV",
+   "transition": "absent_both",
+   "why_declared": "The exchange's patience is finite and its notices are disclosed. Directly adjacent to the abandoned specification 4, which found this signal unreachable from prices alone."
+  },
+  {
+   "baseline": {
+    "accession": "0001193125-26-366101",
+    "filed": "2026-08-26",
+    "reason": "",
+    "state": "absent"
+   },
+   "cik": 72573,
+   "current": {
+    "accession": "0001193125-26-473574",
+    "filed": "2026-11-24",
+    "reason": "",
+    "state": "absent"
+   },
+   "form": "10-Q",
+   "notable": false,
+   "observation_ids": [
+    "edgar:0001193125-26-473574"
+   ],
+   "observed_by_observer": true,
+   "phrase": "reverse stock split",
+   "phrase_declared_at": "2026-11-11",
+   "section": null,
+   "section_source": "unavailable: section attribution needs the filing body, served from www.sec.gov, which answers 403",
+   "ticker": "MOV",
+   "transition": "absent_both",
+   "why_declared": "Most often a bid-price rescue rather than a capital decision. Appearance frequently precedes a delisting fight."
+  },
+  {
+   "baseline": {
+    "accession": "0001193125-26-366101",
+    "filed": "2026-08-26",
+    "reason": "",
+    "state": "present"
+   },
+   "cik": 72573,
+   "current": {
+    "accession": "0001193125-26-473574",
+    "filed": "2026-11-24",
+    "reason": "",
+    "state": "present"
+   },
+   "form": "10-Q",
+   "notable": false,
+   "observation_ids": [
+    "edgar:0001193125-26-473574"
+   ],
+   "observed_by_observer": true,
+   "phrase": "impairment",
+   "phrase_declared_at": "2026-11-11",
+   "section": null,
+   "section_source": "unavailable: section attribution needs the filing body, served from www.sec.gov, which answers 403",
+   "ticker": "MOV",
+   "transition": "retained",
+   "why_declared": "Management conceding that something it bought is worth less than it paid. A non-cash charge with cash-flow information in it."
+  },
+  {
+   "baseline": {
+    "accession": "0001193125-26-366101",
+    "filed": "2026-08-26",
+    "reason": "",
+    "state": "absent"
+   },
+   "cik": 72573,
+   "current": {
+    "accession": "0001193125-26-473574",
+    "filed": "2026-11-24",
+    "reason": "",
+    "state": "present"
+   },
+   "form": "10-Q",
+   "notable": true,
+   "observation_ids": [
+    "edgar:0001193125-26-473574"
+   ],
+   "observed_by_observer": true,
+   "phrase": "discontinued operations",
+   "phrase_declared_at": "2026-11-11",
+   "section": null,
+   "section_source": "unavailable: section attribution needs the filing body, served from www.sec.gov, which answers 403",
+   "ticker": "MOV",
+   "transition": "added",
+   "why_declared": "A business being exited. Its arrival reshapes every margin comparison that follows, which is exactly when quarter-over-quarter reading goes wrong."
+  },
+  {
+   "baseline": {
+    "accession": "0001809519-26-000152",
+    "filed": "2026-08-05",
+    "reason": "",
+    "state": "absent"
+   },
+   "cik": 1809519,
+   "current": {
+    "accession": "0001809519-26-000230",
+    "filed": "2026-11-24",
+    "reason": "",
+    "state": "absent"
+   },
+   "form": "10-Q",
+   "notable": false,
+   "observation_ids": [
+    "edgar:0001809519-26-000230"
+   ],
+   "observed_by_observer": true,
+   "phrase": "going concern",
+   "phrase_declared_at": "2026-11-11",
+   "section": null,
+   "section_source": "unavailable: section attribution needs the filing body, served from www.sec.gov, which answers 403",
+   "ticker": "GDRX",
+   "transition": "absent_both",
+   "why_declared": "The auditor's own doubt, in the auditor's own words. Its APPEARANCE is the loudest single phrase in a filing; its DISAPPEARANCE after a prior appearance is a resolution the market often prices slowly."
+  },
+  {
+   "baseline": {
+    "accession": "0001809519-26-000152",
+    "filed": "2026-08-05",
+    "reason": "",
+    "state": "absent"
+   },
+   "cik": 1809519,
+   "current": {
+    "accession": "0001809519-26-000230",
+    "filed": "2026-11-24",
+    "reason": "",
+    "state": "absent"
+   },
+   "form": "10-Q",
+   "notable": false,
+   "observation_ids": [
+    "edgar:0001809519-26-000230"
+   ],
+   "observed_by_observer": true,
+   "phrase": "substantial doubt",
+   "phrase_declared_at": "2026-11-11",
+   "section": null,
+   "section_source": "unavailable: section attribution needs the filing body, served from www.sec.gov, which answers 403",
+   "ticker": "GDRX",
+   "transition": "absent_both",
+   "why_declared": "The statutory companion to going concern. Tested separately because the two are not always used together, and a filing can drop one while keeping the other."
+  },
+  {
+   "baseline": {
+    "accession": "0001809519-26-000152",
+    "filed": "2026-08-05",
+    "reason": "",
+    "state": "absent"
+   },
+   "cik": 1809519,
+   "current": {
+    "accession": "0001809519-26-000230",
+    "filed": "2026-11-24",
+    "reason": "",
+    "state": "present"
+   },
+   "form": "10-Q",
+   "notable": true,
+   "observation_ids": [
+    "edgar:0001809519-26-000230"
+   ],
+   "observed_by_observer": true,
+   "phrase": "material weakness",
+   "phrase_declared_at": "2026-11-11",
+   "section": null,
+   "section_source": "unavailable: section attribution needs the filing body, served from www.sec.gov, which answers 403",
+   "ticker": "GDRX",
+   "transition": "added",
+   "why_declared": "An admitted failure of internal control. Removal usually means a remediation the company believes is complete -- a claim worth checking against the next restatement."
+  },
+  {
+   "baseline": {
+    "accession": "0001809519-26-000152",
+    "filed": "2026-08-05",
+    "reason": "",
+    "state": "absent"
+   },
+   "cik": 1809519,
+   "current": {
+    "accession": "0001809519-26-000230",
+    "filed": "2026-11-24",
+    "reason": "",
+    "state": "present"
+   },
+   "form": "10-Q",
+   "notable": true,
+   "observation_ids": [
+    "edgar:0001809519-26-000230"
+   ],
+   "observed_by_observer": true,
+   "phrase": "restatement",
+   "phrase_declared_at": "2026-11-11",
+   "section": null,
+   "section_source": "unavailable: section attribution needs the filing body, served from www.sec.gov, which answers 403",
+   "ticker": "GDRX",
+   "transition": "added",
+   "why_declared": "Prior numbers were wrong. Appearance is the event; persistence across quarters says the clean-up is not finished."
+  },
+  {
+   "baseline": {
+    "accession": "0001809519-26-000152",
+    "filed": "2026-08-05",
+    "reason": "",
+    "state": "present"
+   },
+   "cik": 1809519,
+   "current": {
+    "accession": "0001809519-26-000230",
+    "filed": "2026-11-24",
+    "reason": "",
+    "state": "present"
+   },
+   "form": "10-Q",
+   "notable": false,
+   "observation_ids": [
+    "edgar:0001809519-26-000230"
+   ],
+   "observed_by_observer": true,
+   "phrase": "covenant",
+   "phrase_declared_at": "2026-11-11",
+   "section": null,
+   "section_source": "unavailable: section attribution needs the filing body, served from www.sec.gov, which answers 403",
+   "ticker": "GDRX",
+   "transition": "retained",
+   "why_declared": "Lenders, not shareholders, set the binding constraint on a levered company. Language about covenants entering or leaving a filing tracks who is actually in control."
+  },
+  {
+   "baseline": {
+    "accession": "0001809519-26-000152",
+    "filed": "2026-08-05",
+    "reason": "",
+    "state": "absent"
+   },
+   "cik": 1809519,
+   "current": {
+    "accession": "0001809519-26-000230",
+    "filed": "2026-11-24",
+    "reason": "",
+    "state": "absent"
+   },
+   "form": "10-Q",
+   "notable": false,
+   "observation_ids": [
+    "edgar:0001809519-26-000230"
+   ],
+   "observed_by_observer": true,
+   "phrase": "waiver",
+   "phrase_declared_at": "2026-11-11",
+   "section": null,
+   "section_source": "unavailable: section attribution needs the filing body, served from www.sec.gov, which answers 403",
+   "ticker": "GDRX",
+   "transition": "absent_both",
+   "why_declared": "A covenant that needed forgiving. Tested separately from 'covenant' because the waiver is the breach made visible."
+  },
+  {
+   "baseline": {
+    "accession": "0001809519-26-000152",
+    "filed": "2026-08-05",
+    "reason": "",
+    "state": "absent"
+   },
+   "cik": 1809519,
+   "current": {
+    "accession": "0001809519-26-000230",
+    "filed": "2026-11-24",
+    "reason": "",
+    "state": "absent"
+   },
+   "form": "10-Q",
+   "notable": false,
+   "observation_ids": [
+    "edgar:0001809519-26-000230"
+   ],
+   "observed_by_observer": true,
+   "phrase": "delisting",
+   "phrase_declared_at": "2026-11-11",
+   "section": null,
+   "section_source": "unavailable: section attribution needs the filing body, served from www.sec.gov, which answers 403",
+   "ticker": "GDRX",
+   "transition": "absent_both",
+   "why_declared": "The exchange's patience is finite and its notices are disclosed. Directly adjacent to the abandoned specification 4, which found this signal unreachable from prices alone."
+  },
+  {
+   "baseline": {
+    "accession": "0001809519-26-000152",
+    "filed": "2026-08-05",
+    "reason": "",
+    "state": "absent"
+   },
+   "cik": 1809519,
+   "current": {
+    "accession": "0001809519-26-000230",
+    "filed": "2026-11-24",
+    "reason": "",
+    "state": "absent"
+   },
+   "form": "10-Q",
+   "notable": false,
+   "observation_ids": [
+    "edgar:0001809519-26-000230"
+   ],
+   "observed_by_observer": true,
+   "phrase": "reverse stock split",
+   "phrase_declared_at": "2026-11-11",
+   "section": null,
+   "section_source": "unavailable: section attribution needs the filing body, served from www.sec.gov, which answers 403",
+   "ticker": "GDRX",
+   "transition": "absent_both",
+   "why_declared": "Most often a bid-price rescue rather than a capital decision. Appearance frequently precedes a delisting fight."
+  },
+  {
+   "baseline": {
+    "accession": "0001809519-26-000152",
+    "filed": "2026-08-05",
+    "reason": "",
+    "state": "present"
+   },
+   "cik": 1809519,
+   "current": {
+    "accession": "0001809519-26-000230",
+    "filed": "2026-11-24",
+    "reason": "",
+    "state": "present"
+   },
+   "form": "10-Q",
+   "notable": false,
+   "observation_ids": [
+    "edgar:0001809519-26-000230"
+   ],
+   "observed_by_observer": true,
+   "phrase": "impairment",
+   "phrase_declared_at": "2026-11-11",
+   "section": null,
+   "section_source": "unavailable: section attribution needs the filing body, served from www.sec.gov, which answers 403",
+   "ticker": "GDRX",
+   "transition": "retained",
+   "why_declared": "Management conceding that something it bought is worth less than it paid. A non-cash charge with cash-flow information in it."
+  },
+  {
+   "baseline": {
+    "accession": "0001809519-26-000152",
+    "filed": "2026-08-05",
+    "reason": "",
+    "state": "absent"
+   },
+   "cik": 1809519,
+   "current": {
+    "accession": "0001809519-26-000230",
+    "filed": "2026-11-24",
+    "reason": "",
+    "state": "absent"
+   },
+   "form": "10-Q",
+   "notable": false,
+   "observation_ids": [
+    "edgar:0001809519-26-000230"
+   ],
+   "observed_by_observer": true,
+   "phrase": "discontinued operations",
+   "phrase_declared_at": "2026-11-11",
+   "section": null,
+   "section_source": "unavailable: section attribution needs the filing body, served from www.sec.gov, which answers 403",
+   "ticker": "GDRX",
+   "transition": "absent_both",
+   "why_declared": "A business being exited. Its arrival reshapes every margin comparison that follows, which is exactly when quarter-over-quarter reading goes wrong."
+  },
+  {
+   "baseline": {
+    "accession": "0001493152-26-037819",
+    "filed": "2026-08-13",
+    "reason": "",
+    "state": "absent"
+   },
+   "cik": 1847345,
+   "current": {
+    "accession": "0001493152-26-053855",
+    "filed": "2026-11-24",
+    "reason": "",
+    "state": "present"
+   },
+   "form": "10-Q",
+   "notable": true,
+   "observation_ids": [
+    "edgar:0001493152-26-053855"
+   ],
+   "observed_by_observer": true,
+   "phrase": "going concern",
+   "phrase_declared_at": "2026-11-11",
+   "section": null,
+   "section_source": "unavailable: section attribution needs the filing body, served from www.sec.gov, which answers 403",
+   "ticker": "ASBP",
+   "transition": "added",
+   "why_declared": "The auditor's own doubt, in the auditor's own words. Its APPEARANCE is the loudest single phrase in a filing; its DISAPPEARANCE after a prior appearance is a resolution the market often prices slowly."
+  },
+  {
+   "baseline": {
+    "accession": "0001493152-26-037819",
+    "filed": "2026-08-13",
+    "reason": "",
+    "state": "absent"
+   },
+   "cik": 1847345,
+   "current": {
+    "accession": "0001493152-26-053855",
+    "filed": "2026-11-24",
+    "reason": "",
+    "state": "absent"
+   },
+   "form": "10-Q",
+   "notable": false,
+   "observation_ids": [
+    "edgar:0001493152-26-053855"
+   ],
+   "observed_by_observer": true,
+   "phrase": "substantial doubt",
+   "phrase_declared_at": "2026-11-11",
+   "section": null,
+   "section_source": "unavailable: section attribution needs the filing body, served from www.sec.gov, which answers 403",
+   "ticker": "ASBP",
+   "transition": "absent_both",
+   "why_declared": "The statutory companion to going concern. Tested separately because the two are not always used together, and a filing can drop one while keeping the other."
+  },
+  {
+   "baseline": {
+    "accession": "0001493152-26-037819",
+    "filed": "2026-08-13",
+    "reason": "",
+    "state": "absent"
+   },
+   "cik": 1847345,
+   "current": {
+    "accession": "0001493152-26-053855",
+    "filed": "2026-11-24",
+    "reason": "",
+    "state": "present"
+   },
+   "form": "10-Q",
+   "notable": true,
+   "observation_ids": [
+    "edgar:0001493152-26-053855"
+   ],
+   "observed_by_observer": true,
+   "phrase": "material weakness",
+   "phrase_declared_at": "2026-11-11",
+   "section": null,
+   "section_source": "unavailable: section attribution needs the filing body, served from www.sec.gov, which answers 403",
+   "ticker": "ASBP",
+   "transition": "added",
+   "why_declared": "An admitted failure of internal control. Removal usually means a remediation the company believes is complete -- a claim worth checking against the next restatement."
+  },
+  {
+   "baseline": {
+    "accession": "0001493152-26-037819",
+    "filed": "2026-08-13",
+    "reason": "",
+    "state": "absent"
+   },
+   "cik": 1847345,
+   "current": {
+    "accession": "0001493152-26-053855",
+    "filed": "2026-11-24",
+    "reason": "",
+    "state": "present"
+   },
+   "form": "10-Q",
+   "notable": true,
+   "observation_ids": [
+    "edgar:0001493152-26-053855"
+   ],
+   "observed_by_observer": true,
+   "phrase": "restatement",
+   "phrase_declared_at": "2026-11-11",
+   "section": null,
+   "section_source": "unavailable: section attribution needs the filing body, served from www.sec.gov, which answers 403",
+   "ticker": "ASBP",
+   "transition": "added",
+   "why_declared": "Prior numbers were wrong. Appearance is the event; persistence across quarters says the clean-up is not finished."
+  },
+  {
+   "baseline": {
+    "accession": "0001493152-26-037819",
+    "filed": "2026-08-13",
+    "reason": "",
+    "state": "absent"
+   },
+   "cik": 1847345,
+   "current": {
+    "accession": "0001493152-26-053855",
+    "filed": "2026-11-24",
+    "reason": "",
+    "state": "present"
+   },
+   "form": "10-Q",
+   "notable": true,
+   "observation_ids": [
+    "edgar:0001493152-26-053855"
+   ],
+   "observed_by_observer": true,
+   "phrase": "covenant",
+   "phrase_declared_at": "2026-11-11",
+   "section": null,
+   "section_source": "unavailable: section attribution needs the filing body, served from www.sec.gov, which answers 403",
+   "ticker": "ASBP",
+   "transition": "added",
+   "why_declared": "Lenders, not shareholders, set the binding constraint on a levered company. Language about covenants entering or leaving a filing tracks who is actually in control."
+  },
+  {
+   "baseline": {
+    "accession": "0001493152-26-037819",
+    "filed": "2026-08-13",
+    "reason": "",
+    "state": "present"
+   },
+   "cik": 1847345,
+   "current": {
+    "accession": "0001493152-26-053855",
+    "filed": "2026-11-24",
+    "reason": "",
+    "state": "absent"
+   },
+   "form": "10-Q",
+   "notable": true,
+   "observation_ids": [
+    "edgar:0001493152-26-053855"
+   ],
+   "observed_by_observer": true,
+   "phrase": "waiver",
+   "phrase_declared_at": "2026-11-11",
+   "section": null,
+   "section_source": "unavailable: section attribution needs the filing body, served from www.sec.gov, which answers 403",
+   "ticker": "ASBP",
+   "transition": "removed",
+   "why_declared": "A covenant that needed forgiving. Tested separately from 'covenant' because the waiver is the breach made visible."
+  },
+  {
+   "baseline": {
+    "accession": "0001493152-26-037819",
+    "filed": "2026-08-13",
+    "reason": "",
+    "state": "present"
+   },
+   "cik": 1847345,
+   "current": {
+    "accession": "0001493152-26-053855",
+    "filed": "2026-11-24",
+    "reason": "",
+    "state": "present"
+   },
+   "form": "10-Q",
+   "notable": false,
+   "observation_ids": [
+    "edgar:0001493152-26-053855"
+   ],
+   "observed_by_observer": true,
+   "phrase": "delisting",
+   "phrase_declared_at": "2026-11-11",
+   "section": null,
+   "section_source": "unavailable: section attribution needs the filing body, served from www.sec.gov, which answers 403",
+   "ticker": "ASBP",
+   "transition": "retained",
+   "why_declared": "The exchange's patience is finite and its notices are disclosed. Directly adjacent to the abandoned specification 4, which found this signal unreachable from prices alone."
+  },
+  {
+   "baseline": {
+    "accession": "0001493152-26-037819",
+    "filed": "2026-08-13",
+    "reason": "",
+    "state": "present"
+   },
+   "cik": 1847345,
+   "current": {
+    "accession": "0001493152-26-053855",
+    "filed": "2026-11-24",
+    "reason": "",
+    "state": "present"
+   },
+   "form": "10-Q",
+   "notable": false,
+   "observation_ids": [
+    "edgar:0001493152-26-053855"
+   ],
+   "observed_by_observer": true,
+   "phrase": "reverse stock split",
+   "phrase_declared_at": "2026-11-11",
+   "section": null,
+   "section_source": "unavailable: section attribution needs the filing body, served from www.sec.gov, which answers 403",
+   "ticker": "ASBP",
+   "transition": "retained",
+   "why_declared": "Most often a bid-price rescue rather than a capital decision. Appearance frequently precedes a delisting fight."
+  },
+  {
+   "baseline": {
+    "accession": "0001493152-26-037819",
+    "filed": "2026-08-13",
+    "reason": "",
+    "state": "present"
+   },
+   "cik": 1847345,
+   "current": {
+    "accession": "0001493152-26-053855",
+    "filed": "2026-11-24",
+    "reason": "",
+    "state": "present"
+   },
+   "form": "10-Q",
+   "notable": false,
+   "observation_ids": [
+    "edgar:0001493152-26-053855"
+   ],
+   "observed_by_observer": true,
+   "phrase": "impairment",
+   "phrase_declared_at": "2026-11-11",
+   "section": null,
+   "section_source": "unavailable: section attribution needs the filing body, served from www.sec.gov, which answers 403",
+   "ticker": "ASBP",
+   "transition": "retained",
+   "why_declared": "Management conceding that something it bought is worth less than it paid. A non-cash charge with cash-flow information in it."
+  },
+  {
+   "baseline": {
+    "accession": "0001493152-26-037819",
+    "filed": "2026-08-13",
+    "reason": "",
+    "state": "absent"
+   },
+   "cik": 1847345,
+   "current": {
+    "accession": "0001493152-26-053855",
+    "filed": "2026-11-24",
+    "reason": "",
+    "state": "absent"
+   },
+   "form": "10-Q",
+   "notable": false,
+   "observation_ids": [
+    "edgar:0001493152-26-053855"
+   ],
+   "observed_by_observer": true,
+   "phrase": "discontinued operations",
+   "phrase_declared_at": "2026-11-11",
+   "section": null,
+   "section_source": "unavailable: section attribution needs the filing body, served from www.sec.gov, which answers 403",
+   "ticker": "ASBP",
+   "transition": "absent_both",
+   "why_declared": "A business being exited. Its arrival reshapes every margin comparison that follows, which is exactly when quarter-over-quarter reading goes wrong."
+  }
+ ],
+ "day": "2026-11-24",
+ "describes": "filings published 2026-11-24",
+ "generated_at": "2026-11-25T05:31:36+00:00",
+ "instrument": "phrase-presence diff over the primary document",
+ "issuers_eligible": 3,
+ "issuers_read": 3,
+ "ledger": {
+  "ok": true,
+  "why": "chain intact"
+ },
+ "max_names": 60,
+ "names_truncated": false,
+ "no_baseline": [],
+ "not_a_section_diff": "Section attribution (Item 1A vs Item 7) is NOT OBSERVED: filing bodies are served from www.sec.gov, which answers 403 to this client. Only pre-declared phrases are tested, so language nobody declared in advance is invisible here.",
+ "pairs_compared": 3,
+ "phrases": {
+  "count": 10,
+  "digest": "e85d40e7542158f5fcdce50c56e1a124247a472fc6c099c6b80dc21c3fd95c7f",
+  "note": "Pre-registered phrase list for LIBRARIAN (collective agent module 3). A phrase is testable against a filing only if it was declared BEFORE that filing was published -- qt.librarian.check_declared_before refuses otherwise, and librarian_diff.py counts the refusals rather than skipping them quietly. Adding a phrase is free; it simply cannot be applied backwards. These phrases are canonical distress and disclosure language from auditing and reporting practice, deliberately NOT chosen by reading any particular company's filing."
+ },
+ "refused_lookahead": [],
+ "selection_rule": "deduped on (CIK, form) so share classes count once; open-thesis names first, then most recently filed. Not alphabetical.",
+ "source": "OBSERVER records + sec-edgar-fts",
+ "summary": {
+  "absent_both": 14,
+  "added": 8,
+  "claims": 30,
+  "indeterminate": 0,
+  "names": 3,
+  "removed": 1,
+  "retained": 7
+ },
+ "upstream": {
+  "age_days": 0.0,
+  "name": "observations",
+  "stamp": "2026-11-25T05:26:24+00:00",
+  "status": "fresh",
+  "usable": true,
+  "why": "ok"
+ },
+ "with_open_thesis": 0
+}

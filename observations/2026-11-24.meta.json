@@ -1,0 +1,66 @@
+{
+ "added_this_run": 123,
+ "cik_cache": 7318,
+ "direction": {
+  "capped": false,
+  "clusters": 5,
+  "failed": 0,
+  "filled": 68,
+  "first_purchases": 0,
+  "key": true,
+  "note": "Form 4 bodies are on www.sec.gov, which answers 403 to this client; direction comes from Finnhub by accession, which lags EDGAR — 98 still pending and re-checked on later runs",
+  "pending": 98,
+  "tickers_checked": 99,
+  "tickers_needed": 99
+ },
+ "filing_day": "2026-11-24",
+ "forms": [
+  "8-K",
+  "4",
+  "10-Q",
+  "10-K",
+  "424B5"
+ ],
+ "generated_at": "2026-11-25T05:26:24+00:00",
+ "records": 123,
+ "thesis_added": 0,
+ "totals": {
+  "10-K": {
+   "documents": 17,
+   "error": null,
+   "filings": 17,
+   "in_universe": 1,
+   "truncated": false
+  },
+  "10-Q": {
+   "documents": 18,
+   "error": null,
+   "filings": 18,
+   "in_universe": 5,
+   "truncated": false
+  },
+  "4": {
+   "documents": 662,
+   "error": null,
+   "filings": 662,
+   "in_universe": 86,
+   "truncated": false
+  },
+  "424B5": {
+   "documents": 7,
+   "error": null,
+   "filings": 7,
+   "in_universe": 1,
+   "truncated": false
+  },
+  "8-K": {
+   "documents": 246,
+   "error": null,
+   "filings": 246,
+   "in_universe": 30,
+   "truncated": false
+  }
+ },
+ "universe_source": "daily snapshot 2026-11-24",
+ "watched": 1024
+}
