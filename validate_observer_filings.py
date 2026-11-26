@@ -456,6 +456,116 @@ def test_retries():
         edgar.time.sleep = real_sleep
 
 
+
+def test_latency_fixes():
+    print("\nthe four latency bugs, replayed hermetically")
+    import json, os, tempfile
+    from qt import agentio
+    tmp = tempfile.mkdtemp()
+
+    def f4(tk, acc, extra=None):
+        r = ob.upgrade({"accession": acc, "form": "4", "root_form": "4",
+                        "ticker": tk, "observed_at": "earlier",
+                        "direction": None, "direction_source": "pending"})
+        r.update(extra or {})
+        return r
+
+    def write(day, recs):
+        with open(os.path.join(tmp, f"{day}.jsonl"), "w", encoding="utf-8") as f:
+            for r in recs:
+                f.write(json.dumps(r) + "\n")
+
+    def read(day):
+        with open(os.path.join(tmp, f"{day}.jsonl"), encoding="utf-8") as f:
+            return [json.loads(l) for l in f if l.strip()]
+
+    # 11-12: a Form 4 Finnhub never carries (will be finalized).
+    write("2026-11-12", [f4("ZZZ", "z-1")])
+    # 11-18: PAL's cluster was already reported here, and one PAL filing
+    #        is still undirected. A BUYR purchase was directed on an earlier
+    #        run but its first-purchase flag was never evaluated.
+    write("2026-11-18", [
+        f4("PAL", "pal-1"),
+        f4("BUYR", "b-1", {"direction": "purchase", "insiders": ["New Guy"],
+                           "direction_observed_at": "old-run"}),
+        {"id": "derived:f4_PAL_2026-11-18", "kind": "derived_event",
+         "event_type": "form4_cluster_buy", "ticker": "PAL",
+         "first_filing": "2026-11-18", "filed": "2026-11-18",
+         "observed_at": "old-run", "n_insiders": 3, "total_value": 252768.0}])
+    # 11-19: a third PAL insider joins -> the cluster's LAST date moves.
+    write("2026-11-19", [f4("PAL", "pal-2")])
+
+    def P(name, day, acc, value=60000.0):
+        return {"ticker": "PAL", "name": name, "code": "P", "shares": 1000.0,
+                "price": value / 1000, "value": value, "filing_date": day,
+                "transaction_date": day, "tx_id": acc, "is_derivative": False,
+                "currency": "USD"}
+    rows = {"PAL": [P("A", "2026-11-18", "pal-0"), P("B", "2026-11-18", "pal-1"),
+                    P("C", "2026-11-18", "pal-x"), P("D", "2026-11-19", "pal-2")],
+            "BUYR": [{"ticker": "BUYR", "name": "New Guy", "code": "P",
+                      "shares": 100.0, "price": 10.0, "value": 1000.0,
+                      "filing_date": "2026-11-18", "transaction_date": "2026-11-18",
+                      "tx_id": "b-1", "is_derivative": False, "currency": "USD"}],
+            "ZZZ": []}
+
+    saved = (ob.OUT_DIR, ob.FINNHUB_KEY, ob.F4_RECHECK_FILES, ob.finnhub_insider)
+    try:
+        ob.OUT_DIR, ob.FINNHUB_KEY, ob.F4_RECHECK_FILES = tmp, "test-key", 2
+        ob.finnhub_insider = lambda s, tk, k, lb: {"ok": True, "rows": rows.get(tk, []),
+                                                   "reason": "ok"}
+        out = ob.direction_pass(None, "2026-11-19", "RUN")
+    finally:
+        ob.OUT_DIR, ob.FINNHUB_KEY, ob.F4_RECHECK_FILES, ob.finnhub_insider = saved
+
+    d18, d19, d12 = read("2026-11-18"), read("2026-11-19"), read("2026-11-12")
+    derived = [r for r in d18 + d19 if r.get("kind") == "derived_event"]
+    check("🔑-an-extended-cluster-is-not-reported-again",
+          len(derived) == 1 and out["duplicate_clusters_suppressed"] >= 1,
+          f"{len(derived)} cluster event(s), {out['duplicate_clusters_suppressed']} "
+          f"extension(s) suppressed — PAL was reported three times before")
+    check("cluster-key-ignores-the-moving-last-date",
+          ob.cluster_key({"ticker": "PAL", "first_filing": "2026-11-18",
+                          "id": "derived:f4_PAL_2026-11-23"})
+          == ob.cluster_key(derived[0]))
+    pal1 = next(r for r in d18 if r.get("accession") == "pal-1")
+    check("a-direction-arriving-for-an-OLDER-day-is-filled",
+          pal1["direction"] == "purchase" and pal1["direction_observed_at"] == "RUN")
+    buyr = next(r for r in d18 if r.get("accession") == "b-1")
+    check("🔑-first-purchase-is-evaluated-on-an-older-day",
+          "first_purchase" in buyr and buyr["first_purchase"]
+          and buyr["first_purchase"][0]["insider"] == "New Guy",
+          "the old rule required the filing day to be the newest day; the "
+          "two-day lag meant 20 of 205 purchases were ever checked")
+    check("first-purchase-is-also-evaluated-the-night-it-resolves",
+          "first_purchase" in pal1)
+    zzz = d12[0]
+    check("🔑-a-filing-past-the-recheck-window-is-marked-final",
+          zzz["direction"] is None and zzz.get("direction_final") is True
+          and "final" in zzz["direction_source"]
+          and "re-checked" not in zzz["direction_source"],
+          "twenty filings said 're-checked on later runs' after the last "
+          "recheck had passed")
+    check("the-finalize-count-is-reported", out["finalized"] == 1)
+    check("nothing-finalized-inside-the-window",
+          not any(r.get("direction_final") for r in d19))
+
+    res = agentio.resolved_in_run(
+        {"2026-11-18": d18, "2026-11-19": d19, "2026-11-12": d12}, "RUN")
+    check("🔑-what-resolved-this-run-spans-older-days",
+          {r["day"] for r in res} == {"2026-11-18", "2026-11-19"}
+          and all(r.get("direction") for r in res
+                  if r.get("kind", "filing") == "filing"),
+          "this is what the brief and ACTUARY now read")
+    check("a-direction-from-an-earlier-run-is-not-resolved-again",
+          not any(r.get("accession") == "b-1" for r in res))
+    check("an-old-cluster-is-not-resolved-again",
+          not any(r.get("kind") == "derived_event" for r in res))
+    check("no-run-stamp-resolves-nothing",
+          agentio.resolved_in_run({"2026-11-18": d18}, "") == [])
+    check("finalize-is-idempotent",
+          ob.finalize_pending(d12, "again", 5) == 0)
+
+
 def main():
     print("=" * 70)
     print("observer_filings — pure logic (no network, no clock)")
@@ -471,6 +581,7 @@ def main():
     test_append_only()
     test_cache_does_not_keep_failures()
     test_retries()
+    test_latency_fixes()
 
     print("\n" + "=" * 70)
     print(f"{len(PASS)} passed, {len(FAIL)} failed")

@@ -291,30 +291,57 @@ def filings_section(records: list, meta: dict, status: dict) -> dict:
 
 
 def insiders_section(records: list, meta: dict, rates: list,
-                     status: dict) -> dict:
+                     status: dict, resolved: list = None) -> dict:
+    """Insider activity.
+
+    `records` is the newest filing day; `resolved` is what OBSERVER resolved
+    in its latest run across the recheck window (agentio.resolved_in_run).
+    🔑 Purchases and clusters come from `resolved` when it is given: the
+    newest day's directions mostly arrive two nights later, so reading them
+    from `records` showed nothing at all for nine nights running.
+    """
     if not status["usable"]:
         return _dark("insiders", status)
     f4 = [r for r in records if r.get("kind", "filing") == "filing"
           and r.get("root_form") == "4"]
-    clusters = [r for r in records if r.get("kind") == "derived_event"]
+    src = records if resolved is None else resolved
+    clusters = [r for r in src if r.get("kind") == "derived_event"]
     out = []
     counts = {}
     for r in f4:
         k = r.get("direction") or "not observed"
         counts[k] = counts.get(k, 0) + 1
-    out.append(line(f"{len(f4)} Form 4 filing(s) in the watched universe: "
+    day = meta.get("filing_day") or "the newest day"
+    out.append(line(f"{len(f4)} Form 4 filing(s) on {day} in the watched "
+                    f"universe: "
                     + (", ".join(f"{v} {k}" for k, v in sorted(counts.items()))
                        or "none")))
     if counts.get("not observed"):
-        note = (meta.get("direction") or {}).get("note") or ""
         out.append(line(f"⚠️ {counts['not observed']} have no observed "
-                        f"direction — these are filings, NOT purchases; "
-                        f"insider sales outnumber buys. {note}"))
+                        f"direction YET — Finnhub reports direction about two "
+                        f"days after EDGAR, so they resolve in a later brief. "
+                        f"Until then they are filings, NOT purchases; insider "
+                        f"sales outnumber buys."))
+    if resolved is not None:
+        rf = [r for r in resolved if r.get("kind", "filing") == "filing"]
+        rc = {}
+        for r in rf:
+            rc[r["direction"]] = rc.get(r["direction"], 0) + 1
+        days = sorted({r["day"] for r in resolved})
+        out.append(line(
+            f"Resolved since the last brief: {len(rf)} Form 4 direction(s)"
+            + (f" for filings from {', '.join(d[5:] for d in days)}"
+               if days else "") + ": "
+            + (", ".join(f"{v} {k}" for k, v in sorted(rc.items())) or "none")
+            + (f"; {len(clusters)} cluster buy(s)" if clusters else "")))
     for c in sorted(clusters, key=lambda r: r["ticker"]):
+        when = f" (filed {c['day'][5:]})" if c.get("day") else ""
         out.append(line(f"◆ CLUSTER {c['ticker']} — {c['n_insiders']} "
-                        f"insiders, ${c['total_value']:,.0f} (frozen "
+                        f"insiders, ${c['total_value']:,.0f}{when} (frozen "
                         f"definition)"))
-    for r in sorted((r for r in f4 if r.get("direction")
+    pf4 = [r for r in src if r.get("kind", "filing") == "filing"
+           and r.get("root_form") == "4"]
+    for r in sorted((r for r in pf4 if r.get("direction")
                      in ("purchase", "mixed")),
                     key=lambda r: (r["ticker"], r["accession"])):
         val = (f" ${r['purchase_value']:,.0f}"
@@ -325,8 +352,10 @@ def insiders_section(records: list, meta: dict, rates: list,
             fp = r["first_purchase"][0]
             first = (f" — first open-market purchase by {fp['insider']} in "
                      f"the history available (since {fp['history_from']})")
+        when = f" (filed {r['day'][5:]})" if r.get("day") else ""
         out.append(line(f"{r['ticker']} — open-market {r['direction']}{val}"
-                        + (f" by {who}" if who else "") + first, r.get("url")))
+                        + (f" by {who}" if who else "") + first + when,
+                        r.get("url")))
     anchor = ""
     for r in rates or []:
         a = r.get("abnormal") or {}
@@ -444,7 +473,7 @@ def facts(inputs: dict) -> dict:
         "insiders": insiders_section(
             inputs.get("records") or [], inputs.get("meta") or {},
             an.get("base_rates") if st["analysis"]["usable"] else [],
-            st["observations"]),
+            st["observations"], inputs.get("resolved")),
         "base_rates": base_rates_section(an, st["analysis"]),
         "universe": universe_section(inputs.get("daily") or {},
                                      st["daily snapshot"]),

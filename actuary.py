@@ -226,20 +226,28 @@ def main() -> None:
     obs_status = io.artifact_status(
         "observations", meta if day else None,
         (meta or {}).get("generated_at") or (day or ""), OBS_MAX_AGE_DAYS, now)
-    records = io.read_jsonl(path) if day and obs_status["usable"] else []
+    usable = bool(day) and obs_status["usable"]
+    recent = ({d: io.read_jsonl(p) for d, p in
+               io.day_files(OBS_DIR, ".jsonl")[-7:]} if usable else {})
+    records = recent.get(day, []) if usable else []
+    resolved = (io.resolved_in_run(recent, (meta or {}).get("generated_at", ""))
+                if usable else [])
     print(f"[actuary] observations: {obs_status['status']}"
-          + (f" ({day}, {len(records)} records)" if day else ""))
+          + (f" ({day}, {len(records)} records; {len(resolved)} resolved "
+             f"this run across the recheck window)" if day else ""))
 
     observed = []
-    if obs_status["usable"]:
-        for et, count in act.observed_event_types(records).items():
+    if usable:
+        for et, count in act.observed_event_types(
+                act.tonight(records, resolved)).items():
             observed.append({"event_type": et, "count": count,
                              "base_rates": act.lookup(et, rates)})
     clusters = [{"ticker": r.get("ticker"), "id": r.get("id"),
+                 "day": r.get("day"),
                  "n_insiders": r.get("n_insiders"),
                  "total_value": r.get("total_value"),
                  "base_rates": act.lookup(r.get("event_type"), rates)}
-                for r in records if r.get("kind") == "derived_event"]
+                for r in resolved if r.get("kind") == "derived_event"]
 
     # -- upstream: LIBRARIAN --------------------------------------------------
     bday, bpath = io.latest_day_file(BRIEF_DIR, ".json")

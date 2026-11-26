@@ -263,6 +263,38 @@ def first_purchases(rows: list, day: str) -> list:
     return sorted(out.values(), key=lambda x: x["insider"])
 
 
+def cluster_key(record: dict) -> tuple:
+    """A cluster's identity: the ticker and the day its first filing landed.
+
+    🔑 Not the event id. The id carries the cluster's LAST filing date, and
+    a cluster still inside its five-day window moves that date every time
+    another insider joins. Keyed on the id, PAL's one cluster was reported
+    on 11-18, 11-19 and 11-23 -- three events against a base rate that
+    counts it once.
+    """
+    return (str(record.get("ticker") or ""), str(record.get("first_filing") or ""))
+
+
+def finalize_pending(records: list, at: str, rechecks: int) -> int:
+    """Mark Form 4s still without a direction as FINAL. -> number marked.
+
+    Called on a day file that will not be rechecked again. The first
+    version left these saying "re-checked on later runs" after the last
+    recheck had passed -- a promise the code no longer kept. Twenty were
+    stranded that way in the first ten days.
+    """
+    n = 0
+    for r in records:
+        if is_form4(r) and not r.get("direction") and not r.get("direction_final"):
+            r["direction_final"] = True
+            r["direction_source"] = (
+                f"not observed: absent from Finnhub's insider feed across "
+                f"{rechecks} nightly rechecks (final as of {at}). The "
+                f"direction of this filing is unknown, not 'no purchase'.")
+            n += 1
+    return n
+
+
 def cluster_events(rows: list, day: str, at: str) -> list:
     """Cluster buys that COMPLETED on `day`, by the frozen definition.
 
@@ -464,14 +496,41 @@ def collect_filings(sess, day: str, univ: set, cache: dict, now: str) -> tuple:
 
 
 def direction_pass(sess, day: str, now: str) -> dict:
-    """Fill Form 4 directions for the last few day files, and derive events."""
-    files = io.day_files(OUT_DIR, ".jsonl")[-F4_RECHECK_FILES:]
+    """Fill Form 4 directions for the last few day files, and derive events.
+
+    🔑 Every fill and every derived event is stamped with THIS run's time,
+    and CHIEF OF STAFF and ACTUARY read "what resolved in this run" across
+    the recheck window -- not just the newest file. Finnhub lags EDGAR by
+    about two days, so the newest file is almost entirely undirected when
+    the brief is written. The first version of the brief read only that
+    file, and from 11-16 to 11-24 it showed no purchase and no cluster buy
+    on any night, while 185 purchases and 29 clusters resolved into older
+    files nobody displayed.
+    """
+    all_files = io.day_files(OUT_DIR, ".jsonl")
+    files = all_files[-F4_RECHECK_FILES:]
     loaded = {d: [upgrade(r) for r in io.read_jsonl(p)] for d, p in files}
+
+    # Every cluster already reported, in ANY day file, so an extension of
+    # one is not reported again.
+    reported = set()
+    for d, p in all_files:
+        for r in (loaded.get(d) or io.read_jsonl(p)):
+            if r.get("kind") == "derived_event":
+                reported.add(cluster_key(r))
+
     need = []                                   # newest day first
     for d in sorted(loaded, reverse=True):
         for r in loaded[d]:
             if is_form4(r) and not r.get("direction") \
                     and r["ticker"] not in need:
+                need.append(r["ticker"])
+    # Then purchases whose first-purchase flag was never evaluated.
+    for d in sorted(loaded, reverse=True):
+        for r in loaded[d]:
+            if (is_form4(r) and r.get("direction") in ("purchase", "mixed")
+                    and "first_purchase" not in r
+                    and r["ticker"] not in need):
                 need.append(r["ticker"])
 
     out = {"key": bool(FINNHUB_KEY), "tickers_needed": len(need),
@@ -507,17 +566,25 @@ def direction_pass(sess, day: str, now: str) -> dict:
             print(f"[observer] finnhub {i}/{len(todo)}")
     out["tickers_checked"] = len(todo)
 
+    out["duplicate_clusters_suppressed"] = 0
     for d, recs in loaded.items():
         out["filled"] += enrich_direction(recs, rows_by, now, unavailable)
         have = {r.get("id") for r in recs}
         for tk, rows in rows_by.items():
             for ev in cluster_events(rows, d, now):
-                if ev["id"] not in have:
-                    recs.append(ev)
-                    have.add(ev["id"])
-                    out["clusters"] += 1
-            if d != day:
-                continue
+                if ev["id"] in have:
+                    continue
+                if cluster_key(ev) in reported:
+                    out["duplicate_clusters_suppressed"] += 1
+                    continue
+                recs.append(ev)
+                have.add(ev["id"])
+                reported.add(cluster_key(ev))
+                out["clusters"] += 1
+            # 🔑 Evaluated on whichever run the direction ARRIVES, for any
+            # day in the window. The first version required the filing day
+            # to be the newest day, and the two-day Finnhub lag meant that
+            # almost never happened: 20 of 205 purchases were ever checked.
             fp = first_purchases(rows, d)
             for r in recs:
                 if (is_form4(r) and r.get("ticker") == tk
@@ -529,10 +596,30 @@ def direction_pass(sess, day: str, now: str) -> dict:
                     out["first_purchases"] += len(mine)
         io.write_jsonl(os.path.join(OUT_DIR, f"{d}.jsonl"), recs)
 
-    out["pending"] = pending()
+    # Any file that the NEXT run will not recheck is finalized now; that
+    # includes files that fell out of the window before this rule existed.
+    keep = {d for d, _ in all_files[-(F4_RECHECK_FILES - 1):]} \
+        if F4_RECHECK_FILES > 1 else set()
+    out["finalized"] = 0
+    for d, p in all_files:
+        if d in keep:
+            continue
+        recs = loaded.get(d)
+        if recs is None:
+            recs = [upgrade(r) for r in io.read_jsonl(p)]
+        n = finalize_pending(recs, now, F4_RECHECK_FILES)
+        if n or d in loaded:
+            io.write_jsonl(os.path.join(OUT_DIR, f"{d}.jsonl"), recs)
+        out["finalized"] += n
+
+    out["pending"] = pending() - sum(
+        1 for d in loaded if d not in keep for r in loaded[d]
+        if is_form4(r) and r.get("direction_final"))
     out["note"] = (f"{NO_BODY}; direction comes from Finnhub by accession, "
-                   f"which lags EDGAR — {out['pending']} still pending and "
-                   f"re-checked on later runs")
+                   f"which lags EDGAR by about two days — {out['pending']} "
+                   f"still pending and rechecked on later runs"
+                   + (f", {out['finalized']} marked final after "
+                      f"{F4_RECHECK_FILES} rechecks" if out["finalized"] else ""))
     return out
 
 
@@ -585,8 +672,11 @@ def main() -> None:
           f"ticker(s) · filled {direction['filled']} · pending "
           f"{direction['pending']} · failed {direction['failed']}"
           f"{'  [CAPPED]' if direction['capped'] else ''}")
-    print(f"  cluster events {direction['clusters']} · first purchases "
-          f"{direction['first_purchases']} · cik cache {len(cache)}")
+    print(f"  cluster events {direction['clusters']} (+"
+          f"{direction.get('duplicate_clusters_suppressed', 0)} extensions of "
+          f"clusters already reported, suppressed) · first purchases "
+          f"{direction['first_purchases']} · finalized "
+          f"{direction.get('finalized', 0)} · cik cache {len(cache)}")
     print("\n" + text[:1500])
     print("\n[observer] collected only. Nothing scored, nothing recommended, "
           "no order placed, K unchanged.")

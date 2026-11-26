@@ -242,3 +242,40 @@ def load_stance(path: str) -> dict:
                 "source": f"{path}"}
     return {"stance": "balanced", "valid": False, "set_at": None,
             "source": "default — no valid stance is set in " + str(path)}
+
+
+# -- what resolved in the latest run -----------------------------------------
+
+def is_form4(record: dict) -> bool:
+    return (record.get("kind", "filing") == "filing"
+            and str(record.get("root_form") or record.get("form") or "")
+            .startswith("4"))
+
+
+def resolved_in_run(records_by_day: dict, run_at: str) -> list:
+    """Form 4 directions observed, and events derived, IN THE RUN at `run_at`.
+
+    -> [record + {"day": filing day}], oldest filing day first.
+
+    🔑 Why this exists. Finnhub reports a Form 4's direction about two days
+    after EDGAR lists it, so OBSERVER fills it into an OLDER day file. A
+    consumer that reads only the newest file sees a day that is almost
+    entirely undirected, every night: the brief showed no purchase and no
+    cluster buy from 11-16 to 11-24 while 185 and 29 had resolved. This is
+    what a consumer reads instead. Matching is on the exact run timestamp
+    OBSERVER stamps on each fill, so a record is reported on the one night
+    it resolved and never again.
+    """
+    out = []
+    if not run_at:
+        return out
+    for day in sorted(records_by_day):
+        for r in records_by_day[day] or []:
+            hit = ((is_form4(r) and r.get("direction")
+                    and r.get("direction_observed_at") == run_at)
+                   or (r.get("kind") == "derived_event"
+                       and r.get("observed_at") == run_at))
+            if hit:
+                out.append(dict(r, day=day))
+    return out
+

@@ -225,6 +225,28 @@ def lookup(event_type: str, rates: list) -> list:
         event_type, "no frozen outcome ledger exists for this event type")]
 
 
+def tonight(records: list, resolved: list) -> list:
+    """The records whose event type ACTUARY reports for one run.
+
+    The newest day's filings, EXCEPT its Form 4s that already carry a
+    direction and its derived events (those are reported through
+    `resolved`, so they are not counted twice) -- plus everything resolved
+    in this run across the recheck window.
+
+    🔑 The first version used the newest day alone. Its Form 4s are mostly
+    undirected on the night they are filed, so ACTUARY reported 710
+    "form4_direction_not_observed" and matched 4 cluster buys to their base
+    rate when 29 had happened.
+    """
+    def f4(r):
+        return (r.get("kind", "filing") == "filing"
+                and str(r.get("root_form") or r.get("form") or "").startswith("4"))
+    base = [r for r in records or []
+            if r.get("kind") != "derived_event"
+            and not (f4(r) and r.get("direction"))]
+    return base + list(resolved or [])
+
+
 def observed_event_types(records: list) -> dict:
     """{event_type: count} for one day's OBSERVER records.
 
