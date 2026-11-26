@@ -129,7 +129,7 @@
   "total_dollars": null
  },
  "falsifiers": [],
- "generated_at": "2026-11-26T05:04:10+00:00",
+ "generated_at": "2026-11-26T22:56:19+00:00",
  "is_not_a_recommendation": "This document reports distributions with n, concentration figures and ledger status. It contains no buy, sell, hold, rating, target or confidence, and nothing in it should be read as one.",
  "ledger": {
   "ok": true,
@@ -314,7 +314,7 @@
      "sufficient": false
     }
    ],
-   "count": 82,
+   "count": 84,
    "event_type": "form4_direction_not_observed"
   }
  ],
@@ -352,7 +352,7 @@
   "librarian": {
    "age_days": 0.0,
    "name": "librarian brief",
-   "stamp": "2026-11-26T05:03:48+00:00",
+   "stamp": "2026-11-26T22:56:04+00:00",
    "status": "fresh",
    "usable": true,
    "why": "ok"
@@ -360,7 +360,7 @@
   "observations": {
    "age_days": 0.0,
    "name": "observations",
-   "stamp": "2026-11-26T05:00:04+00:00",
+   "stamp": "2026-11-26T22:53:36+00:00",
    "status": "fresh",
    "usable": true,
    "why": "ok"
