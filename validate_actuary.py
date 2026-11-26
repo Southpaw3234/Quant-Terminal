@@ -417,6 +417,35 @@ def test_no_verdict():
           "no recommendation" in d.lower())
 
 
+
+def test_tonight():
+    print("\nACTUARY counts what resolved, once")
+    newest = [{"kind": "filing", "root_form": "8-K", "items": ["2.02"]},
+              {"kind": "filing", "root_form": "4", "direction": None},
+              {"kind": "filing", "root_form": "4", "direction": "purchase",
+               "direction_observed_at": "RUN"},
+              {"kind": "derived_event", "event_type": "form4_cluster_buy",
+               "observed_at": "RUN"}]
+    resolved = [newest[2], newest[3],
+                {"kind": "filing", "root_form": "4", "direction": "sale",
+                 "day": "2026-11-23"},
+                {"kind": "derived_event", "event_type": "form4_cluster_buy",
+                 "day": "2026-11-23"}]
+    et = act.observed_event_types(act.tonight(newest, resolved))
+    check("🔑-resolved-clusters-from-older-days-are-counted",
+          et.get("form4_cluster_buy") == 2,
+          "it matched 4 cluster buys to their base rate when 29 happened")
+    check("a-newest-day-record-in-resolved-is-not-double-counted",
+          et.get("form4_purchase") == 1)
+    check("older-day-directions-are-counted", et.get("form4_sale") == 1)
+    check("the-newest-days-pending-form4s-still-count-as-unobserved",
+          et.get("form4_direction_not_observed") == 1)
+    check("non-form4-filings-are-unchanged", et.get("8k_item_2.02") == 1)
+    check("nothing-resolved-is-the-old-behaviour-minus-directed",
+          act.observed_event_types(act.tonight(newest[:2], [])) ==
+          {"8k_item_2.02": 1, "form4_direction_not_observed": 1})
+
+
 def main():
     print("=" * 70)
     print("ACTUARY — pure logic (no network, no clock)")
@@ -426,6 +455,7 @@ def main():
     test_committed_sources()
     test_exposure()
     test_falsifiers()
+    test_tonight()
     test_no_verdict()
     print("\n" + "=" * 70)
     print(f"{len(PASS)} passed, {len(FAIL)} failed")

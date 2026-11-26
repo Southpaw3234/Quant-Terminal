@@ -506,12 +506,55 @@ def test_capabilities_absent():
           and all(v > 0 for v in agent.MAX_AGE.values()))
 
 
+
+def test_brief_reads_what_resolved():
+    print("\nthe brief shows what resolved in the run, not only the newest day")
+    inp = inputs()
+    newest = [_filing(f"N{i}", "4", f"n{i}") for i in range(5)]  # all undirected
+    inp["records"] = newest
+    inp["meta"] = dict(inp["meta"], filing_day="2026-11-25")
+    resolved = [dict(_filing("PAL", "4", "p1", direction="purchase",
+                             purchase_value=60000.0, insiders=["A"]),
+                     day="2026-11-23"),
+                dict(_filing("SELL", "4", "s1", direction="sale"), day="2026-11-24"),
+                {"id": "derived:c", "kind": "derived_event", "ticker": "PAL",
+                 "event_type": "form4_cluster_buy", "n_insiders": 3,
+                 "total_value": 434000.0, "day": "2026-11-23"}]
+    inp["resolved"] = resolved
+    txt = [l["text"] for l in chief.facts(inp)["sections"]["insiders"]["lines"]]
+    joined = " | ".join(txt)
+    check("🔑-a-purchase-resolved-for-an-older-day-reaches-the-brief",
+          any("PAL — open-market purchase $60,000" in t and "(filed 11-23)" in t
+              for t in txt),
+          "nine briefs in a row showed no purchase while 185 had resolved")
+    check("a-cluster-resolved-for-an-older-day-reaches-the-brief",
+          any("CLUSTER PAL" in t and "(filed 11-23)" in t for t in txt))
+    check("the-resolved-line-counts-and-dates-them",
+          any(t.startswith("Resolved since the last brief: 2 Form 4") and
+              "11-23, 11-24" in t and "1 purchase" in t and "1 sale" in t
+              for t in txt))
+    check("the-newest-day-is-still-shown-as-pending",
+          "5 Form 4 filing(s) on 2026-11-25" in joined
+          and "no observed direction YET" in joined)
+    check("an-undirected-newest-day-is-still-NOT-called-purchases",
+          "NOT purchases" in joined)
+    inp["resolved"] = []
+    quiet = " | ".join(l["text"] for l in
+                       chief.facts(inp)["sections"]["insiders"]["lines"])
+    check("nothing-resolved-says-so", "Resolved since the last brief: 0" in quiet
+          and "CLUSTER" not in quiet)
+    src = inspect.getsource(agent.load_inputs)
+    check("the-agent-passes-resolved-records",
+          "resolved_in_run" in src and "RECENT_FILES" in src)
+
+
 def main():
     print("=" * 70)
     print("CHIEF OF STAFF — pure logic (no network)")
     print("=" * 70)
     test_stance_cannot_change_a_fact()
     test_dark_inputs()
+    test_brief_reads_what_resolved()
     test_operator_channel()
     test_render_and_deliver()
     test_capabilities_absent()

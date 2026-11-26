@@ -58,6 +58,8 @@ API = "https://api.github.com"
 
 # How old each input may be before its section goes dark. Friday's filings
 # read on Monday are three days old, so the EDGAR-derived inputs get four.
+RECENT_FILES = 7     # covers OBSERVER's 5-file recheck window with slack
+
 MAX_AGE = {"observations": 4.0, "macro": 2.0, "librarian": 4.0,
            "analysis": 2.0, "daily snapshot": 4.0}
 
@@ -91,9 +93,16 @@ def load_inputs(now: str) -> dict:
             "daily snapshot", daily, stamp(daily),
             MAX_AGE["daily snapshot"], now),
     }
+    usable = bool(day) and statuses["observations"]["usable"]
+    recent = ({d: io.read_jsonl(p) for d, p in
+               io.day_files(OBS_DIR, ".jsonl")[-RECENT_FILES:]}
+              if usable else {})
     return {"day": day, "meta": meta or {},
-            "records": io.read_jsonl(path)
-            if day and statuses["observations"]["usable"] else [],
+            "records": recent.get(day, []) if usable else [],
+            # What OBSERVER resolved in its latest run, across the recheck
+            # window -- see agentio.resolved_in_run for why.
+            "resolved": io.resolved_in_run(recent, (meta or {}).get(
+                "generated_at", "")) if usable else [],
             "macro": macro, "brief": brief, "analysis": analysis,
             "daily": daily, "statuses": statuses}
 
