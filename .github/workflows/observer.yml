@@ -125,7 +125,8 @@ jobs:
                    qt/actuary qt/chief qt/thesis qt/volatility observer_prices \
                    validate_observer_filings validate_observer_macro \
                    validate_librarian_diff validate_actuary \
-                   validate_chief_of_staff validate_described_events \n                   research/extract_described_events research/describe_events; do
+                   validate_chief_of_staff validate_described_events \
+                   research/extract_described_events research/describe_events; do
             python -m py_compile "$f.py"
           done
           bash -n .github/scripts/publish_agent_branch.sh
