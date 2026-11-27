@@ -160,13 +160,48 @@ def registry_context(registry_doc: dict, spec_id: str) -> dict:
                                            "for this specification"}
 
 
+def described_context(described_doc: dict, event_type: str) -> dict:
+    """The record for a type the operator forfeited to description.
+
+    -> {"basis": "described", "verdict": None, ...} when the type is listed in
+    data/registry/described.json, else a record with `refused` set: a ledger
+    for an UNLISTED type is outcomes nobody paid for and nobody forfeited.
+    """
+    doc = described_doc or {}
+    ref = (doc.get("reference") or {}).get(event_type)
+    if ref:
+        return {"basis": "reference", "described_type": event_type,
+                "verdict": None, "refused": False,
+                "decided_at": doc.get("decided_at"),
+                "definition": ref.get("definition"),
+                "reason": "reference distribution, not an event"}
+    entry = (doc.get("described") or {}).get(event_type)
+    if not entry:
+        return {"basis": "described", "described_type": event_type,
+                "verdict": None, "refused": True,
+                "reason": f"{event_type} is not listed in the described "
+                          f"registry, so its outcomes may not be shown"}
+    return {"basis": "described", "described_type": event_type,
+            "verdict": None, "refused": False,
+            "decided_at": doc.get("decided_at"),
+            "definition": entry.get("definition"),
+            "reason": "described, never tested: forfeited to description, "
+                      "so no read and no verdict exist"}
+
+
 def base_rates(rows: list, source: dict, registry: dict,
-               min_n: int = MIN_N) -> list:
+               min_n: int = MIN_N, applies_to: str = None,
+               condition: str = None) -> list:
     """Distributions per (event type, horizon) from one frozen ledger.
 
     `rows` are the ledger's rows as dicts. Returns are reported two ways,
     because they answer different questions: `abnormal` is the return over
     the control, `raw` is what a holder actually experienced.
+
+    `applies_to` names the OBSERVER event type a ledger describes when its
+    own label differs, and `condition` the subset it covers: spec #3's
+    ledger is 8-K Item 2.02 announcements WITH a two-session reaction of at
+    least +5%, not every earnings 8-K, and that has to travel with it.
     """
     groups = {}
     for r in rows or []:
@@ -187,8 +222,35 @@ def base_rates(rows: list, source: dict, registry: dict,
         controls = sorted({str(r.get("control") or "").strip()
                            for r in grp} - {""})
         verdict = registry.get("verdict")
+        described = registry.get("basis") in ("described", "reference")
+        if registry.get("basis") == "reference":
+            how = ("NOT AN EVENT: an arbitrary day in the same universe, "
+                   "measured the same way. Read every base rate beside it -- "
+                   "an event type's median means something only as a "
+                   "difference from this one.")
+        elif described:
+            how = ("What followed past events of this type — a description, "
+                   "not a forecast. This type was NEVER TESTED: the operator "
+                   f"forfeited it to description on "
+                   f"{registry.get('decided_at') or '(date not recorded)'}, so "
+                   "there is no read, no verdict, and the figures say nothing "
+                   "about whether the difference from zero is real.")
+        else:
+            how = ("What followed past events of this type — a description, "
+                   "not a forecast. "
+                   + (f"The pre-registered read on this ledger returned "
+                      f"{verdict}: the average was not established as "
+                      f"different from zero at the declared threshold."
+                      if verdict else
+                      "No pre-registered verdict is recorded for this ledger."))
+        if condition:
+            how += f" Covers only: {condition}."
         out.append({
-            "event_type": et,
+            "event_type": applies_to or et,
+            "ledger_event_type": et,
+            "basis": (registry.get("basis") if described
+                      else "pre-registered read"),
+            "condition": condition,
             "horizon_bars": int(horizon) if horizon.isdigit() else None,
             "control": controls[0] if len(controls) == 1 else controls,
             "n_events": len(grp),
@@ -201,14 +263,7 @@ def base_rates(rows: list, source: dict, registry: dict,
             "source": source,
             "registry": registry,
             # 🔑 The sentence that has to travel with every number above.
-            "how_to_read": (
-                "What followed past events of this type — a description, "
-                "not a forecast. "
-                + (f"The pre-registered read on this ledger returned "
-                   f"{verdict}: the average was not established as different "
-                   f"from zero at the declared threshold."
-                   if verdict else
-                   "No pre-registered verdict is recorded for this ledger.")),
+            "how_to_read": how,
         })
     return out
 

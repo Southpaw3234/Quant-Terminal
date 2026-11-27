@@ -83,13 +83,30 @@ def load_base_rates() -> tuple:
         reg_path = s.get("registry") or ""
         if reg_path not in registries:
             registries[reg_path] = io.read_json(reg_path)
-        ctx = act.registry_context(registries[reg_path], s.get("spec_id"))
+        if s.get("described_type"):
+            ctx = act.described_context(registries[reg_path],
+                                        s["described_type"])
+            refused = ctx["refused"]
+        else:
+            ctx = act.registry_context(registries[reg_path], s.get("spec_id"))
+            # 🔑 A spec with no recorded verdict has not been read: its
+            # ledger is outcomes the K budget has not paid for.
+            refused = not ctx.get("verdict")
+        if refused:
+            report.append({"ledger": path, "status": "refused", "rows": len(rows),
+                           "spec_id": s.get("spec_id"),
+                           "described_type": s.get("described_type"),
+                           "reason": ctx.get("reason")})
+            continue
         src = {"path": path, "rows": len(rows),
                "sha256": io.sha256_normalised(path)}
-        got = act.base_rates(rows, src, ctx)
+        got = act.base_rates(rows, src, ctx, applies_to=s.get("applies_to"),
+                             condition=s.get("condition"))
         rates.extend(got)
         report.append({"ledger": path, "status": "ok", "rows": len(rows),
                        "sha256": src["sha256"], "spec_id": s.get("spec_id"),
+                       "described_type": s.get("described_type"),
+                       "basis": ctx.get("basis") or "pre-registered read",
                        "verdict": ctx.get("verdict"),
                        "event_types": sorted({r["event_type"] for r in got})})
     return rates, report
@@ -189,7 +206,7 @@ def digest(doc: dict) -> str:
              f"no recommendation is made anywhere in this document)_"]
 
     lines.append("")
-    lines.append("__Base rates__ — from reads already spent")
+    lines.append("__Base rates__ — from reads already spent, and types forfeited to description")
     for r in doc["base_rates"]:
         a = r["abnormal"]
         head = (f"· `{r['event_type']}` over {r['horizon_bars']} bars vs "
@@ -200,7 +217,10 @@ def digest(doc: dict) -> str:
         lines.append(f"{head}: median {a['median']:+.1%}, middle half "
                      f"{a['q25']:+.1%} to {a['q75']:+.1%}, worst "
                      f"{a['worst']:+.1%}, {a['share_positive']:.0%} positive "
-                     f"— registry verdict **{r['registry'].get('verdict') or 'none recorded'}**")
+                     f"— " + ("**described, never tested**"
+                              if r.get("basis") == "described" else
+                              f"registry verdict **{r['registry'].get('verdict') or 'none recorded'}**")
+                     + (f" — covers only {r['condition']}" if r.get("condition") else ""))
     if not doc["base_rates"]:
         lines.append("_none available_")
 

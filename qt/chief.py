@@ -59,15 +59,15 @@ ORDER = {
 CAPS = {
     "conservative": {"theses": 60, "exposure": 40, "risk": 30,
                      "language": 25, "macro": 22,
-                     "filings": 14, "insiders": 8, "base_rates": 6,
+                     "filings": 14, "insiders": 8, "base_rates": 10,
                      "universe": 6},
     "balanced":     {"theses": 60, "exposure": 30, "risk": 20,
                      "language": 15, "macro": 18,
-                     "filings": 20, "insiders": 14, "base_rates": 6,
+                     "filings": 20, "insiders": 14, "base_rates": 10,
                      "universe": 6},
     "aggressive":   {"theses": 40, "exposure": 20, "risk": 14,
                      "language": 10, "macro": 14,
-                     "filings": 30, "insiders": 30, "base_rates": 6,
+                     "filings": 30, "insiders": 30, "base_rates": 10,
                      "universe": 6},
 }
 TITLES = {"theses": "Your theses", "exposure": "Exposure",
@@ -425,35 +425,72 @@ def insiders_section(records: list, meta: dict, rates: list,
                     "from Finnhub by accession." + anchor)
 
 
+def basis_of(rate: dict) -> str:
+    """How far a base rate can be trusted, in words that travel with it."""
+    if rate.get("basis") == "reference":
+        return ("REFERENCE, not an event: an arbitrary day in this universe "
+                "— read each line below against this one")
+    if rate.get("basis") == "described":
+        tail = "described, never tested — no read, no verdict"
+    else:
+        tail = (f"registry verdict "
+                f"{(rate.get('registry') or {}).get('verdict')}")
+    if rate.get("condition"):
+        tail += f"; covers only {rate['condition']}"
+    return tail
+
+
 def base_rates_section(analysis: dict, status: dict) -> dict:
+    """One line per event type, both horizons on it; tonight's types first.
+
+    🔑 Every line says whether its numbers survived a pre-registered read or
+    were only described. Without that word a described median reads exactly
+    like a tested one.
+    """
     if not status["usable"]:
         return _dark("base_rates", status)
-    out = []
+    tonight = {e["event_type"]: e.get("count") for e in
+               analysis.get("observed_today") or []}
+    by_type = {}
     for r in analysis.get("base_rates") or []:
-        a = r["abnormal"]
-        head = (f"{r['event_type']} over {r['horizon_bars']} bars vs "
-                f"{r['control']}, n={a['n']}")
-        if not a["sufficient"]:
-            out.append(line(f"{head}: {a['reason']}"))
-            continue
-        out.append(line(
-            f"{head}: median {pct(a['median'])}, middle half "
-            f"{pct(a['q25'])} to {pct(a['q75'])}, worst {pct(a['worst'])}, "
-            f"best {pct(a['best'])}, {a['share_positive']:.0%} positive — "
-            f"registry verdict {(r.get('registry') or {}).get('verdict')}"))
+        by_type.setdefault(r["event_type"], []).append(r)
+    ref = [t for t in by_type
+           if any(r.get("basis") == "reference" for r in by_type[t])]
+    order = ref + sorted((t for t in by_type if t not in ref),
+                         key=lambda t: (t not in tonight, t))
+    out = []
+    for et in order:
+        grp = sorted(by_type[et], key=lambda r: r.get("horizon_bars") or 0)
+        parts = []
+        for r in grp:
+            a = r["abnormal"]
+            if not a["sufficient"]:
+                parts.append(f"{r['horizon_bars']} bars: {a['reason']}")
+                continue
+            parts.append(
+                f"{r['horizon_bars']} bars n={a['n']} median "
+                f"{pct(a['median'])}, middle half {pct(a['q25'])} to "
+                f"{pct(a['q75'])}, {a['share_positive']:.0%} positive")
+        ctl = grp[0].get("control")
+        when = f" ({tonight[et]} tonight)" if et in tonight else ""
+        out.append(line(f"{et}{when} vs {ctl}: " + "; ".join(parts)
+                        + f" — {basis_of(grp[0])}"))
     today = analysis.get("observed_today") or []
     thin = [e for e in today
             if not any("abnormal" in b and b["abnormal"]["sufficient"]
                        for b in e["base_rates"])]
     if today:
-        out.append(line(f"{len(today)} event type(s) observed; {len(thin)} "
-                        f"have insufficient history for a base rate "
-                        f"(no frozen outcome ledger)"))
+        # First, so a cap never hides how much of tonight has no history.
+        out.insert(0, line(f"{len(today)} event type(s) observed; {len(thin)} "
+                           f"have no base rate"
+                           + (f" ({', '.join(e['event_type'] for e in thin)})"
+                              if thin else "")))
     if not out:
         out.append(line("No base rate is available."))
     return _section("base_rates", out, status,
                     "What followed past events of a type — a description, "
-                    "not a forecast. Computed only from reads already spent.")
+                    "not a forecast. Each line says whether a pre-registered "
+                    "read tested it or it was only described.")
 
 
 def universe_section(daily: dict, status: dict) -> dict:

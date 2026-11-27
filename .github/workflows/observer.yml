@@ -72,6 +72,11 @@ on:
       - 'validate_librarian_diff.py'
       - 'validate_actuary.py'
       - 'validate_chief_of_staff.py'
+      - 'validate_described_events.py'
+      - 'research/extract_described_events.py'
+      - 'research/describe_events.py'
+      - 'data/registry/described.json'
+      - 'data/events/**'
       - 'data/librarian/phrases.json'
       - 'data/actuary/sources.json'
       - 'data/operator/**'
@@ -120,7 +125,7 @@ jobs:
                    qt/actuary qt/chief qt/thesis qt/volatility observer_prices \
                    validate_observer_filings validate_observer_macro \
                    validate_librarian_diff validate_actuary \
-                   validate_chief_of_staff; do
+                   validate_chief_of_staff validate_described_events \n                   research/extract_described_events research/describe_events; do
             python -m py_compile "$f.py"
           done
           bash -n .github/scripts/publish_agent_branch.sh
@@ -136,6 +141,8 @@ jobs:
         run: python validate_volatility.py
       - name: CHIEF OF STAFF
         run: python validate_chief_of_staff.py
+      - name: Described base rates
+        run: python validate_described_events.py
 
       - name: The declared phrase list parses, and record its digest
         # A brief carries this digest, so a later edit to the list is visible
