@@ -29,33 +29,41 @@ METRICS = {
     "revenue": ("us-gaap", "USD", "flow", [
         "RevenueFromContractWithCustomerExcludingAssessedTax", "Revenues",
         "RevenuesNetOfInterestExpense", "SalesRevenueNet",
-        "RevenueFromContractWithCustomerIncludingAssessedTax"]),
-    "gross_profit": ("us-gaap", "USD", "flow", ["GrossProfit"]),
-    "op_income": ("us-gaap", "USD", "flow", ["OperatingIncomeLoss"]),
+        "RevenueFromContractWithCustomerIncludingAssessedTax", "ifrs-full:Revenue"]),
+    "gross_profit": ("us-gaap", "USD", "flow", ["GrossProfit", "ifrs-full:GrossProfit"]),
+    "op_income": ("us-gaap", "USD", "flow", ["OperatingIncomeLoss", "ifrs-full:ProfitLossFromOperatingActivities"]),
     "net_income": ("us-gaap", "USD", "flow", [
-        "NetIncomeLoss", "ProfitLoss", "NetIncomeLossAvailableToCommonStockholdersBasic"]),
+        "NetIncomeLoss", "ProfitLoss", "NetIncomeLossAvailableToCommonStockholdersBasic",
+        "ifrs-full:ProfitLossAttributableToOwnersOfParent", "ifrs-full:ProfitLoss"]),
     "eps": ("us-gaap", "USD/shares", "flow", [
-        "EarningsPerShareDiluted", "EarningsPerShareBasicAndDiluted", "EarningsPerShareBasic"]),
+        "EarningsPerShareDiluted", "EarningsPerShareBasicAndDiluted", "EarningsPerShareBasic",
+        "ifrs-full:DilutedEarningsLossPerShare", "ifrs-full:BasicEarningsLossPerShare"]),
     "op_cash_flow": ("us-gaap", "USD", "flow", [
         "NetCashProvidedByUsedInOperatingActivities",
-        "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations"]),
+        "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations",
+        "ifrs-full:CashFlowsFromUsedInOperatingActivities"]),
     "capex": ("us-gaap", "USD", "flow", [
-        "PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets"]),
+        "PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets",
+        "ifrs-full:PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities"]),
     "dividends_per_share": ("us-gaap", "USD/shares", "flow", [
         "CommonStockDividendsPerShareDeclared", "CommonStockDividendsPerShareCashPaid"]),
-    "assets": ("us-gaap", "USD", "stock", ["Assets"]),
-    "liabilities": ("us-gaap", "USD", "stock", ["Liabilities"]),
+    "assets": ("us-gaap", "USD", "stock", ["Assets", "ifrs-full:Assets"]),
+    "liabilities": ("us-gaap", "USD", "stock", ["Liabilities", "ifrs-full:Liabilities"]),
     "equity": ("us-gaap", "USD", "stock", [
         "StockholdersEquity",
-        "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest"]),
+        "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
+        "ifrs-full:EquityAttributableToOwnersOfParent", "ifrs-full:Equity"]),
     "cash": ("us-gaap", "USD", "stock", [
         "CashAndCashEquivalentsAtCarryingValue",
-        "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents", "Cash"]),
+        "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents", "Cash",
+        "ifrs-full:CashAndCashEquivalents"]),
     "debt_long": ("us-gaap", "USD", "stock", [
         "LongTermDebtNoncurrent", "LongTermDebt", "LongTermDebtAndCapitalLeaseObligations",
-        "LongTermDebtAndFinanceLeaseObligations"]),
+        "LongTermDebtAndFinanceLeaseObligations", "ifrs-full:NoncurrentPortionOfNoncurrentBorrowings",
+        "ifrs-full:LongtermBorrowings"]),
     "debt_current": ("us-gaap", "USD", "stock", [
-        "LongTermDebtCurrent", "DebtCurrent", "ShortTermBorrowings"]),
+        "LongTermDebtCurrent", "DebtCurrent", "ShortTermBorrowings",
+        "ifrs-full:CurrentBorrowingsAndCurrentPortionOfNoncurrentBorrowings"]),
     "shares": ("dei", "shares", "stock", ["EntityCommonStockSharesOutstanding"]),
     "shares_gaap": ("us-gaap", "shares", "stock", [
         "CommonStockSharesOutstanding", "WeightedAverageNumberOfDilutedSharesOutstanding"]),
@@ -90,7 +98,11 @@ def value(cf: dict, name: str, asof) -> "dict | None":
     d = str(asof)[:10]
     best = None
     for i, tag in enumerate(tags):
-        facts = _facts(cf, ns, tag, unit)
+        # "ifrs-full:Revenue" names its own namespace; a bare tag uses the
+        # metric's. IFRS figures are read in USD only -- a franc or a real
+        # beside a dollar share price would make every ratio wrong.
+        t_ns, t_tag = tag.split(":", 1) if ":" in tag else (ns, tag)
+        facts = _facts(cf, t_ns, t_tag, unit)
         if not facts:
             continue
         if kind == "flow":
@@ -115,6 +127,17 @@ def value(cf: dict, name: str, asof) -> "dict | None":
         return None
     best.pop("rank")
     return best
+
+
+def reporting(cf: dict) -> dict:
+    """Which accounting rules, and which currencies, the company files in."""
+    f = cf.get("facts") or {}
+    std = "US GAAP" if f.get("us-gaap") else "IFRS" if f.get("ifrs-full") else "none"
+    cur = set()
+    node = f.get("ifrs-full") or {}
+    for tag in ("Revenue", "Assets", "ProfitLoss"):
+        cur |= {u for u in ((node.get(tag) or {}).get("units") or {}) if "/" not in u}
+    return {"standard": std, "currencies": sorted(cur) if std == "IFRS" else ["USD"] if std == "US GAAP" else []}
 
 
 def extract(cf: dict, asof) -> dict:

@@ -1,9 +1,10 @@
-name: S&P 500 fundamentals — weekly SEC sweep
+name: Company fundamentals — weekly SEC sweep
 
-# The company lookup on the dashboard. SEC figures change when a company
-# files (quarterly), so the 503-company sweep (~5 minutes, ~2 GB from
-# data.sec.gov) runs weekly; the nightly pipeline re-prices the same file
-# with that day's closes (observer_sp500.py --prices).
+# The company lookup on the dashboard: the S&P 500 and the ~1,000 small
+# companies the bots watch. SEC figures change when a company files
+# (quarterly), so the sweep (~15 minutes, a few GB from data.sec.gov) runs
+# weekly; the nightly pipeline re-prices the same files with that day's
+# closes (observer_sp500.py --prices).
 #
 # Sunday, so it never overlaps the weeknight pipeline -- and the same
 # concurrency group as that pipeline, so the two can never push to
@@ -28,7 +29,7 @@ env:
 jobs:
   sweep:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     permissions:
       contents: write        # only ever to the agent-output branch
     steps:
@@ -40,11 +41,48 @@ jobs:
         run: pip install "numpy<2.4" pandas requests yfinance lxml
       - name: Validate
         run: python validate_sp500.py
-      - name: SEC figures for every constituent
+
+      - name: S&P 500 — SEC figures
+        id: sp_sec
+        continue-on-error: true
         env:
           SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
-        run: python observer_sp500.py --sec
-      - name: Prices and ratios
-        run: python observer_sp500.py --prices
+        run: python observer_sp500.py --sec --universe sp500
+      - name: S&P 500 — prices and ratios
+        id: sp_px
+        if: steps.sp_sec.outcome == 'success'
+        continue-on-error: true
+        run: python observer_sp500.py --prices --universe sp500
+
+      - name: Watched small caps — SEC figures
+        id: w_sec
+        continue-on-error: true
+        env:
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+        run: python observer_sp500.py --sec --universe watched
+      - name: Watched small caps — prices and ratios
+        id: w_px
+        if: steps.w_sec.outcome == 'success'
+        continue-on-error: true
+        run: python observer_sp500.py --prices --universe watched
+
       - name: Publish to the agent-output branch
+        id: publish
+        if: steps.sp_px.outcome == 'success' || steps.w_px.outcome == 'success'
         run: bash .github/scripts/publish_agent_branch.sh "$AGENT_BRANCH" fundamentals
+
+      - name: Verdict — a failed half is never a green run
+        if: always()
+        env:
+          A: ${{ steps.sp_sec.outcome }}
+          B: ${{ steps.sp_px.outcome }}
+          C: ${{ steps.w_sec.outcome }}
+          D: ${{ steps.w_px.outcome }}
+          E: ${{ steps.publish.outcome }}
+        run: |
+          bad=0
+          for pair in "S&P 500 SEC:$A" "S&P 500 prices:$B" "watched SEC:$C" "watched prices:$D" "publish:$E"; do
+            n="${pair%%:*}"; o="${pair##*:}"
+            if [ "$o" != "success" ]; then echo "::error::$n — $o"; bad=1; else echo "ok   $n"; fi
+          done
+          exit $bad

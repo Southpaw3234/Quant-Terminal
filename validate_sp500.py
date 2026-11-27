@@ -106,6 +106,10 @@ def test_ratios():
     ps = sp500.price_stats(series(), series(seed=2))
     check("price-stats-have-their-figures",
           all(k in ps for k in ("price", "high_52w", "low_52w", "return_1y", "vol_1y", "beta_1y")))
+    z = series(); z.iloc[100] = 0.0
+    zs = sp500.price_stats(z, None)
+    check("a-zero-close-does-not-poison-volatility", zs.get("vol_1y") is not None
+          and np.isfinite(zs["vol_1y"]), str(zs.get("vol_1y")))
     check("a-short-history-gets-no-statistics", "vol_1y" not in sp500.price_stats(series(40), None))
     s = series()
     check("beta-of-a-stock-against-itself-is-1",
@@ -125,14 +129,43 @@ def test_medians_and_verdicts():
     check("🔑-no-key-is-a-verdict", not any(b in k for k in keys for b in banned), "")
 
 
+def test_small_caps():
+    print("\nthe watched small caps: sector from SIC, foreign filers handled")
+    from qt import sic_sector as sic
+    cases = {2834: "Health Care", 1311: "Energy", 1040: "Materials", 6022: "Financials",
+             6798: "Real Estate", 7372: "Information Technology", 3841: "Health Care",
+             3711: "Consumer Discretionary", 4911: "Utilities", 4813: "Communication Services",
+             2840: "Consumer Staples", 5411: "Consumer Staples", 3721: "Industrials",
+             8731: "Health Care", 9995: "Other", 2711: "Communication Services",
+             2780: "Industrials"}
+    got = {k: sic.sector(k) for k in cases}
+    check("🔑-sic-codes-map-to-the-expected-sector", got == cases,
+          str({k: v for k, v in got.items() if v != cases[k]}))
+    check("narrower-ranges-win", sic.sector(2836) == "Health Care" and sic.sector(2821) == "Materials")
+    check("a-missing-code-is-Other-not-a-guess", sic.sector(None) == "Other" and sic.sector("") == "Other")
+
+    ifrs_usd = {"facts": {"ifrs-full": {"Revenue": {"units": {"USD": [
+        fact("2025-01-01", "2025-12-31", 50e6, "2026-04-01", "20-F", "FY")]}}}}}
+    v = cfx.value(ifrs_usd, "revenue", "2026-11-27")
+    check("ifrs-figures-in-usd-are-read", v and v["val"] == 50e6 and v["tag"] == "ifrs-full:Revenue")
+    ifrs_chf = {"facts": {"ifrs-full": {"Revenue": {"units": {"CHF": [
+        fact("2025-01-01", "2025-12-31", 50e6, "2026-04-01", "20-F", "FY")]}}}}}
+    check("🔑-ifrs-figures-in-another-currency-are-not-mixed-with-dollar-prices",
+          cfx.value(ifrs_chf, "revenue", "2026-11-27") is None)
+    r = cfx.reporting(ifrs_chf)
+    check("the-reporting-currency-is-recorded", r == {"standard": "IFRS", "currencies": ["CHF"]}, str(r))
+    check("us-gaap-is-recorded", cfx.reporting(cf({"Assets": []}))["standard"] == "US GAAP")
+
+
 def main():
     print("=" * 70)
-    print("S&P 500 lookup — pure logic, no network")
+    print("S&P 500 and watched-company lookup — pure logic, no network")
     print("=" * 70)
     test_freshest_tag_wins()
     test_ttm_and_growth()
     test_ratios()
     test_medians_and_verdicts()
+    test_small_caps()
     print("\n" + "=" * 70)
     print(f"{len(PASS)} passed, {len(FAIL)} failed")
     if FAIL:

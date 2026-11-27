@@ -281,6 +281,10 @@ table.tv th:first-child,table.tv td:first-child{text-align:left}
 .lk-pop button{font-family:"IBM Plex Mono",monospace;font-size:.74rem;background:var(--sunk);border:1px solid var(--rule);
   color:var(--ink);border-radius:3px;padding:4px 9px;cursor:pointer}
 .lk{margin-top:18px}
+.badge{font-family:"IBM Plex Mono",monospace;font-size:.62rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;
+  padding:3px 7px;border-radius:2px;vertical-align:middle}
+.b-sp500{background:var(--accent-soft);color:var(--accent)}
+.b-watched{background:var(--open-soft);color:var(--open)}
 .lk-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 24px;align-items:flex-start}
 .lk-head h3{font-family:Spectral,Georgia,serif;font-size:1.5rem;font-weight:500}
 .lk .tk{font-family:"IBM Plex Mono",monospace;font-size:.9rem;color:var(--muted);font-weight:500}
@@ -342,16 +346,16 @@ table.tv th:first-child,table.tv td:first-child{text-align:left}
 
 <section id="lookup-sec">
   <div class="col stack">
-    <h2>Look up an S&amp;P 500 company</h2>
-    <p>Type a ticker or a company name. You'll get its key figures from its own SEC filings, how the market prices it, and how each number compares with a typical company in the same sector, with every figure explained.</p>
+    <h2>Look up a company</h2>
+    <p>Any S&amp;P 500 company, or any of the ~1,000 small companies the bots watch. Type a ticker or a company name. You'll get its key figures from its own SEC filings, how the market prices it, and how each number compares with a typical company in the same sector (large with large, small with small), with every figure explained.</p>
   </div>
   <div id="lookup">
     <div class="lk-search">
-      <input id="lk-q" type="search" autocomplete="off" spellcheck="false" placeholder="e.g. AAPL or Coca-Cola" aria-label="Search S&amp;P 500 companies" aria-controls="lk-sug">
+      <input id="lk-q" type="search" autocomplete="off" spellcheck="false" placeholder="e.g. AAPL, Coca-Cola, or a small cap like ACCO" aria-label="Search companies" aria-controls="lk-sug">
       <ul id="lk-sug" role="listbox" hidden></ul>
     </div>
-    <div id="lk-pop" class="lk-pop">Try: <button type="button">AAPL</button><button type="button">MSFT</button><button type="button">NVDA</button><button type="button">JPM</button><button type="button">KO</button><button type="button">TSLA</button></div>
-    <p class="note" id="lk-status" style="font-style:normal">Loading the S&amp;P 500…</p>
+    <div id="lk-pop" class="lk-pop">Try: <button type="button">AAPL</button><button type="button">MSFT</button><button type="button">NVDA</button><button type="button">JPM</button><button type="button">KO</button><button type="button">TSLA</button><button type="button">ACCO</button><button type="button">ACNB</button></div>
+    <p class="note" id="lk-status" style="font-style:normal">Loading company data…</p>
     <div id="lk-out"></div>
   </div>
 </section>
@@ -1245,7 +1249,7 @@ function setupCalc(vols){
    Published by observer_sp500.py: SEC filings weekly, prices nightly. The
    page compares each figure with the company's sector median and explains
    it in words. High or low is never called good or bad on its own. */
-var SP = null, SP_DARK_DAYS = 10, SP_WARN_DAYS = 4;
+var SP_DARK_DAYS = 10, SP_WARN_DAYS = 4;
 var M = {   // label, format, word if above sector, word if below, what it means, the catch
   pe: ["Price / earnings (P/E)", "x", "more expensive than most in its sector", "cheaper than most in its sector",
     "How many dollars investors pay for each $1 of yearly profit.",
@@ -1316,14 +1320,16 @@ function cmpWord(k, v, med){
   if (k === "beta_1y") near = Math.abs(d) < 0.15;
   return near ? "about typical for its sector" : above ? M[k][2] : M[k][3];
 }
-function sizeWord(m){
+function sizeWord(m, small){
+  if (small) return m == null ? "" : m < 300e6 ? "a micro-cap (very small) company" : m < 2e9 ? "a small-cap company" : m < 10e9 ? "a mid-sized company" : "a large company";
   return m == null ? "" : m >= 200e9 ? "one of the largest companies in the world" : m >= 10e9 ? "a large company"
     : m >= 2e9 ? "a mid-sized company" : "a small company for the S&P 500";
 }
 function summary(t, c, med){
   var r = c.ratios, n = esc(c.name), out = [];
-  out.push(n + " is " + sizeWord(r.market_cap) + (r.market_cap ? ", worth about " + bigUsd(r.market_cap) : "") +
-    ", in " + esc(c.sector) + " (" + esc(c.industry) + ").");
+  var sz = sizeWord(r.market_cap, c.sector_source && c.sector_source.indexOf("SEC") === 0);
+  out.push(n + (sz ? " is " + sz + ", worth about " + bigUsd(r.market_cap) + "," : " is") +
+    " in " + esc(c.sector) + " (" + esc(c.industry) + ").");
   if (r.pe != null) out.push("Investors pay about <b>$" + r.pe.toFixed(0) + " for each $1</b> of its yearly profit" +
     (med.pe ? ", against $" + med.pe.toFixed(0) + " for a typical company in its sector." : "."));
   else if (c.facts && c.facts.net_income && c.facts.net_income.val < 0) out.push("It <b>lost money</b> over the last year, so there is no P/E.");
@@ -1333,18 +1339,31 @@ function summary(t, c, med){
     "% over 12 months" + (Math.abs(r.off_52w_high || 0) < 0.01 ? ", at its 1-year high." : " and " + Math.abs((r.off_52w_high || 0) * 100).toFixed(0) + "% below its 1-year high."));
   return out.join(" ");
 }
+var SETS = {}, INDEX = {};
+var UNI = {sp500: {badge: "S&P 500", peers: "S&P 500"}, watched: {badge: "Watched small cap", peers: "small companies the bots watch"}};
+function noIncomeWhy(c){
+  var rep = c.reporting || {};
+  if (rep.standard === "IFRS" && rep.currencies && rep.currencies.indexOf("USD") < 0)
+    return "This company reports under international accounting rules (IFRS) in " + esc(rep.currencies.join(", ") || "another currency") +
+      ", not US dollars. Its figures can't be set against a dollar share price without currency conversion, so profit-based figures are left blank.";
+  if (rep.standard === "none")
+    return "This company has no machine-readable financial statements at the SEC (common for some foreign companies and newly listed shells), so its figures are left blank rather than guessed.";
+  return "No full-year income figures are on file in a form we can read. This is common right after a spin-off, a corporate reorganisation, or a new listing, when a company files under a new ID. Whatever is filed is shown; the rest is left blank rather than guessed.";
+}
 function lookupCard(t){
-  var c = SP.companies[t];
-  if (!c) return '<div class="card pcard"><p>No S&amp;P 500 company with the ticker <b>' + esc(t) + "</b>.</p></div>";
-  var med = SP.sector_medians[c.sector] || {}, r = c.ratios, p = c.price || {}, f = c.facts || {};
+  var hit = INDEX[t];
+  if (!hit) return '<div class="card pcard"><p>No company with the ticker <b>' + esc(t) + "</b> in the S&amp;P 500 or the watched small caps.</p></div>";
+  var set = SETS[hit.u], c = set.companies[t], U = UNI[hit.u];
+  var med = set.sector_medians[c.sector] || {}, r = c.ratios, p = c.price || {}, f = c.facts || {};
   var noIncome = !f.net_income;
-  var h = '<div class="card lk"><div class="lk-head"><div><h3>' + esc(c.name) + ' <span class="tk">' + esc(t) + "</span></h3>" +
-    '<p class="lk-meta">' + esc(c.sector) + " · " + esc(c.industry) + " · " + esc(c.hq) +
+  var h = '<div class="card lk"><div class="lk-head"><div><h3>' + esc(c.name) + ' <span class="tk">' + esc(t) + '</span> <span class="badge b-' + hit.u + '">' + esc(U.badge) + "</span></h3>" +
+    '<p class="lk-meta">' + esc(c.sector) + (hit.u === "watched" ? " (approx.)" : "") + " · " + esc(c.industry) + (c.hq ? " · " + esc(c.hq) : "") +
     (c.added ? " · in the S&amp;P 500 since " + esc(String(c.added).slice(0, 4)) : "") + "</p></div>" +
     '<div class="lk-px"><div class="big">' + (p.price != null ? "$" + p.price.toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2}) : "—") + "</div>" +
     '<div class="lk-meta">close ' + esc(p.last_session || "") + (p.low_52w != null ? " · 1-yr range $" + p.low_52w + "–$" + p.high_52w : "") + "</div></div></div>";
+  if (hit.u === "watched") h += '<p class="note" style="font-style:normal">One of the ~1,000 small US companies the bots watch. Small companies can be <b>far more volatile</b> than the S&amp;P 500, trade less, and are more likely to run into trouble; the "bad day" figures above show how much more they swing. Being on the watched list is not a recommendation.</p>';
   h += '<p class="lk-sum">' + summary(t, c, med) + "</p>";
-  if (noIncome) h += '<div class="warn">No full-year income figures are on file under this company\'s current SEC registration. This is common right after a spin-off or a corporate reorganisation, when a company files under a new ID. The balance sheet below is current; profit-based figures are left blank rather than guessed.</div>';
+  if (noIncome) h += '<div class="warn">' + noIncomeWhy(c) + "</div>";
   h += '<div class="lk-facts"><div><span>Market value</span><b>' + bigUsd(r.market_cap) + "</b></div>" +
     "<div><span>Yearly sales</span><b>" + bigUsd(f.revenue && f.revenue.val) + "</b></div>" +
     "<div><span>Yearly profit</span><b>" + bigUsd(f.net_income && f.net_income.val) + "</b></div>" +
@@ -1356,7 +1375,7 @@ function lookupCard(t){
     g[1].forEach(function(k){
       var v = r[k], m = med[k];
       h += '<div class="lk-row"><div class="lk-l">' + esc(M[k][0]) + '</div><div class="lk-v">' + fmtM(k, v) + "</div>" +
-        '<div class="lk-m">sector median ' + fmtM(k, m) + "</div>" +
+        '<div class="lk-m">peer median ' + fmtM(k, m) + "</div>" +
         '<div class="lk-c">' + (v == null ? '<span class="muted">not reported in a comparable form</span>' : esc(cmpWord(k, v, m))) + "</div>" +
         '<details class="why lk-d"><summary>What is this?</summary><p>' + esc(M[k][4]) + " <b>The catch:</b> " + esc(M[k][5]) + "</p></details></div>";
     });
@@ -1364,7 +1383,8 @@ function lookupCard(t){
   });
   var per = f.revenue || f.net_income || f.assets;
   h += '<p class="note" style="font-style:normal;margin-top:12px">Figures from SEC filings' + (per ? " for the period ended " + esc(per.end) + " (" + esc(per.basis) + ")" : "") +
-    "; prices to " + esc(p.last_session || "?") + ". Sector median = the middle company of its " + (med.n || "?") + " " + esc(c.sector) + " peers in the S&amp;P 500." +
+    "; prices to " + esc(p.last_session || "?") + ". Peer median = the middle company of the " + (med.n || "?") + " " + esc(c.sector) + " companies among the " + esc(U.peers) +
+    (hit.u === "watched" ? ", so a small company is compared with small companies. Its sector comes from its SEC industry code and is approximate." : ".") +
     (c.shares_class_shared ? " This company has more than one share class; market value counts all classes at this class's price, so treat it as approximate." : "") +
     ' <a href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=' + encodeURIComponent(c.cik) + '" target="_blank" rel="noopener">Its filings at the SEC ↗</a></p>';
   h += '<p class="note" style="font-style:normal">"Higher" or "lower" than peers is not good or bad by itself: a high P/E can be justified by growth, a low one can be a warning. Nothing here is a recommendation.</p></div>';
@@ -1376,30 +1396,39 @@ function showLookup(t){
   document.getElementById("lk-out").innerHTML = lookupCard(t);
   try { history.replaceState(null, "", "#lookup=" + encodeURIComponent(t)); } catch (e) {}
 }
-function setupLookup(d){
-  SP = d;
-  var age = ageDays(d.generated_at), el = document.getElementById("lk-status");
-  if (age === null || age > SP_DARK_DAYS){
-    document.getElementById("lookup").innerHTML = darkBlock("Company data dark", ["The S&amp;P 500 figures are " + (age || 0).toFixed(1) + " days old. Nothing is shown rather than stale prices presented as current."]);
+function setupLookup(sets){
+  var el = document.getElementById("lk-status"), parts = [];
+  ["sp500", "watched"].forEach(function(u){
+    var d = sets[u];
+    if (!d) { parts.push(UNI[u].badge + ": not published yet"); return; }
+    var age = ageDays(d.generated_at);
+    if (age === null || age > SP_DARK_DAYS){ parts.push(UNI[u].badge + ": figures are " + (age || 0).toFixed(1) + " days old, not shown"); return; }
+    SETS[u] = d;
+    Object.keys(d.companies).forEach(function(t){ if (!INDEX[t]) INDEX[t] = {u: u}; });
+    parts.push(d.n + " " + (u === "sp500" ? "S&amp;P 500" : "watched small") + " companies, prices to " + esc(d.last_session) +
+      (age > SP_WARN_DAYS ? ' <span style="color:var(--miss)">(' + age.toFixed(1) + " days old)</span>" : ""));
+  });
+  if (!Object.keys(SETS).length){
+    document.getElementById("lookup").innerHTML = darkBlock("Company data dark", parts.concat(["Nothing is shown rather than stale figures presented as current."]));
     return;
   }
-  el.innerHTML = d.n + " companies · prices to " + esc(d.last_session) + " · SEC figures refreshed " + esc(String(d.sec_generated_at).slice(0, 10)) +
-    (age > SP_WARN_DAYS ? ' · <span style="color:var(--miss)">prices are ' + age.toFixed(1) + " days old</span>" : "");
-  var keys = Object.keys(d.companies).sort();
+  el.innerHTML = parts.join(" · ");
+  var keys = Object.keys(INDEX).sort();
   var inp = document.getElementById("lk-q"), sug = document.getElementById("lk-sug");
+  function co(k){ return SETS[INDEX[k].u].companies[k]; }
   function matches(q){
     q = q.trim().toUpperCase();
     if (!q) return [];
     var a = keys.filter(function(k){ return k.indexOf(q) === 0; });
-    var b = keys.filter(function(k){ return a.indexOf(k) < 0 && d.companies[k].name.toUpperCase().indexOf(q) >= 0; });
+    var b = keys.filter(function(k){ return a.indexOf(k) < 0 && String(co(k).name).toUpperCase().indexOf(q) >= 0; });
     return a.concat(b).slice(0, 8);
   }
   var cur = -1;
   function draw(){
     var m = matches(inp.value);
     sug.innerHTML = m.map(function(k, i){
-      return '<li role="option" data-t="' + esc(k) + '"' + (i === cur ? ' aria-selected="true"' : "") + "><b>" + esc(k) + "</b> " + esc(d.companies[k].name) +
-        ' <span>' + esc(d.companies[k].sector) + "</span></li>"; }).join("");
+      return '<li role="option" data-t="' + esc(k) + '"' + (i === cur ? ' aria-selected="true"' : "") + "><b>" + esc(k) + "</b> " + esc(co(k).name) +
+        ' <span>' + esc(UNI[INDEX[k].u].badge) + " · " + esc(co(k).sector) + "</span></li>"; }).join("");
     sug.hidden = !m.length;
     return m;
   }
@@ -1423,11 +1452,8 @@ function setupLookup(d){
   if (m) showLookup(decodeURIComponent(m[1]));
 }
 (function(){
-  fetchJson(AGENT_RAW + "fundamentals/sp500.json").then(setupLookup).catch(function(err){
-    document.getElementById("lookup").innerHTML = darkBlock("Company data not published yet", [
-      "Could not load <code>fundamentals/sp500.json</code> (" + esc(err.message) + "). It is produced by the weekly SEC sweep and refreshed nightly.",
-      "Nothing is shown rather than something stale."]);
-  });
+  var get = function(u){ return fetchJson(AGENT_RAW + "fundamentals/" + u + ".json").catch(function(){ return null; }); };
+  Promise.all([get("sp500"), get("watched")]).then(function(r){ setupLookup({sp500: r[0], watched: r[1]}); });
 })();
 
 /* ─── the market today: six gauges ────────────────────────────────────────
