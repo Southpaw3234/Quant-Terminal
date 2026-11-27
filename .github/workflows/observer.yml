@@ -57,6 +57,10 @@ on:
       - 'chief_of_staff.py'
       - 'observer_prices.py'
       - 'observer_crypto.py'
+      - 'observer_sp500.py'
+      - 'qt/company_facts.py'
+      - 'qt/sp500.py'
+      - 'validate_sp500.py'
       - 'qt/btc_cycle.py'
       - 'validate_btc_cycle.py'
       - 'qt/volatility.py'
@@ -127,6 +131,7 @@ jobs:
                    chief_of_staff qt/edgar qt/agentio qt/notify qt/librarian \
                    qt/actuary qt/chief qt/thesis qt/volatility observer_prices \
                    observer_crypto qt/btc_cycle validate_btc_cycle \
+                   observer_sp500 qt/company_facts qt/sp500 validate_sp500 \
                    validate_observer_filings validate_observer_macro \
                    validate_librarian_diff validate_actuary \
                    validate_chief_of_staff validate_described_events \
@@ -150,6 +155,8 @@ jobs:
         run: python validate_described_events.py
       - name: Bitcoin cycle description
         run: python validate_btc_cycle.py
+      - name: S&P 500 lookup
+        run: python validate_sp500.py
 
       - name: The declared phrase list parses, and record its digest
         # A brief carries this digest, so a later edit to the list is visible
@@ -257,7 +264,7 @@ jobs:
           }
           if git ls-remote --exit-code --heads origin "$AGENT_BRANCH" >/dev/null 2>&1; then
             git fetch -q origin "$AGENT_BRANCH"
-            for d in observations macro briefs analysis chief crypto; do restore FETCH_HEAD "$d"; done
+            for d in observations macro briefs analysis chief crypto fundamentals; do restore FETCH_HEAD "$d"; done
           elif git ls-remote --exit-code --heads origin observations >/dev/null 2>&1; then
             # First run of the pipeline: carry over what OBSERVER published
             # on its own branch, including the warm CIK cache.
@@ -307,6 +314,13 @@ jobs:
         continue-on-error: true
         run: python observer_crypto.py
 
+      - name: OBSERVER — S&P 500 lookup, re-priced
+        # The SEC half is weekly (sp500.yml); tonight's closes are joined
+        # to the latest sweep, restored from agent-output above.
+        id: sp500
+        continue-on-error: true
+        run: python observer_sp500.py --prices
+
       - name: ACTUARY
         id: actuary
         continue-on-error: true
@@ -343,6 +357,7 @@ jobs:
           S_LIBRARIAN: ${{ steps.librarian.outcome }}
           S_PRICES: ${{ steps.prices.outcome }}
           S_CRYPTO: ${{ steps.crypto.outcome }}
+          S_SP500: ${{ steps.sp500.outcome }}
           S_ACTUARY: ${{ steps.actuary.outcome }}
           S_CHIEF: ${{ steps.chief.outcome }}
         run: |
@@ -356,6 +371,7 @@ jobs:
             echo "| LIBRARIAN | $S_LIBRARIAN |"
             echo "| OBSERVER prices | $S_PRICES |"
             echo "| OBSERVER crypto | $S_CRYPTO |"
+            echo "| OBSERVER S&P 500 | $S_SP500 |"
             echo "| ACTUARY | $S_ACTUARY |"
             echo "| CHIEF OF STAFF | $S_CHIEF |"
             echo
@@ -366,7 +382,7 @@ jobs:
       - name: Publish to the agent-output branch
         id: publish
         if: always() && steps.guard.outcome == 'success'
-        run: bash .github/scripts/publish_agent_branch.sh "$AGENT_BRANCH" observations macro briefs analysis chief crypto
+        run: bash .github/scripts/publish_agent_branch.sh "$AGENT_BRANCH" observations macro briefs analysis chief crypto fundamentals
 
       - name: Deliver — Discord, and a reply on each operator message
         # After the publish, on purpose: both link to the brief on the
@@ -404,6 +420,7 @@ jobs:
           S_ACTUARY: ${{ steps.actuary.outcome }}
           S_PRICES: ${{ steps.prices.outcome }}
           S_CRYPTO: ${{ steps.crypto.outcome }}
+          S_SP500: ${{ steps.sp500.outcome }}
           S_CHIEF: ${{ steps.chief.outcome }}
           S_GUARD: ${{ steps.guard.outcome }}
           S_PUBLISH: ${{ steps.publish.outcome }}
@@ -412,7 +429,8 @@ jobs:
           bad=0
           for pair in "OBSERVER filings:$S_OBSERVER" "OBSERVER macro:$S_MACRO" \
                       "LIBRARIAN:$S_LIBRARIAN" "OBSERVER prices:$S_PRICES" \
-                      "OBSERVER crypto:$S_CRYPTO" "ACTUARY:$S_ACTUARY" \
+                      "OBSERVER crypto:$S_CRYPTO" "OBSERVER S&P 500:$S_SP500" \
+                      "ACTUARY:$S_ACTUARY" \
                       "CHIEF OF STAFF:$S_CHIEF" "data/ guard:$S_GUARD" \
                       "publish:$S_PUBLISH"; do
             name="${pair%%:*}"; out="${pair##*:}"
