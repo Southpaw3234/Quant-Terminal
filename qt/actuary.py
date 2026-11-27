@@ -425,6 +425,43 @@ def exposure(parsed: dict, facts: dict, stance: str,
         flags=flags)
 
 
+# ── 3b. risk in dollars ──────────────────────────────────────────────────────
+
+def risk_dollars(exposure: dict, vols: dict) -> dict:
+    """Each declared position's one-day 99% loss bound in DOLLARS, and their
+    sum. `vols` is {ticker: qt.volatility.describe(...)}.
+
+    🔑 The sum is labelled for exactly what it is: every name having its
+    one-in-a-hundred day on the same day. That is an UPPER bound, not a
+    portfolio estimate -- a portfolio figure needs correlations, and this
+    module does not pretend to have them. A name with no loss bound is
+    listed as such and left out of the sum, and the sum says how much of
+    the book it covers.
+    """
+    if exposure.get("status") != "ok":
+        return {"status": "no_positions", "names": [], "sum_usd": None,
+                "covered_usd": None, "reason": exposure.get("reason")}
+    names, total, covered = [], 0.0, 0.0
+    for n in exposure.get("names") or []:
+        v = vols.get(n["ticker"]) or {}
+        pct = v.get("loss_1d_99_pct")
+        usd = None if pct is None else round(n["dollars"] * pct / 100, 2)
+        if usd is not None:
+            total += usd
+            covered += n["dollars"]
+        names.append({"ticker": n["ticker"], "dollars": n["dollars"],
+                      "loss_1d_99_pct": pct, "loss_1d_99_usd": usd,
+                      "model": v.get("model"),
+                      "reason": None if usd is not None else
+                      (v.get("fallback_reason") or "no price history")})
+    book = exposure.get("total_dollars") or 0.0
+    return {"status": "ok", "names": names, "sum_usd": round(total, 2),
+            "covered_usd": round(covered, 2),
+            "coverage": round(covered / book, 4) if book else None,
+            "reading": "the sum assumes every name has its 1-in-100 day at "
+                       "once — an upper bound, not a portfolio estimate"}
+
+
 # ── 4. falsifiers ────────────────────────────────────────────────────────────
 
 def falsifier_report(theses: list, bearing: list, today: str) -> list:

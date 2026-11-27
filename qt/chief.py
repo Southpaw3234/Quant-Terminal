@@ -49,25 +49,29 @@ import re
 STANCES = ("conservative", "balanced", "aggressive")
 
 ORDER = {
-    "conservative": ("theses", "exposure", "language", "macro", "filings",
-                     "insiders", "base_rates", "universe"),
+    "conservative": ("theses", "exposure", "risk", "language", "macro",
+                     "filings", "insiders", "base_rates", "universe"),
     "balanced":     ("theses", "filings", "language", "insiders",
-                     "base_rates", "exposure", "macro", "universe"),
+                     "base_rates", "exposure", "risk", "macro", "universe"),
     "aggressive":   ("insiders", "base_rates", "filings", "language",
-                     "theses", "exposure", "macro", "universe"),
+                     "theses", "exposure", "risk", "macro", "universe"),
 }
 CAPS = {
-    "conservative": {"theses": 60, "exposure": 40, "language": 25, "macro": 22,
+    "conservative": {"theses": 60, "exposure": 40, "risk": 30,
+                     "language": 25, "macro": 22,
                      "filings": 14, "insiders": 8, "base_rates": 6,
                      "universe": 6},
-    "balanced":     {"theses": 60, "exposure": 30, "language": 15, "macro": 18,
+    "balanced":     {"theses": 60, "exposure": 30, "risk": 20,
+                     "language": 15, "macro": 18,
                      "filings": 20, "insiders": 14, "base_rates": 6,
                      "universe": 6},
-    "aggressive":   {"theses": 40, "exposure": 20, "language": 10, "macro": 14,
+    "aggressive":   {"theses": 40, "exposure": 20, "risk": 14,
+                     "language": 10, "macro": 14,
                      "filings": 30, "insiders": 30, "base_rates": 6,
                      "universe": 6},
 }
 TITLES = {"theses": "Your theses", "exposure": "Exposure",
+          "risk": "Risk — volatility and loss bounds",
           "language": "Filing language", "macro": "Macro and headlines",
           "filings": "Filings in the watched universe",
           "insiders": "Insider activity", "base_rates": "Base rates",
@@ -185,6 +189,57 @@ def exposure_section(analysis: dict, status: dict) -> dict:
                     f"Lines are flagged against the {ex.get('stance')} "
                     f"limits (single name {lim.get('single_name', 0):.0%}); "
                     f"the figures are the same under every stance.")
+
+
+def risk_section(analysis: dict, status: dict) -> dict:
+    """Volatility and loss bounds: how far, never which way."""
+    if not status["usable"]:
+        return _dark("risk", status)
+    vb = analysis.get("volatility") or {}
+    if vb.get("status") != "ok":
+        src = vb.get("source") or {}
+        return _section("risk", [line(
+            f"⚫ Not computed — prices are {src.get('status', 'missing')}: "
+            f"{src.get('why', 'no price file')}")], status)
+    out = []
+    rd = analysis.get("risk_dollars") or {}
+    if rd.get("status") == "ok":
+        out.append(line(
+            f"If every position had its 1-in-100 day at once: "
+            f"${rd['sum_usd']:,.0f} on ${rd['covered_usd']:,.0f} covered "
+            f"({rd['coverage']:.0%} of the book). An upper bound, not a "
+            f"portfolio estimate."))
+        for n in rd["names"]:
+            out.append(line(
+                f"{n['ticker']}: 1-day 99% loss bound "
+                + (f"{n['loss_1d_99_pct']:+.1f}% (${n['loss_1d_99_usd']:,.0f})"
+                   if n["loss_1d_99_usd"] is not None else
+                   f"not available — {n['reason']}")))
+    order = {"position": 0, "thesis": 1, "cluster buy": 2, "benchmark": 3}
+    for t, d in sorted((vb.get("names") or {}).items(),
+                       key=lambda kv: (min(order.get(w, 9) for w in kv[1]["why"]),
+                                       kv[0])):
+        tag = "/".join(d["why"])
+        if d["status"] != "ok":
+            out.append(line(f"{t} ({tag}): {d.get('fallback_reason')}"))
+            continue
+        lo, hi = d["band_21d_pct"]
+        out.append(line(
+            f"{t} ({tag}): {d['vol_ann_pct']:.0f}%/yr now vs "
+            f"{d['realized_63d_ann_pct']:.0f}% over the last 3 months · "
+            f"1-day 99% loss bound {d['loss_1d_99_pct']:+.1f}% · "
+            f"1-month 90% band {lo:+.0f}% to {hi:+.0f}% · {d['model']}"
+            + (f" (fallback: {d['fallback_reason']})"
+               if d.get("fallback_reason") else "")))
+    for t, why in sorted((vb.get("missing") or {}).items()):
+        out.append(line(f"⚫ {t}: no price history — {why}"))
+    if not out:
+        out.append(line("No name to describe."))
+    return _section("risk", out, status,
+                    "How far each name has tended to move, not which way. The "
+                    "1-day figure is breached one day in a hundred by "
+                    "construction; the 1-month band is not a target. Cluster-"
+                    "buy names are shown for context, not as suggestions.")
 
 
 def language_section(brief: dict, status: dict) -> dict:
@@ -465,6 +520,7 @@ def facts(inputs: dict) -> dict:
     sections = {
         "theses": theses_section(an, st["analysis"]),
         "exposure": exposure_section(an, st["analysis"]),
+        "risk": risk_section(an, st["analysis"]),
         "language": language_section(inputs.get("brief") or {}, st["librarian"]),
         "macro": macro_section(inputs.get("macro") or {}, st["macro"]),
         "filings": filings_section(inputs.get("records") or [],

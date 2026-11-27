@@ -446,6 +446,26 @@ def test_tonight():
           {"8k_item_2.02": 1, "form4_direction_not_observed": 1})
 
 
+
+def test_risk_dollars():
+    print("\nrisk in dollars: an upper bound, labelled as one")
+    none = act.risk_dollars({"status": "no_positions", "reason": "empty"}, {})
+    check("no-positions-is-null-not-zero", none["sum_usd"] is None
+          and none["status"] == "no_positions")
+    ex = act.exposure(act.parse_positions(ROWS), FACTS, "balanced")
+    vols = {"AAA": {"loss_1d_99_pct": -10.0, "model": "GJR-GARCH"},
+            "BBB": {"loss_1d_99_pct": -4.0, "model": "EWMA"},
+            "CCC": {"loss_1d_99_pct": None, "fallback_reason": "x sessions"}}
+    rd = act.risk_dollars(ex, vols)
+    check("per-name-dollars", [n["loss_1d_99_usd"] for n in rd["names"]]
+          == [-600.0, -120.0, None])
+    check("🔑-the-sum-is-every-name-at-once-and-says-so",
+          rd["sum_usd"] == -720.0 and "upper bound" in rd["reading"])
+    check("a-name-without-a-bound-is-excluded-and-coverage-reported",
+          rd["covered_usd"] == 9000.0 and rd["coverage"] == 0.9
+          and rd["names"][2]["reason"] == "x sessions")
+
+
 def main():
     print("=" * 70)
     print("ACTUARY — pure logic (no network, no clock)")
@@ -456,6 +476,7 @@ def main():
     test_exposure()
     test_falsifiers()
     test_tonight()
+    test_risk_dollars()
     test_no_verdict()
     print("\n" + "=" * 70)
     print(f"{len(PASS)} passed, {len(FAIL)} failed")

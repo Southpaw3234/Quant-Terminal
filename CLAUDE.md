@@ -153,6 +153,7 @@ and status, and **never a recommendation**.
 | OBSERVER (macro, news) | `observer_macro.py` | — | `validate_observer_macro.py` | `macro/` |
 | LIBRARIAN | `librarian_diff.py` | `qt/librarian.py` | `validate_librarian_diff.py` | `briefs/` |
 | ACTUARY | `actuary.py` | `qt/actuary.py` | `validate_actuary.py` | `analysis/` |
+| ACTUARY (risk) | `observer_prices.py` → `actuary.py` | `qt/volatility.py` | `validate_volatility.py` | `analysis/` (prices themselves are not published) |
 | CHIEF OF STAFF | `chief_of_staff.py` | `qt/chief.py` | `validate_chief_of_staff.py` | `chief/` |
 | thesis ledger | `thesis_ledger.py` | `qt/thesis.py` | `validate_thesis_ledger.py` | `data/theses/ledger.jsonl` (operator only) |
 
@@ -186,3 +187,9 @@ Rules these modules were built on, each paid for in a real failure:
   `data/actuary/sources.json`**, and a ledger may be listed there only after
   a pre-registered read has consumed it. Listing an unread ledger would let a
   nightly job look at outcomes the registry has not paid for.
+- **Volatility is a risk description, chosen by evidence.** GJR-GARCH only
+  where a name trades nearly every day, has ~4 years of history and the fit
+  passes its gates; EWMA otherwise; tail quantiles always from the name's own
+  standardized returns. The thresholds in `qt/volatility.py` were chosen on
+  one sample and checked on a disjoint one (`research/volatility_eval.py`);
+  changing one means re-running that file.
