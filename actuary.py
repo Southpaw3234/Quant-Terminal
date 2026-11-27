@@ -47,6 +47,8 @@ STANCE = os.environ.get("QT_STANCE_FILE", "data/operator/stance.json")
 LEDGER = os.environ.get("QT_THESIS_LEDGER", "data/theses/ledger.jsonl")
 FINNHUB_KEY = os.environ.get("FINNHUB_API_KEY", "").strip()
 FINNHUB = "https://finnhub.io/api/v1"
+PRICES_DIR = os.environ.get("QT_PRICES_DIR", "prices")
+PRICES_MAX_AGE_DAYS = float(os.environ.get("QT_ACT_PRICES_MAX_AGE", "5"))
 OBS_MAX_AGE_DAYS = float(os.environ.get("QT_ACT_OBS_MAX_AGE", "4"))
 BRIEF_MAX_AGE_DAYS = float(os.environ.get("QT_ACT_BRIEF_MAX_AGE", "4"))
 
@@ -91,6 +93,46 @@ def load_base_rates() -> tuple:
                        "verdict": ctx.get("verdict"),
                        "event_types": sorted({r["event_type"] for r in got})})
     return rates, report
+
+
+def volatility_block(now: str) -> dict:
+    """Volatility and loss bounds for every name OBSERVER priced tonight.
+
+    Reads prices/latest.csv with the csv module (pandas would turn the
+    ticker NA into NaN) and hands each series to qt.volatility.describe.
+    A stale or missing price file is a dark block, not old numbers.
+    """
+    meta = io.read_json(os.path.join(PRICES_DIR, "latest.meta.json"))
+    st = io.artifact_status("prices", meta,
+                            (meta or {}).get("last_session") or "",
+                            PRICES_MAX_AGE_DAYS, now)
+    if not st["usable"]:
+        return {"status": "dark", "source": st, "names": {}, "missing": {}}
+    import pandas as pd
+    from qt import volatility as vol
+    series = {}
+    with open(os.path.join(PRICES_DIR, "latest.csv"), encoding="utf-8",
+              newline="") as f:
+        for row in csv.DictReader(f):
+            series.setdefault(row["ticker"], []).append(
+                (row["date"], float(row["close"])))
+    names = {}
+    for t, why in (meta.get("names") or {}).items():
+        if t not in series:
+            continue
+        s = pd.Series([c for _, c in series[t]],
+                      index=pd.to_datetime([d for d, _ in series[t]]))
+        d = vol.describe(s.sort_index())
+        d["why"] = why
+        d["last_session"] = series[t][-1][0] if series[t] else None
+        names[t] = d
+    return {"status": "ok", "source": st, "names": names,
+            "missing": meta.get("missing") or {},
+            "method": ("GJR-GARCH where the stock trades nearly every day and "
+                       "has ~4 years of history and the fit passes its gates; "
+                       "EWMA otherwise. Tail from the stock's own standardized "
+                       "returns. See qt/volatility.py and "
+                       "research/volatility_eval.py.")}
 
 
 def finnhub_facts(tickers: list) -> dict:
@@ -266,6 +308,15 @@ def main() -> None:
     parsed = act.parse_positions(read_csv_rows(POSITIONS))
     facts = finnhub_facts([p["ticker"] for p in parsed["positions"]])
     ex = act.exposure(parsed, facts, stance["stance"], thesis_tickers)
+    vb = volatility_block(now)
+    risk = act.risk_dollars(ex, vb["names"])
+    print(f"[actuary] volatility: {vb['status']}; {len(vb['names'])} name(s) "
+          f"described, {len(vb['missing'])} unpriced")
+    for t, d in sorted(vb["names"].items()):
+        print(f"  {t:<6} {d.get('model') or '-':<10} "
+              + (f"vol {d['vol_ann_pct']}%/yr  1-day 99% {d['loss_1d_99_pct']}%  "
+                 f"21d band {d['band_21d_pct']}" if d["status"] == "ok"
+                 else d.get("fallback_reason") or d["status"]))
     print(f"[actuary] stance {stance['stance']} ({stance['source']}); "
           f"exposure {ex['status']}; theses open {len(th['theses'])}")
 
@@ -286,6 +337,8 @@ def main() -> None:
         "observed_today": observed,
         "cluster_events": clusters,
         "exposure": ex,
+        "volatility": vb,
+        "risk_dollars": risk,
         "ledger": {"ok": th["ok"], "why": th["why"]},
         "falsifiers": act.falsifier_report(th["theses"], bearing,
                                            io.today_utc()),

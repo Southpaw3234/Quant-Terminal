@@ -55,6 +55,10 @@ on:
       - 'librarian_diff.py'
       - 'actuary.py'
       - 'chief_of_staff.py'
+      - 'observer_prices.py'
+      - 'qt/volatility.py'
+      - 'validate_volatility.py'
+      - 'research/volatility_eval.py'
       - 'extract_form4.py'
       - 'qt/edgar.py'
       - 'qt/agentio.py'
@@ -105,13 +109,15 @@ jobs:
       # No requests. Every agent imports it lazily, inside the function that
       # opens a session, so these suites cannot reach a network even by
       # accident -- which is what makes "hermetic" a demonstrated property.
+      # arch is the GARCH library; scipy comes with it. Still no requests:
+      # these suites cannot reach a network.
       - name: Install deps
-        run: pip install "numpy<2.4" pandas
+        run: pip install "numpy<2.4" pandas arch
       - name: Compile check
         run: |
           for f in observer_filings observer_macro librarian_diff actuary \
                    chief_of_staff qt/edgar qt/agentio qt/notify qt/librarian \
-                   qt/actuary qt/chief qt/thesis \
+                   qt/actuary qt/chief qt/thesis qt/volatility observer_prices \
                    validate_observer_filings validate_observer_macro \
                    validate_librarian_diff validate_actuary \
                    validate_chief_of_staff; do
@@ -126,6 +132,8 @@ jobs:
         run: python validate_librarian_diff.py
       - name: ACTUARY
         run: python validate_actuary.py
+      - name: Volatility model
+        run: python validate_volatility.py
       - name: CHIEF OF STAFF
         run: python validate_chief_of_staff.py
 
@@ -221,7 +229,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install deps
-        run: pip install "numpy<2.4" pandas requests
+        run: pip install "numpy<2.4" pandas requests yfinance arch
 
       - name: Restore what was published, and fetch today's universe
         # The agents append to what is already on the branch, so it has to
@@ -275,6 +283,11 @@ jobs:
           QT_LIB_MAX_NAMES: ${{ inputs.max_names || '60' }}
         run: python librarian_diff.py
 
+      - name: OBSERVER — prices for the risk section
+        id: prices
+        continue-on-error: true
+        run: python observer_prices.py
+
       - name: ACTUARY
         id: actuary
         continue-on-error: true
@@ -309,6 +322,7 @@ jobs:
           S_OBSERVER: ${{ steps.observer.outcome }}
           S_MACRO: ${{ steps.macro.outcome }}
           S_LIBRARIAN: ${{ steps.librarian.outcome }}
+          S_PRICES: ${{ steps.prices.outcome }}
           S_ACTUARY: ${{ steps.actuary.outcome }}
           S_CHIEF: ${{ steps.chief.outcome }}
         run: |
@@ -320,6 +334,7 @@ jobs:
             echo "| OBSERVER filings | $S_OBSERVER |"
             echo "| OBSERVER macro | $S_MACRO |"
             echo "| LIBRARIAN | $S_LIBRARIAN |"
+            echo "| OBSERVER prices | $S_PRICES |"
             echo "| ACTUARY | $S_ACTUARY |"
             echo "| CHIEF OF STAFF | $S_CHIEF |"
             echo
@@ -366,6 +381,7 @@ jobs:
           S_MACRO: ${{ steps.macro.outcome }}
           S_LIBRARIAN: ${{ steps.librarian.outcome }}
           S_ACTUARY: ${{ steps.actuary.outcome }}
+          S_PRICES: ${{ steps.prices.outcome }}
           S_CHIEF: ${{ steps.chief.outcome }}
           S_GUARD: ${{ steps.guard.outcome }}
           S_PUBLISH: ${{ steps.publish.outcome }}
@@ -373,7 +389,8 @@ jobs:
           set -u
           bad=0
           for pair in "OBSERVER filings:$S_OBSERVER" "OBSERVER macro:$S_MACRO" \
-                      "LIBRARIAN:$S_LIBRARIAN" "ACTUARY:$S_ACTUARY" \
+                      "LIBRARIAN:$S_LIBRARIAN" "OBSERVER prices:$S_PRICES" \
+                      "ACTUARY:$S_ACTUARY" \
                       "CHIEF OF STAFF:$S_CHIEF" "data/ guard:$S_GUARD" \
                       "publish:$S_PUBLISH"; do
             name="${pair%%:*}"; out="${pair##*:}"

@@ -548,6 +548,42 @@ def test_brief_reads_what_resolved():
           "resolved_in_run" in src and "RECENT_FILES" in src)
 
 
+
+def test_risk_section():
+    print("\nthe risk section: how far, never which way")
+    an = inputs()["analysis"]
+    an = dict(an, volatility={"status": "ok", "missing": {"ZZZ": "nothing returned"},
+        "names": {
+          "SPY": {"status": "ok", "why": ["benchmark"], "model": "GJR-GARCH",
+                  "vol_ann_pct": 18.2, "realized_63d_ann_pct": 14.0,
+                  "loss_1d_99_pct": -2.9, "band_21d_pct": [-8.1, 8.8],
+                  "fallback_reason": None},
+          "CTSO": {"status": "ok", "why": ["cluster buy"], "model": "EWMA",
+                   "vol_ann_pct": 88.0, "realized_63d_ann_pct": 95.0,
+                   "loss_1d_99_pct": -14.2, "band_21d_pct": [-37.0, 59.0],
+                   "fallback_reason": "9% of sessions had no price change"},
+          "NEW": {"status": "insufficient_history", "why": ["thesis"],
+                  "fallback_reason": "80 sessions of history"}}},
+        risk_dollars={"status": "no_positions"})
+    sec = chief.risk_section(an, ok_status())
+    t = [l["text"] for l in sec["lines"]]
+    check("thesis-names-before-cluster-names-before-benchmarks",
+          t[0].startswith("NEW") and t[1].startswith("CTSO") and t[2].startswith("SPY"))
+    check("a-figure-carries-its-model-and-fallback",
+          "EWMA (fallback: 9% of sessions" in t[1] and "GJR-GARCH" in t[2])
+    check("insufficient-history-is-said-not-zeroed", "80 sessions" in t[0])
+    check("an-unpriced-name-is-dark", any("ZZZ: no price history" in x for x in t))
+    check("the-note-says-cluster-names-are-not-suggestions",
+          "not as suggestions" in sec["note"] and "not which way" in sec["note"])
+    dark = chief.risk_section(dict(an, volatility={"status": "dark",
+        "source": {"status": "stale", "why": "prices is 9 days old"}}), ok_status())
+    check("stale-prices-show-no-numbers",
+          len(dark["lines"]) == 1 and "9 days old" in dark["lines"][0]["text"])
+    check("risk-is-in-every-layout",
+          all("risk" in o for o in chief.ORDER.values())
+          and all("risk" in c for c in chief.CAPS.values()))
+
+
 def main():
     print("=" * 70)
     print("CHIEF OF STAFF — pure logic (no network)")
@@ -555,6 +591,7 @@ def main():
     test_stance_cannot_change_a_fact()
     test_dark_inputs()
     test_brief_reads_what_resolved()
+    test_risk_section()
     test_operator_channel()
     test_render_and_deliver()
     test_capabilities_absent()
