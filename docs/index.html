@@ -268,6 +268,41 @@ table.tv th:first-child,table.tv td:first-child{text-align:left}
 .whybox li{margin:2px 0}
 .whybox .nw a{color:var(--accent)}
 .whybox .caveat{font-size:.76rem;color:var(--muted);font-style:italic}
+.lk-search{position:relative;margin-top:22px;max-width:560px}
+.lk-search input{width:100%;font-size:1.05rem;padding:13px 16px;border:1px solid var(--rule);border-radius:4px;
+  background:var(--surface);color:var(--ink);font-family:inherit;box-shadow:var(--shadow)}
+.lk-search input:focus{outline:2px solid var(--accent);outline-offset:1px}
+#lk-sug{position:absolute;left:0;right:0;top:100%;margin:4px 0 0;padding:4px;list-style:none;z-index:5;
+  background:var(--surface);border:1px solid var(--rule);border-radius:4px;box-shadow:var(--shadow)}
+#lk-sug li{padding:8px 10px;border-radius:3px;cursor:pointer;font-size:.9rem;display:flex;gap:8px;align-items:baseline}
+#lk-sug li span{margin-left:auto;font-size:.74rem;color:var(--muted)}
+#lk-sug li:hover,#lk-sug li[aria-selected="true"]{background:var(--sunk)}
+.lk-pop{margin-top:10px;font-size:.82rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.lk-pop button{font-family:"IBM Plex Mono",monospace;font-size:.74rem;background:var(--sunk);border:1px solid var(--rule);
+  color:var(--ink);border-radius:3px;padding:4px 9px;cursor:pointer}
+.lk{margin-top:18px}
+.lk-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 24px;align-items:flex-start}
+.lk-head h3{font-family:Spectral,Georgia,serif;font-size:1.5rem;font-weight:500}
+.lk .tk{font-family:"IBM Plex Mono",monospace;font-size:.9rem;color:var(--muted);font-weight:500}
+.lk-meta{font-size:.8rem;color:var(--muted)}
+.lk-px{text-align:right}
+.lk-px .big{font-family:"IBM Plex Mono",monospace;font-size:1.5rem;color:var(--ink)}
+.lk-sum{font-size:.95rem;line-height:1.6;background:var(--sunk);border-radius:4px;padding:12px 14px}
+.lk-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--rule-soft);
+  border:1px solid var(--rule);border-radius:4px;overflow:hidden}
+.lk-facts div{background:var(--surface);padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.lk-facts span{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-family:"IBM Plex Mono",monospace}
+.lk-facts b{font-family:"IBM Plex Mono",monospace;font-weight:500;font-size:.92rem;color:var(--ink)}
+.lk-g{font-family:"IBM Plex Mono",monospace;font-size:.74rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--ink);margin:16px 0 4px}
+.lk-row{display:grid;grid-template-columns:minmax(150px,1.3fr) 90px 150px 1.6fr;gap:4px 14px;align-items:baseline;
+  padding:7px 0;border-bottom:1px solid var(--rule-soft);font-size:.88rem}
+.lk-v{font-family:"IBM Plex Mono",monospace;color:var(--ink);text-align:right}
+.lk-m{font-family:"IBM Plex Mono",monospace;font-size:.74rem;color:var(--muted)}
+.lk-c{color:var(--body)}
+.lk-c .muted{color:var(--muted);font-style:italic}
+.lk-d{grid-column:1/-1;margin:0}
+@media(max-width:640px){.lk-row{grid-template-columns:1fr auto}.lk-m,.lk-c{grid-column:1/-1}.lk-px{text-align:left}}
 @media (max-width:640px){.wrap{padding:0 20px 72px}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -281,7 +316,7 @@ table.tv th:first-child,table.tv td:first-child{text-align:left}
     <h1>What the market is doing, in plain English</h1>
     <p class="deck">Updated every weeknight by four research bots. Every number comes with what it means, why it matters to you, and what it can't tell you, so you can learn to read the market as you go. Any unfamiliar term is in the <a href="#glossary">glossary</a>.</p>
     <nav class="jump" aria-label="On this page">
-      <a href="#market-sec">The market today</a><a href="#btc-sec">Bitcoin's cycle</a><a href="#plain-sec">Company news &amp; your risk</a><a href="#basics-sec">Investing basics</a><a href="#detail-sec">The full detail</a>
+      <a href="#market-sec">The market today</a><a href="#btc-sec">Bitcoin's cycle</a><a href="#lookup-sec">Look up a company</a><a href="#plain-sec">Company news &amp; your risk</a><a href="#basics-sec">Investing basics</a><a href="#detail-sec">The full detail</a>
     </nav>
   </div>
 </header>
@@ -303,6 +338,22 @@ table.tv th:first-child,table.tv td:first-child{text-align:left}
     <p>About every four years, the reward for creating new bitcoins is cut in half: a <b>halving</b>. So far, Bitcoin's biggest booms and busts have come at similar distances after each halving, and many investors watch that pattern. This is where today's price sits on it.</p>
   </div>
   <div id="btc"><div class="card pcard"><p>Loading Bitcoin data…</p></div></div>
+</section>
+
+<section id="lookup-sec">
+  <div class="col stack">
+    <h2>Look up an S&amp;P 500 company</h2>
+    <p>Type a ticker or a company name. You'll get its key figures from its own SEC filings, how the market prices it, and how each number compares with a typical company in the same sector, with every figure explained.</p>
+  </div>
+  <div id="lookup">
+    <div class="lk-search">
+      <input id="lk-q" type="search" autocomplete="off" spellcheck="false" placeholder="e.g. AAPL or Coca-Cola" aria-label="Search S&amp;P 500 companies" aria-controls="lk-sug">
+      <ul id="lk-sug" role="listbox" hidden></ul>
+    </div>
+    <div id="lk-pop" class="lk-pop">Try: <button type="button">AAPL</button><button type="button">MSFT</button><button type="button">NVDA</button><button type="button">JPM</button><button type="button">KO</button><button type="button">TSLA</button></div>
+    <p class="note" id="lk-status" style="font-style:normal">Loading the S&amp;P 500…</p>
+    <div id="lk-out"></div>
+  </div>
 </section>
 
 <section id="plain-sec">
@@ -1189,6 +1240,195 @@ function setupCalc(vols){
   }
   sel.onchange = upd; amt.oninput = upd; upd();
 }
+
+/* ─── look up an S&P 500 company ──────────────────────────────────────────
+   Published by observer_sp500.py: SEC filings weekly, prices nightly. The
+   page compares each figure with the company's sector median and explains
+   it in words. High or low is never called good or bad on its own. */
+var SP = null, SP_DARK_DAYS = 10, SP_WARN_DAYS = 4;
+var M = {   // label, format, word if above sector, word if below, what it means, the catch
+  pe: ["Price / earnings (P/E)", "x", "more expensive than most in its sector", "cheaper than most in its sector",
+    "How many dollars investors pay for each $1 of yearly profit.",
+    "A high P/E often means investors expect fast growth; a low one can mean slow growth or worries. It is blank when the company lost money."],
+  ps: ["Price / sales", "x", "priced higher per dollar of sales than most peers", "priced lower per dollar of sales than most peers",
+    "The company's total value divided by a year of sales.", "Useful when profits are small or negative; ignores how much of each sale becomes profit."],
+  pb: ["Price / book", "x", "above most peers", "below most peers",
+    "Market value compared with the accounting value of what the company owns minus what it owes.",
+    "Matters most for banks and insurers. Big buybacks can shrink book value and make this look extreme."],
+  fcf_yield: ["Free-cash-flow yield", "%", "more cash per dollar of price than most peers", "less cash per dollar of price than most peers",
+    "Cash the business generated after investing in itself, as a share of its market value.",
+    "One heavy year of investment can make it low; it says nothing about how that cash will be used."],
+  gross_margin: ["Gross margin", "%", "keeps more of each sale than most peers", "keeps less of each sale than most peers",
+    "Of each $1 of sales, what is left after the direct cost of the product.", "Banks, insurers and many service firms don't report it."],
+  op_margin: ["Operating margin", "%", "more profitable from operations than most peers", "less profitable from operations than most peers",
+    "Of each $1 of sales, what is left after running the business (before interest and tax).", "Can swing with one-off charges."],
+  net_margin: ["Net profit margin", "%", "more profitable than most peers", "less profitable than most peers",
+    "Of each $1 of sales, how much ended up as profit.", "Includes one-off gains and losses, which can flatter or hurt a single year."],
+  roe: ["Return on equity", "%", "higher than most peers", "lower than most peers",
+    "Yearly profit as a share of the shareholders' stake in the company.",
+    "Companies that borrow a lot or buy back many shares show a very high ROE that partly reflects small equity, not just strong business."],
+  revenue_growth: ["Sales growth (1 year)", "%", "growing faster than most peers", "growing slower than most peers",
+    "How much yearly sales changed compared with a year earlier.", "One year can be lifted by an acquisition or hurt by a one-off."],
+  eps_growth: ["Earnings-per-share growth (1 year)", "%", "faster than most peers", "slower than most peers",
+    "How much profit per share changed compared with a year earlier.", "Very sensitive to one-offs; a small base can produce huge percentages."],
+  debt_to_equity: ["Debt / equity", "x", "more borrowed than most peers", "less borrowed than most peers",
+    "Total borrowing compared with the shareholders' stake.",
+    "Normal levels differ hugely by industry; utilities and real estate borrow far more than software companies."],
+  dividend_yield: ["Dividend yield", "%", "pays out more per dollar of price than most peers", "pays out less per dollar of price than most peers",
+    "The yearly cash dividend per share, as a share of the price.", "A very high yield can mean the price has fallen on worries the dividend will be cut."],
+  payout_ratio: ["Payout ratio", "%", "pays out more of its profit than most peers", "keeps more of its profit than most peers",
+    "The share of profit paid out as dividends.", "Above 100% means paying out more than it earned, which can't last forever."],
+  return_1y: ["Price change (1 year)", "%", "did better than most in its sector", "did worse than most in its sector",
+    "How much the share price moved over the past 12 months (including adjustments for splits and dividends).", "Past performance does not predict the next year."],
+  off_52w_high: ["Below its 1-year high", "%", "closer to its high than most peers", "further from its high than most peers",
+    "How far the price is under its highest point of the past year.", "A big drop can be an overreaction or a warning; this alone can't tell which."],
+  vol_1y: ["Volatility (1 year)", "%", "swings more than most peers", "swings less than most peers",
+    "How much the price has typically moved, scaled to a year. The S&P 500 is usually around 15–20%.", "How far, not which way."],
+  beta_1y: ["Beta (1 year)", "x", "moves more with the market than most peers", "moves less with the market than most peers",
+    "How much the price has moved for each 1% move in the S&P 500. 1 = in step; below 0 = tended to move the opposite way this past year.",
+    "Changes over time; a single year can be unusual (an oil shock, for example)."]
+};
+var GROUPS = [
+  ["How the market values it", ["pe", "ps", "pb", "fcf_yield"]],
+  ["How profitable it is", ["gross_margin", "op_margin", "net_margin", "roe"]],
+  ["How fast it is growing", ["revenue_growth", "eps_growth"]],
+  ["How much it owes", ["debt_to_equity"]],
+  ["What it pays shareholders", ["dividend_yield", "payout_ratio"]],
+  ["How the stock has behaved", ["return_1y", "off_52w_high", "vol_1y", "beta_1y"]]
+];
+function fmtM(k, v){
+  if (v == null) return "—";
+  var f = M[k][1];
+  if (f === "%") return (v * 100).toFixed(1) + "%";
+  return (Math.abs(v) >= 100 ? v.toFixed(0) : v.toFixed(2)) + "×";
+}
+function bigUsd(x){
+  if (x == null) return "not available";
+  var a = Math.abs(x), s = x < 0 ? "−$" : "$";
+  return a >= 1e12 ? s + (a / 1e12).toFixed(2) + " trillion" : a >= 1e9 ? s + (a / 1e9).toFixed(1) + " billion"
+    : a >= 1e6 ? s + (a / 1e6).toFixed(0) + " million" : s + Math.round(a).toLocaleString("en-US");
+}
+function cmpWord(k, v, med){
+  if (v == null || med == null || med === 0) return "";
+  var r = med > 0 ? v / med : null, d = v - med;
+  var above = (k === "off_52w_high" || med < 0) ? d > 0 : r > 1;
+  var near = med > 0 ? (r >= 0.85 && r <= 1.15) : Math.abs(d) < 0.03;
+  if (k === "beta_1y") near = Math.abs(d) < 0.15;
+  return near ? "about typical for its sector" : above ? M[k][2] : M[k][3];
+}
+function sizeWord(m){
+  return m == null ? "" : m >= 200e9 ? "one of the largest companies in the world" : m >= 10e9 ? "a large company"
+    : m >= 2e9 ? "a mid-sized company" : "a small company for the S&P 500";
+}
+function summary(t, c, med){
+  var r = c.ratios, n = esc(c.name), out = [];
+  out.push(n + " is " + sizeWord(r.market_cap) + (r.market_cap ? ", worth about " + bigUsd(r.market_cap) : "") +
+    ", in " + esc(c.sector) + " (" + esc(c.industry) + ").");
+  if (r.pe != null) out.push("Investors pay about <b>$" + r.pe.toFixed(0) + " for each $1</b> of its yearly profit" +
+    (med.pe ? ", against $" + med.pe.toFixed(0) + " for a typical company in its sector." : "."));
+  else if (c.facts && c.facts.net_income && c.facts.net_income.val < 0) out.push("It <b>lost money</b> over the last year, so there is no P/E.");
+  if (r.net_margin != null) out.push("Of each $1 of sales, about <b>" + Math.round(r.net_margin * 100) + " cents</b> became profit.");
+  if (r.revenue_growth != null) out.push("Sales " + (r.revenue_growth >= 0 ? "grew <b>" : "shrank <b>") + Math.abs(r.revenue_growth * 100).toFixed(0) + "%</b> over the past year.");
+  if (r.return_1y != null) out.push("The share price is " + (r.return_1y >= 0 ? "up " : "down ") + Math.abs(r.return_1y * 100).toFixed(0) +
+    "% over 12 months" + (Math.abs(r.off_52w_high || 0) < 0.01 ? ", at its 1-year high." : " and " + Math.abs((r.off_52w_high || 0) * 100).toFixed(0) + "% below its 1-year high."));
+  return out.join(" ");
+}
+function lookupCard(t){
+  var c = SP.companies[t];
+  if (!c) return '<div class="card pcard"><p>No S&amp;P 500 company with the ticker <b>' + esc(t) + "</b>.</p></div>";
+  var med = SP.sector_medians[c.sector] || {}, r = c.ratios, p = c.price || {}, f = c.facts || {};
+  var noIncome = !f.net_income;
+  var h = '<div class="card lk"><div class="lk-head"><div><h3>' + esc(c.name) + ' <span class="tk">' + esc(t) + "</span></h3>" +
+    '<p class="lk-meta">' + esc(c.sector) + " · " + esc(c.industry) + " · " + esc(c.hq) +
+    (c.added ? " · in the S&amp;P 500 since " + esc(String(c.added).slice(0, 4)) : "") + "</p></div>" +
+    '<div class="lk-px"><div class="big">' + (p.price != null ? "$" + p.price.toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2}) : "—") + "</div>" +
+    '<div class="lk-meta">close ' + esc(p.last_session || "") + (p.low_52w != null ? " · 1-yr range $" + p.low_52w + "–$" + p.high_52w : "") + "</div></div></div>";
+  h += '<p class="lk-sum">' + summary(t, c, med) + "</p>";
+  if (noIncome) h += '<div class="warn">No full-year income figures are on file under this company\'s current SEC registration. This is common right after a spin-off or a corporate reorganisation, when a company files under a new ID. The balance sheet below is current; profit-based figures are left blank rather than guessed.</div>';
+  h += '<div class="lk-facts"><div><span>Market value</span><b>' + bigUsd(r.market_cap) + "</b></div>" +
+    "<div><span>Yearly sales</span><b>" + bigUsd(f.revenue && f.revenue.val) + "</b></div>" +
+    "<div><span>Yearly profit</span><b>" + bigUsd(f.net_income && f.net_income.val) + "</b></div>" +
+    "<div><span>Free cash flow</span><b>" + bigUsd(r.fcf) + "</b></div>" +
+    "<div><span>Cash</span><b>" + bigUsd(f.cash && f.cash.val) + "</b></div>" +
+    "<div><span>Debt</span><b>" + bigUsd(r.debt_total) + "</b></div></div>";
+  GROUPS.forEach(function(g){
+    h += '<h4 class="lk-g">' + esc(g[0]) + '</h4><div class="lk-rows">';
+    g[1].forEach(function(k){
+      var v = r[k], m = med[k];
+      h += '<div class="lk-row"><div class="lk-l">' + esc(M[k][0]) + '</div><div class="lk-v">' + fmtM(k, v) + "</div>" +
+        '<div class="lk-m">sector median ' + fmtM(k, m) + "</div>" +
+        '<div class="lk-c">' + (v == null ? '<span class="muted">not reported in a comparable form</span>' : esc(cmpWord(k, v, m))) + "</div>" +
+        '<details class="why lk-d"><summary>What is this?</summary><p>' + esc(M[k][4]) + " <b>The catch:</b> " + esc(M[k][5]) + "</p></details></div>";
+    });
+    h += "</div>";
+  });
+  var per = f.revenue || f.net_income || f.assets;
+  h += '<p class="note" style="font-style:normal;margin-top:12px">Figures from SEC filings' + (per ? " for the period ended " + esc(per.end) + " (" + esc(per.basis) + ")" : "") +
+    "; prices to " + esc(p.last_session || "?") + ". Sector median = the middle company of its " + (med.n || "?") + " " + esc(c.sector) + " peers in the S&amp;P 500." +
+    (c.shares_class_shared ? " This company has more than one share class; market value counts all classes at this class's price, so treat it as approximate." : "") +
+    ' <a href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=' + encodeURIComponent(c.cik) + '" target="_blank" rel="noopener">Its filings at the SEC ↗</a></p>';
+  h += '<p class="note" style="font-style:normal">"Higher" or "lower" than peers is not good or bad by itself: a high P/E can be justified by growth, a low one can be a warning. Nothing here is a recommendation.</p></div>';
+  return h;
+}
+function showLookup(t){
+  t = String(t || "").trim().toUpperCase().split(/\s|—/)[0];
+  if (!t) return;
+  document.getElementById("lk-out").innerHTML = lookupCard(t);
+  try { history.replaceState(null, "", "#lookup=" + encodeURIComponent(t)); } catch (e) {}
+}
+function setupLookup(d){
+  SP = d;
+  var age = ageDays(d.generated_at), el = document.getElementById("lk-status");
+  if (age === null || age > SP_DARK_DAYS){
+    document.getElementById("lookup").innerHTML = darkBlock("Company data dark", ["The S&amp;P 500 figures are " + (age || 0).toFixed(1) + " days old. Nothing is shown rather than stale prices presented as current."]);
+    return;
+  }
+  el.innerHTML = d.n + " companies · prices to " + esc(d.last_session) + " · SEC figures refreshed " + esc(String(d.sec_generated_at).slice(0, 10)) +
+    (age > SP_WARN_DAYS ? ' · <span style="color:var(--miss)">prices are ' + age.toFixed(1) + " days old</span>" : "");
+  var keys = Object.keys(d.companies).sort();
+  var inp = document.getElementById("lk-q"), sug = document.getElementById("lk-sug");
+  function matches(q){
+    q = q.trim().toUpperCase();
+    if (!q) return [];
+    var a = keys.filter(function(k){ return k.indexOf(q) === 0; });
+    var b = keys.filter(function(k){ return a.indexOf(k) < 0 && d.companies[k].name.toUpperCase().indexOf(q) >= 0; });
+    return a.concat(b).slice(0, 8);
+  }
+  var cur = -1;
+  function draw(){
+    var m = matches(inp.value);
+    sug.innerHTML = m.map(function(k, i){
+      return '<li role="option" data-t="' + esc(k) + '"' + (i === cur ? ' aria-selected="true"' : "") + "><b>" + esc(k) + "</b> " + esc(d.companies[k].name) +
+        ' <span>' + esc(d.companies[k].sector) + "</span></li>"; }).join("");
+    sug.hidden = !m.length;
+    return m;
+  }
+  inp.addEventListener("input", function(){ cur = -1; draw(); });
+  inp.addEventListener("keydown", function(e){
+    var m = matches(inp.value);
+    if (e.key === "ArrowDown"){ cur = Math.min(cur + 1, m.length - 1); draw(); e.preventDefault(); }
+    else if (e.key === "ArrowUp"){ cur = Math.max(cur - 1, 0); draw(); e.preventDefault(); }
+    else if (e.key === "Enter"){ var t = cur >= 0 ? m[cur] : (m[0] || inp.value); inp.value = t; sug.hidden = true; showLookup(t); }
+    else if (e.key === "Escape"){ sug.hidden = true; }
+  });
+  sug.addEventListener("mousedown", function(e){
+    var li = e.target.closest("li");
+    if (li){ inp.value = li.getAttribute("data-t"); sug.hidden = true; showLookup(inp.value); e.preventDefault(); }
+  });
+  inp.addEventListener("blur", function(){ setTimeout(function(){ sug.hidden = true; }, 150); });
+  document.querySelectorAll("#lk-pop button").forEach(function(b){
+    b.addEventListener("click", function(){ inp.value = b.textContent; showLookup(b.textContent); });
+  });
+  var m = /#lookup=([^&]+)/.exec(location.hash);
+  if (m) showLookup(decodeURIComponent(m[1]));
+}
+(function(){
+  fetchJson(AGENT_RAW + "fundamentals/sp500.json").then(setupLookup).catch(function(err){
+    document.getElementById("lookup").innerHTML = darkBlock("Company data not published yet", [
+      "Could not load <code>fundamentals/sp500.json</code> (" + esc(err.message) + "). It is produced by the weekly SEC sweep and refreshed nightly.",
+      "Nothing is shown rather than something stale."]);
+  });
+})();
 
 /* ─── the market today: six gauges ────────────────────────────────────────
    Fixed, stated thresholds. A gauge with no data says so; it is never

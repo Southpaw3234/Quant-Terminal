@@ -1,0 +1,50 @@
+name: S&P 500 fundamentals — weekly SEC sweep
+
+# The company lookup on the dashboard. SEC figures change when a company
+# files (quarterly), so the 503-company sweep (~5 minutes, ~2 GB from
+# data.sec.gov) runs weekly; the nightly pipeline re-prices the same file
+# with that day's closes (observer_sp500.py --prices).
+#
+# Sunday, so it never overlaps the weeknight pipeline -- and the same
+# concurrency group as that pipeline, so the two can never push to
+# agent-output at once even when GitHub starts one late.
+
+on:
+  schedule:
+    - cron: '0 12 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: collective-agent
+  cancel-in-progress: false
+
+env:
+  PYTHONUNBUFFERED: '1'
+  AGENT_BRANCH: agent-output
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write        # only ever to the agent-output branch
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install "numpy<2.4" pandas requests yfinance lxml
+      - name: Validate
+        run: python validate_sp500.py
+      - name: SEC figures for every constituent
+        env:
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+        run: python observer_sp500.py --sec
+      - name: Prices and ratios
+        run: python observer_sp500.py --prices
+      - name: Publish to the agent-output branch
+        run: bash .github/scripts/publish_agent_branch.sh "$AGENT_BRANCH" fundamentals
