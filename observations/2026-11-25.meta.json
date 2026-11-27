@@ -1,5 +1,5 @@
 {
- "added_this_run": 2,
+ "added_this_run": 0,
  "cik_cache": 7790,
  "direction": {
   "capped": false,
@@ -7,13 +7,13 @@
   "duplicate_clusters_suppressed": 0,
   "failed": 0,
   "filled": 0,
-  "finalized": 37,
-  "first_purchases": 33,
+  "finalized": 0,
+  "first_purchases": 0,
   "key": true,
-  "note": "Form 4 bodies are on www.sec.gov, which answers 403 to this client; direction comes from Finnhub by accession, which lags EDGAR by about two days — 88 still pending and rechecked on later runs, 37 marked final after 5 rechecks",
+  "note": "Form 4 bodies are on www.sec.gov, which answers 403 to this client; direction comes from Finnhub by accession, which lags EDGAR by about two days — 88 still pending and rechecked on later runs",
   "pending": 88,
-  "tickers_checked": 114,
-  "tickers_needed": 114
+  "tickers_checked": 49,
+  "tickers_needed": 49
  },
  "filing_day": "2026-11-25",
  "forms": [
@@ -23,7 +23,7 @@
   "10-K",
   "424B5"
  ],
- "generated_at": "2026-11-26T22:53:36+00:00",
+ "generated_at": "2026-11-27T01:04:27+00:00",
  "records": 107,
  "thesis_added": 0,
  "totals": {

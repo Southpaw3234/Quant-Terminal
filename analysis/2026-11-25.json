@@ -129,7 +129,7 @@
   "total_dollars": null
  },
  "falsifiers": [],
- "generated_at": "2026-11-26T22:56:19+00:00",
+ "generated_at": "2026-11-27T01:05:49+00:00",
  "is_not_a_recommendation": "This document reports distributions with n, concentration figures and ledger status. It contains no buy, sell, hold, rating, target or confidence, and nothing in it should be read as one.",
  "ledger": {
   "ok": true,
@@ -318,6 +318,13 @@
    "event_type": "form4_direction_not_observed"
   }
  ],
+ "risk_dollars": {
+  "covered_usd": null,
+  "names": [],
+  "reason": "no positions are declared in data/operator/positions.csv, so there is nothing to measure concentration of",
+  "status": "no_positions",
+  "sum_usd": null
+ },
  "sources": [
   {
    "event_types": [
@@ -352,7 +359,7 @@
   "librarian": {
    "age_days": 0.0,
    "name": "librarian brief",
-   "stamp": "2026-11-26T22:56:04+00:00",
+   "stamp": "2026-11-27T01:05:33+00:00",
    "status": "fresh",
    "usable": true,
    "why": "ok"
@@ -360,10 +367,67 @@
   "observations": {
    "age_days": 0.0,
    "name": "observations",
-   "stamp": "2026-11-26T22:53:36+00:00",
+   "stamp": "2026-11-27T01:04:27+00:00",
    "status": "fresh",
    "usable": true,
    "why": "ok"
   }
+ },
+ "volatility": {
+  "method": "GJR-GARCH where the stock trades nearly every day and has ~4 years of history and the fit passes its gates; EWMA otherwise. Tail from the stock's own standardized returns. See qt/volatility.py and research/volatility_eval.py.",
+  "missing": {},
+  "names": {
+   "IWM": {
+    "band_21d_pct": [
+     -13.1,
+     15.1
+    ],
+    "fallback_reason": null,
+    "how_to_read": "How far this has tended to move, not which way. One day in a hundred, the loss has been worse than the 1-day figure (GJR-GARCH scale, the stock's own tail). The one-month band holds about 90% of outcomes if conditions stay as they are; it is not a target.",
+    "last_session": "2026-11-25",
+    "loss_1d_99_pct": -4.41,
+    "model": "GJR-GARCH",
+    "n": 2488,
+    "realized_63d_ann_pct": 20.6,
+    "status": "ok",
+    "vol_1d_pct": 1.901,
+    "vol_21d_ann_pct": 29.7,
+    "vol_ann_pct": 30.2,
+    "why": [
+     "benchmark"
+    ],
+    "zero_share": 0.0016
+   },
+   "SPY": {
+    "band_21d_pct": [
+     -13.5,
+     15.7
+    ],
+    "fallback_reason": null,
+    "how_to_read": "How far this has tended to move, not which way. One day in a hundred, the loss has been worse than the 1-day figure (GJR-GARCH scale, the stock's own tail). The one-month band holds about 90% of outcomes if conditions stay as they are; it is not a target.",
+    "last_session": "2026-11-25",
+    "loss_1d_99_pct": -5.37,
+    "model": "GJR-GARCH",
+    "n": 2488,
+    "realized_63d_ann_pct": 19.6,
+    "status": "ok",
+    "vol_1d_pct": 2.066,
+    "vol_21d_ann_pct": 30.6,
+    "vol_ann_pct": 32.8,
+    "why": [
+     "benchmark"
+    ],
+    "zero_share": 0.002
+   }
+  },
+  "source": {
+   "age_days": 2.05,
+   "name": "prices",
+   "stamp": "2026-11-25",
+   "status": "fresh",
+   "usable": true,
+   "why": "ok"
+  },
+  "status": "ok"
  }
 }
