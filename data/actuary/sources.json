@@ -1,5 +1,5 @@
 {
-  "note": "Frozen outcome ledgers ACTUARY may compute base rates from. Every ledger listed here has ALREADY been consumed by a pre-registered read, so describing it spends nothing from the K budget. Adding a ledger that has NOT been read would let a nightly job look at outcomes the registry has not paid for — do not list one until its read is taken and recorded.",
+  "note": "Frozen outcome ledgers ACTUARY may compute base rates from. Two kinds, and only two. (1) A ledger a pre-registered read has ALREADY consumed: it carries spec_id, and ACTUARY refuses it if the registry records no verdict. (2) A ledger for an event type the operator FORFEITED to description in data/registry/described.json: it carries described_type, is labelled 'described, never tested' everywhere it appears, and that type may never be pre-registered. ACTUARY refuses a described ledger whose type is not in that file. Do not add a ledger of any third kind.",
   "sources": [
     {
       "ledger": "data/events/event_study.csv",
@@ -10,6 +10,83 @@
       "ledger": "data/events/event_study_v2.csv",
       "registry": "data/registry/specifications.json",
       "spec_id": "form4_cluster_buy_v2"
+    },
+    {
+      "ledger": "data/events/event_study_v3.csv",
+      "registry": "data/registry/specifications.json",
+      "spec_id": "pead_8k_car_v3",
+      "applies_to": "8k_item_2.02",
+      "condition": "earnings 8-Ks (Item 2.02) whose two-session announcement abnormal return was +5% or more; whether tonight's filing clears that is not yet known when it is filed"
+    },
+    {
+      "ledger": "data/events/described/outcomes_8k_item_1.01_21.csv",
+      "registry": "data/registry/described.json",
+      "described_type": "8k_item_1.01"
+    },
+    {
+      "ledger": "data/events/described/outcomes_8k_item_1.01_63.csv",
+      "registry": "data/registry/described.json",
+      "described_type": "8k_item_1.01"
+    },
+    {
+      "ledger": "data/events/described/outcomes_8k_item_3.01_21.csv",
+      "registry": "data/registry/described.json",
+      "described_type": "8k_item_3.01"
+    },
+    {
+      "ledger": "data/events/described/outcomes_8k_item_3.01_63.csv",
+      "registry": "data/registry/described.json",
+      "described_type": "8k_item_3.01"
+    },
+    {
+      "ledger": "data/events/described/outcomes_8k_item_5.02_21.csv",
+      "registry": "data/registry/described.json",
+      "described_type": "8k_item_5.02"
+    },
+    {
+      "ledger": "data/events/described/outcomes_8k_item_5.02_63.csv",
+      "registry": "data/registry/described.json",
+      "described_type": "8k_item_5.02"
+    },
+    {
+      "ledger": "data/events/described/outcomes_8k_item_7.01_21.csv",
+      "registry": "data/registry/described.json",
+      "described_type": "8k_item_7.01"
+    },
+    {
+      "ledger": "data/events/described/outcomes_8k_item_7.01_63.csv",
+      "registry": "data/registry/described.json",
+      "described_type": "8k_item_7.01"
+    },
+    {
+      "ledger": "data/events/described/outcomes_8k_item_8.01_21.csv",
+      "registry": "data/registry/described.json",
+      "described_type": "8k_item_8.01"
+    },
+    {
+      "ledger": "data/events/described/outcomes_8k_item_8.01_63.csv",
+      "registry": "data/registry/described.json",
+      "described_type": "8k_item_8.01"
+    },
+    {
+      "ledger": "data/events/described/outcomes_form4_sale_21.csv",
+      "registry": "data/registry/described.json",
+      "described_type": "form4_sale"
+    },
+    {
+      "ledger": "data/events/described/outcomes_form4_sale_63.csv",
+      "registry": "data/registry/described.json",
+      "described_type": "form4_sale"
+    },
+    {
+      "ledger": "data/events/described/outcomes_universe_any_day_21.csv",
+      "registry": "data/registry/described.json",
+      "described_type": "universe_any_day"
+    },
+    {
+      "ledger": "data/events/described/outcomes_universe_any_day_63.csv",
+      "registry": "data/registry/described.json",
+      "described_type": "universe_any_day"
     }
   ]
 }

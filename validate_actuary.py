@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import ast
 import inspect
+import csv
 import json
 import sys
 
@@ -210,14 +211,105 @@ def test_base_rates():
           et["form4_direction_not_observed"] == 1 and et["form4_purchase"] == 1)
 
 
+def test_described():
+    print("\na described base rate says it was never tested")
+    doc = {"decided_at": "2026-11-26",
+           "described": {"8k_item_3.01": {"definition": "items lists 3.01"}}}
+    ok = act.described_context(doc, "8k_item_3.01")
+    check("a-listed-type-is-described", ok["refused"] is False
+          and ok["basis"] == "described" and ok["verdict"] is None)
+    no = act.described_context(doc, "8k_item_2.02")
+    check("🔑-an-unlisted-type-is-refused", no["refused"] is True,
+          "outcomes nobody paid for and nobody forfeited")
+    rdoc = dict(doc, reference={"universe_any_day": {"definition": "grid"}})
+    ref = act.described_context(rdoc, "universe_any_day")
+    rr = act.base_rates([dict(r, event_type="universe_any_day")
+                         for r in _ledger(40)], {"path": "x"}, ref)[0]
+    check("🔑-the-reference-says-it-is-not-an-event",
+          ref["refused"] is False and rr["basis"] == "reference"
+          and "NOT AN EVENT" in rr["how_to_read"],
+          "small caps trailed SPY in 2023-26; without this line every "
+          "event type's median reads as the event's")
+    led = [dict(r, event_type="8k_item_3.01") for r in _ledger(40)]
+    r = act.base_rates(led, {"path": "x"}, ok)[0]
+    check("🔑-described-rates-say-never-tested",
+          r["basis"] == "described" and "NEVER TESTED" in r["how_to_read"]
+          and "NOT MET" not in r["how_to_read"],
+          "a described median must not read like a tested one")
+    check("described-rate-still-a-full-distribution",
+          r["abnormal"]["sufficient"] and r["abnormal"]["n"] == 40)
+    tested = act.base_rates(_ledger(40), {"path": "x"},
+                            act.registry_context(REG, "a"))[0]
+    check("a-tested-rate-is-labelled-as-such",
+          tested["basis"] == "pre-registered read" and tested["condition"] is None)
+
+    led = [dict(r, event_type="8k_item202_car_ge5_pit") for r in _ledger(40)]
+    c = act.base_rates(led, {"path": "x"}, act.registry_context(REG, "a"),
+                       applies_to="8k_item_2.02",
+                       condition="reactions of +5% or more")
+    check("🔑-a-conditional-ledger-maps-to-the-observed-type",
+          c[0]["event_type"] == "8k_item_2.02"
+          and c[0]["ledger_event_type"] == "8k_item202_car_ge5_pit"
+          and act.lookup("8k_item_2.02", c) == c)
+    check("🔑-the-condition-travels-with-the-number",
+          "Covers only: reactions of +5% or more" in c[0]["how_to_read"]
+          and c[0]["condition"] == "reactions of +5% or more",
+          "spec #3 describes earnings 8-Ks with a big reaction, not all of them")
+
+    import os
+    import tempfile
+    tmp = tempfile.mkdtemp()
+    led_path = os.path.join(tmp, "l.csv")
+    with open(led_path, "w", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=list(_ledger(40)[0]))
+        w.writeheader()
+        w.writerows(_ledger(40))
+    reg_path = os.path.join(tmp, "r.json")
+    json.dump(REG, open(reg_path, "w", encoding="utf-8"))
+    des_path = os.path.join(tmp, "d.json")
+    json.dump(doc, open(des_path, "w", encoding="utf-8"))
+    src_path = os.path.join(tmp, "s.json")
+    json.dump({"sources": [
+        {"ledger": led_path, "registry": reg_path, "spec_id": "c"},
+        {"ledger": led_path, "registry": des_path,
+         "described_type": "8k_item_5.02"},
+        {"ledger": led_path, "registry": reg_path, "spec_id": "a"}]},
+        open(src_path, "w", encoding="utf-8"))
+    saved, agent.SOURCES = agent.SOURCES, src_path
+    try:
+        rates, report = agent.load_base_rates()
+    finally:
+        agent.SOURCES = saved
+    st = [x["status"] for x in report]
+    check("🔑-a-ledger-whose-spec-has-no-read-is-refused",
+          st[0] == "refused", f"{report[0]}")
+    check("🔑-a-ledger-for-an-unforfeited-type-is-refused",
+          st[1] == "refused" and "not listed" in report[1]["reason"])
+    check("a-spent-read-still-loads", st[2] == "ok" and len(rates) == 1)
+
+
 def test_committed_sources():
-    print("\nevery listed ledger has a read that paid for it")
+    print("\nevery listed ledger was paid for by a read or forfeited")
     cfg = json.load(open(agent.SOURCES, encoding="utf-8"))
     check("sources-file-lists-ledgers", len(cfg["sources"]) >= 1)
+    des = json.load(open("data/registry/described.json", encoding="utf-8"))
+    for t in des["kept_out"]:
+        check(f"🔑-kept-out-{t}-is-not-described", t not in des["described"])
+    for t, e in des["described"].items():
+        check(f"described-{t}-has-a-definition", bool(e.get("definition")))
     for s in cfg["sources"]:
         rows = agent.read_csv_rows(s["ledger"])
-        check(f"ledger-exists-{s['spec_id']}", len(rows) > 0, s["ledger"])
+        label = s.get("spec_id") or s.get("described_type")
+        check(f"ledger-exists-{label}-{s['ledger'].rsplit('_', 1)[-1]}",
+              len(rows) > 0, s["ledger"])
         reg = json.load(open(s["registry"], encoding="utf-8"))
+        if s.get("described_type"):
+            ctx = act.described_context(reg, s["described_type"])
+            check(f"🔑-{label}-is-forfeited-in-the-registry",
+                  not ctx["refused"], ctx["reason"])
+            check(f"{label}-ledger-holds-only-that-type",
+                  {r["event_type"] for r in rows} == {s["described_type"]})
+            continue
         ctx = act.registry_context(reg, s["spec_id"])
         # 🔑 The structural form of the note in sources.json.
         check(f"🔑-read-is-recorded-for-{s['spec_id']}",
@@ -229,8 +321,10 @@ def test_committed_sources():
     check("real-ledgers-yield-distributions",
           rates and all(r["abnormal"]["sufficient"] for r in rates),
           ", ".join(f"n={r['abnormal']['n']}" for r in rates))
-    check("no-listed-ledger-is-missing",
-          all(x["status"] == "ok" for x in report))
+    check("no-listed-ledger-is-missing-or-refused",
+          all(x["status"] == "ok" for x in report),
+          "; ".join(f"{x['ledger']}: {x['status']}" for x in report
+                    if x["status"] != "ok"))
 
 
 # ── 3. exposure ──────────────────────────────────────────────────────────────
@@ -472,6 +566,7 @@ def main():
     print("=" * 70)
     test_distribution()
     test_base_rates()
+    test_described()
     test_committed_sources()
     test_exposure()
     test_falsifiers()

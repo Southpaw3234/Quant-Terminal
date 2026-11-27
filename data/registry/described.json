@@ -46,5 +46,11 @@
       "before_any_outcome": true,
       "what": "the first version of `entry` said pre-market and intraday 8-Ks enter that day's close; validate_described_events.py showed the engine enters the next session's close for all of them. The text was corrected to what the engine does. No outcome had been computed."
     }
-  ]
+  ],
+  "reference": {
+    "universe_any_day": {
+      "definition": "NOT an event. Every universe name on a fixed grid of sessions: a random start (seed 7) within its first 21 business days of the window, then every 21 business days. Same window, entry rule, control, horizons and independence filter as the described types. It answers: what did an arbitrary day in this universe look like against SPY? Without it, a negative median for an event type cannot be told apart from small caps trailing SPY over 2023-26.",
+      "forfeits": "nothing -- a calendar grid is not a hypothesis"
+    }
+  }
 }

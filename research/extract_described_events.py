@@ -113,6 +113,20 @@ def form4_sale_events(raw: pd.DataFrame, universe: set) -> pd.DataFrame:
                 "filing_date", "n_filings"]]
 
 
+def reference_grid(universe: set, seed: int = 7, step: int = 21) -> pd.DataFrame:
+    """universe_any_day: every name on a grid of business days. Not an event."""
+    import random
+    days = pd.bdate_range(WINDOW_START, WINDOW_END)
+    rng = random.Random(seed)
+    rows = []
+    for tk in sorted(universe):
+        for d in days[rng.randrange(step)::step]:
+            ds = d.date().isoformat()
+            rows.append({"event_id": f"ref_{tk}_{ds}", "ticker": tk,
+                         "event_ts": ds, "event_type": "universe_any_day"})
+    return pd.DataFrame(rows)
+
+
 # ── network ──────────────────────────────────────────────────────────────────
 
 def fetch_8k_rows(sess, cik: int) -> list:
@@ -176,6 +190,11 @@ def main() -> None:
     os.makedirs(OUT_DIR, exist_ok=True)
     print(f"[describe-events] {len(universe)} names; window {WINDOW_START}.."
           f"{WINDOW_END}; types {types}")
+
+    ref = reference_grid(universe)
+    ref.to_csv(os.path.join(OUT_DIR, "events_universe_any_day.csv"),
+               index=False, lineterminator="\n")
+    print(f"[describe-events] universe_any_day (reference): {len(ref)} dates")
 
     if "form4_sale" in types:
         raw = pd.read_csv(a.form4_raw, keep_default_na=False,

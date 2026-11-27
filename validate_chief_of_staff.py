@@ -584,6 +584,47 @@ def test_risk_section():
           and all("risk" in c for c in chief.CAPS.values()))
 
 
+def test_base_rates_labels():
+    print("\nbase rates: tested or only described, and on what subset")
+    def rate(et, h, basis, verdict=None, condition=None):
+        return {"event_type": et, "horizon_bars": h, "control": "SPY",
+                "basis": basis, "condition": condition,
+                "registry": {"verdict": verdict},
+                "abnormal": {"n": 50, "sufficient": True, "median": -0.02,
+                             "q25": -0.1, "q75": 0.05, "worst": -0.6,
+                             "best": 0.9, "share_positive": 0.41}}
+    an = {"base_rates": [
+            rate("form4_cluster_buy", 63, "pre-registered read", "NOT MET"),
+            rate("8k_item_3.01", 63, "described"),
+            rate("8k_item_3.01", 21, "described"),
+            rate("8k_item_2.02", 63, "pre-registered read", "NOT MET",
+                 "reactions of +5% or more"),
+            rate("universe_any_day", 63, "reference")],
+          "observed_today": [
+            {"event_type": "8k_item_3.01", "count": 2,
+             "base_rates": [{"abnormal": {"sufficient": True}}]},
+            {"event_type": "filing_10-K", "count": 3,
+             "base_rates": [{"sufficient": False}]}]}
+    t = [l["text"] for l in chief.base_rates_section(an, ok_status())["lines"]]
+    check("🔑-coverage-line-comes-first-so-a-cap-cannot-hide-it",
+          t[0].startswith("2 event type(s) observed; 1 have no base rate")
+          and "filing_10-K" in t[0])
+    check("🔑-the-reference-comes-right-after-coverage",
+          t[1].startswith("universe_any_day") and "REFERENCE, not an event" in t[1],
+          t[1])
+    check("tonight's-types-come-before-the-rest",
+          t[2].startswith("8k_item_3.01 (2 tonight)"), t[2])
+    check("both-horizons-on-one-line-shortest-first",
+          t[2].index("21 bars") < t[2].index("63 bars"))
+    check("🔑-a-described-rate-says-never-tested",
+          "described, never tested" in t[2] and "registry verdict" not in t[2])
+    check("a-tested-rate-carries-its-verdict",
+          any(x.startswith("form4_cluster_buy") and "NOT MET" in x for x in t))
+    check("🔑-a-conditional-rate-says-what-it-covers",
+          any(x.startswith("8k_item_2.02") and "covers only reactions of +5%"
+              in x for x in t))
+
+
 def main():
     print("=" * 70)
     print("CHIEF OF STAFF — pure logic (no network)")
@@ -592,6 +633,7 @@ def main():
     test_dark_inputs()
     test_brief_reads_what_resolved()
     test_risk_section()
+    test_base_rates_labels()
     test_operator_channel()
     test_render_and_deliver()
     test_capabilities_absent()
