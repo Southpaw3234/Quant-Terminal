@@ -180,6 +180,43 @@ section{padding-top:56px}
 .close{margin-top:60px;border-top:2px solid var(--ink);padding-top:30px}
 #err{background:var(--miss-soft);border:1px solid var(--miss);border-radius:4px;
   padding:16px 20px;margin-top:26px;color:var(--miss);font-size:.9rem}
+/* Plain-English layer: explains what the bots found. It adds words, never
+   numbers of its own, except the position calculator, which says so. */
+.plain-lead{background:var(--surface);border:1px solid var(--rule);border-left:3px solid var(--open);
+  border-radius:0 4px 4px 0;padding:14px 18px;margin-top:22px;font-size:.9rem;line-height:1.55}
+.plain-lead b{color:var(--ink)}
+.pcard p{font-size:.9rem;line-height:1.55}
+.pcard .big{font-family:"IBM Plex Mono",monospace;font-size:1.35rem;color:var(--ink);
+  font-variant-numeric:tabular-nums;line-height:1.2}
+.pcard .so{font-size:.84rem;color:var(--muted);border-top:1px solid var(--rule-soft);padding-top:9px}
+.pcard .so b{color:var(--ink);font-weight:500}
+.pcard ul{margin:0;padding-left:18px;font-size:.86rem;line-height:1.5}
+.pcard li{margin:3px 0}
+details.why{margin:6px 0 2px;font-size:.84rem;line-height:1.55;color:var(--body)}
+details.why summary{cursor:pointer;color:var(--accent);font-family:"IBM Plex Mono",monospace;
+  font-size:.72rem;list-style:none}
+details.why summary::-webkit-details-marker{display:none}
+details.why summary::before{content:"＋ "}
+details.why[open] summary::before{content:"－ "}
+details.why dl{margin:8px 0 4px;display:grid;grid-template-columns:auto 1fr;gap:6px 14px;
+  background:var(--sunk);border-radius:4px;padding:11px 14px}
+details.why dt{font-family:"IBM Plex Mono",monospace;font-size:.66rem;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--muted);padding-top:3px}
+details.why dd{margin:0}
+@media(max-width:560px){details.why dl{grid-template-columns:1fr}details.why dt{padding-top:6px}}
+.calc{display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-size:.88rem}
+.calc input,.calc select{background:var(--sunk);border:1px solid var(--rule);border-radius:3px;
+  color:var(--ink);font-family:"IBM Plex Mono",monospace;font-size:.86rem;padding:7px 10px;max-width:100%}
+.calc input{width:130px}
+.calc-out{margin-top:10px;font-size:.9rem;line-height:1.6}
+.calc-out b{font-family:"IBM Plex Mono",monospace;font-weight:500;color:var(--ink)}
+.steps{margin:14px 0 0;padding-left:22px;font-size:.92rem;line-height:1.6}
+.steps li{margin:0 0 9px}
+.gloss{display:grid;grid-template-columns:minmax(150px,220px) 1fr;gap:9px 20px;margin-top:20px;
+  font-size:.88rem;line-height:1.5}
+.gloss dt{font-weight:600;color:var(--ink)}
+.gloss dd{margin:0}
+@media(max-width:600px){.gloss{grid-template-columns:1fr;gap:2px}.gloss dd{margin-bottom:10px}}
 @media (max-width:640px){.wrap{padding:0 20px 72px}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -206,12 +243,75 @@ section{padding-top:56px}
   <div id="daily"></div>
 </section>
 
+<section id="plain-sec">
+  <div class="col stack">
+    <h2>Tonight, in plain English</h2>
+    <p>What the bots found on the last run, translated: how jumpy the market is, what a bad day could cost, what companies in the watched universe filed, and what has usually followed filings like those. Every card says what the number means for you and what it <em>cannot</em> tell you.</p>
+  </div>
+  <div class="plain-lead"><b>Read this first.</b> None of these figures has been shown to predict whether a price goes up or down — every pre-registered test of that failed (see <a href="#reads-sec">The reads</a>). They are useful for three things: knowing <b>how much risk</b> you are carrying, knowing <b>what happened</b> at a company before you act, and knowing <b>what usually followed</b> similar events, so a single headline doesn't carry more weight than its history supports. The decision is always yours.</div>
+  <div class="grid" id="plain"></div>
+  <div class="card" style="margin-top:16px" id="calc-card">
+    <h3>What could a position cost on a bad day?</h3>
+    <p class="note" style="font-style:normal">Enter an amount and pick a name. This multiplies tonight's published risk figures by your amount — the only arithmetic on this page.</p>
+    <div class="calc"><label>$ <input id="calc-amt" type="number" min="0" step="100" value="10000" aria-label="Amount in dollars"></label>
+      <select id="calc-name" aria-label="Name"></select></div>
+    <div class="calc-out" id="calc-out">Loading tonight's risk figures…</div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <h3>Using this when you make a decision</h3>
+    <ol class="steps">
+      <li><b>Start with the market mood.</b> When volatility is elevated, the same position swings further in both directions. If you would not be comfortable with the bad-day figure in the calculator, the position is larger than your comfort, whatever you think of the company.</li>
+      <li><b>Check the company's own news.</b> Look for its ticker under <em>Filings</em>, <em>Filing language</em> and <em>Insider activity</em> in the brief below. Every filing links to the SEC original; read it rather than the label.</li>
+      <li><b>Compare with an ordinary day.</b> Each event type's history is shown beside "any ordinary day" in the same universe. If they are about the same, the event on its own tells you very little.</li>
+      <li><b>Know how sure a pattern is.</b> <em>NOT MET</em> means a pre-registered test looked and found no reliable edge. <em>Never tested</em> means a pattern that could be chance. Neither is a reason to act by itself.</li>
+      <li><b>Decide what would prove you wrong, before you act.</b> Write it down as a thesis with a falsifier; the bots track every open thesis and flag new filings that bear on it.</li>
+      <li><b>Declare what you hold.</b> Until positions are declared, the bots can't measure your concentration or your dollar risk — the two numbers most likely to matter.</li>
+    </ol>
+  </div>
+</section>
+
 <section>
   <div class="col stack">
     <h2>The daily brief</h2>
     <p>One page from the four agents: what was filed, what language changed, what has historically followed events like these, where you are concentrated, and where your own theses stand. Your stance changes the <em>order</em> of this page and how much of each section is shown. It cannot change a number — every line is computed before the stance is consulted, and the buttons below re-order the same facts in your browser.</p>
   </div>
   <div id="brief"></div>
+</section>
+
+<section id="glossary">
+  <div class="col stack">
+    <h2>Glossary</h2>
+    <p>Every term the brief uses, in plain words.</p>
+  </div>
+  <dl class="gloss">
+    <dt>Ticker</dt><dd>The short code a stock trades under (SPY, IWM, AAPL).</dd>
+    <dt>SPY · IWM</dt><dd>Funds that track the S&amp;P 500 (500 large US companies) and the Russell 2000 (2,000 small ones). Used as the yardsticks: "vs SPY" means "compared with simply owning the S&amp;P 500".</dd>
+    <dt>Watched universe</dt><dd>The ~1,000 small US companies the bots follow: common stock on a main exchange, price at least $2, and traded actively enough to buy and sell. It is a list of what is watched, not a list of what to buy.</dd>
+    <dt>Trading day ("bar")</dt><dd>One day the market is open. 21 trading days is about a month; 63 is about three months.</dd>
+    <dt>8-K</dt><dd>A form a company must file within four business days of a major event. Each "item" number is a type of event, for example 3.01 = a stock exchange warning that the company is breaking a listing rule, 5.02 = an executive or director leaving or joining, 1.01 = a significant new contract or loan.</dd>
+    <dt>10-K · 10-Q</dt><dd>The annual and quarterly reports. LIBRARIAN compares each one with the company's previous one and reports risk phrases that appeared or disappeared ("going concern", "delisting", "covenant").</dd>
+    <dt>Form 4</dt><dd>Filed when a company insider (an executive, director, or 10% owner) trades the company's shares. Code P = bought on the open market with their own money; S = sold. Grants, option exercises and tax withholding are not purchases and are labelled "other".</dd>
+    <dt>Cluster buy</dt><dd>Two or more different insiders buying on the open market within five days, at least $100,000 in total.</dd>
+    <dt>Base rate</dt><dd>What happened, historically, after events of one type: how the stock did over the next month or three months compared with SPY. It describes the past. It does not say what this company will do.</dd>
+    <dt>Median</dt><dd>The middle outcome: half did better, half did worse. Used instead of the average because a few huge winners can make an average look good when most cases lost.</dd>
+    <dt>Middle half</dt><dd>The range covering the middle 50% of past outcomes: a quarter did worse than the low end, a quarter better than the high end.</dd>
+    <dt>% positive</dt><dd>The share of past cases where the stock beat SPY over that period.</dd>
+    <dt>Any ordinary day</dt><dd>The comparison line: what happened from an arbitrary date in the same universe, measured the same way. Small companies lagged the S&amp;P 500 in 2023–26, so most event types look negative; what matters is the difference from this line.</dd>
+    <dt>NOT MET</dt><dd>A pre-registered test was run on this pattern, with its pass mark fixed in advance, and the pattern failed: it could not be told apart from luck.</dd>
+    <dt>Described, never tested</dt><dd>A pattern that has only been described, not tested. It may be chance. These event types were deliberately given up so they can be shown, and can never be tested later.</dd>
+    <dt>Volatility (%/yr)</dt><dd>How much a price typically swings, scaled to a year. 20% is ordinary for the S&amp;P 500; 30%+ means noticeably bigger daily moves than usual. It says how far, not which way.</dd>
+    <dt>1-day 99% loss bound</dt><dd>On about 1 trading day in 100, the loss has been worse than this. Not the worst case: on those days, it can be much worse.</dd>
+    <dt>1-month 90% band</dt><dd>The range that about 9 months in 10 would end inside, if conditions stay as they are. Not a target, not a forecast of direction.</dd>
+    <dt>GJR-GARCH · EWMA</dt><dd>The two methods used to estimate volatility. GJR-GARCH is used for stocks with long, active trading histories; EWMA (a weighted average of recent swings) everywhere else. Each was checked against years of data it had not seen.</dd>
+    <dt>VIX</dt><dd>The market's own estimate of S&amp;P 500 volatility over the next month, from option prices. Under 15 calm, 15–20 normal, 20–30 elevated, over 30 stressed.</dd>
+    <dt>High-yield credit spread</dt><dd>The extra interest riskier companies pay to borrow, over US Treasuries. Rising means lenders are getting nervous, which hits small, indebted companies first.</dd>
+    <dt>10-year · 2-year yield, curve</dt><dd>Interest rates on US government debt. The "10y minus 2y" spread near or below zero has often come before slowdowns.</dd>
+    <dt>Fed funds rate</dt><dd>The Federal Reserve's policy rate: the base cost of money.</dd>
+    <dt>Jobless claims · unemployment · CPI</dt><dd>Weekly new unemployment claims, the monthly unemployment rate, and the consumer price index (inflation). Context for the economy, not for a single stock.</dd>
+    <dt>Thesis · falsifier</dt><dd>Your written reason for owning something, and the specific thing that would prove it wrong. The bots track both and show filings that bear on them.</dd>
+    <dt>Stance</dt><dd>Conservative, balanced or aggressive. It changes the order of the brief and which concentration levels get flagged. It never changes a number.</dd>
+    <dt>Dark</dt><dd>A section whose data is missing or stale. It is shown as dark rather than showing old numbers as if they were new.</dd>
+  </dl>
 </section>
 
 <section>
@@ -230,7 +330,7 @@ section{padding-top:56px}
   <div class="grid" id="programmes"></div>
 </section>
 
-<section>
+<section id="reads-sec">
   <div class="col stack">
     <h2>The reads</h2>
     <p>Every criterion below was written into the registry before the data existed. Nothing was chosen after seeing a result, and each specification records its own <strong>prior</strong> — the probability the operator signed, in advance, that it would pass.</p>
@@ -769,11 +869,256 @@ var BRIEF_DARK_DAYS = 4;   // Friday's brief read on Monday is 3 days old
 
 function safeUrl(u){ return /^https:\/\//.test(u || "") ? u : null; }
 
+/* ─── plain English ───────────────────────────────────────────────────────
+   Words only. Event codes get their names, "bars" become trading days, and
+   each section gets an explanation. No number is changed or added here. */
+var ITEM_NAMES = {
+  "1.01": "New material agreement", "1.02": "Material agreement ended",
+  "1.03": "Bankruptcy or receivership", "2.01": "Acquisition or sale of assets",
+  "2.02": "Earnings results", "2.03": "New debt or borrowing",
+  "2.04": "Debt repayment triggered early", "2.05": "Restructuring or exit costs",
+  "2.06": "Asset write-down", "3.01": "Listing-rule warning / delisting notice",
+  "3.02": "New shares sold privately (dilution)", "3.03": "Change to shareholders' rights",
+  "4.01": "Auditor change", "4.02": "Past financials no longer reliable",
+  "5.01": "Change in control", "5.02": "Executive or director change",
+  "5.03": "Bylaws or fiscal-year change", "5.07": "Shareholder vote results",
+  "7.01": "Investor presentation / fair-disclosure release",
+  "8.01": "Other company news", "9.01": "Exhibits attached"};
+var CODE_NAMES = {
+  "form4_purchase": "Insider bought on the open market",
+  "form4_sale": "Insider sold on the open market",
+  "form4_mixed": "Insider bought and sold",
+  "form4_other": "Insider grant, option or tax filing (not a trade)",
+  "form4_direction_not_observed": "Insider filing, buy or sell not known yet",
+  "form4_cluster_buy": "Cluster buy (2+ insiders bought within 5 days)",
+  "universe_any_day": "Any ordinary day (comparison line)",
+  "filing_10-K": "Annual report", "filing_10-Q": "Quarterly report",
+  "filing_424B5": "Share or debt offering", "filing_S-1": "Registration for a share sale",
+  "filing_S-3": "Shelf registration for future share sales"};
+function codeName(c){
+  var m = /^8k_item_(\d+\.\d+)$/.exec(c);
+  if (m) return (ITEM_NAMES[m[1]] || "8-K item " + m[1]) + " (8-K " + m[1] + ")";
+  return CODE_NAMES[c] ? CODE_NAMES[c] + " [" + c + "]" : c;
+}
+function plainText(t){
+  return String(t)
+    .replace(/\b(8k_item_\d+\.\d+|form4_[a-z_]+|filing_[A-Za-z0-9\-]+|universe_any_day)\b/g,
+             function(c){ return codeName(c); })
+    .replace(/\b21 bars\b/g, "21 trading days (~1 month)")
+    .replace(/\b63 bars\b/g, "63 trading days (~3 months)")
+    .replace(/(\d+) bars\b/g, "$1 trading days");
+}
+var SECTION_HELP = {
+  theses: ["Your written reasons for owning something, each with the thing that would prove it wrong.",
+    "Each thesis shows its status and any new filing that bears on it.",
+    "This is where a decision gets checked against what you said would change your mind.",
+    "Empty until you open a thesis."],
+  filings: ["Which companies in the watched universe filed with the SEC on the last filing day, by form.",
+    "8-K item numbers are event types (see the glossary). A 3.01 is an exchange warning; a 5.02 is a leadership change. Each line links to the SEC original.",
+    "A quick scan for news at a company you hold or are considering, before you act on it.",
+    "A filing being listed is not a judgement about it. Read the filing."],
+  language: ["LIBRARIAN compares each new annual or quarterly report with the company's previous one, and lists risk phrases that appeared or disappeared.",
+    "\"Added: going concern\" means the new report says something the last one didn't. Removed phrases can be good news (a risk resolved) or just rewording.",
+    "Newly added distress language (going concern, delisting, covenant, restatement) is a reason to read that report closely.",
+    "A phrase change is a flag to read, not a verdict on the company."],
+  insiders: ["Trades by a company's own executives and directors, from Form 4 filings.",
+    "Open-market purchases (code P) are insiders spending their own money; sales are far more common and often routine. Buy or sell direction arrives about two days after the filing.",
+    "An insider buying is context about people who know the company well.",
+    "Insider-buying patterns were tested twice and returned NOT MET: on their own, they have not reliably beaten the market."],
+  base_rates: ["What historically followed each event type, measured against the S&P 500 (SPY) over the next month and three months.",
+    "Compare each line with \"Any ordinary day\". Most lines are negative because small companies lagged the S&P 500 in 2023–26; only the difference from the ordinary-day line says anything about the event.",
+    "It tells you whether a headline usually mattered. If an event's history matches an ordinary day, the event alone carries little information.",
+    "History, not forecast. \"NOT MET\" means tested and failed; \"never tested\" means it may be chance."],
+  exposure: ["How concentrated your declared positions are: by name, by sector, by company size, and how many days it would take to sell.",
+    "Flags show where a concentration passes your stance's limit.",
+    "The most decision-relevant section, once you declare holdings.",
+    "Empty until positions are declared in data/operator/positions.csv."],
+  risk: ["How much each name tends to swing, and how bad a bad day or month has been, for your positions, theses, tonight's cluster-buy names and the two benchmarks.",
+    "\"30%/yr now vs 21% over the last 3 months\" means bigger swings expected than recently. The 1-day figure is beaten on about 1 day in 100; the 1-month band holds about 9 outcomes in 10.",
+    "Use it to size: the calculator above turns it into dollars for any amount.",
+    "How far, never which way. Real losses can exceed these on rare days."],
+  macro: ["The economy and credit conditions from the Federal Reserve's data service, plus recent headlines.",
+    "Watch the VIX (market fear), the high-yield spread (lenders' nervousness) and the 10y–2y curve.",
+    "Context for how much risk to carry overall, especially in small, indebted companies.",
+    "These move the whole market, not a particular stock, and say nothing about timing."],
+  universe: ["How many companies pass the eligibility screen, which entered or left it, and where the benchmarks closed.",
+    "\"Entered\" and \"left\" are screen changes (price or trading volume), not recommendations.",
+    "Shows whether a name you follow is still in the watched set.",
+    "The eligible list is not a buy list."]
+};
+function sectionHelp(id){
+  var h = SECTION_HELP[id];
+  if (!h) return "";
+  var k = ["What it is", "How to read it", "How it can help", "What it can't tell you"];
+  return '<details class="why"><summary>What does this mean?</summary><dl>' +
+    h.map(function(x, i){ return "<dt>" + k[i] + "</dt><dd>" + esc(x) + "</dd>"; }).join("") +
+    "</dl></details>";
+}
+
+var AGENT_RAW = "https://raw.githubusercontent.com/Southpaw3234/Quant-Terminal/agent-output/";
+function fetchJson(u){
+  return fetch(u + "?cb=" + Date.now(), {cache: "no-store"}).then(function(r){
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r.json();
+  });
+}
+function pctS(x, d){ return x == null ? "n/a" : (x > 0 ? "+" : "") + (x * 100).toFixed(d == null ? 1 : d) + "%"; }
+function money(x){ return "$" + Math.round(Math.abs(x)).toLocaleString("en-US"); }
+function pcard(title, big, body, so){
+  return '<div class="card pcard"><h3>' + esc(title) + "</h3>" +
+    (big ? '<div class="big">' + big + "</div>" : "") + body +
+    (so ? '<p class="so">' + so + "</p>" : "") + "</div>";
+}
+function mood(vix){
+  if (vix == null) return ["unknown", "p-open"];
+  if (vix < 15) return ["calm", "p-clear"];
+  if (vix < 20) return ["normal", "p-clear"];
+  if (vix < 30) return ["elevated", "p-open"];
+  return ["stressed", "p-miss"];
+}
+function plainDark(msg){
+  document.getElementById("plain").innerHTML =
+    '<div class="card pcard"><h3>Not available tonight</h3><p>' + msg + "</p></div>";
+  document.getElementById("calc-out").textContent = "No risk figures are available.";
+}
+
+function renderPlain(brief, an, mac){
+  var el = document.getElementById("plain");
+  var series = {};
+  ((mac && mac.series) || []).forEach(function(s){ series[s.id] = s; });
+  var vols = ((an && an.volatility) || {}).names || {};
+  var cards = [];
+
+  // 1. market mood
+  var spy = vols.SPY, vix = series.VIXCLS && series.VIXCLS.value;
+  var m = mood(vix);
+  if (spy && spy.status === "ok"){
+    var ratio = spy.realized_63d_ann_pct ? spy.vol_ann_pct / spy.realized_63d_ann_pct : null;
+    cards.push(pcard("Market mood",
+      '<span class="pill ' + m[1] + '">' + m[0] + "</span>",
+      "<p>The S&amp;P 500 is expected to swing about <b>" + spy.vol_ann_pct +
+      "%/yr</b>" + (ratio ? ", " + ratio.toFixed(1) + "× its pace over the last three months (" +
+      spy.realized_63d_ann_pct + "%)" : "") + ". The VIX, the market's own fear gauge, is <b>" +
+      (vix == null ? "n/a" : vix) + "</b>.</p>",
+      "<b>In practice:</b> expect bigger daily moves than usual, in either direction. " +
+      "Small companies, which this universe is made of, usually swing more than the S&amp;P 500."));
+  }
+
+  // 2. a bad day in dollars
+  var iwm = vols.IWM, bad = [];
+  [["an S&P 500 fund (SPY)", spy], ["a small-company fund (IWM)", iwm]].forEach(function(p){
+    if (p[1] && p[1].status === "ok" && p[1].loss_1d_99_pct != null)
+      bad.push("<li>" + esc(p[0]) + ": a 1-in-100 bad day has lost more than <b>" +
+        money(100 * p[1].loss_1d_99_pct) + "</b> per $10,000. Over a month, about 9 times in 10 it ended between <b>" +
+        money(100 * p[1].band_21d_pct[0]) + " down</b> and <b>" + money(100 * p[1].band_21d_pct[1]) + " up</b>.</li>");
+  });
+  if (bad.length)
+    cards.push(pcard("A bad day, in dollars", "", "<ul>" + bad.join("") + "</ul>",
+      "<b>In practice:</b> if those amounts, scaled to your position, would make you sell in a panic, the position is too big for you right now. Use the calculator below for any amount or name."));
+
+  // 3. credit and rates
+  var hy = series.BAMLH0A0HYM2, t10 = series.DGS10, curve = series.T10Y2Y;
+  if (hy && hy.value != null){
+    var d1y = hy.year_ago != null ? hy.value - hy.year_ago : null;
+    cards.push(pcard("Borrowing conditions",
+      hy.value.toFixed(2) + " pts",
+      "<p>Riskier companies pay <b>" + hy.value.toFixed(2) + " percentage points</b> more than the US government to borrow" +
+      (d1y != null ? ", " + (d1y >= 0 ? "up " : "down ") + Math.abs(d1y * 100).toFixed(0) + " basis points from a year ago" : "") +
+      ". The 10-year Treasury yields <b>" + (t10 ? t10.value + "%" : "n/a") + "</b>; the 10y–2y curve is <b>" +
+      (curve ? curve.value + " pts" : "n/a") + "</b>.</p>",
+      "<b>In practice:</b> " + (d1y != null && d1y > 0
+        ? "lenders are more cautious than a year ago, which bites small, indebted companies first. Check the debt of anything you own in this universe."
+        : "lenders are not more cautious than a year ago.")));
+  }
+
+  // 4. company news tonight vs an ordinary day
+  var today = (an && an.observed_today) || [];
+  var rates = (an && an.base_rates) || [];
+  var ref = {};
+  rates.forEach(function(r){ if (r.event_type === "universe_any_day") ref[r.horizon_bars] = r.abnormal; });
+  var newsLines = today.filter(function(e){ return !/9\.01|direction_not_observed/.test(e.event_type); })
+    .sort(function(a, b){ return b.count - a.count; }).slice(0, 7).map(function(e){
+      var r63 = (e.base_rates || []).filter(function(b){ return b.horizon_bars === 63 && b.abnormal && b.abnormal.sufficient; })[0];
+      var hist = "";
+      if (r63 && ref[63] && ref[63].sufficient){
+        var diff = r63.abnormal.median - ref[63].median;
+        hist = Math.abs(diff) < 0.02 ? " — historically about the same as an ordinary day"
+          : " — historically " + Math.abs(diff * 100).toFixed(1) + " pts " + (diff < 0 ? "worse" : "better") +
+            " than an ordinary day over 3 months (median)";
+        hist += r63.basis === "described" ? ", a pattern never tested" : r63.registry && r63.registry.verdict ? ", tested: " + r63.registry.verdict : "";
+      } else if (r63){
+        hist = " — 3-month median " + pctS(r63.abnormal.median) + " vs SPY";
+      } else {
+        hist = " — no history measured for this type";
+      }
+      return "<li><b>" + e.count + "×</b> " + esc(codeName(e.event_type)) + esc(hist) + "</li>";
+    });
+  if (newsLines.length)
+    cards.push(pcard("Company news on " + (an.day || "the last filing day"), "",
+      "<ul>" + newsLines.join("") + "</ul>" +
+      (ref[63] ? "" : '<p class="note">The "ordinary day" comparison appears from the next nightly run.</p>'),
+      "<b>In practice:</b> a type that matches an ordinary day tells you little on its own. A listing-rule warning or new distress language at a company you hold is a reason to read its filing today."));
+
+  // 5. insiders
+  var clusters = (an && an.cluster_events) || [];
+  cards.push(pcard("Insider buying",
+    String(clusters.length),
+    "<p>" + (clusters.length
+      ? "Cluster buy" + (clusters.length > 1 ? "s" : "") + " resolved on this run: <b>" +
+        clusters.map(function(c){ return esc(c.ticker); }).join(", ") + "</b>."
+      : "No cluster buy (two or more insiders buying within five days) was confirmed on this run.") +
+    " Buy or sell direction reaches the bots about two days after a filing, so the latest filings are still unconfirmed.</p>",
+    "<b>In practice:</b> insiders buying is worth knowing, but tested twice it has not reliably beaten the market. Treat it as a reason to look, not a reason to buy."));
+
+  // 6. your portfolio
+  var ex = (an && an.exposure) || {};
+  cards.push(pcard("Your portfolio", "",
+    ex.status === "ok"
+      ? "<p>Your declared positions are measured in the <em>Exposure</em> and <em>Risk</em> sections of the brief below.</p>"
+      : "<p><b>No positions are declared</b>, so the bots cannot tell you how concentrated you are or what your holdings could lose on a bad day — the two numbers most likely to matter for a decision.</p>",
+    ex.status === "ok" ? "" : "<b>To fix:</b> add your holdings (ticker, dollars) to <code>data/operator/positions.csv</code>, and open a thesis for anything you are weighing."));
+
+  el.innerHTML = cards.join("");
+  setupCalc(vols);
+}
+
+function setupCalc(vols){
+  var sel = document.getElementById("calc-name"), amt = document.getElementById("calc-amt"),
+      out = document.getElementById("calc-out");
+  var names = Object.keys(vols).filter(function(t){ return vols[t].status === "ok"; }).sort();
+  if (!names.length){ out.textContent = "No risk figures were published on this run."; return; }
+  sel.innerHTML = names.map(function(t){
+    return '<option value="' + esc(t) + '">' + esc(t) + " (" + esc((vols[t].why || []).join(", ")) + ")</option>";
+  }).join("");
+  function upd(){
+    var v = vols[sel.value], a = parseFloat(amt.value);
+    if (!v || !(a > 0)){ out.textContent = "Enter an amount above zero."; return; }
+    var lo = a * v.band_21d_pct[0] / 100, hi = a * v.band_21d_pct[1] / 100;
+    out.innerHTML = "On about <b>1 trading day in 100</b>, " + esc(sel.value) + " has lost more than <b>" +
+      (v.loss_1d_99_pct == null ? "n/a" : money(a * v.loss_1d_99_pct / 100)) + "</b> on " + money(a) +
+      ". About <b>9 months in 10</b>, a month from now it would be somewhere between <b>" + money(lo) +
+      " down</b> and <b>" + money(hi) + " up</b>, if conditions stay as they are." +
+      '<br><span class="note">Swings about ' + v.vol_ann_pct + "%/yr now (" + v.realized_63d_ann_pct +
+      "% over the last 3 months) · " + esc(v.model) + (v.fallback_reason ? " — " + esc(v.fallback_reason) : "") +
+      ". How far, never which way.</span>";
+  }
+  sel.onchange = upd; amt.oninput = upd; upd();
+}
+
+function loadPlain(d){
+  var macDay = String(((d.inputs || {}).macro || {}).stamp || d.generated_at || "").slice(0, 10);
+  Promise.all([
+    fetchJson(AGENT_RAW + "analysis/" + d.day + ".json"),
+    fetchJson(AGENT_RAW + "macro/" + macDay + ".json").catch(function(){ return null; })
+  ]).then(function(r){ renderPlain(d, r[0], r[1]); })
+    .catch(function(err){ plainDark("The bots' analysis file could not be loaded (" + esc(err.message) + "). Nothing is shown rather than something stale."); });
+}
+
 function briefLine(ln, dark){
   var t = String(ln.text || ""), sub = t.indexOf("    ") === 0;
   var u = safeUrl(ln.url);
   return '<li class="' + (sub ? "sub" : "") + (dark ? " dk" : "") + '">' +
-    esc(sub ? t.slice(4) : t) +
+    esc(plainText(sub ? t.slice(4) : t)) +
     (u ? '<a href="' + esc(u) + '" target="_blank" rel="noopener">open ↗</a>' : "") +
     "</li>";
 }
@@ -788,6 +1133,7 @@ function renderBrief(d){
       "The published brief carries no readable <code>generated_at</code>, or " +
       "is missing its facts. Nothing from it is shown. An undated record is " +
       "treated exactly like a stale one."]);
+    plainDark("The last brief is undated or incomplete, so nothing is translated.");
     return;
   }
   if (age > BRIEF_DARK_DAYS){
@@ -797,6 +1143,7 @@ function renderBrief(d){
       "The nightly pipeline has stopped. <b>Its content is deliberately not " +
       "rendered</b> — an old brief read as today's is the failure this page " +
       "exists to prevent."]);
+    plainDark("The last brief is " + age.toFixed(1) + " days old. Its figures are not shown as if they were tonight's.");
     return;
   }
 
@@ -837,7 +1184,8 @@ function renderBrief(d){
         ? " <span>— " + lines.length + " of " + sec.lines.length + "</span>" : "") +
       "</h4><ul>" +
       lines.map(function(l){ return briefLine(l, sec.dark); }).join("") +
-      "</ul>" + (sec.note ? '<p class="sn">' + esc(sec.note) + "</p>" : "");
+      "</ul>" + (sec.note ? '<p class="sn">' + esc(sec.note) + "</p>" : "") +
+      sectionHelp(lay.order[i]);
   }
 
   var om = d.operator_messages || {};
@@ -856,10 +1204,16 @@ function renderBrief(d){
 
   html += '<div class="notbuy"><b>This brief makes no recommendation.</b> ' +
     "It relays what was collected, structured and described. Base rates are " +
-    "what followed past events of a type, shown with the verdict of the read " +
-    "that produced them; they are not forecasts. Every decision is yours.</div>" +
+    "what followed past events of a type. Each one says whether a " +
+    "pre-registered read tested it (NOT MET: no reliable edge was found) or " +
+    "it was only described and never tested; neither is a forecast. Every " +
+    "decision is yours.</div>" +
     "</div>";
   el.innerHTML = html;
+  if (window.__plainFor !== d.generated_at){
+    window.__plainFor = d.generated_at;
+    loadPlain(d);
+  }
 }
 
 (function(){
@@ -874,6 +1228,7 @@ function renderBrief(d){
       "This is the expected state before the pipeline's first run, and the " +
       "correct state if it has stopped. Nothing is shown rather than " +
       "something stale."]);
+    plainDark("No brief has been published, so there is nothing to translate.");
   });
 })();
 
