@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Quant Terminal — Research Record</title>
+<title>Quant Terminal — Market, Explained</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -217,6 +217,57 @@ details.why dd{margin:0}
 .gloss dt{font-weight:600;color:var(--ink)}
 .gloss dd{margin:0}
 @media(max-width:600px){.gloss{grid-template-columns:1fr;gap:2px}.gloss dd{margin-bottom:10px}}
+.jump{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.jump a{font-family:"IBM Plex Mono",monospace;font-size:.74rem;text-decoration:none;
+  border:1px solid var(--rule);border-radius:3px;padding:6px 11px;color:var(--ink);background:var(--surface)}
+.jump a:hover{border-color:var(--accent);color:var(--accent)}
+.gauge .lvl{display:flex;align-items:center;gap:9px;font-family:"IBM Plex Mono",monospace;
+  font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.dot{width:12px;height:12px;border-radius:50%;flex:none}
+.g-good .dot{background:var(--accent)} .g-good .lvl{color:var(--accent)}
+.g-warn .dot{background:var(--open)} .g-warn .lvl{color:var(--open)}
+.g-bad .dot{background:var(--miss)} .g-bad .lvl{color:var(--miss)}
+.gauge .rule{font-size:.74rem;color:var(--muted);font-family:"IBM Plex Mono",monospace;line-height:1.45}
+.moodbar{background:var(--surface);border:1px solid var(--rule);border-radius:4px;padding:16px 20px;
+  margin-top:22px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:10px}
+.moodbar .head{font-family:Spectral,Georgia,serif;font-size:1.3rem;color:var(--ink);line-height:1.3}
+.tally{display:flex;gap:5px}
+.tally i{display:block;width:34px;height:10px;border-radius:2px;background:var(--rule)}
+.tally i.g-good{background:var(--accent)} .tally i.g-warn{background:var(--open)} .tally i.g-bad{background:var(--miss)}
+.btc-wrap{display:flex;flex-direction:column;gap:16px;margin-top:22px}
+.tl{position:relative;height:74px;margin:30px 0 8px}
+.tl .track{position:absolute;left:0;right:0;top:18px;height:10px;border-radius:5px;background:var(--rule-soft)}
+.tl .band{position:absolute;top:14px;height:18px;border-radius:3px;opacity:.85}
+.tl .band.pk{background:var(--accent-soft);border:1px solid var(--accent)}
+.tl .band.lo{background:var(--miss-soft);border:1px solid var(--miss)}
+.tl .band span{position:absolute;top:-22px;left:0;white-space:nowrap;font-family:"IBM Plex Mono",monospace;font-size:.66rem;color:var(--muted)}
+.tl .now{position:absolute;top:8px;width:3px;height:30px;background:var(--ink);border-radius:2px}
+.tl .now span{position:absolute;top:34px;transform:translateX(-50%);white-space:nowrap;font-family:"IBM Plex Mono",monospace;font-size:.7rem;color:var(--ink);font-weight:600}
+@media(max-width:600px){.tl{height:92px}.tl .end.r{top:78px}}
+.tl .end{position:absolute;top:60px;font-family:"IBM Plex Mono",monospace;font-size:.66rem;color:var(--muted)}
+.viz{--s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--grid:var(--rule-soft);--axis:var(--muted)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .viz{--s1:#3987e5;--s2:#d95926;--s3:#199e70}}
+:root[data-theme="dark"] .viz{--s1:#3987e5;--s2:#d95926;--s3:#199e70}
+.viz svg{display:block;width:100%;height:auto;overflow:visible}
+.viz .legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.8rem;color:var(--body);margin-bottom:6px}
+.viz .legend span{display:inline-flex;align-items:center;gap:6px}
+.viz .legend i{width:16px;height:3px;border-radius:2px;display:inline-block}
+.viz .tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--rule);
+  border-radius:4px;padding:8px 10px;font-size:.78rem;line-height:1.45;box-shadow:var(--shadow);
+  font-family:"IBM Plex Mono",monospace;color:var(--ink);white-space:nowrap;display:none;z-index:2}
+.viz .plot{position:relative}
+table.tv{width:100%;border-collapse:collapse;font-size:.8rem;margin-top:8px;font-variant-numeric:tabular-nums}
+table.tv th,table.tv td{text-align:right;padding:5px 8px;border-bottom:1px solid var(--rule-soft)}
+table.tv th:first-child,table.tv td:first-child{text-align:left}
+.tvwrap{overflow-x:auto}
+.whybox{background:var(--sunk);border-left:3px solid var(--accent);border-radius:0 4px 4px 0;
+  padding:11px 14px;font-size:.86rem;line-height:1.55;display:flex;flex-direction:column;gap:7px}
+.whybox .wl{font-family:"IBM Plex Mono",monospace;font-size:.68rem;font-weight:600;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--accent)}
+.whybox ul{margin:0;padding-left:18px}
+.whybox li{margin:2px 0}
+.whybox .nw a{color:var(--accent)}
+.whybox .caveat{font-size:.76rem;color:var(--muted);font-style:italic}
 @media (max-width:640px){.wrap{padding:0 20px 72px}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -226,27 +277,38 @@ details.why dd{margin:0}
 
 <header class="mast">
   <div class="col">
-    <div class="eyebrow">Quant Terminal · research record</div>
-    <h1>A trading system that was measured, and stopped</h1>
-    <p class="deck">Three programmes, pre-registered, with every threshold fixed before the data was touched. This page is the record of what they found — read live from the registries on <code>master</code>, so it cannot quietly go stale the way its predecessor did — and, above that record, what the system is looking at today.</p>
-    <div class="stamp" id="stamp"><span>loading the registries…</span></div>
+    <div class="eyebrow">Quant Terminal · the market, explained</div>
+    <h1>What the market is doing, in plain English</h1>
+    <p class="deck">Updated every weeknight by four research bots. Every number comes with what it means, why it matters to you, and what it can't tell you, so you can learn to read the market as you go. Any unfamiliar term is in the <a href="#glossary">glossary</a>.</p>
+    <nav class="jump" aria-label="On this page">
+      <a href="#market-sec">The market today</a><a href="#btc-sec">Bitcoin's cycle</a><a href="#plain-sec">Company news &amp; your risk</a><a href="#basics-sec">Investing basics</a><a href="#detail-sec">The full detail</a>
+    </nav>
   </div>
 </header>
 
 <div id="err" hidden></div>
 
-<section>
+<section id="market-sec">
   <div class="col stack">
-    <h2>Today</h2>
-    <p>What the system can see right now: which names pass the declared eligibility screen, which 8-K and Form&nbsp;4 filings landed for them on the last filing day, and where the benchmarks closed. Gathered after each US close by a scheduled job that <em>cannot</em> reach the Referee, evaluate a criterion or spend a read — gathering is free under the protocol, measuring is not.</p>
+    <h2>The market today</h2>
+    <p>Six gauges professionals watch to judge the market's mood. Each is green, amber or red by a fixed rule stated on the card, and each says in one line why it matters to someone with money invested.</p>
   </div>
-  <div id="daily"></div>
+  <div id="mood-sum"></div>
+  <div class="grid" id="gauges"><div class="card pcard"><p>Loading tonight's readings…</p></div></div>
+</section>
+
+<section id="btc-sec">
+  <div class="col stack">
+    <h2>Bitcoin and the "four-year cycle"</h2>
+    <p>About every four years, the reward for creating new bitcoins is cut in half: a <b>halving</b>. So far, Bitcoin's biggest booms and busts have come at similar distances after each halving, and many investors watch that pattern. This is where today's price sits on it.</p>
+  </div>
+  <div id="btc"><div class="card pcard"><p>Loading Bitcoin data…</p></div></div>
 </section>
 
 <section id="plain-sec">
   <div class="col stack">
-    <h2>Tonight, in plain English</h2>
-    <p>What the bots found on the last run, translated: how jumpy the market is, what a bad day could cost, what companies in the watched universe filed, and what has usually followed filings like those. Every card says what the number means for you and what it <em>cannot</em> tell you.</p>
+    <h2>Company news and your risk</h2>
+    <p>What a bad day could cost, what the ~1,000 small US companies the bots watch filed with regulators, and what has usually followed filings like those. Every card says what the number means for you and what it <em>cannot</em> tell you.</p>
   </div>
   <div class="plain-lead"><b>Read this first.</b> None of these figures has been shown to predict whether a price goes up or down — every pre-registered test of that failed (see <a href="#reads-sec">The reads</a>). They are useful for three things: knowing <b>how much risk</b> you are carrying, knowing <b>what happened</b> at a company before you act, and knowing <b>what usually followed</b> similar events, so a single headline doesn't carry more weight than its history supports. The decision is always yours.</div>
   <div class="grid" id="plain"></div>
@@ -268,6 +330,36 @@ details.why dd{margin:0}
       <li><b>Declare what you hold.</b> Until positions are declared, the bots can't measure your concentration or your dollar risk — the two numbers most likely to matter.</li>
     </ol>
   </div>
+</section>
+
+<section id="basics-sec">
+  <div class="col stack">
+    <h2>Investing basics, in two minutes</h2>
+    <p>General principles most beginners are never told. They are education, not advice about any particular investment.</p>
+  </div>
+  <div class="grid">
+    <div class="card pcard"><h3>Risk and reward travel together</h3><p>Anything that can rise a lot can fall a lot. Small companies and Bitcoin swing far more than the S&amp;P 500; the "bad day" figures on this page show how much more.</p></div>
+    <div class="card pcard"><h3>Time is your cushion</h3><p>Money you need within a few years is exposed to whatever the market does in those years. Stocks have tended to recover from falls, but some falls took years, and Bitcoin has dropped 75–85% after each past peak.</p></div>
+    <div class="card pcard"><h3>Don't put everything in one place</h3><p>One company can fail outright. A fund holding hundreds of companies (like SPY) spreads that risk. The bots' <em>Exposure</em> section measures how concentrated you are, once you declare holdings.</p></div>
+    <div class="card pcard"><h3>Nobody reliably times the market</h3><p>This project tested several ideas for beating the market with strict rules, and every one failed. Be wary of anyone, or any chart, that claims to know what happens next.</p></div>
+    <div class="card pcard"><h3>Size before story</h3><p>Before buying, decide how much you could lose without it changing your life, and size the position to that. The calculator above turns tonight's risk figures into dollars.</p></div>
+    <div class="card pcard"><h3>Write down why, and what would change your mind</h3><p>Before you act, write one sentence on why, and one on what would prove you wrong. It is the simplest protection against panic selling and against holding a loser out of hope.</p></div>
+  </div>
+</section>
+
+<section id="detail-sec" class="close">
+  <div class="col stack">
+    <h2>The full detail</h2>
+    <p>Everything below is the bots' raw output and the research record behind it. Each section has a <em>What does this mean?</em> panel.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col stack">
+    <h2>The watched companies today</h2>
+    <p>What the system can see right now: which names pass the declared eligibility screen, which 8-K and Form&nbsp;4 filings landed for them on the last filing day, and where the benchmarks closed. Gathered after each US close by a scheduled job that <em>cannot</em> reach the Referee, evaluate a criterion or spend a read — gathering is free under the protocol, measuring is not.</p>
+  </div>
+  <div id="daily"></div>
 </section>
 
 <section>
@@ -310,6 +402,11 @@ details.why dd{margin:0}
     <dt>Jobless claims · unemployment · CPI</dt><dd>Weekly new unemployment claims, the monthly unemployment rate, and the consumer price index (inflation). Context for the economy, not for a single stock.</dd>
     <dt>Thesis · falsifier</dt><dd>Your written reason for owning something, and the specific thing that would prove it wrong. The bots track both and show filings that bear on them.</dd>
     <dt>Stance</dt><dd>Conservative, balanced or aggressive. It changes the order of the brief and which concentration levels get flagged. It never changes a number.</dd>
+    <dt>Bitcoin halving</dt><dd>Every 210,000 blocks (about four years) the number of new bitcoins created per block is cut in half. Past halvings: Nov 2012, Jul 2016, May 2020, Apr 2024. The next is estimated for around April 2028.</dd>
+    <dt>Four-year cycle</dt><dd>The observation that Bitcoin's big booms (about 17–18 months after a halving) and busts (about 30 months after) have come at similar times in past cycles. A pattern, not a law.</dd>
+    <dt>Drawdown ("% below the high")</dt><dd>How far a price is under its highest point. A 50% drawdown needs a 100% gain to get back to the high.</dd>
+    <dt>Inflation (CPI)</dt><dd>How much the prices of everyday goods rose over a year. The Federal Reserve aims for about 2%.</dd>
+    <dt>Recession</dt><dd>A broad, lasting fall in economic activity, usually with rising unemployment. Stock prices often fall before and during one.</dd>
     <dt>Dark</dt><dd>A section whose data is missing or stale. It is shown as dark rather than showing old numbers as if they were new.</dd>
   </dl>
 </section>
@@ -320,6 +417,15 @@ details.why dd{margin:0}
     <p>Set how conservative or aggressive you want to be, and send a question or an instruction. The stance is remembered in this browser and travels with every message you send.</p>
   </div>
   <div id="channel"></div>
+</section>
+
+<section id="record-sec">
+  <div class="col stack">
+    <div class="eyebrow">The research record</div>
+    <h2>A trading system that was measured, and stopped</h2>
+    <p>Three programmes, pre-registered, with every threshold fixed before the data was touched. This is the record of what they found, read live from the registries on <code>master</code> so it cannot quietly go stale.</p>
+    <div class="stamp" id="stamp"><span>loading the registries…</span></div>
+  </div>
 </section>
 
 <section>
@@ -977,6 +1083,9 @@ function mood(vix){
   return ["stressed", "p-miss"];
 }
 function plainDark(msg){
+  document.getElementById("gauges").innerHTML =
+    '<div class="card pcard"><h3>Not available tonight</h3><p>' + msg + "</p></div>";
+  document.getElementById("mood-sum").innerHTML = "";
   document.getElementById("plain").innerHTML =
     '<div class="card pcard"><h3>Not available tonight</h3><p>' + msg + "</p></div>";
   document.getElementById("calc-out").textContent = "No risk figures are available.";
@@ -989,21 +1098,7 @@ function renderPlain(brief, an, mac){
   var vols = ((an && an.volatility) || {}).names || {};
   var cards = [];
 
-  // 1. market mood
-  var spy = vols.SPY, vix = series.VIXCLS && series.VIXCLS.value;
-  var m = mood(vix);
-  if (spy && spy.status === "ok"){
-    var ratio = spy.realized_63d_ann_pct ? spy.vol_ann_pct / spy.realized_63d_ann_pct : null;
-    cards.push(pcard("Market mood",
-      '<span class="pill ' + m[1] + '">' + m[0] + "</span>",
-      "<p>The S&amp;P 500 is expected to swing about <b>" + spy.vol_ann_pct +
-      "%/yr</b>" + (ratio ? ", " + ratio.toFixed(1) + "× its pace over the last three months (" +
-      spy.realized_63d_ann_pct + "%)" : "") + ". The VIX, the market's own fear gauge, is <b>" +
-      (vix == null ? "n/a" : vix) + "</b>.</p>",
-      "<b>In practice:</b> expect bigger daily moves than usual, in either direction. " +
-      "Small companies, which this universe is made of, usually swing more than the S&amp;P 500."));
-  }
-
+  var spy = vols.SPY;
   // 2. a bad day in dollars
   var iwm = vols.IWM, bad = [];
   [["an S&P 500 fund (SPY)", spy], ["a small-company fund (IWM)", iwm]].forEach(function(p){
@@ -1014,22 +1109,9 @@ function renderPlain(brief, an, mac){
   });
   if (bad.length)
     cards.push(pcard("A bad day, in dollars", "", "<ul>" + bad.join("") + "</ul>",
-      "<b>In practice:</b> if those amounts, scaled to your position, would make you sell in a panic, the position is too big for you right now. Use the calculator below for any amount or name."));
-
-  // 3. credit and rates
-  var hy = series.BAMLH0A0HYM2, t10 = series.DGS10, curve = series.T10Y2Y;
-  if (hy && hy.value != null){
-    var d1y = hy.year_ago != null ? hy.value - hy.year_ago : null;
-    cards.push(pcard("Borrowing conditions",
-      hy.value.toFixed(2) + " pts",
-      "<p>Riskier companies pay <b>" + hy.value.toFixed(2) + " percentage points</b> more than the US government to borrow" +
-      (d1y != null ? ", " + (d1y >= 0 ? "up " : "down ") + Math.abs(d1y * 100).toFixed(0) + " basis points from a year ago" : "") +
-      ". The 10-year Treasury yields <b>" + (t10 ? t10.value + "%" : "n/a") + "</b>; the 10y–2y curve is <b>" +
-      (curve ? curve.value + " pts" : "n/a") + "</b>.</p>",
-      "<b>In practice:</b> " + (d1y != null && d1y > 0
-        ? "lenders are more cautious than a year ago, which bites small, indebted companies first. Check the debt of anything you own in this universe."
-        : "lenders are not more cautious than a year ago.")));
-  }
+      "<b>In practice:</b> if those amounts, scaled to your position, would make you sell in a panic, the position is too big for you right now. Use the calculator below for any amount or name." +
+      (spy && spy.realized_63d_ann_pct ? '<br><b>Why they are this size:</b> these figures scale with how much prices are swinging, and stocks are swinging ' +
+        (spy.vol_ann_pct / spy.realized_63d_ann_pct).toFixed(1) + '× their pace of the last three months. See <a href="#market-sec">How much stocks are swinging</a> for why.' : "")));
 
   // 4. company news tonight vs an ordinary day
   var today = (an && an.observed_today) || [];
@@ -1068,7 +1150,10 @@ function renderPlain(brief, an, mac){
         clusters.map(function(c){ return esc(c.ticker); }).join(", ") + "</b>."
       : "No cluster buy (two or more insiders buying within five days) was confirmed on this run.") +
     " Buy or sell direction reaches the bots about two days after a filing, so the latest filings are still unconfirmed.</p>",
-    "<b>In practice:</b> insiders buying is worth knowing, but tested twice it has not reliably beaten the market. Treat it as a reason to look, not a reason to buy."));
+    "<b>In practice:</b> insiders buying is worth knowing, but tested twice it has not reliably beaten the market. Treat it as a reason to look, not a reason to buy." +
+    "<br><b>Why the count is " + (clusters.length ? "what it is" : "zero") + ":</b> " + (clusters.length
+      ? "a cluster is counted only once two or more insiders' purchases are confirmed, which happens about two days after they file."
+      : "either few insiders bought, or their trades have not been confirmed yet: buy-or-sell direction reaches the bots about two days after the filing, and longer around holidays.")));
 
   // 6. your portfolio
   var ex = (an && an.exposure) || {};
@@ -1105,12 +1190,391 @@ function setupCalc(vols){
   sel.onchange = upd; amt.oninput = upd; upd();
 }
 
+/* ─── the market today: six gauges ────────────────────────────────────────
+   Fixed, stated thresholds. A gauge with no data says so; it is never
+   coloured from a guess. The tally is a count of those colours, nothing more. */
+/* ─── "why": likely contributors behind each reading ──────────────────────
+   Built from three things only: the other published readings, tonight's
+   published headlines (matched by keyword, linked, labelled "may be
+   related"), and the textbook drivers for a move in that direction. The
+   bots measure what happened, not why, and every box says so. */
+var NEWS_KEYS = {
+  swings: /attack|strike|war|conflict|missile|tariff|sell-?off|slump|plunge|turmoil|crisis|concerned|volatil|rally/i,
+  vix: /attack|strike|war|conflict|missile|tariff|sell-?off|slump|plunge|turmoil|crisis|concerned|fear/i,
+  credit: /default|bankrupt|debt|credit|downgrade|insolven|refinanc/i,
+  jobs: /\bjobs?\b|payroll|unemploy|layoff|hiring|labou?r|GDP|economy/i,
+  inflation: /inflation|oil|brent|crude|energy|tariff|CPI|prices/i,
+  curve: /\bFed\b|Federal Reserve|interest rate|yield|treasur|bond|ECB|central bank|GDP/i,
+  bitcoin: /bitcoin|crypto|\bBTC\b|ether|stablecoin|digital asset/i
+};
+function newsFor(key, mac){
+  var items = (((mac || {}).news || {}).market || {}).items || [];
+  var re = NEWS_KEYS[key];
+  return items.filter(function(n){ return re && re.test(n.headline || ""); }).slice(0, 2);
+}
+function ch1y(s){ return s && s.year_ago != null ? s.value - s.year_ago : null; }
+function f2(x){ return (x > 0 ? "+" : "") + x.toFixed(2); }
+function whyBox(points, drivers, news){
+  var h = '<div class="whybox"><div class="wl">Why this may be happening</div>';
+  if (points.length) h += "<ul>" + points.map(function(p){ return "<li>" + p + "</li>"; }).join("") + "</ul>";
+  if (drivers) h += "<p><b>What usually drives this:</b> " + drivers + "</p>";
+  if (news && news.length) h += '<p class="nw"><b>In tonight\'s news (may be related):</b> ' + news.map(function(n){
+      var u = safeUrl(n.url);
+      return u ? '<a href="' + esc(u) + '" target="_blank" rel="noopener">' + esc(n.headline) + "</a>" : esc(n.headline);
+    }).join(" · ") + "</p>";
+  return h + '<p class="caveat">The bots measure what happened, not why. These are likely contributors checked against tonight\'s data, not proven causes.</p></div>';
+}
+function explain(g, an, mac){
+  var S = {};
+  ((mac && mac.series) || []).forEach(function(s){ if (s.value != null) S[s.id] = s; });
+  var spy = (((an || {}).volatility || {}).names || {}).SPY;
+  var vix = S.VIXCLS, hy = S.BAMLH0A0HYM2, t10 = S.DGS10, t2 = S.DGS2, ff = S.DFF,
+      un = S.UNRATE, cl = S.ICSA, cpi = S.CPIAUCSL, usd$ = S.DTWEXBGS;
+  var dV = ch1y(vix), dH = ch1y(hy), d10 = ch1y(t10), d2 = ch1y(t2), dU = ch1y(un);
+  var inf = cpi && cpi.year_ago ? cpi.value / cpi.year_ago - 1 : null;
+  var P = [], D = "";
+  var up = g.level !== "good";
+  if (g.key === "swings"){
+    if (vix && dV != null && dV > 0) P.push("The VIX fear gauge is " + vix.value.toFixed(1) + ", up from " + vix.year_ago.toFixed(1) + " a year ago: investors are paying more to protect themselves against big moves.");
+    if (hy && dH != null && dH > 0.1) P.push("Lenders charge riskier companies " + dH.toFixed(2) + " points more than a year ago, a sign of caution that often comes with choppier stock prices.");
+    if (t10 && d10 != null && Math.abs(d10) > 0.4) P.push("Long-term interest rates are " + f2(d10) + " points from a year ago (10-year at " + t10.value + "%). " + (d10 > 0 ? "Higher rates make companies' future profits worth less today, which unsettles prices." : "Falling rates often reflect worries about growth."));
+    if (inf != null && inf > 0.03) P.push("Inflation is running at " + (inf * 100).toFixed(1) + "%, which keeps investors guessing about what the Federal Reserve will do next.");
+    D = up ? "price swings grow when something surprises investors — a war or energy shock, a change in what the Fed is expected to do, disappointing company results — and they feed on themselves as worried investors sell."
+           : "swings shrink when there are few surprises and investors are confident about growth and interest rates.";
+  } else if (g.key === "vix"){
+    if (hy && dH != null) P.push("Lenders' extra charge for risky borrowers is " + (dH >= 0 ? "up " : "down ") + Math.abs(dH).toFixed(2) + " points on the year, " + (dH > 0 ? "the same caution showing up in the bond market." : "so the bond market is calmer than the options market."));
+    if (spy && spy.realized_63d_ann_pct) P.push("Stocks are expected to swing about " + spy.vol_ann_pct + "% a year, against " + spy.realized_63d_ann_pct + "% over the last three months; the VIX rises when recent moves get bigger.");
+    if (inf != null && inf > 0.03 && t2 && ff && t2.value > ff.value) P.push("With inflation at " + (inf * 100).toFixed(1) + "%, markets expect the Fed may raise rates (the 2-year rate of " + t2.value + "% is above the Fed's " + ff.value + "%), an uncertainty investors pay to protect against.");
+    D = up ? "the VIX rises when investors rush to buy insurance (options) against a fall — typically around wars, energy shocks, elections, or uncertainty about interest rates."
+           : "the VIX stays low when investors see few threats and feel no need to buy protection.";
+  } else if (g.key === "credit"){
+    if (vix && dV != null && dV > 0) P.push("The VIX is up " + dV.toFixed(1) + " points on the year: the general rise in caution is reaching lenders too.");
+    if (t10 && d10 != null && d10 > 0.3) P.push("Interest rates are higher than a year ago (10-year " + t10.value + "% vs " + t10.year_ago + "%), so companies that must refinance their debt face bigger bills, and lenders price that in.");
+    if (un && dU != null && dU <= 0.1) P.push("Unemployment has not risen (" + un.value + "% vs " + un.year_ago + "% a year ago), so this looks more like nervousness than companies actually failing to repay.");
+    else if (un && dU != null && dU > 0.1) P.push("Unemployment is up " + dU.toFixed(1) + " points on the year, a sign of a slowing economy that makes lenders warier.");
+    D = up ? "spreads widen when lenders worry more companies will struggle to repay — because the economy may slow, or because loans must be refinanced at higher rates — and when investors in general pull back from risk."
+           : "spreads stay steady or narrow when the economy looks healthy and investors are comfortable taking risk.";
+  } else if (g.key === "jobs"){
+    if (un && dU != null) P.push("Unemployment is " + un.value + "%, " + (dU < 0 ? "down " : "up ") + Math.abs(dU).toFixed(1) + " points from " + un.year_ago + "% a year ago.");
+    if (cl && cl.year_ago) P.push((cl.value < cl.year_ago ? "Fewer" : "More") + " people are filing new unemployment claims each week than a year ago (" + Math.round(cl.value / 1000) + "k vs " + Math.round(cl.year_ago / 1000) + "k), which means " + (cl.value < cl.year_ago ? "fewer layoffs." : "more layoffs."));
+    if (inf != null && inf > 0.03) P.push("Inflation of " + (inf * 100).toFixed(1) + "% suggests demand is still strong — the same spending that keeps prices rising keeps businesses hiring.");
+    D = g.level === "good" ? "jobs hold up or improve when businesses see enough demand to keep and add staff, usually because consumers keep spending."
+           : "jobs weaken when demand slows and businesses cut costs; higher interest rates, which make borrowing for expansion expensive, often play a part.";
+  } else if (g.key === "inflation"){
+    if (un && un.value < 4.5) P.push("The job market is strong (" + un.value + "% unemployment), so people keep spending and businesses can keep raising prices.");
+    if (t10 && d10 != null && d10 > 0.3) P.push("Long-term interest rates rose " + d10.toFixed(2) + " points over the year, which is what you'd expect if investors think inflation will stay high.");
+    if (usd$ && usd$.year_ago){
+      var dd = usd$.value / usd$.year_ago - 1;
+      if (dd > 0.01) P.push("The US dollar is " + (dd * 100).toFixed(1) + "% stronger than a year ago, which usually makes imports cheaper — so it is working against inflation, not causing it.");
+      else if (dd < -0.01) P.push("The US dollar is " + (-dd * 100).toFixed(1) + "% weaker than a year ago, which makes imports more expensive and adds to inflation.");
+    }
+    D = g.level === "good" ? "inflation stays near target when demand and supply are in balance and energy prices are steady."
+           : "inflation comes from strong demand meeting limited supply, energy and food prices (oil especially), housing costs, and taxes or tariffs on imports.";
+  } else if (g.key === "curve"){
+    if (t2 && t10 && d2 != null && d10 != null) P.push("Over the past year the 2-year rate moved " + f2(d2) + " points and the 10-year " + f2(d10) + ". " + (d2 > d10 ? "Short rates rose faster, so the gap between them narrowed." : "Long rates rose faster, so the gap widened."));
+    if (t2 && ff) P.push("The 2-year rate (" + t2.value + "%) is " + (t2.value > ff.value ? "above" : "below") + " the Fed's current rate (" + ff.value + "%), which usually means investors expect the Fed to " + (t2.value > ff.value ? "raise" : "cut") + " rates" + (inf != null && t2.value > ff.value ? " — likely because inflation is " + (inf * 100).toFixed(1) + "%." : "."));
+    D = "short-term rates follow what the Fed is expected to do; long-term rates follow expected growth and inflation over many years. A flat or inverted curve means markets expect tight Fed policy now and slower growth later.";
+  }
+  return whyBox(P, D, newsFor(g.key, mac));
+}
+
+function btcWhy(c){
+  var mac = window.__mac || null, S = {};
+  ((mac && mac.series) || []).forEach(function(s){ if (s.value != null) S[s.id] = s; });
+  var P = [];
+  var full = (c.cycles || []).filter(function(x){ return x.status === "ok" && x.complete_data && !x.current; });
+  var ph = c.phase || {};
+  if (ph.label && full.length) P.push("Timing: today is day " + c.days_since_halving + ", " + esc(ph.text) + ". After their peaks, the earlier cycles fell " +
+    full.map(function(x){ return Math.round(-100 * x.drop_peak_to_low) + "%"; }).join(" and ") + ". A " + Math.round(-100 * c.off_cycle_high) + "% fall from this cycle's high is in line with that pattern so far.");
+  var mood = window.__mood;
+  if (mood) P.push("Risk appetite: Bitcoin tends to move with investors' appetite for risk, and tonight's market mood is <b>" + esc(mood.word) + "</b> (" + mood.caution + " of " + mood.total + " gauges show caution" + (S.VIXCLS ? ", VIX " + S.VIXCLS.value.toFixed(1) : "") + ").");
+  if (S.DGS10 && S.DGS10.year_ago != null && S.DGS10.value > S.DGS10.year_ago + 0.3)
+    P.push("Interest rates: the 10-year Treasury pays " + S.DGS10.value + "%, up from " + S.DGS10.year_ago + "% a year ago. When safe bonds pay more, assets that pay no interest, like Bitcoin, become less attractive to hold.");
+  if (full.length) P.push("Smaller booms: this cycle's high was " + (c.cycles.filter(function(x){ return x.current; })[0] || {}).peak_multiple + "× its halving-day price, against " +
+    full.map(function(x){ return x.peak_multiple + "×"; }).join(" and ") + " before. As Bitcoin has grown and large funds hold it, each halving's cut to new supply matters less.");
+  var D = "the usual explanation for the cycle is that each halving cuts the supply of new coins, which has come before big rallies; rallies draw in new buyers and borrowed money, and when the mood turns, forced selling makes the fall deeper.";
+  return whyBox(P, D, mac ? newsFor("bitcoin", mac) : []);
+}
+function renderBtcWhy(){
+  var el = document.getElementById("btc-why");
+  if (el && window.__btc) el.innerHTML = '<h3>Why is Bitcoin here?</h3>' + btcWhy(window.__btc);
+}
+
+function gaugeCard(g){
+  return '<div class="card pcard gauge g-' + g.level + '"><h3>' + esc(g.title) + "</h3>" +
+    '<div class="lvl"><span class="dot" aria-hidden="true"></span>' + esc(g.word) + "</div>" +
+    '<div class="big">' + g.big + "</div>" +
+    "<p><b>What it is:</b> " + g.what + "</p>" +
+    "<p><b>Right now:</b> " + g.now + "</p>" +
+    '<p class="so"><b>Why it matters to you:</b> ' + g.why + "</p>" +
+    (g.whyHtml || "") +
+    '<p class="rule">Rule: ' + esc(g.rule) + "</p></div>";
+}
+function gaugesFrom(an, mac){
+  var S = {};
+  ((mac && mac.series) || []).forEach(function(s){ if (s.value != null) S[s.id] = s; });
+  var spy = (((an || {}).volatility || {}).names || {}).SPY;
+  var out = [];
+  if (spy && spy.status === "ok" && spy.realized_63d_ann_pct){
+    var r = spy.vol_ann_pct / spy.realized_63d_ann_pct;
+    var L = r < 0.9 ? ["good", "Calmer than usual"] : r <= 1.25 ? ["good", "Normal"]
+          : r <= 1.6 ? ["warn", "Jumpier than usual"] : ["bad", "Much jumpier than usual"];
+    out.push({key: "swings", short: "bigger price swings", title: "How much stocks are swinging",
+      level: L[0], word: L[1], big: r.toFixed(1) + "× <small>usual</small>",
+      what: "how far the S&amp;P 500 (the 500 largest US companies) is expected to move day to day, compared with its last three months.",
+      now: "expected swings of about " + spy.vol_ann_pct + "% a year, against " + spy.realized_63d_ann_pct + "% over the last three months.",
+      why: "bigger swings mean any stock or fund you own can drop (or jump) further, faster. It says nothing about which way.",
+      rule: "green under 1.25×, amber to 1.6×, red above"});
+  }
+  if (S.VIXCLS){
+    var v = S.VIXCLS.value;
+    var L2 = v < 20 ? ["good", v < 15 ? "Calm" : "Normal"] : v < 30 ? ["warn", "Elevated"] : ["bad", "Fearful"];
+    out.push({key: "vix", short: "elevated fear", title: "The fear gauge (VIX)",
+      level: L2[0], word: L2[1], big: v.toFixed(1),
+      what: "a number from the options market showing how much movement investors are paying to protect against over the next month.",
+      now: v.toFixed(1) + (S.VIXCLS.year_ago != null ? ", against " + S.VIXCLS.year_ago.toFixed(1) + " a year ago." : "."),
+      why: "when it is high, investors are nervous and prices tend to move sharply. Long-term investors often treat fear as a time for patience, not panic.",
+      rule: "green under 20, amber 20–30, red 30 and above"});
+  }
+  var hy = S.BAMLH0A0HYM2;
+  if (hy){
+    var d = hy.year_ago != null ? hy.value - hy.year_ago : null;
+    var L3 = hy.value >= 5 || (d != null && d > 1) ? ["bad", "Stressed"]
+           : d != null && d > 0.25 ? ["warn", "Tightening"] : ["good", "Steady"];
+    out.push({key: "credit", short: "nervous lenders", title: "How nervous lenders are",
+      level: L3[0], word: L3[1], big: hy.value.toFixed(2) + " pts",
+      what: "the extra interest riskier companies pay to borrow, compared with the US government (the high-yield credit spread).",
+      now: hy.value.toFixed(2) + " points" + (d != null ? ", " + (d >= 0 ? "up " : "down ") + Math.abs(d).toFixed(2) + " from a year ago." : "."),
+      why: "when lenders get nervous, smaller and indebted companies feel it first, and stock prices often follow. Rising spreads are an early warning sign.",
+      rule: "green if up 0.25 pts or less on the year, amber to +1 pt, red above +1 pt or at 5 pts"});
+  }
+  var un = S.UNRATE, cl = S.ICSA;
+  if (un && un.year_ago != null){
+    var du = un.value - un.year_ago;
+    var L4 = du > 0.5 ? ["bad", "Weakening"] : du > 0.2 ? ["warn", "Softening"]
+           : du < -0.1 ? ["good", "Improving"] : ["good", "Steady"];
+    out.push({key: "jobs", short: "a softening job market", title: "Jobs",
+      level: L4[0], word: L4[1], big: un.value + "% <small>unemployed</small>",
+      what: "the share of people looking for work who can't find it, and the weekly count of new unemployment claims.",
+      now: un.value + "% unemployment, against " + un.year_ago + "% a year ago" +
+        (cl ? "; " + Math.round(cl.value / 1000) + "k new claims last week" + (cl.year_ago ? " (" + Math.round(cl.year_ago / 1000) + "k a year ago)" : "") : "") + ".",
+      why: "people with jobs keep spending, which keeps company profits up. A fast rise in unemployment has often come with recessions and falling markets.",
+      rule: "green if unemployment is within +0.2 pts of a year ago, amber to +0.5, red above"});
+  }
+  var cpi = S.CPIAUCSL;
+  if (cpi && cpi.year_ago){
+    var inf = cpi.value / cpi.year_ago - 1;
+    var L5 = inf <= 0.025 ? ["good", "Near target"] : inf <= 0.04 ? ["warn", "Above target"] : ["bad", "High"];
+    out.push({key: "inflation", short: "high inflation", title: "Inflation",
+      level: L5[0], word: L5[1], big: (inf * 100).toFixed(1) + "% <small>a year</small>",
+      what: "how much prices for everyday goods rose over the last twelve months (the consumer price index). The Federal Reserve aims for about 2%.",
+      now: "prices are " + (inf * 100).toFixed(1) + "% higher than a year earlier (as of " + esc(cpi.as_of) + ").",
+      why: "high inflation eats the value of cash and pushes the Fed to keep interest rates high, which tends to weigh on stock prices, especially smaller companies.",
+      rule: "green at 2.5% or less, amber to 4%, red above"});
+  }
+  var cv = S.T10Y2Y;
+  if (cv){
+    var L6 = cv.value < 0 ? ["bad", "Inverted"] : cv.value < 0.5 ? ["warn", "Flat"] : ["good", "Normal"];
+    out.push({key: "curve", short: "a flat yield curve", title: "Interest rates and the yield curve",
+      level: L6[0], word: L6[1], big: cv.value.toFixed(2) + " pts",
+      what: "the gap between 10-year and 2-year US government interest rates. Normally longer loans pay more.",
+      now: "10-year " + (S.DGS10 ? S.DGS10.value + "%" : "n/a") + ", 2-year " + (S.DGS2 ? S.DGS2.value + "%" : "n/a") +
+        ", gap " + cv.value.toFixed(2) + " pts; the Fed's own rate is " + (S.DFF ? S.DFF.value + "%" : "n/a") + ".",
+      why: "when short rates are above long ones (\"inverted\"), recessions have often followed within a year or two. Higher rates also make borrowing costlier for companies and households.",
+      rule: "green at 0.5 pts or more, amber 0–0.5, red below 0"});
+  }
+  return out;
+}
+function renderGauges(an, mac){
+  var gs = gaugesFrom(an, mac);
+  var el = document.getElementById("gauges"), sum = document.getElementById("mood-sum");
+  if (!gs.length){
+    el.innerHTML = '<div class="card pcard"><p>No gauge readings were published on this run.</p></div>';
+    sum.innerHTML = ""; return;
+  }
+  var caution = gs.filter(function(g){ return g.level !== "good"; });
+  var calm = gs.filter(function(g){ return g.level === "good"; });
+  var word = caution.length <= 1 ? "Calm" : caution.length <= 3 ? "Mixed" : "Cautious";
+  gs.forEach(function(g){ g.whyHtml = explain(g, an, mac); });
+  window.__mac = mac;
+  window.__mood = {word: word, caution: caution.length, total: gs.length};
+  var list = function(a){ return a.length > 1 ? a.slice(0, -1).join(", ") + " and " + a[a.length - 1] : a[0]; };
+  sum.innerHTML = '<div class="moodbar"><div class="head">Overall: <b>' + word + "</b> — " +
+    caution.length + " of " + gs.length + " gauges show caution.</div>" +
+    '<div class="tally" aria-hidden="true">' + gs.map(function(g){ return '<i class="g-' + g.level + '"></i>'; }).join("") + "</div>" +
+    "<p>" + (caution.length ? "Signs of caution: " + esc(list(caution.map(function(g){ return g.short; }))) + ". " : "") +
+    (calm.length ? "Holding up: " + esc(list(calm.map(function(g){ return g.title.toLowerCase(); }))) + "." : "") + "</p>" +
+    '<p class="note" style="font-style:normal">This describes conditions today. Markets have often risen while gauges were red and fallen while they were green; none of these predicts tomorrow.</p></div>';
+  el.innerHTML = gs.map(gaugeCard).join("");
+  renderBtcWhy();
+}
+
+/* ─── Bitcoin and the four-year cycle ─────────────────────────────────────
+   Published by observer_crypto.py to agent-output/crypto/latest.json. */
+var BTC_DARK_DAYS = 4;
+function fmtDate(iso){
+  var m = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  var p = String(iso).split("-");
+  return p.length === 3 ? (+p[2]) + " " + m[+p[1] - 1] + " " + p[0] : iso;
+}
+function usd(x){ return "$" + Math.round(x).toLocaleString("en-US"); }
+function btcChart(c){
+  var cyc = c.cycles.filter(function(x){ return x.overlay && x.overlay.length; });
+  var cols = {"2016-07-09": "var(--s1)", "2020-05-11": "var(--s2)", "2024-04-20": "var(--s3)"};
+  var name = function(x){ return x.current ? "This cycle (since " + x.halving.slice(0, 4) + ")" : x.halving.slice(0, 4) + " cycle"; };
+  // On a phone the SVG shrinks to ~40% scale, so its text is drawn larger
+  // there and the end-of-line labels give way to the legend above.
+  var small = window.innerWidth < 600, fs = small ? 22 : 12;
+  var W = 760, H = small ? 420 : 330, ml = small ? 74 : 50, mr = small ? 24 : 118, mt = 14, mb = small ? 46 : 36;
+  var X = function(d){ return ml + (W - ml - mr) * d / c.cycle_length_days_est; };
+  var lo = 1, hi = 1;
+  cyc.forEach(function(x){ x.overlay.forEach(function(p){ lo = Math.min(lo, p[1]); hi = Math.max(hi, p[1]); }); });
+  lo = Math.max(lo * 0.8, 0.05); hi = hi * 1.2;
+  var Y = function(m){ return mt + (H - mt - mb) * (Math.log(hi) - Math.log(m)) / (Math.log(hi) - Math.log(lo)); };
+  var svg = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Bitcoin price as a multiple of its halving-day price, by days since each halving">';
+  var ph = c.phase || {};
+  [[ph.peak_window, "past peaks"], [ph.low_window, "past lows"]].forEach(function(b){
+    if (!b[0]) return;
+    svg += '<rect x="' + X(b[0][0]) + '" y="' + mt + '" width="' + (X(b[0][1]) - X(b[0][0])) + '" height="' + (H - mt - mb) +
+      '" fill="var(--sunk)"/><text x="' + (X(b[0][0]) + 4) + '" y="' + (mt + fs) + '" font-size="' + (fs - 1) + '" fill="var(--muted)" font-family="IBM Plex Mono">' + b[1] + "</text>";
+  });
+  [0.25, 0.5, 1, 2, 5, 10, 20, 50].forEach(function(t){
+    if (t < lo || t > hi) return;
+    svg += '<line x1="' + ml + '" x2="' + (W - mr) + '" y1="' + Y(t) + '" y2="' + Y(t) + '" stroke="var(--grid)" stroke-width="1"' + (t === 1 ? ' stroke-dasharray="4 3" stroke="var(--axis)"' : "") + "/>" +
+      '<text x="' + (ml - 8) + '" y="' + (Y(t) + fs / 3) + '" text-anchor="end" font-size="' + fs + '" fill="var(--muted)" font-family="IBM Plex Mono">' + t + "×</text>";
+  });
+  for (var yr = 0; yr <= 4; yr++){
+    var dx = Math.round(yr * c.cycle_length_days_est / 4);
+    svg += '<text x="' + X(dx) + '" y="' + (H - mb + fs + 6) + '" text-anchor="middle" font-size="' + fs + '" fill="var(--muted)" font-family="IBM Plex Mono">' + (yr === 0 ? "halving" : "year " + yr) + "</text>";
+  }
+  var ends = [];
+  cyc.forEach(function(x){
+    var d = x.overlay.map(function(p, i){ return (i ? "L" : "M") + X(p[0]).toFixed(1) + " " + Y(p[1]).toFixed(1); }).join(" ");
+    svg += '<path d="' + d + '" fill="none" stroke="' + cols[x.halving] + '" stroke-width="' + (x.current ? 3 : 2) + '" stroke-linejoin="round" stroke-linecap="round"/>';
+    var last = x.overlay[x.overlay.length - 1];
+    ends.push({y: Y(last[1]), x: X(last[0]), t: name(x), col: cols[x.halving], cur: x.current});
+  });
+  var cur = ends.filter(function(e){ return e.cur; })[0];
+  if (cur) svg += '<circle cx="' + cur.x + '" cy="' + cur.y + '" r="5" fill="' + cur.col + '" stroke="var(--surface)" stroke-width="2"/>' +
+    '<text x="' + cur.x + '" y="' + (cur.y - 11) + '" text-anchor="middle" font-size="' + fs + '" font-weight="600" fill="var(--ink)" font-family="IBM Plex Mono">today</text>';
+  ends.sort(function(a, b){ return a.y - b.y; });
+  for (var i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 14) ends[i].y = ends[i - 1].y + 14;
+  if (!small) ends.forEach(function(e){
+    var lx = e.cur ? e.x + 10 : W - mr + 6;
+    svg += '<text x="' + lx + '" y="' + (e.y + 4) + '" font-size="12.5" fill="var(--body)" font-family="IBM Plex Sans">' + esc(e.t) + "</text>";
+  });
+  svg += '<line class="xh" x1="0" x2="0" y1="' + mt + '" y2="' + (H - mb) + '" stroke="var(--axis)" stroke-width="1" visibility="hidden"/>';
+  svg += '<rect class="hit" x="' + ml + '" y="' + mt + '" width="' + (W - ml - mr) + '" height="' + (H - mt - mb) + '" fill="transparent"/></svg>';
+  var legend = '<div class="legend">' + cyc.map(function(x){
+    return '<span><i style="background:' + cols[x.halving] + '"></i>' + esc(name(x)) + "</span>"; }).join("") +
+    '<span style="color:var(--muted)">1× = the price on halving day · log scale</span></div>';
+  return {html: legend + '<div class="plot">' + svg + '<div class="tip"></div></div>', cyc: cyc, X: X, W: W, ml: ml, mr: mr, name: name};
+}
+function wireChart(root, ch, c){
+  var svg = root.querySelector("svg"), tip = root.querySelector(".tip"), xh = root.querySelector(".xh"),
+      hit = root.querySelector(".hit");
+  function at(x, day){
+    var best = null;
+    x.overlay.forEach(function(p){ if (p[0] <= day && (!best || p[0] > best[0])) best = p; });
+    return best && day - best[0] <= 8 ? best : null;
+  }
+  hit.addEventListener("mousemove", function(ev){
+    var r = svg.getBoundingClientRect(), sx = (ev.clientX - r.left) * ch.W / r.width;
+    var day = Math.round((sx - ch.ml) / (ch.W - ch.ml - ch.mr) * c.cycle_length_days_est);
+    if (day < 0) return;
+    xh.setAttribute("x1", sx); xh.setAttribute("x2", sx); xh.setAttribute("visibility", "visible");
+    var rows = ch.cyc.map(function(x){
+      var p = at(x, day);
+      return p ? esc(ch.name(x)) + ": " + p[1].toFixed(2) + "×" : null; }).filter(Boolean);
+    tip.innerHTML = "<b>Day " + day + "</b> (~" + (day / 30.44).toFixed(0) + " months) after halving<br>" +
+      (rows.length ? rows.join("<br>") : "no data at this point");
+    tip.style.display = "block";
+    var left = ev.clientX - r.left + 14;
+    if (left > r.width - 220) left = ev.clientX - r.left - 230;
+    tip.style.left = left + "px"; tip.style.top = (ev.clientY - r.top - 10) + "px";
+  });
+  hit.addEventListener("mouseleave", function(){ tip.style.display = "none"; xh.setAttribute("visibility", "hidden"); });
+}
+function renderBtc(c){
+  var el = document.getElementById("btc");
+  var age = ageDays(c && c.generated_at);
+  if (!c || c.status !== "ok" || age === null || age > BTC_DARK_DAYS){
+    el.innerHTML = darkBlock("Bitcoin data dark", [
+      c && c.generated_at ? "The last Bitcoin reading is " + (age || 0).toFixed(1) + " days old (" + esc(c.generated_at) + ")." : "No usable Bitcoin reading was published.",
+      "Nothing is shown rather than an old price presented as today's."]);
+    return;
+  }
+  window.__btc = c;
+  var ph = c.phase || {};
+  var pct = Math.round(100 * c.share_of_cycle);
+  var stage = (c.same_stage_past || []).map(function(s){
+    return "the " + s.halving.slice(0, 4) + " cycle was <b>" + Math.round(-100 * s.off_cycle_high) + "% below</b> its high"; });
+  var tl = function(d){ return Math.max(0, Math.min(100, 100 * d / c.cycle_length_days_est)); };
+  var bands = [[ph.peak_window, "pk", "past peaks"], [ph.low_window, "lo", "past lows"]].map(function(b){
+    if (!b[0]) return "";
+    return '<div class="band ' + b[1] + '" style="left:' + tl(b[0][0]) + "%;width:" + (tl(b[0][1]) - tl(b[0][0])) + '%"><span>' + b[2] + "</span></div>"; }).join("");
+  var ch = btcChart(c);
+  var past = c.cycles.filter(function(x){ return x.status === "ok"; });
+  var rows = past.map(function(x){
+    if (!x.complete_data) return "<tr><td>" + x.halving.slice(0, 4) + "</td><td colspan=\"5\" style=\"text-align:left;color:var(--muted)\">Our price data starts September 2014, after this halving — not compared.</td></tr>";
+    return "<tr><td>" + x.halving.slice(0, 4) + (x.current ? " (now)" : "") + "</td><td>" + usd(x.price_at_halving) + "</td><td>" +
+      usd(x.peak) + " · " + fmtDate(x.peak_date) + "</td><td>" + x.peak_days_after + " days · " + x.peak_multiple + "×</td><td>" +
+      usd(x.low_after_peak) + " · " + fmtDate(x.low_date) + (x.current ? " (so far)" : "") + "</td><td>" + Math.round(100 * x.drop_peak_to_low) + "%</td></tr>";
+  }).join("");
+  el.innerHTML = '<div class="btc-wrap">' +
+    '<div class="grid" style="margin-top:0">' +
+      pcard("Price", usd(c.price), "<p>Bitcoin's closing price on " + fmtDate(c.last_session) + ", in US dollars.</p>",
+        "It is <b>" + Math.round(-100 * c.off_cycle_high) + "% below</b> this cycle's high of " + usd(c.cycle_high) + " (" + fmtDate(c.cycle_high_date) + "), and " +
+        (c.multiple_vs_halving >= 1 ? "<b>" + c.multiple_vs_halving + "×</b>" : "<b>" + Math.round(100 * (1 - c.multiple_vs_halving)) + "% below</b>") +
+        " its price on halving day (" + usd(c.price_at_halving) + ").") +
+      pcard("Where we are in the cycle", "Day " + c.days_since_halving + " <small>of ~" + c.cycle_length_days_est + "</small>",
+        "<p>About <b>" + pct + "%</b> of the way from the " + fmtDate(c.halvings[c.halvings.length - 1]) + " halving to the next one, estimated around " + fmtDate(c.next_halving_estimate) + ".</p>",
+        "Today's distance from the halving is <b>" + esc(ph.text || "unknown") + "</b>" +
+        (ph.low_window ? " (past lows: days " + ph.past_low_days.join(" and ") + ")." : ".")) +
+      pcard("Compared with past cycles", "", "<p>At this same point after their halvings, " + (stage.length ? stage.join(", and ") : "no comparable cycle is in the data") +
+        ". This cycle is <b>" + Math.round(-100 * c.off_cycle_high) + "% below</b> its high.</p>" +
+        "<p>This cycle's high came on day " + c.cycle_high_days_after + "; past cycles peaked on days " + (ph.past_peak_days || []).join(" and ") + ". The high itself was far smaller: " +
+        c.cycles.filter(function(x){ return x.complete_data && x.status === "ok"; }).map(function(x){ return x.peak_multiple + "×"; }).join(", ") + " the halving-day price, cycle by cycle.</p>",
+        "Each cycle's rise has been smaller than the last. A pattern that has played out only twice in this data is a reason to pay attention, not proof it will repeat.") +
+    "</div>" +
+    '<div class="card pcard" id="btc-why"></div>' +
+    '<div class="card"><h3>The current cycle, halving to halving</h3>' +
+      '<div class="tl" role="img" aria-label="Timeline of the current cycle with today at ' + pct + ' percent">' +
+        '<div class="track"></div>' + bands +
+        '<div class="now" style="left:' + tl(c.days_since_halving) + '%"><span>today · day ' + c.days_since_halving + "</span></div>" +
+        '<div class="end" style="left:0">halving · ' + fmtDate(c.halvings[c.halvings.length - 1]) + "</div>" +
+        '<div class="end r" style="right:0">next ~' + fmtDate(c.next_halving_estimate) + " (est.)</div>" +
+      "</div>" +
+      '<p class="note" style="font-style:normal">Shaded: the stretches where the 2016 and 2020 cycles peaked and hit their lows, padded by 60 days either side.</p>' +
+    "</div>" +
+    '<div class="card viz"><h3>Each cycle, side by side</h3><p class="note" style="font-style:normal">Price as a multiple of its halving-day price (1× = unchanged), lined up by days since each halving. Hover to compare cycles at any point.</p>' +
+      ch.html +
+      '<details class="why"><summary>Show as a table</summary><div class="tvwrap"><table class="tv"><thead><tr><th>Cycle</th><th>Price at halving</th><th>Cycle high</th><th>High came</th><th>Low after the high</th><th>Fall, high to low</th></tr></thead><tbody>' + rows + "</tbody></table></div></details>" +
+    "</div>" +
+    '<div class="card pcard"><h3>How to read this, honestly</h3><ul>' +
+      "<li><b>It is a pattern, not a law.</b> It has played out two full times in this price data (three or four in Bitcoin's whole history). That is very few, and it has never been tested here.</li>" +
+      "<li><b>Each boom has been smaller.</b> Roughly 30× after 2016, 8× after 2020, 2× after 2024. If the pattern is fading, past timing may stop applying.</li>" +
+      "<li><b>The falls have been brutal.</b> After each past peak Bitcoin fell 75–85%. Anyone holding it should be able to sit through that without needing the money.</li>" +
+      "<li><b>Other forces matter now.</b> Large funds, regulation, interest rates and the stock market's mood affect Bitcoin more than they once did.</li>" +
+      "<li><b>Nothing here says what happens next.</b> It shows where today sits against what happened before.</li>" +
+    "</ul></div></div>";
+  wireChart(el, ch, c);
+  renderBtcWhy();
+}
+(function(){
+  fetchJson(AGENT_RAW + "crypto/latest.json").then(renderBtc).catch(function(err){
+    document.getElementById("btc").innerHTML = darkBlock("Bitcoin data not published yet", [
+      "Could not load <code>crypto/latest.json</code> (" + esc(err.message) + "). It is produced by the nightly run from the first night after this feature ships.",
+      "Nothing is shown rather than something stale."]);
+  });
+})();
+
 function loadPlain(d){
   var macDay = String(((d.inputs || {}).macro || {}).stamp || d.generated_at || "").slice(0, 10);
   Promise.all([
     fetchJson(AGENT_RAW + "analysis/" + d.day + ".json"),
     fetchJson(AGENT_RAW + "macro/" + macDay + ".json").catch(function(){ return null; })
-  ]).then(function(r){ renderPlain(d, r[0], r[1]); })
+  ]).then(function(r){ renderGauges(r[0], r[1]); renderPlain(d, r[0], r[1]); })
     .catch(function(err){ plainDark("The bots' analysis file could not be loaded (" + esc(err.message) + "). Nothing is shown rather than something stale."); });
 }
 
