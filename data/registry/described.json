@@ -8,8 +8,11 @@
   "common": {
     "universe": "data/universe/v27_universe.csv (907 names, frozen) -- the same universe as every frozen ledger; today's listed names only, so survivorship biases every figure UPWARD",
     "window": "filing dates 2023-09-01 .. 2026-08-31",
-    "horizons_bars": [21, 63],
-    "entry": "the first close AFTER the filing became public: the filing day's close when accepted before 16:00 ET on a session, otherwise the next session's close (8-K). Form 4: the session after the filing date, because the insider source carries no time of day.",
+    "horizons_bars": [
+      21,
+      63
+    ],
+    "entry": "the close of the first session AFTER the ET date of acceptance, for every 8-K (event_study's look-ahead guard on midnight-dated bars). After-close filings enter when they first became tradeable; pre-market and intraday filings enter one session later than they could have, so the first day's reaction is left out. Form 4: the session after the filing date, because the insider source carries no time of day.",
     "control": "SPY, market-adjusted, identical window",
     "independence": "event_study._dedupe_overlaps, unchanged: the first event per ticker wins and any later one inside its horizon is dropped",
     "delisting": "recorded at last traded price, exit_status=delisted, never dropped",
@@ -17,11 +20,31 @@
     "min_n": "ACTUARY's MIN_N (30): below it a type reports 'insufficient history' with no statistics"
   },
   "described": {
-    "8k_item_1.01": {"definition": "an original 8-K (not 8-K/A) whose EDGAR `items` field lists 1.01 -- entry into a material definitive agreement. One event per ticker per filing date."},
-    "8k_item_3.01": {"definition": "an original 8-K whose `items` lists 3.01 -- notice of delisting or failure to satisfy a listing rule. One event per ticker per filing date.", "why_forfeit_is_cheap": "specification #4 (listing deficiency) was abandoned before declaration on 2026-11-11 -- docs/V27_SPEC4_LISTING_DEFICIENCY.md"},
-    "8k_item_5.02": {"definition": "an original 8-K whose `items` lists 5.02 -- departure or appointment of directors or officers, or compensation arrangements. One event per ticker per filing date."},
-    "8k_item_7.01": {"definition": "an original 8-K whose `items` lists 7.01 -- Regulation FD disclosure. One event per ticker per filing date."},
-    "8k_item_8.01": {"definition": "an original 8-K whose `items` lists 8.01 -- other events. One event per ticker per filing date."},
-    "form4_sale": {"definition": "a Form 4 filing whose non-derivative transaction codes include S (open-market sale) and not P -- OBSERVER's direction_of() == 'sale'. One event per ticker per filing date, however many insiders filed. Source: Finnhub insider-transactions, the 1095-day pull of run 33927199851."}
-  }
+    "8k_item_1.01": {
+      "definition": "an original 8-K (not 8-K/A) whose EDGAR `items` field lists 1.01 -- entry into a material definitive agreement. One event per ticker per filing date."
+    },
+    "8k_item_3.01": {
+      "definition": "an original 8-K whose `items` lists 3.01 -- notice of delisting or failure to satisfy a listing rule. One event per ticker per filing date.",
+      "why_forfeit_is_cheap": "specification #4 (listing deficiency) was abandoned before declaration on 2026-11-11 -- docs/V27_SPEC4_LISTING_DEFICIENCY.md"
+    },
+    "8k_item_5.02": {
+      "definition": "an original 8-K whose `items` lists 5.02 -- departure or appointment of directors or officers, or compensation arrangements. One event per ticker per filing date."
+    },
+    "8k_item_7.01": {
+      "definition": "an original 8-K whose `items` lists 7.01 -- Regulation FD disclosure. One event per ticker per filing date."
+    },
+    "8k_item_8.01": {
+      "definition": "an original 8-K whose `items` lists 8.01 -- other events. One event per ticker per filing date."
+    },
+    "form4_sale": {
+      "definition": "a Form 4 filing whose non-derivative transaction codes include S (open-market sale) and not P -- OBSERVER's direction_of() == 'sale'. One event per ticker per filing date, however many insiders filed. Source: Finnhub insider-transactions, the 1095-day pull of run 33927199851."
+    }
+  },
+  "corrections": [
+    {
+      "at": "2026-11-26",
+      "before_any_outcome": true,
+      "what": "the first version of `entry` said pre-market and intraday 8-Ks enter that day's close; validate_described_events.py showed the engine enters the next session's close for all of them. The text was corrected to what the engine does. No outcome had been computed."
+    }
+  ]
 }
