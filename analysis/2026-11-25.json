@@ -15,6 +15,8 @@
     "sufficient": true,
     "worst": -0.565368
    },
+   "basis": "pre-registered read",
+   "condition": null,
    "control": "SPY",
    "event_type": "form4_cluster_buy",
    "exits": {
@@ -22,6 +24,7 @@
    },
    "horizon_bars": 21,
    "how_to_read": "What followed past events of this type — a description, not a forecast. The pre-registered read on this ledger returned NOT MET: the average was not established as different from zero at the declared threshold.",
+   "ledger_event_type": "form4_cluster_buy",
    "n_events": 160,
    "raw": {
     "best": 1.20339,
@@ -69,6 +72,8 @@
     "sufficient": true,
     "worst": -0.771707
    },
+   "basis": "pre-registered read",
+   "condition": null,
    "control": "SPY",
    "event_type": "form4_cluster_buy",
    "exits": {
@@ -76,6 +81,7 @@
    },
    "horizon_bars": 63,
    "how_to_read": "What followed past events of this type — a description, not a forecast. The pre-registered read on this ledger returned NOT MET: the average was not established as different from zero at the declared threshold.",
+   "ledger_event_type": "form4_cluster_buy",
    "n_events": 406,
    "raw": {
     "best": 2.742857,
@@ -107,6 +113,902 @@
     "rows": 406,
     "sha256": "45498e5cb74920c9cf51e18130bc20fa3abfce2108c9e60cab2278012bafe22f"
    }
+  },
+  {
+   "abnormal": {
+    "best": 2.187373,
+    "mean": -0.03808,
+    "median": -0.063297,
+    "min_n": 30,
+    "n": 1025,
+    "p05": -0.452776,
+    "p95": 0.510015,
+    "q25": -0.206071,
+    "q75": 0.079508,
+    "share_positive": 0.3746,
+    "sufficient": true,
+    "worst": -1.024666
+   },
+   "basis": "pre-registered read",
+   "condition": "earnings 8-Ks (Item 2.02) whose two-session announcement abnormal return was +5% or more; whether tonight's filing clears that is not yet known when it is filed",
+   "control": "SPY",
+   "event_type": "8k_item_2.02",
+   "exits": {
+    "delisted": 4,
+    "ok": 1021
+   },
+   "horizon_bars": 63,
+   "how_to_read": "What followed past events of this type — a description, not a forecast. The pre-registered read on this ledger returned NOT MET: the average was not established as different from zero at the declared threshold. Covers only: earnings 8-Ks (Item 2.02) whose two-session announcement abnormal return was +5% or more; whether tonight's filing clears that is not yet known when it is filed.",
+   "ledger_event_type": "8k_item202_car_ge5_pit",
+   "n_events": 1025,
+   "raw": {
+    "best": 2.226216,
+    "mean": 0.022206,
+    "median": -0.005155,
+    "min_n": 30,
+    "n": 1025,
+    "p05": -0.407567,
+    "p95": 0.566765,
+    "q25": -0.149847,
+    "q75": 0.139429,
+    "share_positive": 0.4868,
+    "sufficient": true,
+    "worst": -0.976952
+   },
+   "registry": {
+    "declared_at": "2026-09-05",
+    "read_at": "2026-11-10",
+    "reason": "ok",
+    "spec_id": "pead_8k_car_v3",
+    "verdict": "NOT MET"
+   },
+   "sample": {
+    "from": "2023-10-06",
+    "to": "2026-08-07"
+   },
+   "source": {
+    "path": "data/events/event_study_v3.csv",
+    "rows": 1025,
+    "sha256": "2b54a54f56cfe4e65554c580442186648ebcca0d60f8b6d30454c1968f9fc78a"
+   }
+  },
+  {
+   "abnormal": {
+    "best": 15.251955,
+    "mean": -0.012712,
+    "median": -0.032907,
+    "min_n": 30,
+    "n": 2766,
+    "p05": -0.413835,
+    "p95": 0.401991,
+    "q25": -0.149647,
+    "q75": 0.061891,
+    "share_positive": 0.3941,
+    "sufficient": true,
+    "worst": -0.970105
+   },
+   "basis": "described",
+   "condition": null,
+   "control": "SPY",
+   "event_type": "8k_item_1.01",
+   "exits": {
+    "delisted": 7,
+    "ok": 2759
+   },
+   "horizon_bars": 21,
+   "how_to_read": "What followed past events of this type — a description, not a forecast. This type was NEVER TESTED: the operator forfeited it to description on 2026-11-26, so there is no read, no verdict, and the figures say nothing about whether the difference from zero is real.",
+   "ledger_event_type": "8k_item_1.01",
+   "n_events": 2766,
+   "raw": {
+    "best": 15.26898,
+    "mean": 0.00544,
+    "median": -0.013354,
+    "min_n": 30,
+    "n": 2766,
+    "p05": -0.399086,
+    "p95": 0.435315,
+    "q25": -0.137525,
+    "q75": 0.083919,
+    "share_positive": 0.4544,
+    "sufficient": true,
+    "worst": -0.881032
+   },
+   "registry": {
+    "basis": "described",
+    "decided_at": "2026-11-26",
+    "definition": "an original 8-K (not 8-K/A) whose EDGAR `items` field lists 1.01 -- entry into a material definitive agreement. One event per ticker per filing date.",
+    "described_type": "8k_item_1.01",
+    "reason": "described, never tested: forfeited to description, so no read and no verdict exist",
+    "refused": false,
+    "verdict": null
+   },
+   "sample": {
+    "from": "2023-09-01",
+    "to": "2026-08-31"
+   },
+   "source": {
+    "path": "data/events/described/outcomes_8k_item_1.01_21.csv",
+    "rows": 2766,
+    "sha256": "81adac1dfdd8186a0b90ff2d563d8cb19d4d688f60732891bf8fb63329aca448"
+   }
+  },
+  {
+   "abnormal": {
+    "best": 29.321962,
+    "mean": -0.0279,
+    "median": -0.095448,
+    "min_n": 30,
+    "n": 2124,
+    "p05": -0.64302,
+    "p95": 0.683274,
+    "q25": -0.270314,
+    "q75": 0.072843,
+    "share_positive": 0.3409,
+    "sufficient": true,
+    "worst": -1.078527
+   },
+   "basis": "described",
+   "condition": null,
+   "control": "SPY",
+   "event_type": "8k_item_1.01",
+   "exits": {
+    "delisted": 7,
+    "ok": 2117
+   },
+   "horizon_bars": 63,
+   "how_to_read": "What followed past events of this type — a description, not a forecast. This type was NEVER TESTED: the operator forfeited it to description on 2026-11-26, so there is no read, no verdict, and the figures say nothing about whether the difference from zero is real.",
+   "ledger_event_type": "8k_item_1.01",
+   "n_events": 2124,
+   "raw": {
+    "best": 29.368762,
+    "mean": 0.025649,
+    "median": -0.037518,
+    "min_n": 30,
+    "n": 2124,
+    "p05": -0.603255,
+    "p95": 0.75233,
+    "q25": -0.231951,
+    "q75": 0.130055,
+    "share_positive": 0.4388,
+    "sufficient": true,
+    "worst": -0.980855
+   },
+   "registry": {
+    "basis": "described",
+    "decided_at": "2026-11-26",
+    "definition": "an original 8-K (not 8-K/A) whose EDGAR `items` field lists 1.01 -- entry into a material definitive agreement. One event per ticker per filing date.",
+    "described_type": "8k_item_1.01",
+    "reason": "described, never tested: forfeited to description, so no read and no verdict exist",
+    "refused": false,
+    "verdict": null
+   },
+   "sample": {
+    "from": "2023-09-01",
+    "to": "2026-08-24"
+   },
+   "source": {
+    "path": "data/events/described/outcomes_8k_item_1.01_63.csv",
+    "rows": 2124,
+    "sha256": "3489e7872dca9e43c989839b22fba765dcfbeac7f2c298b001164b287de0ec95"
+   }
+  },
+  {
+   "abnormal": {
+    "best": 22.621929,
+    "mean": 0.027476,
+    "median": -0.049884,
+    "min_n": 30,
+    "n": 510,
+    "p05": -0.574996,
+    "p95": 0.672945,
+    "q25": -0.208228,
+    "q75": 0.091057,
+    "share_positive": 0.3824,
+    "sufficient": true,
+    "worst": -0.957622
+   },
+   "basis": "described",
+   "condition": null,
+   "control": "SPY",
+   "event_type": "8k_item_3.01",
+   "exits": {
+    "ok": 510
+   },
+   "horizon_bars": 21,
+   "how_to_read": "What followed past events of this type — a description, not a forecast. This type was NEVER TESTED: the operator forfeited it to description on 2026-11-26, so there is no read, no verdict, and the figures say nothing about whether the difference from zero is real.",
+   "ledger_event_type": "8k_item_3.01",
+   "n_events": 510,
+   "raw": {
+    "best": 22.673469,
+    "mean": 0.050284,
+    "median": -0.03235,
+    "min_n": 30,
+    "n": 510,
+    "p05": -0.562043,
+    "p95": 0.691281,
+    "q25": -0.194551,
+    "q75": 0.124925,
+    "share_positive": 0.4353,
+    "sufficient": true,
+    "worst": -0.9
+   },
+   "registry": {
+    "basis": "described",
+    "decided_at": "2026-11-26",
+    "definition": "an original 8-K whose `items` lists 3.01 -- notice of delisting or failure to satisfy a listing rule. One event per ticker per filing date.",
+    "described_type": "8k_item_3.01",
+    "reason": "described, never tested: forfeited to description, so no read and no verdict exist",
+    "refused": false,
+    "verdict": null
+   },
+   "sample": {
+    "from": "2023-09-06",
+    "to": "2026-08-28"
+   },
+   "source": {
+    "path": "data/events/described/outcomes_8k_item_3.01_21.csv",
+    "rows": 510,
+    "sha256": "03622f0fe5e687b5bd76a6ddd9346db41a6871122a4db43b5a6dcb88c99f8f64"
+   }
+  },
+  {
+   "abnormal": {
+    "best": 6.200894,
+    "mean": 0.037965,
+    "median": -0.125545,
+    "min_n": 30,
+    "n": 413,
+    "p05": -0.772615,
+    "p95": 1.304072,
+    "q25": -0.386629,
+    "q75": 0.15617,
+    "share_positive": 0.3632,
+    "sufficient": true,
+    "worst": -1.120152
+   },
+   "basis": "described",
+   "condition": null,
+   "control": "SPY",
+   "event_type": "8k_item_3.01",
+   "exits": {
+    "ok": 413
+   },
+   "horizon_bars": 63,
+   "how_to_read": "What followed past events of this type — a description, not a forecast. This type was NEVER TESTED: the operator forfeited it to description on 2026-11-26, so there is no read, no verdict, and the figures say nothing about whether the difference from zero is real.",
+   "ledger_event_type": "8k_item_3.01",
+   "n_events": 413,
+   "raw": {
+    "best": 6.285714,
+    "mean": 0.097901,
+    "median": -0.076923,
+    "min_n": 30,
+    "n": 413,
+    "p05": -0.716905,
+    "p95": 1.391513,
+    "q25": -0.3384,
+    "q75": 0.228438,
+    "share_positive": 0.4237,
+    "sufficient": true,
+    "worst": -0.980571
+   },
+   "registry": {
+    "basis": "described",
+    "decided_at": "2026-11-26",
+    "definition": "an original 8-K whose `items` lists 3.01 -- notice of delisting or failure to satisfy a listing rule. One event per ticker per filing date.",
+    "described_type": "8k_item_3.01",
+    "reason": "described, never tested: forfeited to description, so no read and no verdict exist",
+    "refused": false,
+    "verdict": null
+   },
+   "sample": {
+    "from": "2023-09-06",
+    "to": "2026-08-19"
+   },
+   "source": {
+    "path": "data/events/described/outcomes_8k_item_3.01_63.csv",
+    "rows": 413,
+    "sha256": "e15df4d53b7c2aa52eb8f94b2b884cb711766a610f54bfe380ef669679da3411"
+   }
+  },
+  {
+   "abnormal": {
+    "best": 4.090219,
+    "mean": -0.001857,
+    "median": -0.023946,
+    "min_n": 30,
+    "n": 3622,
+    "p05": -0.323681,
+    "p95": 0.36901,
+    "q25": -0.118505,
+    "q75": 0.070093,
+    "share_positive": 0.4257,
+    "sufficient": true,
+    "worst": -0.905717
+   },
+   "basis": "described",
+   "condition": null,
+   "control": "SPY",
+   "event_type": "8k_item_5.02",
+   "exits": {
+    "delisted": 7,
+    "ok": 3615
+   },
+   "horizon_bars": 21,
+   "how_to_read": "What followed past events of this type — a description, not a forecast. This type was NEVER TESTED: the operator forfeited it to description on 2026-11-26, so there is no read, no verdict, and the figures say nothing about whether the difference from zero is real.",
+   "ledger_event_type": "8k_item_5.02",
+   "n_events": 3622,
+   "raw": {
+    "best": 4.126506,
+    "mean": 0.016187,
+    "median": -0.006155,
+    "min_n": 30,
+    "n": 3622,
+    "p05": -0.313333,
+    "p95": 0.399004,
+    "q25": -0.101298,
+    "q75": 0.091111,
+    "share_positive": 0.4757,
+    "sufficient": true,
+    "worst": -0.890411
+   },
+   "registry": {
+    "basis": "described",
+    "decided_at": "2026-11-26",
+    "definition": "an original 8-K whose `items` lists 5.02 -- departure or appointment of directors or officers, or compensation arrangements. One event per ticker per filing date.",
+    "described_type": "8k_item_5.02",
+    "reason": "described, never tested: forfeited to description, so no read and no verdict exist",
+    "refused": false,
+    "verdict": null
+   },
+   "sample": {
+    "from": "2023-09-01",
+    "to": "2026-08-31"
+   },
+   "source": {
+    "path": "data/events/described/outcomes_8k_item_5.02_21.csv",
+    "rows": 3622,
+    "sha256": "4913dd469606073634c2d1ba3203f1e634b63253c2ff8522038a0c3a8ffaa94a"
+   }
+  },
+  {
+   "abnormal": {
+    "best": 5.418348,
+    "mean": -0.010385,
+    "median": -0.060581,
+    "min_n": 30,
+    "n": 2724,
+    "p05": -0.536868,
+    "p95": 0.680352,
+    "q25": -0.234317,
+    "q75": 0.095919,
+    "share_positive": 0.3844,
+    "sufficient": true,
+    "worst": -1.037011
+   },
+   "basis": "described",
+   "condition": null,
+   "control": "SPY",
+   "event_type": "8k_item_5.02",
+   "exits": {
+    "delisted": 7,
+    "ok": 2717
+   },
+   "horizon_bars": 63,
+   "how_to_read": "What followed past events of this type — a description, not a forecast. This type was NEVER TESTED: the operator forfeited it to description on 2026-11-26, so there is no read, no verdict, and the figures say nothing about whether the difference from zero is real.",
+   "ledger_event_type": "8k_item_5.02",
+   "n_events": 2724,
+   "raw": {
+    "best": 5.530121,
+    "mean": 0.042527,
+    "median": -0.006662,
+    "min_n": 30,
+    "n": 2724,
+    "p05": -0.505782,
+    "p95": 0.748416,
+    "q25": -0.179981,
+    "q75": 0.156884,
+    "share_positive": 0.4809,
+    "sufficient": true,
+    "worst": -0.95161
+   },
+   "registry": {
+    "basis": "described",
+    "decided_at": "2026-11-26",
+    "definition": "an original 8-K whose `items` lists 5.02 -- departure or appointment of directors or officers, or compensation arrangements. One event per ticker per filing date.",
+    "described_type": "8k_item_5.02",
+    "reason": "described, never tested: forfeited to description, so no read and no verdict exist",
+    "refused": false,
+    "verdict": null
+   },
+   "sample": {
+    "from": "2023-09-01",
+    "to": "2026-08-25"
+   },
+   "source": {
+    "path": "data/events/described/outcomes_8k_item_5.02_63.csv",
+    "rows": 2724,
+    "sha256": "d40d14c1f621670ba356d26d3fb51507cb3ef63aa8b3eda64375c56ddb90a049"
+   }
+  },
+  {
+   "abnormal": {
+    "best": 43.654939,
+    "mean": 0.000809,
+    "median": -0.023125,
+    "min_n": 30,
+    "n": 4754,
+    "p05": -0.320871,
+    "p95": 0.327689,
+    "q25": -0.110451,
+    "q75": 0.062722,
+    "share_positive": 0.418,
+    "sufficient": true,
+    "worst": -0.996349
+   },
+   "basis": "described",
+   "condition": null,
+   "control": "SPY",
+   "event_type": "8k_item_7.01",
+   "exits": {
+    "delisted": 7,
+    "ok": 4747
+   },
+   "horizon_bars": 21,
+   "how_to_read": "What followed past events of this type — a description, not a forecast. This type was NEVER TESTED: the operator forfeited it to description on 2026-11-26, so there is no read, no verdict, and the figures say nothing about whether the difference from zero is real.",
+   "ledger_event_type": "8k_item_7.01",
+   "n_events": 4754,
+   "raw": {
+    "best": 43.661872,
+    "mean": 0.019069,
+    "median": -0.002749,
+    "min_n": 30,
+    "n": 4754,
+    "p05": -0.311827,
+    "p95": 0.353075,
+    "q25": -0.094176,
+    "q75": 0.086022,
+    "share_positive": 0.4817,
+    "sufficient": true,
+    "worst": -0.98792
+   },
+   "registry": {
+    "basis": "described",
+    "decided_at": "2026-11-26",
+    "definition": "an original 8-K whose `items` lists 7.01 -- Regulation FD disclosure. One event per ticker per filing date.",
+    "described_type": "8k_item_7.01",
+    "reason": "described, never tested: forfeited to description, so no read and no verdict exist",
+    "refused": false,
+    "verdict": null
+   },
+   "sample": {
+    "from": "2023-09-01",
+    "to": "2026-08-31"
+   },
+   "source": {
+    "path": "data/events/described/outcomes_8k_item_7.01_21.csv",
+    "rows": 4754,
+    "sha256": "68959d42d1ee829144176935cae4cb4ee1fb7eca6203a45457aa5e9d155ed658"
+   }
+  },
+  {
+   "abnormal": {
+    "best": 26.556158,
+    "mean": -0.020045,
+    "median": -0.056438,
+    "min_n": 30,
+    "n": 3153,
+    "p05": -0.577011,
+    "p95": 0.58026,
+    "q25": -0.219543,
+    "q75": 0.093033,
+    "share_positive": 0.3863,
+    "sufficient": true,
+    "worst": -1.120152
+   },
+   "basis": "described",
+   "condition": null,
+   "control": "SPY",
+   "event_type": "8k_item_7.01",
+   "exits": {
+    "delisted": 7,
+    "ok": 3146
+   },
+   "horizon_bars": 63,
+   "how_to_read": "What followed past events of this type — a description, not a forecast. This type was NEVER TESTED: the operator forfeited it to description on 2026-11-26, so there is no read, no verdict, and the figures say nothing about whether the difference from zero is real.",
+   "ledger_event_type": "8k_item_7.01",
+   "n_events": 3153,
+   "raw": {
+    "best": 26.496404,
+    "mean": 0.034658,
+    "median": -0.002536,
+    "min_n": 30,
+    "n": 3153,
+    "p05": -0.536137,
+    "p95": 0.636718,
+    "q25": -0.166297,
+    "q75": 0.15179,
+    "share_positive": 0.4865,
+    "sufficient": true,
+    "worst": -0.991935
+   },
+   "registry": {
+    "basis": "described",
+    "decided_at": "2026-11-26",
+    "definition": "an original 8-K whose `items` lists 7.01 -- Regulation FD disclosure. One event per ticker per filing date.",
+    "described_type": "8k_item_7.01",
+    "reason": "described, never tested: forfeited to description, so no read and no verdict exist",
+    "refused": false,
+    "verdict": null
+   },
+   "sample": {
+    "from": "2023-09-01",
+    "to": "2026-08-25"
+   },
+   "source": {
+    "path": "data/events/described/outcomes_8k_item_7.01_63.csv",
+    "rows": 3153,
+    "sha256": "edc1bd73d58668bd4658cc4744ac0783683d7985f66f7a4780771c8141292c8b"
+   }
+  },
+  {
+   "abnormal": {
+    "best": 3.375618,
+    "mean": -0.016268,
+    "median": -0.026663,
+    "min_n": 30,
+    "n": 3998,
+    "p05": -0.368687,
+    "p95": 0.332967,
+    "q25": -0.124069,
+    "q75": 0.055907,
+    "share_positive": 0.4065,
+    "sufficient": true,
+    "worst": -0.967068
+   },
+   "basis": "described",
+   "condition": null,
+   "control": "SPY",
+   "event_type": "8k_item_8.01",
+   "exits": {
+    "delisted": 5,
+    "ok": 3993
+   },
+   "horizon_bars": 21,
+   "how_to_read": "What followed past events of this type — a description, not a forecast. This type was NEVER TESTED: the operator forfeited it to description on 2026-11-26, so there is no read, no verdict, and the figures say nothing about whether the difference from zero is real.",
+   "ledger_event_type": "8k_item_8.01",
+   "n_events": 3998,
+   "raw": {
+    "best": 3.394905,
+    "mean": 0.000928,
+    "median": -0.008582,
+    "min_n": 30,
+    "n": 3998,
+    "p05": -0.357184,
+    "p95": 0.363064,
+    "q25": -0.112221,
+    "q75": 0.077282,
+    "share_positive": 0.462,
+    "sufficient": true,
+    "worst": -0.958601
+   },
+   "registry": {
+    "basis": "described",
+    "decided_at": "2026-11-26",
+    "definition": "an original 8-K whose `items` lists 8.01 -- other events. One event per ticker per filing date.",
+    "described_type": "8k_item_8.01",
+    "reason": "described, never tested: forfeited to description, so no read and no verdict exist",
+    "refused": false,
+    "verdict": null
+   },
+   "sample": {
+    "from": "2023-08-31",
+    "to": "2026-08-31"
+   },
+   "source": {
+    "path": "data/events/described/outcomes_8k_item_8.01_21.csv",
+    "rows": 3998,
+    "sha256": "c360053e549f19499a04bf9bcaee26cb1914c37f6317024897a33d484e7909de"
+   }
+  },
+  {
+   "abnormal": {
+    "best": 7.062091,
+    "mean": -0.024177,
+    "median": -0.058234,
+    "min_n": 30,
+    "n": 2742,
+    "p05": -0.593044,
+    "p95": 0.565419,
+    "q25": -0.223733,
+    "q75": 0.08705,
+    "share_positive": 0.3833,
+    "sufficient": true,
+    "worst": -1.085265
+   },
+   "basis": "described",
+   "condition": null,
+   "control": "SPY",
+   "event_type": "8k_item_8.01",
+   "exits": {
+    "delisted": 5,
+    "ok": 2737
+   },
+   "horizon_bars": 63,
+   "how_to_read": "What followed past events of this type — a description, not a forecast. This type was NEVER TESTED: the operator forfeited it to description on 2026-11-26, so there is no read, no verdict, and the figures say nothing about whether the difference from zero is real.",
+   "ledger_event_type": "8k_item_8.01",
+   "n_events": 2742,
+   "raw": {
+    "best": 7.30303,
+    "mean": 0.029743,
+    "median": -0.001421,
+    "min_n": 30,
+    "n": 2742,
+    "p05": -0.549569,
+    "p95": 0.627189,
+    "q25": -0.183029,
+    "q75": 0.144339,
+    "share_positive": 0.4938,
+    "sufficient": true,
+    "worst": -0.980855
+   },
+   "registry": {
+    "basis": "described",
+    "decided_at": "2026-11-26",
+    "definition": "an original 8-K whose `items` lists 8.01 -- other events. One event per ticker per filing date.",
+    "described_type": "8k_item_8.01",
+    "reason": "described, never tested: forfeited to description, so no read and no verdict exist",
+    "refused": false,
+    "verdict": null
+   },
+   "sample": {
+    "from": "2023-08-31",
+    "to": "2026-08-25"
+   },
+   "source": {
+    "path": "data/events/described/outcomes_8k_item_8.01_63.csv",
+    "rows": 2742,
+    "sha256": "aad4c57b783fece433d449e83ae57430e32c050807fca7f70536c32f92d7642b"
+   }
+  },
+  {
+   "abnormal": {
+    "best": 4.927428,
+    "mean": -0.009189,
+    "median": -0.022227,
+    "min_n": 30,
+    "n": 2877,
+    "p05": -0.251842,
+    "p95": 0.253258,
+    "q25": -0.095796,
+    "q75": 0.055633,
+    "share_positive": 0.4129,
+    "sufficient": true,
+    "worst": -0.852951
+   },
+   "basis": "described",
+   "condition": null,
+   "control": "SPY",
+   "event_type": "form4_sale",
+   "exits": {
+    "delisted": 7,
+    "ok": 2870
+   },
+   "horizon_bars": 21,
+   "how_to_read": "What followed past events of this type — a description, not a forecast. This type was NEVER TESTED: the operator forfeited it to description on 2026-11-26, so there is no read, no verdict, and the figures say nothing about whether the difference from zero is real.",
+   "ledger_event_type": "form4_sale",
+   "n_events": 2877,
+   "raw": {
+    "best": 4.932204,
+    "mean": 0.005329,
+    "median": -0.005723,
+    "min_n": 30,
+    "n": 2877,
+    "p05": -0.247991,
+    "p95": 0.280323,
+    "q25": -0.084611,
+    "q75": 0.074483,
+    "share_positive": 0.4692,
+    "sufficient": true,
+    "worst": -0.808895
+   },
+   "registry": {
+    "basis": "described",
+    "decided_at": "2026-11-26",
+    "definition": "a Form 4 filing whose non-derivative transaction codes include S (open-market sale) and not P -- OBSERVER's direction_of() == 'sale'. One event per ticker per filing date, however many insiders filed. Source: Finnhub insider-transactions, the 1095-day pull of run 33927199851.",
+    "described_type": "form4_sale",
+    "reason": "described, never tested: forfeited to description, so no read and no verdict exist",
+    "refused": false,
+    "verdict": null
+   },
+   "sample": {
+    "from": "2023-09-05",
+    "to": "2026-08-31"
+   },
+   "source": {
+    "path": "data/events/described/outcomes_form4_sale_21.csv",
+    "rows": 2877,
+    "sha256": "2e2ae0d44012a2548e4695fced9265efbd477bb9f3564fe0578c239e4c2096c5"
+   }
+  },
+  {
+   "abnormal": {
+    "best": 25.531771,
+    "mean": -0.028533,
+    "median": -0.064016,
+    "min_n": 30,
+    "n": 1940,
+    "p05": -0.465774,
+    "p95": 0.441936,
+    "q25": -0.195711,
+    "q75": 0.076163,
+    "share_positive": 0.3727,
+    "sufficient": true,
+    "worst": -0.988922
+   },
+   "basis": "described",
+   "condition": null,
+   "control": "SPY",
+   "event_type": "form4_sale",
+   "exits": {
+    "delisted": 7,
+    "ok": 1933
+   },
+   "horizon_bars": 63,
+   "how_to_read": "What followed past events of this type — a description, not a forecast. This type was NEVER TESTED: the operator forfeited it to description on 2026-11-26, so there is no read, no verdict, and the figures say nothing about whether the difference from zero is real.",
+   "ledger_event_type": "form4_sale",
+   "n_events": 1940,
+   "raw": {
+    "best": 25.503268,
+    "mean": 0.020708,
+    "median": -0.011238,
+    "min_n": 30,
+    "n": 1940,
+    "p05": -0.421088,
+    "p95": 0.504156,
+    "q25": -0.147414,
+    "q75": 0.12405,
+    "share_positive": 0.4763,
+    "sufficient": true,
+    "worst": -0.983429
+   },
+   "registry": {
+    "basis": "described",
+    "decided_at": "2026-11-26",
+    "definition": "a Form 4 filing whose non-derivative transaction codes include S (open-market sale) and not P -- OBSERVER's direction_of() == 'sale'. One event per ticker per filing date, however many insiders filed. Source: Finnhub insider-transactions, the 1095-day pull of run 33927199851.",
+    "described_type": "form4_sale",
+    "reason": "described, never tested: forfeited to description, so no read and no verdict exist",
+    "refused": false,
+    "verdict": null
+   },
+   "sample": {
+    "from": "2023-09-05",
+    "to": "2026-08-25"
+   },
+   "source": {
+    "path": "data/events/described/outcomes_form4_sale_63.csv",
+    "rows": 1940,
+    "sha256": "96684e333c8f437d10e9fcb42aef92ecea142d9b0eeaf68b978969d543b481da"
+   }
+  },
+  {
+   "abnormal": {
+    "best": 36.402671,
+    "mean": 0.004139,
+    "median": -0.023351,
+    "min_n": 30,
+    "n": 15826,
+    "p05": -0.319663,
+    "p95": 0.344247,
+    "q25": -0.111078,
+    "q75": 0.067314,
+    "share_positive": 0.4206,
+    "sufficient": true,
+    "worst": -1.076912
+   },
+   "basis": "reference",
+   "condition": null,
+   "control": "SPY",
+   "event_type": "universe_any_day",
+   "exits": {
+    "delisted": 9,
+    "ok": 15817
+   },
+   "horizon_bars": 21,
+   "how_to_read": "NOT AN EVENT: an arbitrary day in the same universe, measured the same way. Read every base rate beside it -- an event type's median means something only as a difference from this one.",
+   "ledger_event_type": "universe_any_day",
+   "n_events": 15826,
+   "raw": {
+    "best": 36.410072,
+    "mean": 0.020246,
+    "median": -0.005961,
+    "min_n": 30,
+    "n": 15826,
+    "p05": -0.310494,
+    "p95": 0.372046,
+    "q25": -0.097866,
+    "q75": 0.086847,
+    "share_positive": 0.4763,
+    "sufficient": true,
+    "worst": -0.993563
+   },
+   "registry": {
+    "basis": "reference",
+    "decided_at": "2026-11-26",
+    "definition": "NOT an event. Every universe name on a fixed grid of sessions: a random start (seed 7) within its first 21 business days of the window, then every 21 business days. Same window, entry rule, control, horizons and independence filter as the described types. It answers: what did an arbitrary day in this universe look like against SPY? Without it, a negative median for an event type cannot be told apart from small caps trailing SPY over 2023-26.",
+    "described_type": "universe_any_day",
+    "reason": "reference distribution, not an event",
+    "refused": false,
+    "verdict": null
+   },
+   "sample": {
+    "from": "2023-09-01",
+    "to": "2026-08-31"
+   },
+   "source": {
+    "path": "data/events/described/outcomes_universe_any_day_21.csv",
+    "rows": 15826,
+    "sha256": "c5892d66ab3abc3b8fa0ecab5df9f022f1b83f4511acf564d2601fb483c57a90"
+   }
+  },
+  {
+   "abnormal": {
+    "best": 25.057444,
+    "mean": -0.012591,
+    "median": -0.063967,
+    "min_n": 30,
+    "n": 8316,
+    "p05": -0.576056,
+    "p95": 0.622068,
+    "q25": -0.233036,
+    "q75": 0.093377,
+    "share_positive": 0.3831,
+    "sufficient": true,
+    "worst": -1.151026
+   },
+   "basis": "reference",
+   "condition": null,
+   "control": "SPY",
+   "event_type": "universe_any_day",
+   "exits": {
+    "delisted": 9,
+    "ok": 8307
+   },
+   "horizon_bars": 63,
+   "how_to_read": "NOT AN EVENT: an arbitrary day in the same universe, measured the same way. Read every base rate beside it -- an event type's median means something only as a difference from this one.",
+   "ledger_event_type": "universe_any_day",
+   "n_events": 8316,
+   "raw": {
+    "best": 24.978418,
+    "mean": 0.032693,
+    "median": -0.016208,
+    "min_n": 30,
+    "n": 8316,
+    "p05": -0.548718,
+    "p95": 0.690697,
+    "q25": -0.193675,
+    "q75": 0.144657,
+    "share_positive": 0.4705,
+    "sufficient": true,
+    "worst": -0.998405
+   },
+   "registry": {
+    "basis": "reference",
+    "decided_at": "2026-11-26",
+    "definition": "NOT an event. Every universe name on a fixed grid of sessions: a random start (seed 7) within its first 21 business days of the window, then every 21 business days. Same window, entry rule, control, horizons and independence filter as the described types. It answers: what did an arbitrary day in this universe look like against SPY? Without it, a negative median for an event type cannot be told apart from small caps trailing SPY over 2023-26.",
+    "described_type": "universe_any_day",
+    "reason": "reference distribution, not an event",
+    "refused": false,
+    "verdict": null
+   },
+   "sample": {
+    "from": "2023-09-01",
+    "to": "2026-08-25"
+   },
+   "source": {
+    "path": "data/events/described/outcomes_universe_any_day_63.csv",
+    "rows": 8316,
+    "sha256": "9690bece22e037a0514930b2b1083292b5dae839f400e3a59194ae88d3292696"
+   }
   }
  ],
  "cluster_events": [],
@@ -129,7 +1031,7 @@
   "total_dollars": null
  },
  "falsifiers": [],
- "generated_at": "2026-11-27T05:04:08+00:00",
+ "generated_at": "2026-11-27T07:28:10+00:00",
  "is_not_a_recommendation": "This document reports distributions with n, concentration figures and ledger status. It contains no buy, sell, hold, rating, target or confidence, and nothing in it should be read as one.",
  "ledger": {
   "ok": true,
@@ -140,10 +1042,124 @@
   {
    "base_rates": [
     {
+     "abnormal": {
+      "best": 15.251955,
+      "mean": -0.012712,
+      "median": -0.032907,
+      "min_n": 30,
+      "n": 2766,
+      "p05": -0.413835,
+      "p95": 0.401991,
+      "q25": -0.149647,
+      "q75": 0.061891,
+      "share_positive": 0.3941,
+      "sufficient": true,
+      "worst": -0.970105
+     },
+     "basis": "described",
+     "condition": null,
+     "control": "SPY",
      "event_type": "8k_item_1.01",
-     "n": 0,
-     "reason": "insufficient history: no frozen outcome ledger exists for this event type",
-     "sufficient": false
+     "exits": {
+      "delisted": 7,
+      "ok": 2759
+     },
+     "horizon_bars": 21,
+     "how_to_read": "What followed past events of this type — a description, not a forecast. This type was NEVER TESTED: the operator forfeited it to description on 2026-11-26, so there is no read, no verdict, and the figures say nothing about whether the difference from zero is real.",
+     "ledger_event_type": "8k_item_1.01",
+     "n_events": 2766,
+     "raw": {
+      "best": 15.26898,
+      "mean": 0.00544,
+      "median": -0.013354,
+      "min_n": 30,
+      "n": 2766,
+      "p05": -0.399086,
+      "p95": 0.435315,
+      "q25": -0.137525,
+      "q75": 0.083919,
+      "share_positive": 0.4544,
+      "sufficient": true,
+      "worst": -0.881032
+     },
+     "registry": {
+      "basis": "described",
+      "decided_at": "2026-11-26",
+      "definition": "an original 8-K (not 8-K/A) whose EDGAR `items` field lists 1.01 -- entry into a material definitive agreement. One event per ticker per filing date.",
+      "described_type": "8k_item_1.01",
+      "reason": "described, never tested: forfeited to description, so no read and no verdict exist",
+      "refused": false,
+      "verdict": null
+     },
+     "sample": {
+      "from": "2023-09-01",
+      "to": "2026-08-31"
+     },
+     "source": {
+      "path": "data/events/described/outcomes_8k_item_1.01_21.csv",
+      "rows": 2766,
+      "sha256": "81adac1dfdd8186a0b90ff2d563d8cb19d4d688f60732891bf8fb63329aca448"
+     }
+    },
+    {
+     "abnormal": {
+      "best": 29.321962,
+      "mean": -0.0279,
+      "median": -0.095448,
+      "min_n": 30,
+      "n": 2124,
+      "p05": -0.64302,
+      "p95": 0.683274,
+      "q25": -0.270314,
+      "q75": 0.072843,
+      "share_positive": 0.3409,
+      "sufficient": true,
+      "worst": -1.078527
+     },
+     "basis": "described",
+     "condition": null,
+     "control": "SPY",
+     "event_type": "8k_item_1.01",
+     "exits": {
+      "delisted": 7,
+      "ok": 2117
+     },
+     "horizon_bars": 63,
+     "how_to_read": "What followed past events of this type — a description, not a forecast. This type was NEVER TESTED: the operator forfeited it to description on 2026-11-26, so there is no read, no verdict, and the figures say nothing about whether the difference from zero is real.",
+     "ledger_event_type": "8k_item_1.01",
+     "n_events": 2124,
+     "raw": {
+      "best": 29.368762,
+      "mean": 0.025649,
+      "median": -0.037518,
+      "min_n": 30,
+      "n": 2124,
+      "p05": -0.603255,
+      "p95": 0.75233,
+      "q25": -0.231951,
+      "q75": 0.130055,
+      "share_positive": 0.4388,
+      "sufficient": true,
+      "worst": -0.980855
+     },
+     "registry": {
+      "basis": "described",
+      "decided_at": "2026-11-26",
+      "definition": "an original 8-K (not 8-K/A) whose EDGAR `items` field lists 1.01 -- entry into a material definitive agreement. One event per ticker per filing date.",
+      "described_type": "8k_item_1.01",
+      "reason": "described, never tested: forfeited to description, so no read and no verdict exist",
+      "refused": false,
+      "verdict": null
+     },
+     "sample": {
+      "from": "2023-09-01",
+      "to": "2026-08-24"
+     },
+     "source": {
+      "path": "data/events/described/outcomes_8k_item_1.01_63.csv",
+      "rows": 2124,
+      "sha256": "3489e7872dca9e43c989839b22fba765dcfbeac7f2c298b001164b287de0ec95"
+     }
     }
    ],
    "count": 5,
@@ -164,10 +1180,62 @@
   {
    "base_rates": [
     {
+     "abnormal": {
+      "best": 2.187373,
+      "mean": -0.03808,
+      "median": -0.063297,
+      "min_n": 30,
+      "n": 1025,
+      "p05": -0.452776,
+      "p95": 0.510015,
+      "q25": -0.206071,
+      "q75": 0.079508,
+      "share_positive": 0.3746,
+      "sufficient": true,
+      "worst": -1.024666
+     },
+     "basis": "pre-registered read",
+     "condition": "earnings 8-Ks (Item 2.02) whose two-session announcement abnormal return was +5% or more; whether tonight's filing clears that is not yet known when it is filed",
+     "control": "SPY",
      "event_type": "8k_item_2.02",
-     "n": 0,
-     "reason": "insufficient history: no frozen outcome ledger exists for this event type",
-     "sufficient": false
+     "exits": {
+      "delisted": 4,
+      "ok": 1021
+     },
+     "horizon_bars": 63,
+     "how_to_read": "What followed past events of this type — a description, not a forecast. The pre-registered read on this ledger returned NOT MET: the average was not established as different from zero at the declared threshold. Covers only: earnings 8-Ks (Item 2.02) whose two-session announcement abnormal return was +5% or more; whether tonight's filing clears that is not yet known when it is filed.",
+     "ledger_event_type": "8k_item202_car_ge5_pit",
+     "n_events": 1025,
+     "raw": {
+      "best": 2.226216,
+      "mean": 0.022206,
+      "median": -0.005155,
+      "min_n": 30,
+      "n": 1025,
+      "p05": -0.407567,
+      "p95": 0.566765,
+      "q25": -0.149847,
+      "q75": 0.139429,
+      "share_positive": 0.4868,
+      "sufficient": true,
+      "worst": -0.976952
+     },
+     "registry": {
+      "declared_at": "2026-09-05",
+      "read_at": "2026-11-10",
+      "reason": "ok",
+      "spec_id": "pead_8k_car_v3",
+      "verdict": "NOT MET"
+     },
+     "sample": {
+      "from": "2023-10-06",
+      "to": "2026-08-07"
+     },
+     "source": {
+      "path": "data/events/event_study_v3.csv",
+      "rows": 1025,
+      "sha256": "2b54a54f56cfe4e65554c580442186648ebcca0d60f8b6d30454c1968f9fc78a"
+     }
     }
    ],
    "count": 1,
@@ -188,10 +1256,122 @@
   {
    "base_rates": [
     {
+     "abnormal": {
+      "best": 22.621929,
+      "mean": 0.027476,
+      "median": -0.049884,
+      "min_n": 30,
+      "n": 510,
+      "p05": -0.574996,
+      "p95": 0.672945,
+      "q25": -0.208228,
+      "q75": 0.091057,
+      "share_positive": 0.3824,
+      "sufficient": true,
+      "worst": -0.957622
+     },
+     "basis": "described",
+     "condition": null,
+     "control": "SPY",
      "event_type": "8k_item_3.01",
-     "n": 0,
-     "reason": "insufficient history: no frozen outcome ledger exists for this event type",
-     "sufficient": false
+     "exits": {
+      "ok": 510
+     },
+     "horizon_bars": 21,
+     "how_to_read": "What followed past events of this type — a description, not a forecast. This type was NEVER TESTED: the operator forfeited it to description on 2026-11-26, so there is no read, no verdict, and the figures say nothing about whether the difference from zero is real.",
+     "ledger_event_type": "8k_item_3.01",
+     "n_events": 510,
+     "raw": {
+      "best": 22.673469,
+      "mean": 0.050284,
+      "median": -0.03235,
+      "min_n": 30,
+      "n": 510,
+      "p05": -0.562043,
+      "p95": 0.691281,
+      "q25": -0.194551,
+      "q75": 0.124925,
+      "share_positive": 0.4353,
+      "sufficient": true,
+      "worst": -0.9
+     },
+     "registry": {
+      "basis": "described",
+      "decided_at": "2026-11-26",
+      "definition": "an original 8-K whose `items` lists 3.01 -- notice of delisting or failure to satisfy a listing rule. One event per ticker per filing date.",
+      "described_type": "8k_item_3.01",
+      "reason": "described, never tested: forfeited to description, so no read and no verdict exist",
+      "refused": false,
+      "verdict": null
+     },
+     "sample": {
+      "from": "2023-09-06",
+      "to": "2026-08-28"
+     },
+     "source": {
+      "path": "data/events/described/outcomes_8k_item_3.01_21.csv",
+      "rows": 510,
+      "sha256": "03622f0fe5e687b5bd76a6ddd9346db41a6871122a4db43b5a6dcb88c99f8f64"
+     }
+    },
+    {
+     "abnormal": {
+      "best": 6.200894,
+      "mean": 0.037965,
+      "median": -0.125545,
+      "min_n": 30,
+      "n": 413,
+      "p05": -0.772615,
+      "p95": 1.304072,
+      "q25": -0.386629,
+      "q75": 0.15617,
+      "share_positive": 0.3632,
+      "sufficient": true,
+      "worst": -1.120152
+     },
+     "basis": "described",
+     "condition": null,
+     "control": "SPY",
+     "event_type": "8k_item_3.01",
+     "exits": {
+      "ok": 413
+     },
+     "horizon_bars": 63,
+     "how_to_read": "What followed past events of this type — a description, not a forecast. This type was NEVER TESTED: the operator forfeited it to description on 2026-11-26, so there is no read, no verdict, and the figures say nothing about whether the difference from zero is real.",
+     "ledger_event_type": "8k_item_3.01",
+     "n_events": 413,
+     "raw": {
+      "best": 6.285714,
+      "mean": 0.097901,
+      "median": -0.076923,
+      "min_n": 30,
+      "n": 413,
+      "p05": -0.716905,
+      "p95": 1.391513,
+      "q25": -0.3384,
+      "q75": 0.228438,
+      "share_positive": 0.4237,
+      "sufficient": true,
+      "worst": -0.980571
+     },
+     "registry": {
+      "basis": "described",
+      "decided_at": "2026-11-26",
+      "definition": "an original 8-K whose `items` lists 3.01 -- notice of delisting or failure to satisfy a listing rule. One event per ticker per filing date.",
+      "described_type": "8k_item_3.01",
+      "reason": "described, never tested: forfeited to description, so no read and no verdict exist",
+      "refused": false,
+      "verdict": null
+     },
+     "sample": {
+      "from": "2023-09-06",
+      "to": "2026-08-19"
+     },
+     "source": {
+      "path": "data/events/described/outcomes_8k_item_3.01_63.csv",
+      "rows": 413,
+      "sha256": "e15df4d53b7c2aa52eb8f94b2b884cb711766a610f54bfe380ef669679da3411"
+     }
     }
    ],
    "count": 2,
@@ -224,10 +1404,124 @@
   {
    "base_rates": [
     {
+     "abnormal": {
+      "best": 4.090219,
+      "mean": -0.001857,
+      "median": -0.023946,
+      "min_n": 30,
+      "n": 3622,
+      "p05": -0.323681,
+      "p95": 0.36901,
+      "q25": -0.118505,
+      "q75": 0.070093,
+      "share_positive": 0.4257,
+      "sufficient": true,
+      "worst": -0.905717
+     },
+     "basis": "described",
+     "condition": null,
+     "control": "SPY",
      "event_type": "8k_item_5.02",
-     "n": 0,
-     "reason": "insufficient history: no frozen outcome ledger exists for this event type",
-     "sufficient": false
+     "exits": {
+      "delisted": 7,
+      "ok": 3615
+     },
+     "horizon_bars": 21,
+     "how_to_read": "What followed past events of this type — a description, not a forecast. This type was NEVER TESTED: the operator forfeited it to description on 2026-11-26, so there is no read, no verdict, and the figures say nothing about whether the difference from zero is real.",
+     "ledger_event_type": "8k_item_5.02",
+     "n_events": 3622,
+     "raw": {
+      "best": 4.126506,
+      "mean": 0.016187,
+      "median": -0.006155,
+      "min_n": 30,
+      "n": 3622,
+      "p05": -0.313333,
+      "p95": 0.399004,
+      "q25": -0.101298,
+      "q75": 0.091111,
+      "share_positive": 0.4757,
+      "sufficient": true,
+      "worst": -0.890411
+     },
+     "registry": {
+      "basis": "described",
+      "decided_at": "2026-11-26",
+      "definition": "an original 8-K whose `items` lists 5.02 -- departure or appointment of directors or officers, or compensation arrangements. One event per ticker per filing date.",
+      "described_type": "8k_item_5.02",
+      "reason": "described, never tested: forfeited to description, so no read and no verdict exist",
+      "refused": false,
+      "verdict": null
+     },
+     "sample": {
+      "from": "2023-09-01",
+      "to": "2026-08-31"
+     },
+     "source": {
+      "path": "data/events/described/outcomes_8k_item_5.02_21.csv",
+      "rows": 3622,
+      "sha256": "4913dd469606073634c2d1ba3203f1e634b63253c2ff8522038a0c3a8ffaa94a"
+     }
+    },
+    {
+     "abnormal": {
+      "best": 5.418348,
+      "mean": -0.010385,
+      "median": -0.060581,
+      "min_n": 30,
+      "n": 2724,
+      "p05": -0.536868,
+      "p95": 0.680352,
+      "q25": -0.234317,
+      "q75": 0.095919,
+      "share_positive": 0.3844,
+      "sufficient": true,
+      "worst": -1.037011
+     },
+     "basis": "described",
+     "condition": null,
+     "control": "SPY",
+     "event_type": "8k_item_5.02",
+     "exits": {
+      "delisted": 7,
+      "ok": 2717
+     },
+     "horizon_bars": 63,
+     "how_to_read": "What followed past events of this type — a description, not a forecast. This type was NEVER TESTED: the operator forfeited it to description on 2026-11-26, so there is no read, no verdict, and the figures say nothing about whether the difference from zero is real.",
+     "ledger_event_type": "8k_item_5.02",
+     "n_events": 2724,
+     "raw": {
+      "best": 5.530121,
+      "mean": 0.042527,
+      "median": -0.006662,
+      "min_n": 30,
+      "n": 2724,
+      "p05": -0.505782,
+      "p95": 0.748416,
+      "q25": -0.179981,
+      "q75": 0.156884,
+      "share_positive": 0.4809,
+      "sufficient": true,
+      "worst": -0.95161
+     },
+     "registry": {
+      "basis": "described",
+      "decided_at": "2026-11-26",
+      "definition": "an original 8-K whose `items` lists 5.02 -- departure or appointment of directors or officers, or compensation arrangements. One event per ticker per filing date.",
+      "described_type": "8k_item_5.02",
+      "reason": "described, never tested: forfeited to description, so no read and no verdict exist",
+      "refused": false,
+      "verdict": null
+     },
+     "sample": {
+      "from": "2023-09-01",
+      "to": "2026-08-25"
+     },
+     "source": {
+      "path": "data/events/described/outcomes_8k_item_5.02_63.csv",
+      "rows": 2724,
+      "sha256": "d40d14c1f621670ba356d26d3fb51507cb3ef63aa8b3eda64375c56ddb90a049"
+     }
     }
    ],
    "count": 4,
@@ -260,10 +1554,124 @@
   {
    "base_rates": [
     {
+     "abnormal": {
+      "best": 43.654939,
+      "mean": 0.000809,
+      "median": -0.023125,
+      "min_n": 30,
+      "n": 4754,
+      "p05": -0.320871,
+      "p95": 0.327689,
+      "q25": -0.110451,
+      "q75": 0.062722,
+      "share_positive": 0.418,
+      "sufficient": true,
+      "worst": -0.996349
+     },
+     "basis": "described",
+     "condition": null,
+     "control": "SPY",
      "event_type": "8k_item_7.01",
-     "n": 0,
-     "reason": "insufficient history: no frozen outcome ledger exists for this event type",
-     "sufficient": false
+     "exits": {
+      "delisted": 7,
+      "ok": 4747
+     },
+     "horizon_bars": 21,
+     "how_to_read": "What followed past events of this type — a description, not a forecast. This type was NEVER TESTED: the operator forfeited it to description on 2026-11-26, so there is no read, no verdict, and the figures say nothing about whether the difference from zero is real.",
+     "ledger_event_type": "8k_item_7.01",
+     "n_events": 4754,
+     "raw": {
+      "best": 43.661872,
+      "mean": 0.019069,
+      "median": -0.002749,
+      "min_n": 30,
+      "n": 4754,
+      "p05": -0.311827,
+      "p95": 0.353075,
+      "q25": -0.094176,
+      "q75": 0.086022,
+      "share_positive": 0.4817,
+      "sufficient": true,
+      "worst": -0.98792
+     },
+     "registry": {
+      "basis": "described",
+      "decided_at": "2026-11-26",
+      "definition": "an original 8-K whose `items` lists 7.01 -- Regulation FD disclosure. One event per ticker per filing date.",
+      "described_type": "8k_item_7.01",
+      "reason": "described, never tested: forfeited to description, so no read and no verdict exist",
+      "refused": false,
+      "verdict": null
+     },
+     "sample": {
+      "from": "2023-09-01",
+      "to": "2026-08-31"
+     },
+     "source": {
+      "path": "data/events/described/outcomes_8k_item_7.01_21.csv",
+      "rows": 4754,
+      "sha256": "68959d42d1ee829144176935cae4cb4ee1fb7eca6203a45457aa5e9d155ed658"
+     }
+    },
+    {
+     "abnormal": {
+      "best": 26.556158,
+      "mean": -0.020045,
+      "median": -0.056438,
+      "min_n": 30,
+      "n": 3153,
+      "p05": -0.577011,
+      "p95": 0.58026,
+      "q25": -0.219543,
+      "q75": 0.093033,
+      "share_positive": 0.3863,
+      "sufficient": true,
+      "worst": -1.120152
+     },
+     "basis": "described",
+     "condition": null,
+     "control": "SPY",
+     "event_type": "8k_item_7.01",
+     "exits": {
+      "delisted": 7,
+      "ok": 3146
+     },
+     "horizon_bars": 63,
+     "how_to_read": "What followed past events of this type — a description, not a forecast. This type was NEVER TESTED: the operator forfeited it to description on 2026-11-26, so there is no read, no verdict, and the figures say nothing about whether the difference from zero is real.",
+     "ledger_event_type": "8k_item_7.01",
+     "n_events": 3153,
+     "raw": {
+      "best": 26.496404,
+      "mean": 0.034658,
+      "median": -0.002536,
+      "min_n": 30,
+      "n": 3153,
+      "p05": -0.536137,
+      "p95": 0.636718,
+      "q25": -0.166297,
+      "q75": 0.15179,
+      "share_positive": 0.4865,
+      "sufficient": true,
+      "worst": -0.991935
+     },
+     "registry": {
+      "basis": "described",
+      "decided_at": "2026-11-26",
+      "definition": "an original 8-K whose `items` lists 7.01 -- Regulation FD disclosure. One event per ticker per filing date.",
+      "described_type": "8k_item_7.01",
+      "reason": "described, never tested: forfeited to description, so no read and no verdict exist",
+      "refused": false,
+      "verdict": null
+     },
+     "sample": {
+      "from": "2023-09-01",
+      "to": "2026-08-25"
+     },
+     "source": {
+      "path": "data/events/described/outcomes_8k_item_7.01_63.csv",
+      "rows": 3153,
+      "sha256": "edc1bd73d58668bd4658cc4744ac0783683d7985f66f7a4780771c8141292c8b"
+     }
     }
    ],
    "count": 5,
@@ -272,10 +1680,124 @@
   {
    "base_rates": [
     {
+     "abnormal": {
+      "best": 3.375618,
+      "mean": -0.016268,
+      "median": -0.026663,
+      "min_n": 30,
+      "n": 3998,
+      "p05": -0.368687,
+      "p95": 0.332967,
+      "q25": -0.124069,
+      "q75": 0.055907,
+      "share_positive": 0.4065,
+      "sufficient": true,
+      "worst": -0.967068
+     },
+     "basis": "described",
+     "condition": null,
+     "control": "SPY",
      "event_type": "8k_item_8.01",
-     "n": 0,
-     "reason": "insufficient history: no frozen outcome ledger exists for this event type",
-     "sufficient": false
+     "exits": {
+      "delisted": 5,
+      "ok": 3993
+     },
+     "horizon_bars": 21,
+     "how_to_read": "What followed past events of this type — a description, not a forecast. This type was NEVER TESTED: the operator forfeited it to description on 2026-11-26, so there is no read, no verdict, and the figures say nothing about whether the difference from zero is real.",
+     "ledger_event_type": "8k_item_8.01",
+     "n_events": 3998,
+     "raw": {
+      "best": 3.394905,
+      "mean": 0.000928,
+      "median": -0.008582,
+      "min_n": 30,
+      "n": 3998,
+      "p05": -0.357184,
+      "p95": 0.363064,
+      "q25": -0.112221,
+      "q75": 0.077282,
+      "share_positive": 0.462,
+      "sufficient": true,
+      "worst": -0.958601
+     },
+     "registry": {
+      "basis": "described",
+      "decided_at": "2026-11-26",
+      "definition": "an original 8-K whose `items` lists 8.01 -- other events. One event per ticker per filing date.",
+      "described_type": "8k_item_8.01",
+      "reason": "described, never tested: forfeited to description, so no read and no verdict exist",
+      "refused": false,
+      "verdict": null
+     },
+     "sample": {
+      "from": "2023-08-31",
+      "to": "2026-08-31"
+     },
+     "source": {
+      "path": "data/events/described/outcomes_8k_item_8.01_21.csv",
+      "rows": 3998,
+      "sha256": "c360053e549f19499a04bf9bcaee26cb1914c37f6317024897a33d484e7909de"
+     }
+    },
+    {
+     "abnormal": {
+      "best": 7.062091,
+      "mean": -0.024177,
+      "median": -0.058234,
+      "min_n": 30,
+      "n": 2742,
+      "p05": -0.593044,
+      "p95": 0.565419,
+      "q25": -0.223733,
+      "q75": 0.08705,
+      "share_positive": 0.3833,
+      "sufficient": true,
+      "worst": -1.085265
+     },
+     "basis": "described",
+     "condition": null,
+     "control": "SPY",
+     "event_type": "8k_item_8.01",
+     "exits": {
+      "delisted": 5,
+      "ok": 2737
+     },
+     "horizon_bars": 63,
+     "how_to_read": "What followed past events of this type — a description, not a forecast. This type was NEVER TESTED: the operator forfeited it to description on 2026-11-26, so there is no read, no verdict, and the figures say nothing about whether the difference from zero is real.",
+     "ledger_event_type": "8k_item_8.01",
+     "n_events": 2742,
+     "raw": {
+      "best": 7.30303,
+      "mean": 0.029743,
+      "median": -0.001421,
+      "min_n": 30,
+      "n": 2742,
+      "p05": -0.549569,
+      "p95": 0.627189,
+      "q25": -0.183029,
+      "q75": 0.144339,
+      "share_positive": 0.4938,
+      "sufficient": true,
+      "worst": -0.980855
+     },
+     "registry": {
+      "basis": "described",
+      "decided_at": "2026-11-26",
+      "definition": "an original 8-K whose `items` lists 8.01 -- other events. One event per ticker per filing date.",
+      "described_type": "8k_item_8.01",
+      "reason": "described, never tested: forfeited to description, so no read and no verdict exist",
+      "refused": false,
+      "verdict": null
+     },
+     "sample": {
+      "from": "2023-08-31",
+      "to": "2026-08-25"
+     },
+     "source": {
+      "path": "data/events/described/outcomes_8k_item_8.01_63.csv",
+      "rows": 2742,
+      "sha256": "aad4c57b783fece433d449e83ae57430e32c050807fca7f70536c32f92d7642b"
+     }
     }
    ],
    "count": 7,
@@ -327,6 +1849,8 @@
  },
  "sources": [
   {
+   "basis": "pre-registered read",
+   "described_type": null,
    "event_types": [
     "form4_cluster_buy"
    ],
@@ -338,6 +1862,8 @@
    "verdict": "NOT MET"
   },
   {
+   "basis": "pre-registered read",
+   "described_type": null,
    "event_types": [
     "form4_cluster_buy"
    ],
@@ -347,6 +1873,201 @@
    "spec_id": "form4_cluster_buy_v2",
    "status": "ok",
    "verdict": "NOT MET"
+  },
+  {
+   "basis": "pre-registered read",
+   "described_type": null,
+   "event_types": [
+    "8k_item_2.02"
+   ],
+   "ledger": "data/events/event_study_v3.csv",
+   "rows": 1025,
+   "sha256": "2b54a54f56cfe4e65554c580442186648ebcca0d60f8b6d30454c1968f9fc78a",
+   "spec_id": "pead_8k_car_v3",
+   "status": "ok",
+   "verdict": "NOT MET"
+  },
+  {
+   "basis": "described",
+   "described_type": "8k_item_1.01",
+   "event_types": [
+    "8k_item_1.01"
+   ],
+   "ledger": "data/events/described/outcomes_8k_item_1.01_21.csv",
+   "rows": 2766,
+   "sha256": "81adac1dfdd8186a0b90ff2d563d8cb19d4d688f60732891bf8fb63329aca448",
+   "spec_id": null,
+   "status": "ok",
+   "verdict": null
+  },
+  {
+   "basis": "described",
+   "described_type": "8k_item_1.01",
+   "event_types": [
+    "8k_item_1.01"
+   ],
+   "ledger": "data/events/described/outcomes_8k_item_1.01_63.csv",
+   "rows": 2124,
+   "sha256": "3489e7872dca9e43c989839b22fba765dcfbeac7f2c298b001164b287de0ec95",
+   "spec_id": null,
+   "status": "ok",
+   "verdict": null
+  },
+  {
+   "basis": "described",
+   "described_type": "8k_item_3.01",
+   "event_types": [
+    "8k_item_3.01"
+   ],
+   "ledger": "data/events/described/outcomes_8k_item_3.01_21.csv",
+   "rows": 510,
+   "sha256": "03622f0fe5e687b5bd76a6ddd9346db41a6871122a4db43b5a6dcb88c99f8f64",
+   "spec_id": null,
+   "status": "ok",
+   "verdict": null
+  },
+  {
+   "basis": "described",
+   "described_type": "8k_item_3.01",
+   "event_types": [
+    "8k_item_3.01"
+   ],
+   "ledger": "data/events/described/outcomes_8k_item_3.01_63.csv",
+   "rows": 413,
+   "sha256": "e15df4d53b7c2aa52eb8f94b2b884cb711766a610f54bfe380ef669679da3411",
+   "spec_id": null,
+   "status": "ok",
+   "verdict": null
+  },
+  {
+   "basis": "described",
+   "described_type": "8k_item_5.02",
+   "event_types": [
+    "8k_item_5.02"
+   ],
+   "ledger": "data/events/described/outcomes_8k_item_5.02_21.csv",
+   "rows": 3622,
+   "sha256": "4913dd469606073634c2d1ba3203f1e634b63253c2ff8522038a0c3a8ffaa94a",
+   "spec_id": null,
+   "status": "ok",
+   "verdict": null
+  },
+  {
+   "basis": "described",
+   "described_type": "8k_item_5.02",
+   "event_types": [
+    "8k_item_5.02"
+   ],
+   "ledger": "data/events/described/outcomes_8k_item_5.02_63.csv",
+   "rows": 2724,
+   "sha256": "d40d14c1f621670ba356d26d3fb51507cb3ef63aa8b3eda64375c56ddb90a049",
+   "spec_id": null,
+   "status": "ok",
+   "verdict": null
+  },
+  {
+   "basis": "described",
+   "described_type": "8k_item_7.01",
+   "event_types": [
+    "8k_item_7.01"
+   ],
+   "ledger": "data/events/described/outcomes_8k_item_7.01_21.csv",
+   "rows": 4754,
+   "sha256": "68959d42d1ee829144176935cae4cb4ee1fb7eca6203a45457aa5e9d155ed658",
+   "spec_id": null,
+   "status": "ok",
+   "verdict": null
+  },
+  {
+   "basis": "described",
+   "described_type": "8k_item_7.01",
+   "event_types": [
+    "8k_item_7.01"
+   ],
+   "ledger": "data/events/described/outcomes_8k_item_7.01_63.csv",
+   "rows": 3153,
+   "sha256": "edc1bd73d58668bd4658cc4744ac0783683d7985f66f7a4780771c8141292c8b",
+   "spec_id": null,
+   "status": "ok",
+   "verdict": null
+  },
+  {
+   "basis": "described",
+   "described_type": "8k_item_8.01",
+   "event_types": [
+    "8k_item_8.01"
+   ],
+   "ledger": "data/events/described/outcomes_8k_item_8.01_21.csv",
+   "rows": 3998,
+   "sha256": "c360053e549f19499a04bf9bcaee26cb1914c37f6317024897a33d484e7909de",
+   "spec_id": null,
+   "status": "ok",
+   "verdict": null
+  },
+  {
+   "basis": "described",
+   "described_type": "8k_item_8.01",
+   "event_types": [
+    "8k_item_8.01"
+   ],
+   "ledger": "data/events/described/outcomes_8k_item_8.01_63.csv",
+   "rows": 2742,
+   "sha256": "aad4c57b783fece433d449e83ae57430e32c050807fca7f70536c32f92d7642b",
+   "spec_id": null,
+   "status": "ok",
+   "verdict": null
+  },
+  {
+   "basis": "described",
+   "described_type": "form4_sale",
+   "event_types": [
+    "form4_sale"
+   ],
+   "ledger": "data/events/described/outcomes_form4_sale_21.csv",
+   "rows": 2877,
+   "sha256": "2e2ae0d44012a2548e4695fced9265efbd477bb9f3564fe0578c239e4c2096c5",
+   "spec_id": null,
+   "status": "ok",
+   "verdict": null
+  },
+  {
+   "basis": "described",
+   "described_type": "form4_sale",
+   "event_types": [
+    "form4_sale"
+   ],
+   "ledger": "data/events/described/outcomes_form4_sale_63.csv",
+   "rows": 1940,
+   "sha256": "96684e333c8f437d10e9fcb42aef92ecea142d9b0eeaf68b978969d543b481da",
+   "spec_id": null,
+   "status": "ok",
+   "verdict": null
+  },
+  {
+   "basis": "reference",
+   "described_type": "universe_any_day",
+   "event_types": [
+    "universe_any_day"
+   ],
+   "ledger": "data/events/described/outcomes_universe_any_day_21.csv",
+   "rows": 15826,
+   "sha256": "c5892d66ab3abc3b8fa0ecab5df9f022f1b83f4511acf564d2601fb483c57a90",
+   "spec_id": null,
+   "status": "ok",
+   "verdict": null
+  },
+  {
+   "basis": "reference",
+   "described_type": "universe_any_day",
+   "event_types": [
+    "universe_any_day"
+   ],
+   "ledger": "data/events/described/outcomes_universe_any_day_63.csv",
+   "rows": 8316,
+   "sha256": "9690bece22e037a0514930b2b1083292b5dae839f400e3a59194ae88d3292696",
+   "spec_id": null,
+   "status": "ok",
+   "verdict": null
   }
  ],
  "stance": {
@@ -359,7 +2080,7 @@
   "librarian": {
    "age_days": 0.0,
    "name": "librarian brief",
-   "stamp": "2026-11-27T05:03:46+00:00",
+   "stamp": "2026-11-27T07:27:53+00:00",
    "status": "fresh",
    "usable": true,
    "why": "ok"
@@ -367,7 +2088,7 @@
   "observations": {
    "age_days": 0.0,
    "name": "observations",
-   "stamp": "2026-11-27T05:02:36+00:00",
+   "stamp": "2026-11-27T07:26:40+00:00",
    "status": "fresh",
    "usable": true,
    "why": "ok"
@@ -421,7 +2142,7 @@
    }
   },
   "source": {
-   "age_days": 2.21,
+   "age_days": 2.31,
    "name": "prices",
    "stamp": "2026-11-25",
    "status": "fresh",

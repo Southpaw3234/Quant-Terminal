@@ -10,23 +10,51 @@
     "id": "base_rates",
     "lines": [
      {
-      "text": "form4_cluster_buy over 21 bars vs SPY, n=160: median -0.2%, middle half -7.1% to +6.8%, worst -56.5%, best +118.2%, 49% positive — registry verdict NOT MET",
+      "text": "15 event type(s) observed; 9 have no base rate (8k_item_1.02, 8k_item_2.03, 8k_item_3.02, 8k_item_3.03, 8k_item_5.03, 8k_item_5.07, 8k_item_9.01, filing_10-K, form4_direction_not_observed)",
       "url": null
      },
      {
-      "text": "form4_cluster_buy over 63 bars vs SPY, n=406: median -4.5%, middle half -20.5% to +9.8%, worst -77.2%, best +268.6%, 40% positive — registry verdict NOT MET",
+      "text": "universe_any_day vs SPY: 21 bars n=15826 median -2.3%, middle half -11.1% to +6.7%, 42% positive; 63 bars n=8316 median -6.4%, middle half -23.3% to +9.3%, 38% positive — REFERENCE, not an event: an arbitrary day in this universe — read each line below against this one",
       "url": null
      },
      {
-      "text": "15 event type(s) observed; 15 have insufficient history for a base rate (no frozen outcome ledger)",
+      "text": "8k_item_1.01 (5 tonight) vs SPY: 21 bars n=2766 median -3.3%, middle half -15.0% to +6.2%, 39% positive; 63 bars n=2124 median -9.5%, middle half -27.0% to +7.3%, 34% positive — described, never tested — no read, no verdict",
+      "url": null
+     },
+     {
+      "text": "8k_item_2.02 (1 tonight) vs SPY: 63 bars n=1025 median -6.3%, middle half -20.6% to +8.0%, 37% positive — registry verdict NOT MET; covers only earnings 8-Ks (Item 2.02) whose two-session announcement abnormal return was +5% or more; whether tonight's filing clears that is not yet known when it is filed",
+      "url": null
+     },
+     {
+      "text": "8k_item_3.01 (2 tonight) vs SPY: 21 bars n=510 median -5.0%, middle half -20.8% to +9.1%, 38% positive; 63 bars n=413 median -12.6%, middle half -38.7% to +15.6%, 36% positive — described, never tested — no read, no verdict",
+      "url": null
+     },
+     {
+      "text": "8k_item_5.02 (4 tonight) vs SPY: 21 bars n=3622 median -2.4%, middle half -11.9% to +7.0%, 43% positive; 63 bars n=2724 median -6.1%, middle half -23.4% to +9.6%, 38% positive — described, never tested — no read, no verdict",
+      "url": null
+     },
+     {
+      "text": "8k_item_7.01 (5 tonight) vs SPY: 21 bars n=4754 median -2.3%, middle half -11.0% to +6.3%, 42% positive; 63 bars n=3153 median -5.6%, middle half -22.0% to +9.3%, 39% positive — described, never tested — no read, no verdict",
+      "url": null
+     },
+     {
+      "text": "8k_item_8.01 (7 tonight) vs SPY: 21 bars n=3998 median -2.7%, middle half -12.4% to +5.6%, 41% positive; 63 bars n=2742 median -5.8%, middle half -22.4% to +8.7%, 38% positive — described, never tested — no read, no verdict",
+      "url": null
+     },
+     {
+      "text": "form4_cluster_buy vs SPY: 21 bars n=160 median -0.2%, middle half -7.1% to +6.8%, 49% positive; 63 bars n=406 median -4.5%, middle half -20.5% to +9.8%, 40% positive — registry verdict NOT MET",
+      "url": null
+     },
+     {
+      "text": "form4_sale vs SPY: 21 bars n=2877 median -2.2%, middle half -9.6% to +5.6%, 41% positive; 63 bars n=1940 median -6.4%, middle half -19.6% to +7.6%, 37% positive — described, never tested — no read, no verdict",
       "url": null
      }
     ],
-    "note": "What followed past events of a type — a description, not a forecast. Computed only from reads already spent.",
+    "note": "What followed past events of a type — a description, not a forecast. Each line says whether a pre-registered read tested it or it was only described.",
     "source": {
      "age_days": 0.0,
      "name": "ACTUARY analysis",
-     "stamp": "2026-11-27T05:04:08+00:00",
+     "stamp": "2026-11-27T07:28:10+00:00",
      "status": "fresh",
      "usable": true,
      "why": "ok"
@@ -46,7 +74,7 @@
     "source": {
      "age_days": 0.0,
      "name": "ACTUARY analysis",
-     "stamp": "2026-11-27T05:04:08+00:00",
+     "stamp": "2026-11-27T07:28:10+00:00",
      "status": "fresh",
      "usable": true,
      "why": "ok"
@@ -178,7 +206,7 @@
     "source": {
      "age_days": 0.0,
      "name": "OBSERVER filings",
-     "stamp": "2026-11-27T05:02:36+00:00",
+     "stamp": "2026-11-27T07:26:40+00:00",
      "status": "fresh",
      "usable": true,
      "why": "ok"
@@ -206,7 +234,7 @@
     "source": {
      "age_days": 0.0,
      "name": "OBSERVER filings",
-     "stamp": "2026-11-27T05:02:36+00:00",
+     "stamp": "2026-11-27T07:26:40+00:00",
      "status": "fresh",
      "usable": true,
      "why": "ok"
@@ -238,7 +266,7 @@
     "source": {
      "age_days": 0.0,
      "name": "LIBRARIAN brief",
-     "stamp": "2026-11-27T05:03:46+00:00",
+     "stamp": "2026-11-27T07:27:53+00:00",
      "status": "fresh",
      "usable": true,
      "why": "ok"
@@ -290,11 +318,23 @@
       "url": "https://fred.stlouisfed.org/series/CPIAUCSL"
      },
      {
+      "text": "Erdogan completes Turkey's ratification of Mecca defence pact - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMisgFBVV95cUxPVmJEdmR5Wl9uZTZKS1R2ckJXekhkX1AwSVZpSHhkODcweDNmTVRva2JDdjRWcjNvYk4yeXNkQWw3ZTVnMUpWUTBjYXNWOTVCY2Y1emVTdGFjazhoR1ltaXF6WTNvMEVqSUdaNTI3VzU4U3dMNkROYVlDMTR5NHhpdGhuZjl4VnZGTzFTNHRXMDdnSXVmdXhpODl6YjVabXVoa0NlMVFsOW94OUw1clJ2UUpR?oc=5"
+     },
+     {
+      "text": "Iran warns on Gulf military presence as South Korea readies expanded naval role - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMixwFBVV95cUxNNjgyMVEwOUJRYll3NXdiU29vVVlmcGMxc3VhTGdEZ3BaZzZ0bUFtemt1c01oMXhjcHlJMEoxVWppTFV2YU12Qk4xRjlzVTNZaEVyR0dBZGtRNEdvaGhCTHhPY2VEVTUtZUw3a3dGekV4VTZkYmp3ZzFjVmxMRnliRmhwZmJOdkZhS3dBNWVfVkU4SjdObjF4WFY4Mmo4ZDlGWFcxYTZnMmVDUXN3NTVPY2lObHZlRFd0aXhjbTR0NXkwWkFkSHVr?oc=5"
+     },
+     {
+      "text": "Australia sanctions alleged Iranian agents suspected of directing antisemitic attacks - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMiygFBVV95cUxNSHBtblZnbWZBQUo5LVNGb2sxQkpHOFdJTGI0YlozM0YxUGh0bnZkLWZOeWJrMFBoX0h3aGNkTEtCVVA3Zjg0WEpuYi1MdjBEa2dKVDg3Rk5yWFJCNEs1NDFnYTRrVmpJeVQ1Y1lMR0daaDItcWczSEhzT3VfVTRxVno4Zm9HVGdTN2RDT2NtYmk5NlZqTGJnekNMSTI5dERMY1dZaFpFUy1IM01aVUFjbzI3MDEteXFNS2FvaEhFLTJhZnBvRTVRbzln?oc=5"
+     },
+     {
       "text": "Shares find footing after bruising month, dollar set for third monthly gain - Reuters",
       "url": "https://news.google.com/rss/articles/CBMigwFBVV95cUxOeDB1T1E2SVA0LVpuZFR6d2d5dWFobkEwdkN5aFVmZUZKN1pSVWExbEJzWlZhV0tKcklRQ09yZlFTZklkLTBNSGFwbHBfbHR2SWZoQTdXcWtFdEViWGdQamN2a0JjWjZ4M0Mydmlpc1lrQUdYaFBNVkFBdTQ4djVpbjZrRQ?oc=5"
      },
      {
-      "text": "Brent trades near month's high as Mideast conflict threatens supply - Reuters",
+      "text": "Oil on track to snap 3-week losing streak over supply fears - Reuters",
       "url": "https://news.google.com/rss/articles/CBMitgFBVV95cUxPTzVQVzE5aGdzbGVhNEUtVl94M0V3RjN5Rks4UDU0U0plazFDcjFnUTBMMHBvdk9BRzFaVHljSXk1ZFdzSjlRTVRXNGZ0cnRyUWRRbFJaRjBsVWNFbDZqSnQ0cHo0TW5fRDlwMWlKWDI3V2ROcnlXczVET1RqSXR6UGtZSTZ0OTQtY1YwaG1yYTRwQnZ6TW43azNGNTFqMmpkNFhtbVJwRnVkVERhR1NnSlFIMzExZw?oc=5"
      },
      {
@@ -304,6 +344,14 @@
      {
       "text": "Trump says Wednesday's market had him briefly 'concerned' before stocks recovered - Reuters",
       "url": "https://news.google.com/rss/articles/CBMixAFBVV95cUxOWHRXZnN1TmZVRDJ6VUJtNjhuRm85eGlQVmdGNGQ0SC0yeHlPVUlKSksyLVNZa0VqRGdqUWVtaW1oNHhjQldDdHlKYnZ0TVgtbkpEcmJfVEcyTUxnNkNYeEdaYXlWUmQwcnhyLUtrUERoYnhIdnVxV3lFeUhza21Wc3U2WW9yd2loWmpxeXE4SG9OT2Rlai1reWtSemRkYnlBZndLaFVNOHJHeDF4ZkVmckpqSzZSbElNZHpfdUFLTTBsOW9C?oc=5"
+     },
+     {
+      "text": "Final New Zealand election vote count to confirm parliament make up - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxPcFJqbEVQNWVCSWlBVEdnUXJlWHgwV3pmUjRGZ254NjNIcGgtSHU0NkVsemlWUnFjZWlJa3BLY01sTDN3djdCS0ZYU2dvcGV0U0I5NUh4MDV2NU5ya0V1WS1BUkJRSGRtNnIxUlRqc3ZFOXBycWJITFh5cnB3WEtsa1B1REFtMDlkMmFYdlBLTEFKSjNvWGZ4SmtEMl9RMzRNbFdCS25kbHF4eVhGeGs5OW1Rb2FGcUhWcVJV?oc=5"
+     },
+     {
+      "text": "US, Qatar to help Venezuela clear regional development bank arrears, sources say - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMiyAFBVV95cUxNYnZ1a0tWZGRjN19GNkZNS0JoYmlDZGNHSkVZMmM1d2xsTEN1QmhsNkZtWVZfelZCUzdid05hSkVYa0hNVmpRazY0MUtWdWJQR2FydkFUeWtqZUotbXVvQ1JPVWg2Y0tGdWZOQ0hHUkNLRGh6Nm5SMjBNVldmRm1YZU1iaG5DSjdaSmFTcXpIdDZwUExwOFQzNWxSMk1QV1NaWWVONy02Y2FSa2xZbV8wUWMtd0h1clBxZ01aYTdpd0xYYjZMXzVrVQ?oc=5"
      },
      {
       "text": "Hamas weighs response after Israel kills 10 people in Gaza - Reuters",
@@ -316,6 +364,10 @@
      {
       "text": "Two Italians killed in attack on Kuwait site, Iran denies involvement - Reuters",
       "url": "https://news.google.com/rss/articles/CBMiswFBVV95cUxPeE9DZXQ0VUMxV052eWlmWWlKM3R0LTFiMS1ITm93Ty1NOWpta1ZVNU5MeWVVMHRlcmdXd0NpZmxJeGlGZEhCeklaaEs2VWlSWnR0RVRLUHhCNm9MeFNTMmNUZFEyWWdoUVVBWUZTcVc0LVNFY0gxN050ZHNtS3psSVRHQWtBVEM5N3dPYVl6T1Flb0tBb1BlUGVxQ3ZaNURWVU9vTHYtTGxFRDJSQVhaMU1Tbw?oc=5"
+     },
+     {
+      "text": "Turkey's capital markets catch cold from funds crisis - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMiowFBVV95cUxNS3lROFVRYjM4YU8zM0VfZjVwMEVLZC1oNWtyUmRzZThnYkNwa28yZlNMRDhBaHAwMkdfQ0lObE1ZSjZEb1dMNzdORFdBSEI3aXZpRl9Rb2xOTEI2SklOellmVHVlVG1qT1BMM0JKdWhpX2NyRWowOVoxTnA4TnVOSDJuTURmd0xHR3VKakhHblU0M3NwVGpZQ0JZU0swbmZtcUxR?oc=5"
      },
      {
       "text": "Settlers smash foundations of Palestinian family's homes in West Bank - Reuters",
@@ -338,6 +390,14 @@
       "url": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxPLXo4cXNsVjIzOVYyWnIxR1JOUjY5UUkzU0xCSXc2ampKcnhKajJ2VjdjWWdzSkY3QlV5Z0xNQkd1aUtKUWh6d19mMXlsTEc5RTk3T0NvbkJyM2Y4VWZ5bW9sRFhUX2Q4aGx5dGhLLXVLb0VDWDFaSGQ0eGZaZVRacTVlWkx1eVYwZEwwUWNSZEFpVGlQbVA5dkRGWXVmeHlpYzE5VFB3NVo5TzBmWHk1YXZjZmN2XzZjdS0w?oc=5"
      },
      {
+      "text": "Guinea-Bissau delays elections, extending military-led transition a year after coup - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMiyAFBVV95cUxON3Rhd2R2U1BBMjNIc1JzRDVaVWwyZG0zdjVEQ2tNS2pFMWJtc3Bkdl9sSGlKT3dyMkc5ekhtdHNPX01yanBrYS14d1k4NFNyUURJbVF1Vi1KZElMZmRUR0ttWnZkdDYtSjZGNEc0OThCdmhnQVhkRXpTMlZCR2htY2dnY1FBNEcwdE9veW95SzRhUmg2Z00zWDB6dnhsS3otTXpnOEtuVjk0MWRPcVNOR0NaUFQ0S2N3TXdFOWEwekpKNU1Gd0d2Vg?oc=5"
+     },
+     {
+      "text": "Mexico urges Asian trade partners to crack down on tariff dodging - Reuters",
+      "url": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxPaHhmUFduZ0tRbWFBQ2xIRmtIZDU0S012anU5bEx3SGVzOXVmV1JkNGxIZkNXV0RYTWJlNEVqUTFoS0tnQ1QtcXI0bVlJT25XQ1Y4TFZvczVTbTFPWTc3eUF6MzF6M0swR3JYTGR0ZjNwZVhhb2dWUjNBSjBod1ZfWU4zajFXMnBYUU1YY3pNQXNDWlRQa2VILWVJc25tcnJpV3ljRW95RjViUXM?oc=5"
+     },
+     {
       "text": "Russia arrests deputy aerospace commander in reported corruption case - Reuters",
       "url": "https://news.google.com/rss/articles/CBMitwFBVV95cUxNQzFOeDFjM0VPTXBIZkxlelN0ZFAtQ25fOUZkTVVheGM0cURoX1RqVXUzTGttUDlLTmhuczVlelh1eGJUYkVWQllDQ1ZzTlB3OUdQMjloczZsRGR4WGwzbF9XWURoSk9Tb2FybGNlbExBc243elBHTGxtNnpacDR3Y1pSaDctcFZqdUs5UkJiZ1R1Q09lTWxkUmN2TnNSZUdaQlpPNUl1N0tZVDJGd0xOT0lTU0tGUzA?oc=5"
      },
@@ -356,45 +416,13 @@
      {
       "text": "Iraqi Kurds protest against Baghdad leader's moves to assert central control - Reuters",
       "url": "https://news.google.com/rss/articles/CBMiwgFBVV95cUxOZ2xrakttQVBBRkRuMG9VbFRZaFJxcnIxZE1TV3EzdTFtV0w2anEwMWgxb2VDdzhFazVicDR0cW45TExKWFZlbVAzd05hUEhwVUt6YzBGVXJBOGtFYk5pUjRsVVJJYVNrRjFwSGk2bGdiY0poRXBqNDBFT3QybWZKT0FHUmRSdEZJUU5TWUJNQ205UmlpbFpiajFXTVZ1X3dxMU5NZEwyN2pEa2ZOVWtrcFFfbWcxczcyektCWlRlWnlyZw?oc=5"
-     },
-     {
-      "text": "Trump demands probe of GDP data released before midterms - Reuters",
-      "url": "https://news.google.com/rss/articles/CBMinwFBVV95cUxPdjAtVm85ZE55RGw0MXhaM3NVV1NlaHdlazNjODRQQjRPOGh2eDQ5aWYzcmxNSHpVWHNacEhhMDFaRDZ3YWIxalJzY3JCTXdjLVE4RXpmbktlZXNZTUc3RlE0LVhtTlo5Rl8xMm9nOXVPZmZ1eEd2XzJjcXQxX2otajdiUHN6djBScGpldmJvUXBIaG9UeUJxeW5kSWtnTTQ?oc=5"
-     },
-     {
-      "text": "Spain's De Cos set to be nominated by EU countries as next head of ECB - Reuters",
-      "url": "https://news.google.com/rss/articles/CBMiqgFBVV95cUxOOV8wZkxRVTY5U0ZQeVZwSGtCMVZJTjV2d2t5TlhsSVoxQmpLRXI4OTV1R0QwQkV1QmZma3BDN0lrOEJTNGFVeloyeE5HbnhmWDZfR1VrbzN5TzZrck5WTTlKNTBaeFhVbDd4RldhY0hZMnFsczlsTURLY0FpWWgzeE5YVVc2NUZqMy1KbldQVDJfcUtsVEhINHF2emJ5SEFrMXozWUdTM3BFQQ?oc=5"
-     },
-     {
-      "text": "French actor Gerard Depardieu to face trial for rape, court rules - Reuters",
-      "url": "https://news.google.com/rss/articles/CBMipgFBVV95cUxNWHRHWGdZSTZmMFAtdFFZbVlVOTRTUEdYNDlQQVVVaGdua3JjQk1YRmlEOXhSeXk5a0thWjdtSUt2cWZpTVNkV3dveE9McHRhSWVpdjIxd2FuOW84bkRBTlNGcDJ4S3Z3MFBCd3RyWlBDai1mMXlKMkpFUnVBWmtDWk5tVzhFX2F6bzNuS3lYV0Q2bUtCbjlpMUlUZFJwYlM4eGhwcmdB?oc=5"
-     },
-     {
-      "text": "Two Italian workers killed in Iranian strike in Kuwait, source says - Reuters",
-      "url": "https://news.google.com/rss/articles/CBMitAFBVV95cUxPZ2hPQWhhdW9HTWxtRndjQkN3aFhQTzhyWV9sQ0NTbHNsRFpINkRjMHhKRGN4QTk1NTJYWU1yVHhmYVJSazJEVGtOdVIzZ2xsNFJFeHF0YXNEbXBqTF94bnBDOEFnMV9JdGRRbWVROFJGRmZISmZWUXhtYTlJTXFFMlBWa2IwdXBfUXY4OENRd2tVeWh0Q1M1OThsMl9kMkVEamJiTjMzdWxwZHRzdlVHYmtwTUI?oc=5"
-     },
-     {
-      "text": "Airline Norse Atlantic flags bankruptcy risk as flights suspended - Reuters",
-      "url": "https://news.google.com/rss/articles/CBMixwFBVV95cUxNelVSdGZIMFMxelZ3SVpNZHYyYzRTZWN4S010bExkN0lmVVk5eng2VWp0VUszQXhGVDF5TUFxTDQzSXFuNmxHazV3d1VSR1BWMFRIeFBMQzJDeUM0RG5Cazhya0dpdDA2ZzJDSnd0WGVvVGItS0ttemdLUGhUbUwwbjBWbUk2VktZQUxsa0haX290d21lVFg5Ri1UZ0FkcFo1ZUpnSUNTd1ZudHJWYnQ5T0U4X0w2aExZRXBSOE9ETlEwa2ljRmxF?oc=5"
-     },
-     {
-      "text": "China Railway Resources Group plans $600 million investment in Zimbabwe gold mines - Reuters",
-      "url": "https://news.google.com/rss/articles/CBMixgFBVV95cUxOLUpCLVR5YVZ1cFBPeHRtT0pkYUdFZE8yd0loYTFweXZ6ZVhMTlhNczJyRU1Ed0ZTS2JlODFQUVpoTHM4azhmNUtTM0huMTNBWUpTbWgwRFhoZHViZ1Npb2tQbEVGWFZVOUh2Z3ZyN0dYRzI3aU5wOS1mZldycWM4WHJzR2pHQV9QNFF6azNUM1lybEN6Q1N4MHk4ZVpKdkxiaWZ3MUpLZ29uSko5a1ZYdnA3dGVJc2EtXzMxZFhSV04wc2VNS1E?oc=5"
-     },
-     {
-      "text": "Spain's de Cos to become ECB's next president, FT reports - Reuters",
-      "url": "https://news.google.com/rss/articles/CBMiogFBVV95cUxPaWxGUjk3QjBiVW11a0hIVTN4R21ScVdhVXZTY2ZEeU5oRXp6U3VWWHNqblR6MUNJcWVHc0xQSEZwd2l4cDkwNmZ1N0NxbHF3c1g4TlZiZTVKemRnZktkWENldWhOMkN6N0t2MTc0Z0daLUtFOGtXLWlWSTVZa0FUeUNYZjhKdTNnc2lCMVgyc2VtMkNmUzlhaDhDang2Yndad2c?oc=5"
-     },
-     {
-      "text": "Iran's supreme leader urges Guards-linked Basij volunteers to broaden social reach - Reuters",
-      "url": "https://news.google.com/rss/articles/CBMivAFBVV95cUxQYmt1bHZnbVJoU3dJN3o2VEQ1c1c2WXRPeTRxRVFRT0I5bHc5MEJweVVlZ1J1aXNVd0NCZ0piWlg1OU14dVJiR3FyZTVicHoxc3FIS2tZbXdvU3gxLXBQRi1mOGhmaEZGUkV4elpkWk94MVdtVDBtTngyT0FaSm1OQ1BZV0dNNnBqTWNZcTR0U1FfU3pLQlNKN2NYWkJFWlFIRmdlOURCWTlaWHN6ZEpYTXhuelJiSUstVDQ4TQ?oc=5"
      }
     ],
     "note": "Collected, not curated: series state their own age and headlines are newest-first, not most-important-first.",
     "source": {
      "age_days": 0.0,
      "name": "OBSERVER macro",
-     "stamp": "2026-11-27T05:03:42+00:00",
+     "stamp": "2026-11-27T07:27:49+00:00",
      "status": "fresh",
      "usable": true,
      "why": "ok"
@@ -418,7 +446,7 @@
     "source": {
      "age_days": 0.0,
      "name": "ACTUARY analysis",
-     "stamp": "2026-11-27T05:04:08+00:00",
+     "stamp": "2026-11-27T07:28:10+00:00",
      "status": "fresh",
      "usable": true,
      "why": "ok"
@@ -438,7 +466,7 @@
     "source": {
      "age_days": 0.0,
      "name": "ACTUARY analysis",
-     "stamp": "2026-11-27T05:04:08+00:00",
+     "stamp": "2026-11-27T07:28:10+00:00",
      "status": "fresh",
      "usable": true,
      "why": "ok"
@@ -464,7 +492,7 @@
     ],
     "note": "",
     "source": {
-     "age_days": 0.04,
+     "age_days": 0.14,
      "name": "daily snapshot",
      "stamp": "2026-11-27T04:06:42Z",
      "status": "fresh",
@@ -475,19 +503,19 @@
    }
   }
  },
- "facts_sha256": "1ba834d21e2e02adcbc1a1dc2d87ad0bc71e5742b8a10a829e2912edc740e0cb",
- "generated_at": "2026-11-27T05:04:10+00:00",
+ "facts_sha256": "4c863ce9ccd87383cf3fc32682dfc74350afe76b53fe30595e167df118215e1c",
+ "generated_at": "2026-11-27T07:28:11+00:00",
  "inputs": {
   "analysis": {
    "age_days": 0.0,
    "name": "ACTUARY analysis",
-   "stamp": "2026-11-27T05:04:08+00:00",
+   "stamp": "2026-11-27T07:28:10+00:00",
    "status": "fresh",
    "usable": true,
    "why": "ok"
   },
   "daily snapshot": {
-   "age_days": 0.04,
+   "age_days": 0.14,
    "name": "daily snapshot",
    "stamp": "2026-11-27T04:06:42Z",
    "status": "fresh",
@@ -497,7 +525,7 @@
   "librarian": {
    "age_days": 0.0,
    "name": "LIBRARIAN brief",
-   "stamp": "2026-11-27T05:03:46+00:00",
+   "stamp": "2026-11-27T07:27:53+00:00",
    "status": "fresh",
    "usable": true,
    "why": "ok"
@@ -505,7 +533,7 @@
   "macro": {
    "age_days": 0.0,
    "name": "OBSERVER macro",
-   "stamp": "2026-11-27T05:03:42+00:00",
+   "stamp": "2026-11-27T07:27:49+00:00",
    "status": "fresh",
    "usable": true,
    "why": "ok"
@@ -513,7 +541,7 @@
   "observations": {
    "age_days": 0.0,
    "name": "OBSERVER filings",
-   "stamp": "2026-11-27T05:02:36+00:00",
+   "stamp": "2026-11-27T07:26:40+00:00",
    "status": "fresh",
    "usable": true,
    "why": "ok"
@@ -523,7 +551,7 @@
  "layouts": {
   "aggressive": {
    "caps": {
-    "base_rates": 6,
+    "base_rates": 10,
     "exposure": 20,
     "filings": 30,
     "insiders": 30,
@@ -547,7 +575,7 @@
   },
   "balanced": {
    "caps": {
-    "base_rates": 6,
+    "base_rates": 10,
     "exposure": 30,
     "filings": 20,
     "insiders": 14,
@@ -571,7 +599,7 @@
   },
   "conservative": {
    "caps": {
-    "base_rates": 6,
+    "base_rates": 10,
     "exposure": 40,
     "filings": 14,
     "insiders": 8,
@@ -625,7 +653,7 @@
    "source": {
     "age_days": 0.0,
     "name": "ACTUARY analysis",
-    "stamp": "2026-11-27T05:04:08+00:00",
+    "stamp": "2026-11-27T07:28:10+00:00",
     "status": "fresh",
     "usable": true,
     "why": "ok"
@@ -723,7 +751,7 @@
    "source": {
     "age_days": 0.0,
     "name": "OBSERVER filings",
-    "stamp": "2026-11-27T05:02:36+00:00",
+    "stamp": "2026-11-27T07:26:40+00:00",
     "status": "fresh",
     "usable": true,
     "why": "ok"
@@ -757,7 +785,7 @@
    "source": {
     "age_days": 0.0,
     "name": "LIBRARIAN brief",
-    "stamp": "2026-11-27T05:03:46+00:00",
+    "stamp": "2026-11-27T07:27:53+00:00",
     "status": "fresh",
     "usable": true,
     "why": "ok"
@@ -787,7 +815,7 @@
    "source": {
     "age_days": 0.0,
     "name": "OBSERVER filings",
-    "stamp": "2026-11-27T05:02:36+00:00",
+    "stamp": "2026-11-27T07:26:40+00:00",
     "status": "fresh",
     "usable": true,
     "why": "ok"
@@ -800,30 +828,58 @@
    "id": "base_rates",
    "lines": [
     {
-     "text": "form4_cluster_buy over 21 bars vs SPY, n=160: median -0.2%, middle half -7.1% to +6.8%, worst -56.5%, best +118.2%, 49% positive — registry verdict NOT MET",
+     "text": "15 event type(s) observed; 9 have no base rate (8k_item_1.02, 8k_item_2.03, 8k_item_3.02, 8k_item_3.03, 8k_item_5.03, 8k_item_5.07, 8k_item_9.01, filing_10-K, form4_direction_not_observed)",
      "url": null
     },
     {
-     "text": "form4_cluster_buy over 63 bars vs SPY, n=406: median -4.5%, middle half -20.5% to +9.8%, worst -77.2%, best +268.6%, 40% positive — registry verdict NOT MET",
+     "text": "universe_any_day vs SPY: 21 bars n=15826 median -2.3%, middle half -11.1% to +6.7%, 42% positive; 63 bars n=8316 median -6.4%, middle half -23.3% to +9.3%, 38% positive — REFERENCE, not an event: an arbitrary day in this universe — read each line below against this one",
      "url": null
     },
     {
-     "text": "15 event type(s) observed; 15 have insufficient history for a base rate (no frozen outcome ledger)",
+     "text": "8k_item_1.01 (5 tonight) vs SPY: 21 bars n=2766 median -3.3%, middle half -15.0% to +6.2%, 39% positive; 63 bars n=2124 median -9.5%, middle half -27.0% to +7.3%, 34% positive — described, never tested — no read, no verdict",
+     "url": null
+    },
+    {
+     "text": "8k_item_2.02 (1 tonight) vs SPY: 63 bars n=1025 median -6.3%, middle half -20.6% to +8.0%, 37% positive — registry verdict NOT MET; covers only earnings 8-Ks (Item 2.02) whose two-session announcement abnormal return was +5% or more; whether tonight's filing clears that is not yet known when it is filed",
+     "url": null
+    },
+    {
+     "text": "8k_item_3.01 (2 tonight) vs SPY: 21 bars n=510 median -5.0%, middle half -20.8% to +9.1%, 38% positive; 63 bars n=413 median -12.6%, middle half -38.7% to +15.6%, 36% positive — described, never tested — no read, no verdict",
+     "url": null
+    },
+    {
+     "text": "8k_item_5.02 (4 tonight) vs SPY: 21 bars n=3622 median -2.4%, middle half -11.9% to +7.0%, 43% positive; 63 bars n=2724 median -6.1%, middle half -23.4% to +9.6%, 38% positive — described, never tested — no read, no verdict",
+     "url": null
+    },
+    {
+     "text": "8k_item_7.01 (5 tonight) vs SPY: 21 bars n=4754 median -2.3%, middle half -11.0% to +6.3%, 42% positive; 63 bars n=3153 median -5.6%, middle half -22.0% to +9.3%, 39% positive — described, never tested — no read, no verdict",
+     "url": null
+    },
+    {
+     "text": "8k_item_8.01 (7 tonight) vs SPY: 21 bars n=3998 median -2.7%, middle half -12.4% to +5.6%, 41% positive; 63 bars n=2742 median -5.8%, middle half -22.4% to +8.7%, 38% positive — described, never tested — no read, no verdict",
+     "url": null
+    },
+    {
+     "text": "form4_cluster_buy vs SPY: 21 bars n=160 median -0.2%, middle half -7.1% to +6.8%, 49% positive; 63 bars n=406 median -4.5%, middle half -20.5% to +9.8%, 40% positive — registry verdict NOT MET",
+     "url": null
+    },
+    {
+     "text": "form4_sale vs SPY: 21 bars n=2877 median -2.2%, middle half -9.6% to +5.6%, 41% positive; 63 bars n=1940 median -6.4%, middle half -19.6% to +7.6%, 37% positive — described, never tested — no read, no verdict",
      "url": null
     }
    ],
-   "note": "What followed past events of a type — a description, not a forecast. Computed only from reads already spent.",
-   "shown": 3,
+   "note": "What followed past events of a type — a description, not a forecast. Each line says whether a pre-registered read tested it or it was only described.",
+   "shown": 10,
    "source": {
     "age_days": 0.0,
     "name": "ACTUARY analysis",
-    "stamp": "2026-11-27T05:04:08+00:00",
+    "stamp": "2026-11-27T07:28:10+00:00",
     "status": "fresh",
     "usable": true,
     "why": "ok"
    },
    "title": "Base rates",
-   "total": 3
+   "total": 10
   },
   {
    "dark": false,
@@ -839,7 +895,7 @@
    "source": {
     "age_days": 0.0,
     "name": "ACTUARY analysis",
-    "stamp": "2026-11-27T05:04:08+00:00",
+    "stamp": "2026-11-27T07:28:10+00:00",
     "status": "fresh",
     "usable": true,
     "why": "ok"
@@ -865,7 +921,7 @@
    "source": {
     "age_days": 0.0,
     "name": "ACTUARY analysis",
-    "stamp": "2026-11-27T05:04:08+00:00",
+    "stamp": "2026-11-27T07:28:10+00:00",
     "status": "fresh",
     "usable": true,
     "why": "ok"
@@ -918,11 +974,23 @@
      "url": "https://fred.stlouisfed.org/series/CPIAUCSL"
     },
     {
+     "text": "Erdogan completes Turkey's ratification of Mecca defence pact - Reuters",
+     "url": "https://news.google.com/rss/articles/CBMisgFBVV95cUxPVmJEdmR5Wl9uZTZKS1R2ckJXekhkX1AwSVZpSHhkODcweDNmTVRva2JDdjRWcjNvYk4yeXNkQWw3ZTVnMUpWUTBjYXNWOTVCY2Y1emVTdGFjazhoR1ltaXF6WTNvMEVqSUdaNTI3VzU4U3dMNkROYVlDMTR5NHhpdGhuZjl4VnZGTzFTNHRXMDdnSXVmdXhpODl6YjVabXVoa0NlMVFsOW94OUw1clJ2UUpR?oc=5"
+    },
+    {
+     "text": "Iran warns on Gulf military presence as South Korea readies expanded naval role - Reuters",
+     "url": "https://news.google.com/rss/articles/CBMixwFBVV95cUxNNjgyMVEwOUJRYll3NXdiU29vVVlmcGMxc3VhTGdEZ3BaZzZ0bUFtemt1c01oMXhjcHlJMEoxVWppTFV2YU12Qk4xRjlzVTNZaEVyR0dBZGtRNEdvaGhCTHhPY2VEVTUtZUw3a3dGekV4VTZkYmp3ZzFjVmxMRnliRmhwZmJOdkZhS3dBNWVfVkU4SjdObjF4WFY4Mmo4ZDlGWFcxYTZnMmVDUXN3NTVPY2lObHZlRFd0aXhjbTR0NXkwWkFkSHVr?oc=5"
+    },
+    {
+     "text": "Australia sanctions alleged Iranian agents suspected of directing antisemitic attacks - Reuters",
+     "url": "https://news.google.com/rss/articles/CBMiygFBVV95cUxNSHBtblZnbWZBQUo5LVNGb2sxQkpHOFdJTGI0YlozM0YxUGh0bnZkLWZOeWJrMFBoX0h3aGNkTEtCVVA3Zjg0WEpuYi1MdjBEa2dKVDg3Rk5yWFJCNEs1NDFnYTRrVmpJeVQ1Y1lMR0daaDItcWczSEhzT3VfVTRxVno4Zm9HVGdTN2RDT2NtYmk5NlZqTGJnekNMSTI5dERMY1dZaFpFUy1IM01aVUFjbzI3MDEteXFNS2FvaEhFLTJhZnBvRTVRbzln?oc=5"
+    },
+    {
      "text": "Shares find footing after bruising month, dollar set for third monthly gain - Reuters",
      "url": "https://news.google.com/rss/articles/CBMigwFBVV95cUxOeDB1T1E2SVA0LVpuZFR6d2d5dWFobkEwdkN5aFVmZUZKN1pSVWExbEJzWlZhV0tKcklRQ09yZlFTZklkLTBNSGFwbHBfbHR2SWZoQTdXcWtFdEViWGdQamN2a0JjWjZ4M0Mydmlpc1lrQUdYaFBNVkFBdTQ4djVpbjZrRQ?oc=5"
     },
     {
-     "text": "Brent trades near month's high as Mideast conflict threatens supply - Reuters",
+     "text": "Oil on track to snap 3-week losing streak over supply fears - Reuters",
      "url": "https://news.google.com/rss/articles/CBMitgFBVV95cUxPTzVQVzE5aGdzbGVhNEUtVl94M0V3RjN5Rks4UDU0U0plazFDcjFnUTBMMHBvdk9BRzFaVHljSXk1ZFdzSjlRTVRXNGZ0cnRyUWRRbFJaRjBsVWNFbDZqSnQ0cHo0TW5fRDlwMWlKWDI3V2ROcnlXczVET1RqSXR6UGtZSTZ0OTQtY1YwaG1yYTRwQnZ6TW43azNGNTFqMmpkNFhtbVJwRnVkVERhR1NnSlFIMzExZw?oc=5"
     },
     {
@@ -934,20 +1002,8 @@
      "url": "https://news.google.com/rss/articles/CBMixAFBVV95cUxOWHRXZnN1TmZVRDJ6VUJtNjhuRm85eGlQVmdGNGQ0SC0yeHlPVUlKSksyLVNZa0VqRGdqUWVtaW1oNHhjQldDdHlKYnZ0TVgtbkpEcmJfVEcyTUxnNkNYeEdaYXlWUmQwcnhyLUtrUERoYnhIdnVxV3lFeUhza21Wc3U2WW9yd2loWmpxeXE4SG9OT2Rlai1reWtSemRkYnlBZndLaFVNOHJHeDF4ZkVmckpqSzZSbElNZHpfdUFLTTBsOW9C?oc=5"
     },
     {
-     "text": "Hamas weighs response after Israel kills 10 people in Gaza - Reuters",
-     "url": "https://news.google.com/rss/articles/CBMixwFBVV95cUxNNzFiM29KUVhvZHZUYTV1SWtlLXNYbXg3ZzRodFVmanZkNzJsczZ4UldfRkNkSW1fVDhMaTFYOW9ETUxXaXFKcktCTThoYnBYS21mVjQxYkNWM19MR1h0WHNSdjlGenRTNkExU2RKU0ZKNUhCRWR0OVU2VmFqTUJHeE5QMVNybDE4Qk1WTmp5VGgyWDV0NjhaM3h4Ulp1bWZDUThnSlI0TFMwMnQzNk5KQnZXVTRCUUxvc2FLbmlDYVREeHpwOUpV?oc=5"
-    },
-    {
-     "text": "Attack on Saudi Aramco's Jazan refinery kills worker, halts some operations - Reuters",
-     "url": "https://news.google.com/rss/articles/CBMiugFBVV95cUxORnNINWJlUzU0bDVSQ1Z5TWhtZTl1dzVxa01lbWhiMTg0bjBKZzQtbld6RmpIQ3NOSkctT29wTmdmR3VCcHpMbzdBQUdQSU0wVWItQU1COHhCS1BzYnpoOTJsRzl2TWp0aVNNZWVpZVFhS2cwWXVtNnA0bzRfUXNTRTJRTEVHem5BY2V2SURxZG9Vb3VkT3FNa1RuR3RfZWJQUE15WTdGaVFudnJaeVJIdVhXdE9PcWFuY2c?oc=5"
-    },
-    {
-     "text": "Two Italians killed in attack on Kuwait site, Iran denies involvement - Reuters",
-     "url": "https://news.google.com/rss/articles/CBMiswFBVV95cUxPeE9DZXQ0VUMxV052eWlmWWlKM3R0LTFiMS1ITm93Ty1NOWpta1ZVNU5MeWVVMHRlcmdXd0NpZmxJeGlGZEhCeklaaEs2VWlSWnR0RVRLUHhCNm9MeFNTMmNUZFEyWWdoUVVBWUZTcVc0LVNFY0gxN050ZHNtS3psSVRHQWtBVEM5N3dPYVl6T1Flb0tBb1BlUGVxQ3ZaNURWVU9vTHYtTGxFRDJSQVhaMU1Tbw?oc=5"
-    },
-    {
-     "text": "Settlers smash foundations of Palestinian family's homes in West Bank - Reuters",
-     "url": "https://news.google.com/rss/articles/CBMitwFBVV95cUxPb1JfSF9vcWp6cVBxNTNjV2NnZkd4aUN5ektmYU4wSF9Qa18weEFlbGhTZlRtTEhuY1haWW1pTk4wZjExSHo3Rk5jY1VHd09FblJPSHJfazNMenFsYWRlVDdYYjJobXd2TnRFRlYwWXBvaWlLWjQyWTFIZnF0VWNVSHYzQmxMRVVxYUlad21JWXBseHJ3VUlqOXVFRk5EQXpHODZoUExmMWFVVW5HT1Nrd1ZCMklXVHc?oc=5"
+     "text": "Final New Zealand election vote count to confirm parliament make up - Reuters",
+     "url": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxPcFJqbEVQNWVCSWlBVEdnUXJlWHgwV3pmUjRGZ254NjNIcGgtSHU0NkVsemlWUnFjZWlJa3BLY01sTDN3djdCS0ZYU2dvcGV0U0I5NUh4MDV2NU5ya0V1WS1BUkJRSGRtNnIxUlRqc3ZFOXBycWJITFh5cnB3WEtsa1B1REFtMDlkMmFYdlBLTEFKSjNvWGZ4SmtEMl9RMzRNbFdCS25kbHF4eVhGeGs5OW1Rb2FGcUhWcVJV?oc=5"
     }
    ],
    "note": "Collected, not curated: series state their own age and headlines are newest-first, not most-important-first.",
@@ -955,7 +1011,7 @@
    "source": {
     "age_days": 0.0,
     "name": "OBSERVER macro",
-    "stamp": "2026-11-27T05:03:42+00:00",
+    "stamp": "2026-11-27T07:27:49+00:00",
     "status": "fresh",
     "usable": true,
     "why": "ok"
@@ -983,7 +1039,7 @@
    "note": "",
    "shown": 3,
    "source": {
-    "age_days": 0.04,
+    "age_days": 0.14,
     "name": "daily snapshot",
     "stamp": "2026-11-27T04:06:42Z",
     "status": "fresh",
