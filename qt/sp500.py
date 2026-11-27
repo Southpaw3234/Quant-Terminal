@@ -37,6 +37,7 @@ def _div(a, b, positive_b=True):
 def price_stats(closes: pd.Series, bench: pd.Series) -> dict:
     """1-year price figures from daily closes (USD, adjusted)."""
     px = pd.Series(closes, dtype="float64").dropna()
+    px = px[px > 0]          # a zero close would turn log returns into -inf
     if len(px) < 60:
         return {"price": float(px.iloc[-1]) if len(px) else None, "n_days": int(len(px))}
     yr = px[px.index >= px.index[-1] - pd.Timedelta(days=365)]

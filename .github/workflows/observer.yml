@@ -60,6 +60,7 @@ on:
       - 'observer_sp500.py'
       - 'qt/company_facts.py'
       - 'qt/sp500.py'
+      - 'qt/sic_sector.py'
       - 'validate_sp500.py'
       - 'qt/btc_cycle.py'
       - 'validate_btc_cycle.py'
@@ -131,7 +132,7 @@ jobs:
                    chief_of_staff qt/edgar qt/agentio qt/notify qt/librarian \
                    qt/actuary qt/chief qt/thesis qt/volatility observer_prices \
                    observer_crypto qt/btc_cycle validate_btc_cycle \
-                   observer_sp500 qt/company_facts qt/sp500 validate_sp500 \
+                   observer_sp500 qt/company_facts qt/sp500 qt/sic_sector validate_sp500 \
                    validate_observer_filings validate_observer_macro \
                    validate_librarian_diff validate_actuary \
                    validate_chief_of_staff validate_described_events \
@@ -319,7 +320,12 @@ jobs:
         # to the latest sweep, restored from agent-output above.
         id: sp500
         continue-on-error: true
-        run: python observer_sp500.py --prices
+        run: python observer_sp500.py --prices --universe sp500
+
+      - name: OBSERVER — watched small caps lookup, re-priced
+        id: watched
+        continue-on-error: true
+        run: python observer_sp500.py --prices --universe watched
 
       - name: ACTUARY
         id: actuary
@@ -358,6 +364,7 @@ jobs:
           S_PRICES: ${{ steps.prices.outcome }}
           S_CRYPTO: ${{ steps.crypto.outcome }}
           S_SP500: ${{ steps.sp500.outcome }}
+          S_WATCHED: ${{ steps.watched.outcome }}
           S_ACTUARY: ${{ steps.actuary.outcome }}
           S_CHIEF: ${{ steps.chief.outcome }}
         run: |
@@ -372,6 +379,7 @@ jobs:
             echo "| OBSERVER prices | $S_PRICES |"
             echo "| OBSERVER crypto | $S_CRYPTO |"
             echo "| OBSERVER S&P 500 | $S_SP500 |"
+            echo "| OBSERVER watched lookup | $S_WATCHED |"
             echo "| ACTUARY | $S_ACTUARY |"
             echo "| CHIEF OF STAFF | $S_CHIEF |"
             echo
@@ -421,6 +429,7 @@ jobs:
           S_PRICES: ${{ steps.prices.outcome }}
           S_CRYPTO: ${{ steps.crypto.outcome }}
           S_SP500: ${{ steps.sp500.outcome }}
+          S_WATCHED: ${{ steps.watched.outcome }}
           S_CHIEF: ${{ steps.chief.outcome }}
           S_GUARD: ${{ steps.guard.outcome }}
           S_PUBLISH: ${{ steps.publish.outcome }}
@@ -429,7 +438,7 @@ jobs:
           bad=0
           for pair in "OBSERVER filings:$S_OBSERVER" "OBSERVER macro:$S_MACRO" \
                       "LIBRARIAN:$S_LIBRARIAN" "OBSERVER prices:$S_PRICES" \
-                      "OBSERVER crypto:$S_CRYPTO" "OBSERVER S&P 500:$S_SP500" \
+                      "OBSERVER crypto:$S_CRYPTO" "OBSERVER S&P 500:$S_SP500" "OBSERVER watched lookup:$S_WATCHED" \
                       "ACTUARY:$S_ACTUARY" \
                       "CHIEF OF STAFF:$S_CHIEF" "data/ guard:$S_GUARD" \
                       "publish:$S_PUBLISH"; do
