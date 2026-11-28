@@ -1,0 +1,46 @@
+{
+ "baseline_unavailable": [],
+ "bearing_on_theses": [],
+ "claims": [],
+ "day": "2026-11-27",
+ "describes": "filings published 2026-11-27",
+ "generated_at": "2026-11-28T04:47:06+00:00",
+ "instrument": "phrase-presence diff over the primary document",
+ "issuers_eligible": 0,
+ "issuers_read": 0,
+ "ledger": {
+  "ok": true,
+  "why": "chain intact"
+ },
+ "max_names": 60,
+ "names_truncated": false,
+ "no_baseline": [],
+ "not_a_section_diff": "Section attribution (Item 1A vs Item 7) is NOT OBSERVED: filing bodies are served from www.sec.gov, which answers 403 to this client. Only pre-declared phrases are tested, so language nobody declared in advance is invisible here.",
+ "pairs_compared": 0,
+ "phrases": {
+  "count": 10,
+  "digest": "e85d40e7542158f5fcdce50c56e1a124247a472fc6c099c6b80dc21c3fd95c7f",
+  "note": "Pre-registered phrase list for LIBRARIAN (collective agent module 3). A phrase is testable against a filing only if it was declared BEFORE that filing was published -- qt.librarian.check_declared_before refuses otherwise, and librarian_diff.py counts the refusals rather than skipping them quietly. Adding a phrase is free; it simply cannot be applied backwards. These phrases are canonical distress and disclosure language from auditing and reporting practice, deliberately NOT chosen by reading any particular company's filing."
+ },
+ "refused_lookahead": [],
+ "selection_rule": "deduped on (CIK, form) so share classes count once; open-thesis names first, then most recently filed. Not alphabetical.",
+ "source": "OBSERVER records + sec-edgar-fts",
+ "summary": {
+  "absent_both": 0,
+  "added": 0,
+  "claims": 0,
+  "indeterminate": 0,
+  "names": 0,
+  "removed": 0,
+  "retained": 0
+ },
+ "upstream": {
+  "age_days": 0.0,
+  "name": "observations",
+  "stamp": "2026-11-28T04:44:23+00:00",
+  "status": "fresh",
+  "usable": true,
+  "why": "ok"
+ },
+ "with_open_thesis": 0
+}

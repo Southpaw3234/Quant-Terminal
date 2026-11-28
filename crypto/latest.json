@@ -1700,7 +1700,7 @@
    "complete_data": true,
    "current": true,
    "drop_peak_to_low": -0.5306,
-   "ends": "2026-11-28",
+   "ends": "2026-11-29",
    "halving": "2024-04-20",
    "low_after_peak": 58558.86,
    "low_date": "2026-06-30",
@@ -2252,8 +2252,8 @@
      0.9246
     ],
     [
-     951,
-     0.9497
+     952,
+     0.9225
     ]
    ],
    "peak": 124752.53,
@@ -2265,8 +2265,8 @@
   }
  ],
  "data_from": "2014-09-17",
- "days_since_halving": 951,
- "generated_at": "2026-11-27T07:28:09+00:00",
+ "days_since_halving": 952,
+ "generated_at": "2026-11-28T04:47:07+00:00",
  "halvings": [
   "2012-11-28",
   "2016-07-09",
@@ -2275,10 +2275,10 @@
  ],
  "how_to_read": "A pattern that has repeated a few times, not a law. Past cycles peaked and bottomed at similar distances after each halving; that is the whole basis of the 'four-year cycle'. It has never been tested here, the sample is three or four cycles, and Bitcoin has fallen 70-85% from past peaks. Nothing here says which way the price goes next.",
  "is_not_a_recommendation": true,
- "last_session": "2026-11-27",
- "multiple_vs_halving": 0.95,
+ "last_session": "2026-11-28",
+ "multiple_vs_halving": 0.92,
  "next_halving_estimate": "2028-04-20",
- "off_cycle_high": -0.5052,
+ "off_cycle_high": -0.5194,
  "phase": {
   "label": "low window",
   "low_window": [
@@ -2299,21 +2299,21 @@
   ],
   "text": "inside the stretch where past cycles hit their lows"
  },
- "price": 61726.2,
+ "price": 59955.52,
  "price_at_halving": 64994.44,
  "same_stage_past": [
   {
    "halving": "2016-07-09",
-   "multiple_vs_halving": 5.56,
-   "off_cycle_high": -0.8143
+   "multiple_vs_halving": 5.58,
+   "off_cycle_high": -0.8138
   },
   {
    "halving": "2020-05-11",
-   "multiple_vs_halving": 1.95,
-   "off_cycle_high": -0.752
+   "multiple_vs_halving": 1.91,
+   "off_cycle_high": -0.7567
   }
  ],
- "share_of_cycle": 0.6509,
+ "share_of_cycle": 0.6516,
  "source": "yfinance BTC-USD daily close (UTC)",
  "status": "ok"
 }
